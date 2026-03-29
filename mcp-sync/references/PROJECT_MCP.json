@@ -1,0 +1,10 @@
+{
+  "project_name": "REPLACE_ME",
+  "mcpServers": {
+    "EXAMPLE_LOCAL_SERVER": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "enabled": true
+    }
+  }
+}
