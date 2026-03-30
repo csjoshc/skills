@@ -1,6 +1,10 @@
 ---
 name: ticket-critic
-description: Pre-implementation critic that audits tickets for blocking issues before any spec or code is written. Pattern-matches 10 common blocker types and either blocks with clear reasons or auto-resolves via STANDARDS.md. Use before spec-writer or tdd skills.
+description: >-
+  Pre-implementation critic for .tickets/*.md — 10 blocking patterns, STANDARDS.md auto-resolve,
+  Stage header gate, blast-radius splits (≤5 files / epic), TDD & verification mandates, and
+  optional ticket hardening using the cleanup QUALITY_RUBRIC for acceptance criteria. Use before
+  spec-writer or tdd when work is ticket-driven; use cleanup skill for reviewing existing code only.
 ---
 
 # Ticket Critic — Pre-Implementation Audit
@@ -654,7 +658,7 @@ Evidence: Section 2 "API contracts" lacks validation spec
 
 ### With spec-writer
 
-With missing/invalid `Stage:` header, ticket-critic must block and route remediation to [$spec-writer](/Users/joshc/.skills/spec-writer/SKILL.md).
+With missing/invalid `Stage:` header, ticket-critic must block and route remediation to the **spec-writer** skill (`~/.cursor/rules/spec-writer/SKILL.md` or `~/.cursor/skills/spec-writer/SKILL.md`).
 
 **Flow:**
 1. User provides feature request
@@ -682,6 +686,106 @@ With missing/invalid `Stage:` header, ticket-critic must block and route remedia
 3. ticket-critic uses merged STANDARDS.md for auto-resolution
 
 **Why:** Ensures ticket-critic has project-specific decisions available.
+
+### With cleanup (QUALITY_RUBRIC only)
+
+The **cleanup** skill reviews **existing code**, not tickets. When **hardening ticket acceptance criteria** or mapping work to quality dimensions, read **`~/.cursor/rules/cleanup/QUALITY_RUBRIC.md`** (mechanical M1–M12, subjective tiers, anti-patterns). Use it to make AC **checkable** and aligned with layering/contracts/tests—**do not** conflate with the cleanup *workflow* (codebase audit).
+
+---
+
+## Ticket shape & implementation readiness
+
+When creating or auditing tickets (orchestrate + spec-writer alignment), ensure:
+
+1. **YAML front matter** — `Stage:`, `Type`, `Order`, `Depends-On`, `Parent` per pipeline.
+2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to **files** (and quality dimensions if using rubric).
+3. **Target files** — explicit list; **≤ 5 production files** per implementation ticket (see blast radius below).
+4. **Traceability (optional table)** — area → expected change → verification command (pytest, bandit, ruff, playwright, etc.).
+5. **Verification (TDD)** — floor: project test suite; new tests when behavior changes.
+6. **Ticket critic preflight** — this skill’s 10 patterns + Stage gate; no silent assumptions (resolve in `STANDARDS.md` or `Stage: BLOCKED` + explicit question).
+
+**Agent calibration:** Mechanical improvements should be **provable** with project linters/tests; holistic quality is **evidence-based** (paths, coupling)—never promise “guaranteed points” from a vendor score.
+
+---
+
+## Blast radius & epic split (orchestrate)
+
+- If implementation touches **> 5 production files**, **split** the work: `01a-ticket-slug.md`, `01b-…`, same directory.
+- Set **parent** ticket to epic/tracker (`Stage: COMPLETE` when it only tracks children, per **orchestrate** skill).
+- Children start **`Stage: NEW`** with their own target file lists.
+
+---
+
+## Strict TDD, verification, and self-review (BUILD-bound tickets)
+
+When the ticket implies implementation:
+
+### Architecture & PRD formalization
+
+- Treat the ticket as a **mini-PRD**: design intent, AC, integration paths (who calls whom).
+- Document **blockers**, **edge cases**, assumptions—resolved via `STANDARDS.md` / `AGENTS.md` or escalated with `[ASSUMPTION: …]` and **BLOCKED** if needed.
+- Remediation options must **not contradict** `AGENTS.md` / `STANDARDS.md`.
+
+### TDD & coverage
+
+- State explicitly: **tests written first** (red → green → refactor) unless the ticket is **docs-only** or **planning-only** (say so).
+- **Frontend in repo:** mandate **Playwright** (or project E2E standard) for new/changed user-visible behavior where feasible—map user actions to tests.
+- **Backend (e.g. Python):** **pytest** for contracts, I/O boundaries, happy + unhappy paths (bad input, missing data, timeouts).
+- Other stacks: name the **actual** test runner.
+
+### Verification section
+
+Concrete commands, e.g. `pytest tests/ -q`, `npx playwright test`, plus linters/typecheck the repo uses.
+
+### Self-review (pre-REVIEW)
+
+- [ ] DRY; maintainability; boundaries per **QUALITY_RUBRIC.md**
+- [ ] UI work: **make-ui** if project uses it
+- [ ] No unjustified god files; **QUALITY_RUBRIC** anti-patterns addressed for touched code
+
+### Principal staff lens (ticket authoring)
+
+Prioritize **code deletion** and **pragmatic modularity**; unify scattered AI patterns into **one predictable standard** per concern (logging, config, errors, file IO). See **QUALITY_RUBRIC** §Part 5–6 for frontend/middleware/data notes.
+
+---
+
+## Super-prompt: harden tickets under `.tickets/`
+
+Use when the user wants markdown tickets upgraded in place:
+
+```
+Read AGENTS.md and STANDARDS.md first.
+
+Use ticket-critic (this skill) for Stage gate and 10 patterns.
+Read spec-writer and tdd skills for structure and test-first discipline.
+Read ~/.cursor/rules/cleanup/QUALITY_RUBRIC.md for checkable AC tied to mechanical (M1–M12) and subjective tiers—do not run the cleanup codebase-audit workflow unless also asked to review code.
+
+For each ticket in .tickets/ (or paths named):
+1. Stage header valid; dependencies and STANDARDS alignment.
+2. If BUILD implied: explicit TDD, Verification commands, Self-review checklist.
+3. >5 production files → split 01a/01b…; parent epic per orchestrate.
+4. No vague AC; assumptions in STANDARDS or [ASSUMPTION] + BLOCKED.
+5. You MAY edit ticket markdown to satisfy the above.
+
+Frontend: Playwright (or project E2E) if UI exists; else state N/A.
+Backend: pytest (or project standard) for contracts and unhappy paths.
+```
+
+---
+
+## Kickoff prompt: generate new cleanup-oriented tickets (optional)
+
+When the user wants **new** tickets from an audit report (adapt repo root):
+
+```
+Create actionable tasks in .tickets/ using orchestrate ticket shape, spec-writer and ticket-critic discipline.
+
+Each ticket: explicit target file list (≤5 files), AGENTS.md/STANDARDS.md alignment, checkable AC, Verification commands, TDD where implementation is implied.
+
+Prioritize work that maps to QUALITY_RUBRIC.md (layering, contracts, tests, mechanical M-patterns).
+
+Mechanical improvements should be verifiable with project pytest/linters/security tools; avoid promising numeric score deltas.
+```
 
 ---
 
