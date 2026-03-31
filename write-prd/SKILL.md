@@ -62,7 +62,19 @@ write-prd --approve "..."           # Skip HITL (CI/scripted)
 
 ## How It Works
 
-The skill runs `python write_prd_langgraph.py` in the target project directory.
+**Invocation:** The skill is invoked via the agent system (`/write-prd`), which runs the PRD expansion pipeline.
+
+**Execution pattern:**
+```bash
+# Via agent skill (recommended)
+/write-prd "feature description"
+
+# Or with intake file (reads from project root)
+/write-prd --input .prd/intake/my-issue.md
+
+# The agent runs the pipeline targeting the current project directory
+# Output: .prd/drafts/{slug}.md (same project root as intake)
+```
 
 ### Pipeline Stages
 
@@ -121,12 +133,12 @@ Pipeline prunes the Q-DAG based on Round 1 answers. Present any remaining follow
 ## CLI Reference
 
 ```bash
-python write_prd_langgraph.py --input .prd/intake/my-issue.md
-python write_prd_langgraph.py --text "raw text here"
-python write_prd_langgraph.py --input .prd/intake/my-issue.md --dry-run
-python write_prd_langgraph.py --input .prd/intake/my-issue.md --approve
-python write_prd_langgraph.py --input .prd/intake/my-issue.md \
-  --answers '{"q_abc123": "use OAuth", "q_def456": "postgres"}'
+# Via agent skill (recommended)
+/write-prd "add file upload to dashboard"
+/write-prd --input .prd/intake/my-issue.md
+
+# Pipeline supports multi-round HITL clarification
+# Answers provided via --answers flag for resume
 ```
 
 | Flag | Purpose |
@@ -136,7 +148,6 @@ python write_prd_langgraph.py --input .prd/intake/my-issue.md \
 | `--dry-run` | Preview artifacts without writing |
 | `--approve` | Skip all HITL rounds |
 | `--answers`, `-a` | JSON of question_id → answer_text for HITL resume |
-| `--output-dir` | Target project directory (default: cwd) |
 
 ## Manifest Format
 
