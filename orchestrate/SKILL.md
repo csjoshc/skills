@@ -92,3 +92,14 @@ If an existing ticket requires modifying more than 5 files or contains 2+ distin
 - **Tier 1 (reversible):** Missing status update — proceed, but add Task N to update the ticket before finishing.
 - **Tier 2 (logic):** Ticket stage transition is illegal (e.g., NEW -> COMPLETE) — **STOP**, clarify via spec-writer.
 - **Tier 3 (security):** Ticket implementation attempts to bypass stage-gate security — **STOP**, block and alert immediately.
+
+## Project Setup
+
+When running the orchestrate skill on a new project, ensure the following are added to the project's `.gitignore`:
+
+```
+.orchestra.db
+.orchestra/
+```
+
+These are runtime artifacts created by the orchestration framework and should not be committed.

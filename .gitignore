@@ -1,1 +1,6 @@
 .backup/
+.system/
+.qwen/
+.orchestra.db
+.orchestra/
+*.log

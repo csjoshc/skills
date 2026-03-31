@@ -13,7 +13,7 @@ Synchronize and audit AI skills from a master store (`~/.skills`) to platform-sp
 
 **Invocation:**
 ```bash
-python3 ~/.skills/sync.py
+python3 ~/.skills/skill-sync/sync.py
 ```
 
 ## When to Use
