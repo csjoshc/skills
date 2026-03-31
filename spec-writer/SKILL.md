@@ -14,6 +14,10 @@ Turns vague feature requests into structured technical specs, implementation pla
 /spec-writer <feature-description>
 ```
 
+## Companion files (progressive disclosure)
+
+- **Parallel or batched markdown tickets** (e.g. many tickets for one Orchestra run with `--concurrency` / `-j`, explicit `Depends-On:`): when the user asks for parallel tickets, a ticket batch, or `-j` / multi-ticket concurrency, read **`PARALLEL_TICKETS_BATCH.md`** in this same directory (`~/.skills/spec-writer/`) before generating the batch.
+
 ## Decision Tree
 
 1. **How much ambiguity exists?**
@@ -27,6 +31,10 @@ Turns vague feature requests into structured technical specs, implementation pla
 3. **Does the task hit a blast radius limit (>5 files)?**
    - YES → **MANDATORY** split into child certificates/tickets via `01a-`, `01b-` pattern.
    - NO → Proceed.
+
+4. **Is the user asking for parallel / batched runner tickets (`-j`, many `.tickets/` files, explicit DAG)?**
+   - YES → Read **`PARALLEL_TICKETS_BATCH.md`** (this folder), then apply its checklist plus any project ticket skill (e.g. Orchestra `orchestra-decomposed-tickets`).
+   - NO → Continue with the sections below.
 
 ## Workflow
 
