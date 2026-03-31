@@ -3,7 +3,130 @@ name: tdd
 description: Test-driven development with red-green-refactor loop. Use when user wants to build features or fix bugs using TDD, mentions "red-green-refactor", or wants test-first development. Language-agnostic.
 ---
 
-# Test-Driven Development (TDD)
+# TDD
+
+## TL;DR (Quick Start)
+
+Write ONE failing test → write minimal code to pass → refactor. Repeat for each behavior. Tests verify public interfaces, not implementation details.
+
+**When to use:** Building new features, fixing bugs, refactoring with safety net. NOT for exploratory spikes or one-off scripts.
+
+**Invocation:** Plan behaviors → RED (test fails) → GREEN (minimal code) → REFACTOR.
+
+## Assumptions & Escalation
+
+**[ASSUMPTION: Test framework available]** — If no test framework exists, add Task 0 to install pytest/vitest/jest per STANDARDS.md.
+
+**[ASSUMPTION: User can identify behaviors to test]** — If user unsure what to test, prompt: "What should the public interface do?" Focus on user-facing behaviors.
+
+**Escalation thresholds:**
+- Tier 1 (reversible): Test naming, file location → proceed, flag for post-review
+- Tier 2 (architecture): Test framework choice, mocking strategy → check STANDARDS.md
+- Tier 3 (security): Testing auth/encryption flows → always block for human confirmation
+
+## Decision Tree
+
+Use this skill when you need to:
+
+1. **Is this a new feature or bug fix?**
+   - YES → Use TDD workflow (RED→GREEN→REFACTOR)
+   - NO (exploratory spike, one-off script) → Skip TDD, document manually
+
+2. **What type of test is needed?**
+   - Unit test (single function/class) → Test public methods, edge cases
+   - Integration test (multiple components) → Test through public API
+   - E2E test (full user flow) → Use Playwright/cypress per STANDARDS.md
+
+3. **Is mocking appropriate?**
+   - External services (API, DB) → Use mocks/stubs
+   - Internal collaborators → Prefer real objects (integration-style)
+   - Pure functions → No mocks needed, test directly
+
+4. **When to stop adding tests?**
+   - All critical paths covered → Stop
+   - Diminishing returns (testing trivial getters) → Stop
+   - User confirms priority behaviors tested → Stop
+
+## Examples (Few-Shot)
+
+**Example 1: New feature — user login**
+
+Input: "Add user login functionality with email and password"
+
+Output (TDD workflow):
+```
+RED: Write test for successful login
+  def test_login_valid_credentials():
+      user = create_user(email="test@example.com", password="secure123")
+      result = login(email="test@example.com", password="secure123")
+      assert result.success == True
+      assert result.user_id == user.id
+
+GREEN: Implement minimal login function
+  def login(email, password):
+      user = db.get_user_by_email(email)
+      if user and verify_password(password, user.password_hash):
+          return LoginResult(success=True, user_id=user.id)
+      return LoginResult(success=False)
+
+REFACTOR: Extract password verification, add rate limiting
+
+RED: Write test for failed login (wrong password)
+RED: Write test for failed login (user not found)
+RED: Write test for rate limiting (5 failed attempts)
+```
+
+**Example 2: Bug fix — null pointer in cart total**
+
+Input: "Cart total crashes when cart is empty"
+
+Output (TDD workflow):
+```
+RED: Write test that reproduces the crash
+  def test_cart_total_empty_cart():
+      cart = Cart()  # empty cart
+      total = cart.get_total()  # currently crashes
+      assert total == 0  # expected behavior
+
+GREEN: Fix the bug
+  def get_total(self):
+      if not self.items:
+          return 0
+      return sum(item.price for item in self.items)
+
+REFACTOR: No refactor needed — fix is already clean
+```
+
+**Example 3: Refactor with safety net**
+
+Input: "Refactor authentication to use JWT instead of sessions"
+
+Output (TDD workflow):
+```
+RED: Write characterization tests for current behavior
+  def test_auth_valid_token():
+      # Tests current session-based auth
+      session = create_session(user_id=123)
+      assert authenticate(session).user_id == 123
+
+GREEN: Implement JWT-based auth (tests still pass)
+  def authenticate(token):
+      payload = jwt.decode(token, SECRET_KEY)
+      return AuthResult(user_id=payload['user_id'])
+
+REFACTOR: Remove old session code, clean up imports
+
+RED: Add tests for JWT-specific behavior (expiry, refresh)
+```
+
+## Related Skills
+
+| Skill | When to use instead |
+|-------|---------------------|
+| `spec-writer` | When you need to plan the feature before implementing |
+| `ticket-critic` | When working from a ticket — audit before Task 1 |
+| `test-ui` | For frontend E2E testing (Playwright) |
+| `cleanup` | For code quality audits (not behavior testing) |
 
 ## Philosophy
 

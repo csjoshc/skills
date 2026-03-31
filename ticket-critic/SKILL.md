@@ -3,32 +3,60 @@ name: ticket-critic
 description: >-
   Pre-implementation critic for .tickets/*.md — 10 blocking patterns, STANDARDS.md auto-resolve,
   Stage header gate, blast-radius splits (≤5 files / epic), TDD & verification mandates, and
-  optional ticket hardening using the cleanup QUALITY_RUBRIC for acceptance criteria. Use before
+  optional ticket hardening using the cleanup QUALITY_RUBRIC. Use before
   spec-writer or tdd when work is ticket-driven; use cleanup skill for reviewing existing code only.
----
 
-# Ticket Critic — Pre-Implementation Audit
+## Assumptions & Escalation
 
-You are an adversarial pre-flight critic. Your job is to **prevent wasted effort** by catching blocking issues **before** Task 1 starts.
+- **Tier 1 (reversible):** Missing dependency in the ticket — proceed, flag for review.
+- **Tier 2 (conflict):** Ticket violates `STANDARDS.md` core patterns — **STOP**, block and alert.
+- **Tier 3 (security):** Ticket implementation touches sensitive auth logic without a plan — **STOP**, block immediately.
+
+## TL;DR (Quick Start)
+
+Adversarial pre-flight audit for tickets in `.tickets/`. Prevents wasted effort by catching blocking issues (dependencies, scope, architecture) before implementation begins.
+
+**When to use:** "criticize this ticket", "audit ticket", "preflight check".
+
+**Invocation:**
+```bash
+/ticket-critic <ticket-path>
+```
+
+## Decision Tree
+
+1. **Does the ticket have a `Stage:` header?**
+   - YES → Proceed to audit.
+   - NO → **BLOCK** immediately.
+
+2. **Are there out-of-scope items?**
+   - YES → Are they critical for functionality? If YES, **BLOCK**.
+   - NO → Continue.
+
+3. **Does the implementation touch > 5 production files?**
+   - YES → **MANDATORY** split into child tickets.
+   - NO → Proceed.
+
+4. **Is there a verification plan?**
+   - YES → Does it match project standards? If NO, **WARN**.
+   - NO → **BLOCK**.
+
+## Workflow
 
 You do **not** write specs or implementation. You **audit tickets** for the 10 blocking patterns and either:
 1. **Clear the ticket** (all patterns addressed)
 2. **Block with specific reasons** (which patterns failed, what's needed)
 3. **Auto-resolve** via STANDARDS.md (if question already answered)
 
----
-
 ## Operating Principles
 
-**Block early, block clearly:** Better to block for 10 minutes now than waste 4 hours implementing the wrong thing. When blocking, be **specific** about what's missing and **actionable** about how to fix it.
+**Block early, block clearly:** Better to block for 10 minutes now than waste 4 hours implementing the wrong thing. Be **specific** about what's missing and **actionable** about how to fix it.
 
-**Auto-resolve when possible:** Don't block on questions already answered in `~/.skills/STANDARDS.md` or the local project `./STANDARDS.md`. Check these files first before blocking.
+**Auto-resolve when possible:** Check `./STANDARDS.md` and `~/.skills/STANDARDS.md` before blocking on any question.
 
-**Risk-tier assumptions:** Not all assumptions need human review. Tier 1 (reversible) → proceed. Tier 2 (architecture) → check STANDARDS.md. Tier 3 (security/safety) → always block.
+**Risk-tier assumptions:** Tier 1 (reversible) → proceed. Tier 2 (architecture) → check STANDARDS.md. Tier 3 (security/safety) → always block. See [Assumption Tiers](#assumption-tiers).
 
-**Evidence-based:** Don't say "might be a problem." Say "Line 47 assumes X exists, but X is not in the ticket. Verification needed: [specific check]."
-
----
+**Evidence-based:** Cite specific lines/sections. Don't say "might be a problem."
 
 ## Mandatory Preflight: Stage Header Gate
 
@@ -36,538 +64,181 @@ Before running the 10 patterns, validate ticket stage metadata.
 
 **Required field:** `Stage:` (canonical; do not rely on `Status:` for new tickets)
 
-If the ticket is implementation-ready, it must explicitly contain:
-
+If implementation-ready, must contain:
 ```yaml
 ---
 Stage: BUILD
 ---
 ```
 
-Allowed stage enum (single line): `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
+Allowed enum: `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
 
-If `Stage:` is missing or invalid, mark ticket as blocked immediately and require patching via [$spec-writer](/Users/joshc/.skills/spec-writer/SKILL.md).
-
-**Block message template:**
-
-```markdown
-❌ BLOCKED: Missing or Invalid Stage Header
-
-Issue: Ticket is missing canonical `Stage:` field (or value is outside allowed enum).
-
-Required before Task 1:
-- [ ] Patch ticket header using [$spec-writer](/Users/joshc/.skills/spec-writer/SKILL.md)
-- [ ] Add canonical YAML header with an allowed stage value
-- [ ] If implementation-ready, set exactly `Stage: BUILD`
-
-Allowed enum: `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`
-```
-
----
+If `Stage:` is missing or invalid, block immediately. Block message: see [templates/block-messages.md](templates/block-messages.md) — Stage Header Gate section.
 
 ## The 10 Blocking Patterns
 
-Audit every ticket against these 10 patterns. For each pattern, mark: ✅ (pass), ⚠️ (warning, auto-resolvable), ❌ (blocker).
+Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warning, auto-resolvable), ❌ (blocker).
 
 ### Pattern 1: Unimplemented Dependencies
 
 **Check:** Does the ticket assume a feature/endpoint/service exists that doesn't?
 
-**Red flags:**
-- "Already implemented" without link to PR/commit
-- "Backend returns X" without endpoint specification
-- "Frontend calls X" without API contract
-- Dependency on ticket that's in progress or not started
+**Red flags:** "Already implemented" without link; "Backend returns X" without endpoint spec; dependency on ticket in progress or not started.
 
-**Verification steps:**
-1. List all external dependencies mentioned in ticket
-2. For each: verify existence (check codebase, PR status, merge state)
-3. If not merged: is there a stable API contract? If not → block
-4. If no contract: add Task 0 "Define API contract" or block until dependency ready
+**Verification:** List all external dependencies → verify existence (codebase, PR status, merge state) → if not merged, check for stable API contract → if no contract, add Task 0 or block.
 
-**Auto-resolve via STANDARDS.md:** If dependency is a standard pattern (e.g., REST endpoint), check if STANDARDS.md defines the pattern. If yes → proceed with standard pattern.
+**Auto-resolve:** If dependency is a standard pattern defined in STANDARDS.md → proceed.
 
-**Block message template:**
-```
-❌ BLOCKED: Unimplemented Dependency
-
-Issue: Ticket assumes [X] exists, but [X] is [not started / in progress / not merged / no stable API]
-
-Required before Task 1:
-- [ ] Dependency merged and stable, OR
-- [ ] API contract defined and agreed, OR
-- [ ] Task 0 added: "Implement [X]" or "Define API contract for [X]"
-
-Evidence: [specific line/section in ticket that assumes existence]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 1.
 
 ### Pattern 2: Architecture Contradictions
 
 **Check:** Does this ticket conflict with other approved tickets or STANDARDS.md?
 
-**Red flags:**
-- Ticket proposes X, another ticket proposes not-X
-- Ticket says "split module", STANDARDS.md says "keep cohesive"
-- Multiple tickets approved for same system with different approaches
-- No coordinating ticket for related refactors
+**Red flags:** Ticket proposes X, another proposes not-X; multiple tickets with different approaches for same system; no coordinating ticket for related refactors.
 
-**Verification steps:**
-1. Search for tickets affecting same files/systems
-2. Check STANDARDS.md for resolved architecture decisions
-3. If contradiction found: which ticket is authoritative?
-4. If unclear: block for architectural decision
+**Verification:** Search for tickets affecting same files/systems → check STANDARDS.md for resolved decisions → if contradiction, determine authoritative ticket → if unclear, block.
 
-**Auto-resolve via STANDARDS.md:** If STANDARDS.md already decides this question (e.g., "DTOs stay cohesive"), apply that decision and note in audit.
+**Auto-resolve:** If STANDARDS.md already decides this question → apply that decision.
 
-**Block message template:**
-```
-❌ BLOCKED: Architecture Contradiction
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 2.
 
-Issue: This ticket says [X], but [Ticket Y / STANDARDS.md] says [not-X]
-
-Required before Task 1:
-- [ ] Coordinating ticket resolves contradiction, OR
-- [ ] Architectural decision documented in STANDARDS.md, OR
-- [ ] One ticket marked authoritative, others updated/withdrawn
-
-Evidence: This ticket line [N] vs [Ticket Y line M / STANDARDS.md section]
-```
-
----
-
-### Pattern 3: Scope Gaps (Critical Functionality Out of Scope)
+### Pattern 3: Scope Gaps
 
 **Check:** Is essential functionality marked "out of scope" that's required for the feature to work?
 
-**Red flags:**
-- "OUT of scope: changing backend" but frontend sends data to backend
-- "OUT of scope: UI changes" but backend returns new data format
-- "OUT of scope: security" for feature handling user input
-- Full user flow not traceable with in-scope items
+**Red flags:** "OUT of scope: changing backend" but frontend sends data; "OUT of scope: security" for user input feature; full user flow not traceable.
 
-**Verification steps:**
-1. Trace complete user flow: trigger → processing → output
-2. Mark each step as in-scope or out-of-scope
-3. If any step out-of-scope: can feature work without it?
-4. If no: scope gap → block
+**Verification:** Trace complete user flow (trigger → processing → output) → mark each step in/out of scope → if any out-of-scope step blocks flow → block.
 
 **Auto-resolve:** If gap is obvious omission (not intentional), add to IN scope and note in audit.
 
-**Block message template:**
-```
-❌ BLOCKED: Scope Gap
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 3.
 
-Issue: [X] is OUT of scope, but required for [Y] to work
-
-User flow trace:
-1. [Step 1] → IN scope ✅
-2. [Step 2] → OUT of scope ❌ (blocks flow)
-3. [Step 3] → IN scope ✅
-
-Required before Task 1:
-- [ ] Move [Step 2] to IN scope, OR
-- [ ] Explain how flow works without [Step 2], OR
-- [ ] Split ticket: this ticket does [partial], new ticket does [Step 2]
-
-Evidence: "Scope boundary" section says "[quote]"
-```
-
----
-
-### Pattern 4: Unverified Assumptions About Current State
+### Pattern 4: Unverified Assumptions
 
 **Check:** Does the ticket assume current implementation works a certain way without auditing first?
 
-**Red flags:**
-- "Already returns X" without verification
-- "Uses existing pattern" without linking to pattern
-- "MSW configured" without checking package.json
-- "Field exists on model" without schema reference
-- Task 1 starts without Task 0 audit
+**Red flags:** "Already returns X" without verification; "Uses existing pattern" without linking; Task 1 starts without Task 0 audit.
 
-**Verification steps:**
-1. List all assumptions about current state
-2. For each: is there evidence (file reference, test, log)?
-3. If no evidence: add Task 0 "Verify [assumption]"
-4. If assumption is critical (blocks Task 1+): must verify before proceeding
+**Verification:** List all assumptions → for each, check for evidence (file reference, test, log) → if no evidence, add Task 0 "Verify [assumption]".
 
-**Auto-resolve via STANDARDS.md:** If assumption matches STANDARDS.md default (e.g., "pytest for backend"), proceed without verification.
+**Auto-resolve:** If assumption matches STANDARDS.md default → proceed.
 
-**Block message template:**
-```
-❌ BLOCKED: Unverified Assumption
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 4.
 
-Issue: Ticket assumes [X] without verification
-
-Assumptions needing verification:
-- [X]: [why it matters, what breaks if wrong]
-- [Y]: [why it matters, what breaks if wrong]
-
-Required before Task 1:
-- [ ] Task 0 added: "Verify [X/Y]"
-- [ ] OR evidence provided (file reference, test, schema)
-
-Evidence: Section [N] says "[quote]"
-```
-
----
-
-### Pattern 5: Security Vulnerabilities Not Addressed
+### Pattern 5: Security Vulnerabilities
 
 **Check:** Does the design introduce security risks that aren't mitigated?
 
-**Red flags:**
-- User input → backend without validation spec
-- File path exposure (path traversal risk)
-- Subprocess execution from HTTP endpoint
-- Auth requirements not specified
-- Rate limiting not mentioned for user-triggered operations
+**Red flags:** User input → backend without validation spec; file path exposure; subprocess from HTTP endpoint; auth requirements not specified; rate limiting not mentioned.
 
-**Verification steps:**
-1. Identify all user input touchpoints
-2. Identify all sensitive operations (file access, subprocess, DB writes)
-3. Check: is validation/isolation specified for each?
-4. Check: STANDARDS.md security checklist applied?
-5. If any gap: security blocker
+**Verification:** Identify all user input touchpoints and sensitive operations → check for validation/isolation → apply STANDARDS.md security checklist.
 
-**Auto-resolve via STANDARDS.md:** If STANDARDS.md security checklist covers this (e.g., "file uploads validated via magic bytes"), apply those requirements.
+**Auto-resolve:** If STANDARDS.md security checklist covers this → apply those requirements.
 
-**Block message template:**
-```
-❌ BLOCKED: Security Vulnerability
-
-Issue: [User input / file access / subprocess] without [validation / isolation / auth]
-
-Risk: [specific attack: path traversal, RCE, data exfiltration, etc.]
-
-Touchpoints needing security review:
-- [Input X]: no validation spec
-- [Operation Y]: no isolation spec
-
-Required before Task 1:
-- [ ] Security review completed
-- [ ] Validation/isolation strategy specified
-- [ ] STANDARDS.md security checklist applied
-
-Evidence: Section [N] lacks [security spec]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 5.
 
 ### Pattern 6: Missing Decision Points
 
 **Check:** Are there open questions that should be decided before implementation?
 
-**Red flags:**
-- "Open questions" section with unanswered items
-- "TBD" or "FIXME" in spec
-- Multiple approaches listed without selection
-- UI location, API pattern, or data model undecided
+**Red flags:** "Open questions" section unanswered; "TBD" or "FIXME" in spec; multiple approaches listed without selection.
 
-**Verification steps:**
-1. List all open questions in ticket
-2. For each: does it block implementation decisions?
-3. If yes: check STANDARDS.md for answer
-4. If not in STANDARDS.md: block until decided
+**Verification:** List all open questions → check if each blocks implementation → if yes, check STANDARDS.md → if not answered, block.
 
-**Auto-resolve via STANDARDS.md:** If question answered in STANDARDS.md (e.g., "REST API pattern"), apply that answer and note in audit.
+**Auto-resolve:** If question answered in STANDARDS.md → apply that answer.
 
-**Block message template:**
-```
-❌ BLOCKED: Missing Decision
-
-Issue: [Question] is undecided but blocks [Task N / implementation]
-
-Open questions:
-- [Question 1]: blocks [specific task]
-- [Question 2]: blocks [specific task]
-
-Required before Task 1:
-- [ ] Decision made and documented in ticket, OR
-- [ ] STANDARDS.md updated with decision, OR
-- [ ] Task 0 added: "Decide [question]"
-
-Evidence: "Open questions" section or "TBD" in Section [N]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 6.
 
 ### Pattern 7: Unclear Success Criteria
 
 **Check:** Is there no definition of what "done" looks like or how to measure it?
 
-**Red flags:**
-- "Works correctly" (not binary)
-- "Improve performance" (no baseline/target)
-- "≥90% coverage" (no baseline measurement)
-- "All tests pass" (no verification plan)
-- No Given/When/Then acceptance criteria
+**Red flags:** "Works correctly" (not binary); "Improve performance" (no baseline/target); no Given/When/Then acceptance criteria.
 
-**Verification steps:**
-1. Check each acceptance criterion: is it binary (pass/fail)?
-2. Check metrics: is baseline defined? target defined? measurement method specified?
-3. Check verification: how do we prove it's done?
-4. If any gap: success criteria blocker
+**Verification:** Check each criterion is binary (pass/fail) → check metrics have baseline, target, measurement method → check verification plan exists.
 
-**Auto-resolve:** If metric is standard (e.g., "80% coverage" is project default per STANDARDS.md), apply default.
+**Auto-resolve:** If metric is a project default per STANDARDS.md → apply default.
 
-**Block message template:**
-```
-❌ BLOCKED: Unclear Success Criteria
-
-Issue: [Criterion] is not measurable or verifiable
-
-Problems:
-- [Criterion X]: "works correctly" → not binary
-- [Metric Y]: no baseline defined
-- [Target Z]: no measurement method
-
-Required before Task 1:
-- [ ] Rewrite as Given/When/Then (binary outcome)
-- [ ] Define baseline (current state)
-- [ ] Define target (measurable number)
-- [ ] Define measurement method (how to verify)
-
-Evidence: Acceptance criteria Section [N]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 7.
 
 ### Pattern 8: Missing Tests/Verification
 
 **Check:** Are refactors or changes without tests to catch regressions?
 
-**Red flags:**
-- "No new tests required" for refactor
-- Public API changes without verification tests
-- Domain layer split without domain tests
-- Security hardening without security tests
+**Red flags:** "No new tests required" for refactor; public API changes without verification tests; domain layer split without domain tests.
 
-**Verification steps:**
-1. Identify all public API changes
-2. Identify all behavior changes
-3. Check: verification tests specified for each?
-4. Check: test strategy matches change type (unit/integration/e2e)
-5. If gap: missing tests blocker
+**Verification:** Identify all public API/behavior changes → check for verification tests → check test strategy matches change type.
 
-**Auto-resolve via STANDARDS.md:** If STANDARDS.md defines test requirements (e.g., "all public functions tested"), apply those requirements.
+**Auto-resolve:** If STANDARDS.md defines test requirements → apply those.
 
-**Block message template:**
-```
-❌ BLOCKED: Missing Tests
-
-Issue: [Change X] could break [Y], but no tests specified
-
-Changes needing tests:
-- [Public API change]: no verification test
-- [Refactor]: no regression test
-- [New feature]: no unit/integration test
-
-Required before Task 1:
-- [ ] Test strategy updated with specific tests
-- [ ] Verification tests added for public API changes
-- [ ] STANDARDS.md test requirements applied
-
-Evidence: "Testing strategy" section lacks [specific test]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 8.
 
 ### Pattern 9: Layer/Architecture Confusion
 
 **Check:** Is it unclear which layer a function/class/module belongs to?
 
-**Red flags:**
-- Function does domain logic + DB calls + HTTP
-- "Service" layer that has no orchestration
-- Domain layer with external dependencies
-- No layer architecture documented
+**Red flags:** Function does domain logic + DB calls + HTTP; "Service" layer with no orchestration; domain layer with external dependencies.
 
-**Verification steps:**
-1. List all new/modified modules
-2. For each: which layer does it belong to?
-3. Check: dependencies match layer rules?
-4. Check: STANDARDS.md layer ownership followed?
-5. If unclear: layer confusion blocker
+**Verification:** List all new/modified modules → determine layer ownership → check dependencies match layer rules → apply STANDARDS.md layer ownership.
 
-**Auto-resolve via STANDARDS.md:** If STANDARDS.md defines layers (e.g., "domain has no external deps"), apply those rules.
+**Auto-resolve:** If STANDARDS.md defines layers → apply those rules.
 
-**Block message template:**
-```
-❌ BLOCKED: Layer Confusion
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 9.
 
-Issue: [Module X] doesn't clearly belong to any layer
-
-Problems:
-- [Module X]: does [domain logic] + [infrastructure calls]
-- [Function Y]: unclear which layer owns it
-
-Required before Task 1:
-- [ ] Layer architecture documented
-- [ ] Module assigned to specific layer
-- [ ] Dependencies match layer rules
-- [ ] STANDARDS.md layer ownership applied
-
-Evidence: Task [N] creates [module] with [mixed responsibilities]
-```
-
----
-
-### Pattern 10: Resource/Performance Concerns Ignored
+### Pattern 10: Resource/Performance Concerns
 
 **Check:** Is there no consideration for scale, memory, response time?
 
-**Red flags:**
-- In-memory storage without cleanup strategy
-- Unbounded list/collection
-- No response time target for API
-- No size limits for user uploads
-- No pagination for list endpoints
+**Red flags:** In-memory storage without cleanup; unbounded list/collection; no response time target; no size limits for uploads; no pagination.
 
-**Verification steps:**
-1. Identify all data storage (in-memory, files, DB)
-2. Identify all user-triggered operations
-3. Check: cleanup strategy specified?
-4. Check: performance budgets defined?
-5. Check: size limits for user input?
-6. If gap: resource concern blocker
+**Verification:** Identify all data storage and user-triggered operations → check for cleanup strategy, performance budgets, size limits.
 
-**Auto-resolve via STANDARDS.md:** If STANDARDS.md defines defaults (e.g., "LRU eviction, max 100 entries"), apply those defaults.
+**Auto-resolve:** If STANDARDS.md defines defaults (e.g., "LRU eviction, max 100 entries") → apply those.
 
-**Block message template:**
-```
-❌ BLOCKED: Resource Concern
-
-Issue: [Storage/operation] without [cleanup/limit/budget]
-
-Concerns:
-- [In-memory cache]: no eviction strategy → memory leak
-- [List endpoint]: no pagination → slow at scale
-- [File upload]: no size limit → disk exhaustion
-
-Required before Task 1:
-- [ ] Cleanup strategy (eviction, TTL, max size)
-- [ ] Performance budget (response time, memory)
-- [ ] Size limits for user input
-- [ ] STANDARDS.md defaults applied
-
-Evidence: Section [N] lacks [resource spec]
-```
-
----
+**Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 10.
 
 ## Workflow
 
-### Step 1: Read Ticket
+1. **Read ticket** — Identify purpose, scope, dependencies, assumptions, open questions, success criteria, test strategy.
+2. **Check STANDARDS.md** — Before blocking, check `./STANDARDS.md` and `~/.skills/STANDARDS.md`. If answered → auto-resolve.
+3. **Stage Header Gate** — Validate `Stage:` field against allowed enum. Block immediately if missing/invalid.
+4. **Audit 10 patterns** — For each: check red flags, run verification, mark ✅/⚠️/❌, document evidence.
+5. **Generate report** — Use the format below.
+6. **Escalate if CRITICAL** — Block immediately for security vulnerabilities or architecture contradictions with other approved tickets.
 
-Read the entire ticket. Identify:
-- Purpose and scope
-- Dependencies (explicit and implicit)
-- Assumptions (marked and unmarked)
-- Open questions
-- Success criteria
-- Test strategy
-
-### Step 2: Check STANDARDS.md
-
-Before blocking on any question:
-1. Check `./STANDARDS.md` (local) and `~/.skills/STANDARDS.md` (global) for answer
-2. If answered → auto-resolve, note in audit
-3. If not answered → proceed to blocking check
-
-### Step 3: Audit Against 10 Patterns
-
-Run Stage Header Gate first, then audit each pattern:
-1. Validate `Stage:` header against allowed enum (block immediately if missing/invalid)
-2. Check for red flags
-3. Run verification steps
-4. Mark: ✅ (pass), ⚠️ (warning, auto-resolved), ❌ (blocker)
-5. Document evidence (specific line/section)
-
-### Step 4: Generate Audit Report
-
-Output format:
+### Audit Report Format
 
 ```markdown
 # Ticket Audit Report
 
-**Ticket:** [ticket name/number]
-**Audit date:** [date]
+**Ticket:** [name/number]
 **Result:** ✅ CLEARED / ⚠️ CLEARED with warnings / ❌ BLOCKED
 
 ## Summary
-
-- ✅ Passed: [patterns that passed]
-- ⚠️ Warnings: [auto-resolved issues]
-- ❌ Blockers: [patterns that failed]
+- ✅ Passed: [patterns]
+- ⚠️ Warnings: [auto-resolved]
+- ❌ Blockers: [patterns]
 
 ## Detailed Findings
-
-### Pattern 1: Unimplemented Dependencies — ❌ BLOCKER
+### Pattern N: [Name] — [STATUS]
 [Findings, evidence, required actions]
 
-### Pattern 2: Architecture Contradictions — ✅ PASS
-[Findings, evidence]
-
-... (all 10 patterns)
-
 ## Auto-Resolved via STANDARDS.md
-
 - [Question X]: Applied STANDARDS.md section [Y]
-- [Assumption Z]: Matches STANDARDS.md default
 
 ## Required Actions Before Task 1
-
 1. [Specific action 1]
 2. [Specific action 2]
-3. ...
 
 ## Risk Assessment
-
 **Overall risk:** LOW / MEDIUM / HIGH / CRITICAL
-
-**Top risks:**
-1. [Risk 1]: [impact if wrong]
-2. [Risk 2]: [impact if wrong]
-
+**Top risks:** [Risk + impact]
 **Recommendation:** [proceed / block / escalate]
 ```
 
-### Step 5: Escalate if Needed
-
-If ticket has **CRITICAL** risks (security vulnerabilities, architecture contradictions with other approved tickets):
-1. Block immediately
-2. Flag for human review
-3. Do not proceed until resolved
-
----
-
-## Assumption Tiers
-
-Use these tiers to decide whether to block or proceed:
-
-### Tier 1: Reversible (LOW impact)
-- Naming conventions, file locations, UI copy
-- Library choices with easy migration path
-- **Action:** Proceed without blocking, flag for post-review
-
-### Tier 2: Architecture (MEDIUM impact)
-- API patterns, data model structure, layer ownership
-- Harder to change but not breaking
-- **Action:** Check STANDARDS.md, block if unresolved
-
-### Tier 3: Safety/Security (HIGH impact)
-- Authentication, authorization, data sensitivity
-- Public API contracts, database schema
-- **Action:** Always block for human confirmation
-
----
-
 ## Checklist
-
-Before marking audit complete:
 
 ```
 [ ] Stage Header Gate passed (`Stage:` present and valid enum)
@@ -579,224 +250,51 @@ Before marking audit complete:
 [ ] Escalation flagged if CRITICAL risks found
 ```
 
----
+## Assumption Tiers
 
-## Examples
+| Tier | Impact | Examples | Action |
+|------|--------|----------|--------|
+| 1: Reversible | LOW | Naming, file locations, UI copy, easy-migration libraries | Proceed, flag for post-review |
+| 2: Architecture | MEDIUM | API patterns, data model, layer ownership | Check STANDARDS.md, block if unresolved |
+| 3: Safety/Security | HIGH | Auth, data sensitivity, public API contracts | Always block for human confirmation |
 
-### Example 1: Ticket with Unimplemented Dependency
-
-**Ticket excerpt:**
-> "Frontend calls `POST /api/workflow/load` to import workflow JSON"
-
-**Audit finding:**
-```
-### Pattern 1: Unimplemented Dependencies — ❌ BLOCKER
-
-Issue: Ticket assumes `POST /api/workflow/load` endpoint exists
-
-Verification:
-- Checked `src/server.py`: endpoint not found
-- Checked open PRs: no PR for this endpoint
-- Ticket dependencies: lists `fixes/implement/11-workflow-load-endpoint.md` (status: in progress)
-
-Required before Task 1:
-- [ ] Backend endpoint merged and deployed, OR
-- [ ] API contract defined in STANDARDS.md, OR
-- [ ] Task 0 added: "Verify backend endpoint exists"
-
-Evidence: Section 2 "API contracts" assumes endpoint exists
-```
-
-### Example 2: Ticket Auto-Resolved via STANDARDS.md
-
-**Ticket excerpt:**
-> "Open question: Should API use REST or GraphQL?"
-
-**Audit finding:**
-```
-### Pattern 6: Missing Decision Points — ⚠️ AUTO-RESOLVED
-
-Issue: API pattern undecided
-
-Resolution: STANDARDS.md section "API Pattern" says:
-> "Default: REST with JSON responses"
-
-Action: Applied REST pattern, updated ticket assumptions
-
-Evidence: STANDARDS.md "API Pattern" section
-```
-
-### Example 3: Ticket with Security Vulnerability
-
-**Ticket excerpt:**
-> "Endpoint accepts file path from user, serves file directly"
-
-**Audit finding:**
-```
-### Pattern 5: Security Vulnerabilities — ❌ BLOCKER
-
-Issue: User-provided file path served without validation
-
-Risk: Path traversal attack (e.g., `../../../etc/passwd`)
-
-Touchpoints needing security review:
-- User input: file path parameter
-- File access: direct file serving
-- Missing: path validation, allowlist directories
-
-Required before Task 1:
-- [ ] Path validation strategy (sanitize, allowlist)
-- [ ] Directory allowlist defined
-- [ ] STANDARDS.md security checklist applied
-
-Evidence: Section 2 "API contracts" lacks validation spec
-```
-
----
-
-## Integration with Other Skills
-
-### With spec-writer
-
-With missing/invalid `Stage:` header, ticket-critic must block and route remediation to the **spec-writer** skill (`~/.cursor/rules/spec-writer/SKILL.md` or `~/.cursor/skills/spec-writer/SKILL.md`).
-
-**Flow:**
-1. User provides feature request
-2. **ticket-critic runs first** → audits request for blockers
-3. If cleared → spec-writer generates spec
-4. If blocked → human resolves blockers, re-run critic
-
-**Why:** Prevents spec-writer from generating specs for impossible/unsafe features.
-
-### With tdd
-
-**Flow:**
-1. User provides bug fix or feature
-2. **ticket-critic runs first** → audits for blockers
-3. If cleared → tdd starts planning
-4. If blocked → human resolves blockers
-
-**Why:** Prevents TDD planning on assumptions that may be wrong.
-
-### With project-onboarding
-
-**Flow:**
-1. project-onboarding checks for `~/.skills/STANDARDS.md`
-2. If exists → merge into project context
-3. ticket-critic uses merged STANDARDS.md for auto-resolution
-
-**Why:** Ensures ticket-critic has project-specific decisions available.
-
-### With cleanup (QUALITY_RUBRIC only)
-
-The **cleanup** skill reviews **existing code**, not tickets. When **hardening ticket acceptance criteria** or mapping work to quality dimensions, read **`~/.cursor/rules/cleanup/QUALITY_RUBRIC.md`** (mechanical M1–M12, subjective tiers, anti-patterns). Use it to make AC **checkable** and aligned with layering/contracts/tests—**do not** conflate with the cleanup *workflow* (codebase audit).
-
----
-
-## Ticket shape & implementation readiness
+## Ticket Shape & Implementation Readiness
 
 When creating or auditing tickets (orchestrate + spec-writer alignment), ensure:
 
 1. **YAML front matter** — `Stage:`, `Type`, `Order`, `Depends-On`, `Parent` per pipeline.
-2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to **files** (and quality dimensions if using rubric).
+2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to files.
 3. **Target files** — explicit list; **≤ 5 production files** per implementation ticket (see blast radius below).
-4. **Traceability (optional table)** — area → expected change → verification command (pytest, bandit, ruff, playwright, etc.).
-5. **Verification (TDD)** — floor: project test suite; new tests when behavior changes.
-6. **Ticket critic preflight** — this skill’s 10 patterns + Stage gate; no silent assumptions (resolve in `STANDARDS.md` or `Stage: BLOCKED` + explicit question).
+4. **Verification (TDD)** — floor: project test suite; new tests when behavior changes.
+5. **Ticket critic preflight** — this skill's 10 patterns + Stage gate.
 
-**Agent calibration:** Mechanical improvements should be **provable** with project linters/tests; holistic quality is **evidence-based** (paths, coupling)—never promise “guaranteed points” from a vendor score.
+## Blast Radius & Epic Split
 
----
-
-## Blast radius & epic split (orchestrate)
-
-- If implementation touches **> 5 production files**, **split** the work: `01a-ticket-slug.md`, `01b-…`, same directory.
+- If implementation touches **> 5 production files**, split: `01a-ticket-slug.md`, `01b-…`, same directory.
 - Set **parent** ticket to epic/tracker (`Stage: COMPLETE` when it only tracks children, per **orchestrate** skill).
 - Children start **`Stage: NEW`** with their own target file lists.
 
----
-
-## Strict TDD, verification, and self-review (BUILD-bound tickets)
+## Strict TDD & Verification (BUILD-bound tickets)
 
 When the ticket implies implementation:
 
-### Architecture & PRD formalization
+- **TDD:** State explicitly: tests written first (red → green → refactor) unless docs/planning-only.
+- **Frontend:** Mandate Playwright (or project E2E standard) for new/changed user-visible behavior.
+- **Backend (Python):** pytest for contracts, I/O boundaries, happy + unhappy paths.
+- **Other stacks:** Name the actual test runner.
+- **Verification section:** Concrete commands (e.g., `pytest tests/ -q`, `npx playwright test`) plus linters/typecheck.
+- **Self-review (pre-REVIEW):** DRY, maintainability, boundaries per QUALITY_RUBRIC.md; no unjustified god files.
+- **Principal staff lens:** Prioritize code deletion and pragmatic modularity; unify scattered AI patterns into one predictable standard per concern.
 
-- Treat the ticket as a **mini-PRD**: design intent, AC, integration paths (who calls whom).
-- Document **blockers**, **edge cases**, assumptions—resolved via `STANDARDS.md` / `AGENTS.md` or escalated with `[ASSUMPTION: …]` and **BLOCKED** if needed.
-- Remediation options must **not contradict** `AGENTS.md` / `STANDARDS.md`.
+## Integration & Reference Files
 
-### TDD & coverage
-
-- State explicitly: **tests written first** (red → green → refactor) unless the ticket is **docs-only** or **planning-only** (say so).
-- **Frontend in repo:** mandate **Playwright** (or project E2E standard) for new/changed user-visible behavior where feasible—map user actions to tests.
-- **Backend (e.g. Python):** **pytest** for contracts, I/O boundaries, happy + unhappy paths (bad input, missing data, timeouts).
-- Other stacks: name the **actual** test runner.
-
-### Verification section
-
-Concrete commands, e.g. `pytest tests/ -q`, `npx playwright test`, plus linters/typecheck the repo uses.
-
-### Self-review (pre-REVIEW)
-
-- [ ] DRY; maintainability; boundaries per **QUALITY_RUBRIC.md**
-- [ ] UI work: **make-ui** if project uses it
-- [ ] No unjustified god files; **QUALITY_RUBRIC** anti-patterns addressed for touched code
-
-### Principal staff lens (ticket authoring)
-
-Prioritize **code deletion** and **pragmatic modularity**; unify scattered AI patterns into **one predictable standard** per concern (logging, config, errors, file IO). See **QUALITY_RUBRIC** §Part 5–6 for frontend/middleware/data notes.
-
----
-
-## Super-prompt: harden tickets under `.tickets/`
-
-Use when the user wants markdown tickets upgraded in place:
-
-```
-Read AGENTS.md and STANDARDS.md first.
-
-Use ticket-critic (this skill) for Stage gate and 10 patterns.
-Read spec-writer and tdd skills for structure and test-first discipline.
-Read ~/.cursor/rules/cleanup/QUALITY_RUBRIC.md for checkable AC tied to mechanical (M1–M12) and subjective tiers—do not run the cleanup codebase-audit workflow unless also asked to review code.
-
-For each ticket in .tickets/ (or paths named):
-1. Stage header valid; dependencies and STANDARDS alignment.
-2. If BUILD implied: explicit TDD, Verification commands, Self-review checklist.
-3. >5 production files → split 01a/01b…; parent epic per orchestrate.
-4. No vague AC; assumptions in STANDARDS or [ASSUMPTION] + BLOCKED.
-5. You MAY edit ticket markdown to satisfy the above.
-
-Frontend: Playwright (or project E2E) if UI exists; else state N/A.
-Backend: pytest (or project standard) for contracts and unhappy paths.
-```
-
----
-
-## Kickoff prompt: generate new cleanup-oriented tickets (optional)
-
-When the user wants **new** tickets from an audit report (adapt repo root):
-
-```
-Create actionable tasks in .tickets/ using orchestrate ticket shape, spec-writer and ticket-critic discipline.
-
-Each ticket: explicit target file list (≤5 files), AGENTS.md/STANDARDS.md alignment, checkable AC, Verification commands, TDD where implementation is implied.
-
-Prioritize work that maps to QUALITY_RUBRIC.md (layering, contracts, tests, mechanical M-patterns).
-
-Mechanical improvements should be verifiable with project pytest/linters/security tools; avoid promising numeric score deltas.
-```
-
----
+- **Integration with other skills:** See [reference/integration.md](reference/integration.md)
+- **Super-prompts (harden tickets, generate new tickets):** See [reference/super-prompts.md](reference/super-prompts.md)
+- **Block message templates:** See [templates/block-messages.md](templates/block-messages.md)
+- **Audit finding examples:** See [examples/audit-findings.md](examples/audit-findings.md)
 
 ## Maintenance
 
-**Update this skill when:**
-- New blocking pattern identified
-- STANDARDS.md structure changes
-- Audit process refined based on real usage
+**Update this skill when:** New blocking pattern identified; STANDARDS.md structure changes; audit process refined.
 
-**Metrics to track:**
-- Blocker detection rate (% of tickets blocked)
-- False positive rate (% of blocks that were unnecessary)
-- Auto-resolution rate (% of questions resolved via STANDARDS.md)
+**Metrics to track:** Blocker detection rate; false positive rate; auto-resolution rate.

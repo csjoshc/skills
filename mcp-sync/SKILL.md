@@ -1,67 +1,75 @@
 ---
 name: mcp-sync
-description: >-
-  Synchronizes and audits Model Context Protocol (MCP) configurations across multiple
-  IDEs, CLI agents, and desktop apps. Uses ~/.secrets/mcp.json as the master store.
-  Supports global syncing, project-specific MCP enabling, and toggling specific
-  MCP servers across all platforms.
+description: Synchronizes and audits Model Context Protocol (MCP) configs across all ides and agents.
 ---
 
 # MCP Sync & Toggle
 
-**Version:** 1.0.0
+## TL;DR (Quick Start)
 
-## Context
-MCP configurations are fragmented across different tools. This skill unifies them using `~/.secrets/mcp.json` as the authoritative source.
+Unifies Model Context Protocol (MCP) server configurations across IDEs (Cursor, VS Code) and agents (Claude, Gemini). Uses `~/.secrets/mcp.json` as the master store.
 
-## Objectives
-1. **Global Sync:** Propagate servers from `~/.secrets/mcp.json` to all platform-specific config files.
-2. **Project Setup:** Create project-local MCP shims if needed (e.g., `.gemini/mcp_config.json`).
-3. **Toggle (Enable/Disable):** Globally or locally enable/disable a specific MCP server by name.
-4. **Secret Protection:** Ensure no actual secrets are in the skill; always reference `~/.secrets/mcp.json`.
+**When to use:** Adding a new MCP server, global sync across all tools, or toggling (enable/disable) specific servers.
 
-## Core Commands & Workflows
+**Invocation:**
+```bash
+mcp-sync sync-all
+# Or via script
+python3 ~/.skills/mcp-sync/sync.py
+```
 
-### 1. Sync All Platforms
-- Read `~/.secrets/mcp.json`.
-- Audit [GLOBAL_MCP.md](references/GLOBAL_MCP.md) for target paths.
-- For each path, merge the master JSON into the target.
-- **Handling Wrappers:** If the target is Claude Desktop, ensure servers are under the `"mcpServers"` key.
+## When to Use
+- Adding or modifying a global MCP server configuration.
+- Syncing changes from the master store to all tools.
+- Enabling or disabling a specific server by name.
+- **NOT for:** Per-project local tool configuration (handled by the project agent).
 
-### 2. Project Onboarding (MCP)
-- Check for `.gemini/mcp_config.json` or `.mcp.json`.
-- Reference [PROJECT_MCP.json](references/PROJECT_MCP.json) for project-specific overrides.
-- Add these local configs to `.gitignore`.
+## Decision Tree
 
-### 3. MCP Toggle (`mcp-toggle`)
-When the user asks to "enable/disable [server]":
-- **Global Toggle:** Modify `~/.secrets/mcp.json` (comment out or set an `enabled: false` flag if supported by the tool, or remove/add the entry).
-- **Multi-Tool Propagation:** Immediately run the Sync workflow to update all IDEs and CLIs so the change is reflected everywhere.
-- **Project-Specific Toggle:** Enable/Disable only for the current project by modifying the local `.mcp.json` or `.gemini/mcp_config.json`.
+1. **Global or Local update?**
+   - GLOBAL → Update `~/.secrets/mcp.json` and sync all platforms.
+   - LOCAL → Update project-specific `.mcp_config.json`.
 
-## Step-by-Step Implementation
+2. **Is the target a specific tool?**
+   - Claude Desktop → Merge into `mcpServers` key.
+   - Gemini/Antigravity → Merge into `context_servers` key.
 
-### 1. Initialize Master Store
-- If `~/.secrets/mcp.json` does not exist:
-  - Create the `~/.secrets` directory.
-  - Seed it from `~/.config/mcp/mcp_servers.json` or create a new JSON with `{ "mcpServers": {} }`.
+3. **Are secrets involved?**
+   - YES → **MANDATORY** Store in `~/.secrets/mcp.json`; never in the skill repo.
+   - NO → Proceed with standard config.
 
-### 2. Update Master Store
-- Add or modify the desired MCP server configuration in `~/.secrets/mcp.json`.
-- Ensure the configuration follows the standard `{ "mcpServers": { "serverName": { "command": "...", "args": [...] } } }` format.
+## Workflow
 
-### 3. Propagate to Targets (Sync)
-- For each target defined in `GLOBAL_MCP.md`:
-  - Read the existing target configuration.
-  - Merge the `mcpServers` object from the master store into the target's relevant key (e.g., `mcpServers`, `context_servers`, or `mcp`).
-  - Write the updated configuration back to the target path.
-  - Create parent directories if they are missing.
+### 1. Initialize/Audit
+Read `~/.secrets/mcp.json`. Verify the existence of target config files for all platforms.
 
-### 4. Verification
-- Use `mcp-cli` to verify the server is recognized by the CLI.
-- Check IDE settings to confirm the server appears.
+### 2. Update Master
+Add the new server config to the master store using the standard `{ "mcpServers": { ... } }` format.
 
-## Verification
-- [ ] `~/.secrets/mcp.json` exists and is valid JSON.
-- [ ] Target config files are updated with the correct format (standard vs. wrapped).
-- [ ] Toggled servers are successfully removed or added across all audited paths.
+### 3. Propagate (Sync)
+Merge the master configuration into each tool's local configuration file, preserving tool-specific keys.
+
+### 4. Toggle
+When a server is marked as `enabled: false` in the master store, remove it from all synced targets.
+
+## Assumptions & Escalation
+
+- **Tier 1 (reversible):** Missing tool config — proceed with re-creation of target file.
+- **Tier 2 (conflict):** Different commands for the same server name — block and confirm priority.
+- **Tier 3 (security):** Secrets found in public skill documentation — **STOP**, scrub history, block and alert.
+
+## Examples (Few-Shot)
+
+**Example 1: Adding a new server**
+Input: "Sync the new postgres mcp server"
+Output: `~/.secrets/mcp.json` updated with `postgres` server; and all platform configs synced.
+
+**Example 2: Disabling a server**
+Input: "Disable the figma mcp server globally"
+Output: `figma` server removed from `mcpServers` and all tools synced.
+
+## Related Skills
+| Skill | When to use instead |
+|-------|---------------------|
+| skill-sync | For syncing behavior/documentation (`.skills/`) |
+| mcp-cli | For local command-line exploration of MCP tools |

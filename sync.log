@@ -1,0 +1,157 @@
+[INFO] ============================================================
+[INFO] Universal Skills Sync — Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[ERROR] OpenCode: Permission config parse error: 'PlatformConfig' object has no attribute 'platform_key'
+[INFO]   Merged permissions into C:\Users\Me\.config\opencode\opencode.json
+[INFO] 
+--- Codex ---
+[INFO] Codex: Skills symlink OK
+[INFO] 
+--- Gemini/Antigravity ---
+[INFO] Gemini/Antigravity: Skills symlink OK
+[INFO] 
+--- Cursor ---
+[INFO] Cursor: Skills symlink OK
+[INFO] 
+--- Claude ---
+[INFO] Claude: Skills symlink OK
+[INFO] 
+--- Qwen ---
+[INFO] Qwen: Skills symlink OK
+[ERROR] Qwen: Permission config parse error: 'PlatformConfig' object has no attribute 'platform_key'
+[INFO]   Merged permissions into C:\Users\Me\.qwen\settings.json
+[INFO] 
+--- Copilot ---
+[INFO] Copilot: Skills symlink OK
+[INFO] ============================================================
+[INFO] Universal Skills Sync — Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[INFO] Codex: Skills symlink OK
+[INFO] 
+--- Gemini/Antigravity ---
+[INFO] Gemini/Antigravity: Skills symlink OK
+[INFO] 
+--- Cursor ---
+[INFO] Cursor: Skills symlink OK
+[INFO] 
+--- Claude ---
+[INFO] Claude: Skills symlink OK
+[INFO] 
+--- Qwen ---
+[INFO] Qwen: Skills symlink OK
+[INFO] 
+--- Copilot ---
+[INFO] Copilot: Skills symlink OK
+[INFO] ============================================================
+[INFO] Universal Skills Sync — Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[WARN] Codex: Skills path is a real directory, not a symlink
+[INFO] 
+--- Gemini/Antigravity ---
+[INFO] Gemini/Antigravity: Skills symlink OK
+[INFO] 
+--- Cursor ---
+[INFO] Cursor: Skills symlink OK
+[INFO] 
+--- Claude ---
+[INFO] Claude: Skills symlink OK
+[INFO] 
+--- Qwen ---
+[INFO] Qwen: Skills symlink OK
+[INFO] 
+--- Copilot ---
+[INFO] Copilot: Skills symlink OK
+[INFO] ============================================================
+[INFO] Universal Skills Sync — Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[WARN] Codex: Skills path is a real directory, not a symlink
+[INFO] Repairing Codex skills symlink...
+[INFO] ============================================================
+[INFO] Universal Skills Sync â€” Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[WARN] Codex: Skills symlink missing
+[INFO] Repairing Codex skills symlink...
+[INFO]   Created: C:\Users\Me\.codex\skills â†’ C:\Users\Me\.skills
+[INFO] 
+--- Gemini/Antigravity ---
+[INFO] Gemini/Antigravity: Skills symlink OK
+[INFO] 
+--- Cursor ---
+[INFO] Cursor: Skills symlink OK
+[INFO] 
+--- Claude ---
+[INFO] Claude: Skills symlink OK
+[INFO] 
+--- Qwen ---
+[INFO] Qwen: Skills symlink OK
+[INFO] 
+--- Copilot ---
+[INFO] Copilot: Skills symlink OK
+[INFO] Adding project symlink for: C:\Users\Me\Projects\orchestra
+[INFO] Created project symlink: C:\Users\Me\Projects\orchestra\.skills â†’ C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] Universal Skills Sync â€” Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[WARN] Codex: Skills symlink missing
+[INFO] Repairing Codex skills symlink...
+[INFO]   Created: C:\Users\Me\.codex\skills â†’ C:\Users\Me\.skills
+[INFO] 
+--- Gemini/Antigravity ---
+[INFO] Gemini/Antigravity: Skills symlink OK
+[INFO] 
+--- Cursor ---
+[INFO] Cursor: Skills symlink OK
+[INFO] 
+--- Claude ---
+[INFO] Claude: Skills symlink OK
+[INFO] 
+--- Qwen ---
+[INFO] Qwen: Skills symlink OK
+[INFO] 
+--- Copilot ---
+[INFO] Copilot: Skills symlink OK
+[INFO] ============================================================
+[INFO] Universal Skills Sync â€” Full Audit
+[INFO] OS: windows | Skills: C:\Users\Me\.skills
+[INFO] ============================================================
+[INFO] 
+--- OpenCode ---
+[INFO] OpenCode: Skills symlink OK
+[INFO] 
+--- Codex ---
+[WARN] Codex: Skills symlink missing
+[INFO] Repairing Codex skills symlink...

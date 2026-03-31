@@ -1,0 +1,18 @@
+# Allow read access to universal skills directory
+[[rule]]
+toolName = "read_file"
+argsPattern = "\\.skills"
+decision = "allow"
+priority = 500
+
+[[rule]]
+toolName = "glob"
+argsPattern = "\\.skills"
+decision = "allow"
+priority = 500
+
+[[rule]]
+toolName = "read_many_files"
+argsPattern = "\\.skills"
+decision = "allow"
+priority = 500

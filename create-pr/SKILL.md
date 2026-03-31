@@ -8,10 +8,41 @@ description: >-
   for review.
 ---
 
-# Create PR
+## TL;DR (Quick Start)
 
-Creates a GitHub PR from local changes with proper git hygiene, descriptive branch naming,
-and evidence-based descriptions (UI recordings for frontend, test logs for backend).
+Creates a GitHub PR from local changes with proper git hygiene, descriptive branch naming, and evidence-based descriptions (UI recordings for frontend, test logs for backend).
+
+**When to use:** "create PR", "open PR", "push and PR", "submit changes".
+
+**Invocation:**
+```bash
+git checkout -b feat/new-feature
+git commit -m "feat: add feature"
+git push -u origin HEAD
+gh pr create --title "feat: add feature" --body "$(cat <<'EOF'
+## Summary
+- Detailed explanation...
+EOF
+)"
+```
+
+## Decision Tree
+
+1. **Are you on `main` with uncommitted changes?**
+   - YES → Create a feature branch first (`git checkout -b feat/...`).
+   - NO → Continue.
+
+2. **Is this a UI change?**
+   - YES → **MANDATORY** Capture screenshots/recordings before pushing.
+   - NO → Continue.
+
+3. **Does the project have a test suite?**
+   - YES → **MANDATORY** Run tests and include logs in PR body.
+   - NO → Note manual verification steps.
+
+4. **Is the change trivial (<5 lines, non-functional)?**
+   - YES → Skip evidence collection; denote as "Trivial change".
+   - NO → Full Phase 3 evidence collection.
 
 ## Workflow
 
@@ -22,59 +53,31 @@ Phase 3: Evidence Collection (conditional)
 Phase 4: Create PR with rich description
 ```
 
----
-
 ## Phase 1: Git Preparation
 
-```
-Checklist:
-- [ ] 1.1 Run `git status` and `git log --oneline -5` to assess state
-- [ ] 1.2 Determine current branch and divergence from remote
-- [ ] 1.3 If on main with uncommitted or unpushed changes → create feature branch
-- [ ] 1.4 If already on feature branch → continue on it
-- [ ] 1.5 Verify no secrets in staged files (.env, credentials, tokens)
-```
+1. Run `git status` and `git log --oneline -5` to assess state
+2. Determine current branch and divergence from remote
+3. If on main with uncommitted/unpushed changes → create feature branch
+4. If already on feature branch → continue on it
+5. Verify no secrets in staged files (.env, credentials, tokens)
 
 ### Branch from dirty main
 
-When on `main` (or `master`) with local changes not on remote:
-
 ```bash
-# Stage changes
 git add -A
-
-# Create descriptive branch name from the changes
-# Pattern: <type>/<short-description>
-# Types: feat, fix, refactor, style, docs, test, chore
 git checkout -b <type>/<short-description>
 ```
 
-Branch name rules:
-- Lowercase, hyphens only (no spaces, underscores, or uppercase)
-- Max 50 chars
-- Derive from the actual diff content, not a generic name
-- Examples: `feat/c3-theme-migration`, `fix/date-picker-dark-mode`, `refactor/api-error-handling`
+**Branch name rules:** lowercase, hyphens only, max 50 chars, derive from diff content. Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`.
 
 ### Already on feature branch
 
-If already on a feature branch, just verify it's up to date with remote main:
-
 ```bash
 git fetch origin
-git log --oneline origin/main..HEAD  # show what will be in the PR
+git log --oneline origin/main..HEAD
 ```
-
----
 
 ## Phase 2: Commit & Push
-
-```
-Checklist:
-- [ ] 2.1 Stage all relevant files (exclude secrets, build artifacts)
-- [ ] 2.2 Write commit message from diff analysis (why, not what)
-- [ ] 2.3 Commit using HEREDOC format
-- [ ] 2.4 Push branch to remote with -u flag
-```
 
 ```bash
 git add -A
@@ -87,152 +90,50 @@ EOF
 git push -u origin HEAD
 ```
 
-Commit message conventions:
-- First line: `type(scope): summary` under 72 chars
-- Body: explain the motivation, not a line-by-line changelog
-- Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`
-
----
+**Commit conventions:** First line `type(scope): summary` under 72 chars. Body explains motivation, not line-by-line changelog.
 
 ## Phase 3: Evidence Collection
 
-> **Evidence files (screenshots, recordings, test logs) must NOT persist in the final
-> branch HEAD.** Use the **ephemeral commit** pattern below to embed images in the PR
-> description without polluting the codebase.
+> **Evidence files must NOT persist in final branch HEAD.** Use the ephemeral commit pattern.
 
-Determine the change type by analyzing the diff:
-
-```
-UI changes? → 3A (recording)
-Backend changes? → 3B (test logs)
-Both? → Do both 3A and 3B
-```
+Determine change type by analyzing the diff:
+- UI changes? → Phase 3A
+- Backend changes? → Phase 3B
+- Both? → Do both
 
 ### 3A: UI Evidence (frontend changes)
 
-**Goal:** Attach visual documentation of the UI changes to the PR. This is MANDATORY for UI-heavy PRs — an agent MUST NOT skip this step.
-
-> ⚠️ **CRITICAL:** If the PR touches any UI (components, styles, pages, themes), you MUST capture visual evidence. Skipping this makes review harder and delays merging.
-
-**When to capture:**
-- Any visual change (new component, style change, theme change)
-- Form/input changes (empty, filled, error states)
-- Modal/dialog changes
-- Navigation/flow changes
-- Dark mode/light mode changes
-- Responsive layout changes
+**MANDATORY** for UI-heavy PRs. Capture when: visual changes, form/input changes, modal/dialog changes, navigation/flow changes, theme changes, responsive changes.
 
 **In Cursor (IDE browser available):**
-
-```
-Checklist:
-- [ ] Navigate to the running app using browser tools (browser_navigate)
-- [ ] Lock browser (browser_lock)
-- [ ] Walk through each affected user flow, taking screenshots at key states
-- [ ] For theme changes: capture both light and dark mode
-- [ ] For form changes: show empty, filled, and error states
-- [ ] For new components: show all visual states
-- [ ] Unlock browser (browser_unlock)
-- [ ] Collect screenshots into PR description as inline images
-```
-
-**Screen recording (preferred for complex flows):**
-```bash
-# Use Chrome DevTools MCP or cursor's built-in recording
-# Capture: full user flow from start to finish
-# Include: all interactions, state changes, edge cases
-```
+1. Navigate to running app using browser tools
+2. Lock browser, walk through each affected user flow, take screenshots at key states
+3. For theme changes: capture both light and dark mode
+4. For form changes: show empty, filled, and error states
+5. Unlock browser, collect screenshots into PR description
 
 **Screenshot requirements:**
-1. Screenshot of change in default state (REQUIRED)
+1. Change in default state (REQUIRED)
 2. Dark mode screenshot if theme exists (REQUIRED if applicable)
 3. Interactive states: empty → filled → error (REQUIRED for forms)
 4. Before/after comparison if refactoring
 
-Upload screenshots to the PR using the **ephemeral commit** pattern:
+**Screen recording (preferred for complex flows):** Use Chrome DevTools MCP or cursor's built-in recording.
 
-```bash
-# The ephemeral commit pattern:
-# 1. Commit evidence files to .evidence/ and push
-# 2. Capture the commit SHA (pinned URL survives forever)
-# 3. Remove .evidence/ in the next commit and push
-# 4. Use raw.githubusercontent.com/{owner}/{repo}/{SHA}/.evidence/{file} in PR body
-#
-# Why it works: the "add" commit is an ancestor of HEAD, so GitHub never
-# garbage-collects it. The SHA-pinned URL renders images inline permanently,
-# even after the file is deleted from the branch tip.
-
-# Step 1: Save screenshots to .evidence/ in the repo root
-mkdir -p .evidence
-cp /tmp/screenshot-dark.png .evidence/
-cp /tmp/screenshot-light.png .evidence/
-
-# Step 2: Force-add (overrides .gitignore) and commit
-git add -f .evidence/
-git commit -m "evidence: PR screenshots [skip ci]"
-
-# Step 3: Capture the SHA and push
-EVIDENCE_SHA=$(git rev-parse HEAD)
-git push
-
-# Step 4: Remove evidence and push again
-git rm -r .evidence/
-git commit -m "chore: remove evidence files"
-git push
-
-# Step 5: Build image URLs from the pinned SHA
-# Pattern: https://raw.githubusercontent.com/{owner}/{repo}/{EVIDENCE_SHA}/.evidence/{filename}
-# Example:
-#   https://raw.githubusercontent.com/acme/app/a1b2c3d/.evidence/dashboard-dark.png
-
-# Step 6: Embed in PR body
-gh pr edit <PR_NUMBER> --body "$(cat <<'EOF'
-## Evidence
-![Dark mode](https://raw.githubusercontent.com/{owner}/{repo}/${EVIDENCE_SHA}/.evidence/dashboard-dark.png)
-![Light mode](https://raw.githubusercontent.com/{owner}/{repo}/${EVIDENCE_SHA}/.evidence/dashboard-light.png)
-EOF
-)"
-```
-
-> **Tip:** Add `.evidence/` to `.gitignore` so evidence files are ignored by default.
-> The flow uses `git add -f` to override the ignore for the ephemeral commit.
-
-**In terminal agent (no IDE browser):**
-
-```bash
-# Start a recording session with Chrome DevTools Protocol
-# Or use mcp-cli to interact with browser tools
-# CRITICAL: Do NOT skip this step - start dev server if needed
-# Save screenshots to /tmp/, then use the ephemeral commit pattern above.
-```
-
-**Minimum UI evidence for ANY frontend PR:**
-1. Screenshot or description of the change in default state (REQUIRED)
-2. If dark mode exists: both themes shown (REQUIRED if applicable)
-3. If interactive: key interaction states documented (REQUIRED if applicable)
+**Minimum evidence for ANY frontend PR:**
+1. Screenshot/description of change in default state (REQUIRED)
+2. Both themes shown if dark mode exists (REQUIRED if applicable)
+3. Key interaction states documented if interactive (REQUIRED if applicable)
 4. Screen recording for complex flows (RECOMMENDED)
 
 ### 3B: Backend Evidence (backend changes)
 
-**Goal:** Attach test results and coverage to the PR. This is MANDATORY for code changes — an agent MUST capture test evidence.
+**MANDATORY** for code changes. Capture when: backend code changes, configuration changes, database/schema changes, external service integration, refactoring.
 
-> ⚠️ **CRITICAL:** If the PR touches backend code (Python, API routes, services), you MUST run tests and capture evidence. Skipping test results makes review harder and risks regressions.
-
-**When to capture:**
-- Any backend code change (new endpoint, service, model)
-- Configuration changes
-- Database/schema changes
-- Integration with external services
-- Refactoring of backend logic
-
-```
-Checklist:
-- [ ] Run the project's test suite (REQUIRED)
-- [ ] Capture test output (pass/fail summary) (REQUIRED)
-- [ ] Run coverage if available (REQUIRED if applicable)
-- [ ] Format results for PR description (REQUIRED)
-- [ ] Save logs to file for attachment
-```
+1. Run the project's test suite (REQUIRED)
+2. Capture test output (pass/fail summary) (REQUIRED)
+3. Run coverage if available (REQUIRED if applicable)
+4. Format results for PR description
 
 ```bash
 # Python projects
@@ -242,117 +143,44 @@ python -m pytest --cov --cov-report=term-missing 2>&1 | tail -30 > /tmp/coverage
 # Node projects
 npm test 2>&1 | tail -20 > /tmp/test-results.txt
 npx vitest --coverage 2>&1 | tail -30 > /tmp/coverage.txt
-
-# C3 platform (js-rhino)
-# Use the project's test runner as documented in AGENTS.md
-
-# IMPORTANT: Save logs to /tmp/ only. Paste contents into the PR body
-# as fenced code blocks. For large logs, use the ephemeral commit pattern
-# from 3A (save to .evidence/, commit, capture SHA, remove, embed URL).
 ```
 
-**Test output requirements:**
-1. Pass/fail summary with counts (REQUIRED)
-2. Failed test names if any failures (REQUIRED if applicable)
-3. Coverage report (REQUIRED if available)
-4. Error messages from failures (REQUIRED if applicable)
+**Test output requirements:** Pass/fail summary with counts; failed test names if any; coverage report if available; error messages from failures.
 
----
+Save logs to `/tmp/` only. Paste into PR body as fenced code blocks. For large logs, use the ephemeral commit pattern from Phase 3A.
 
 ## Phase 4: Create PR
 
-```
-Checklist:
-- [ ] 4.1 Analyze ALL commits on the branch (not just latest)
-- [ ] 4.2 Draft PR title and body
-- [ ] 4.3 Create PR using gh cli
-- [ ] 4.4 If evidence was collected, edit PR body to include it
-- [ ] 4.5 Return the PR URL
-```
+1. Analyze ALL commits on the branch (not just latest)
+2. Draft PR title and body
+3. Create PR using gh cli
+4. If evidence was collected, edit PR body to include it
+5. Return the PR URL
 
-### PR creation
-
-```bash
-gh pr create --title "<type>(<scope>): <summary>" --body "$(cat <<'EOF'
-## Summary
-
-<1-3 bullet points explaining WHAT changed and WHY>
-
-## Changes
-
-<grouped list of file changes by category>
-
-## Evidence
-
-### UI Validation
-<screenshots, recordings, or manual validation steps>
-
-### Test Results
-```
-<paste from /tmp/test-results.txt>
-```
-
-### Coverage
-```
-<paste from /tmp/coverage.txt>
-```
-
-## Test Plan
-
-- [ ] <specific thing to verify>
-- [ ] <specific thing to verify>
-
-EOF
-)"
-```
-
-### Editing PR body after creation (for attaching evidence)
-
-If you need to create the PR first then add evidence:
-
-```bash
-# Create PR first
-gh pr create --title "..." --body "## Summary\n\n..."
-
-# Collect evidence...
-
-# Then update the body
-gh pr edit <PR_NUMBER> --body "$(cat <<'EOF'
-<full updated body with evidence>
-EOF
-)"
-```
-
----
+See [templates/pr-body.md](templates/pr-body.md) for PR body template and ephemeral commit pattern.
 
 ## Conditional Paths
 
-> ⚠️ **IMPORTANT:** These paths are ONLY for trivial changes. If your change touches UI or backend code, you MUST complete Phase 3.
+**Trivial change (< 5 lines, single file, no functional change):** Skip Phase 3 only if truly trivial (typo fix, comment, whitespace). Note in PR: "Trivial change — no visual/test evidence needed".
 
-**Trivial change (< 5 lines, single file, no functional change):**
-- [ ] Skip Phase 3 only if truly trivial (typo fix, comment, whitespace)
-- [ ] Note in PR: "Trivial change — no visual/test evidence needed"
+**No test suite available:** Note in PR: "No automated tests — manual verification required." Still describe what was tested manually.
 
-**No test suite available:**
-- [ ] Note in PR: "No automated tests — manual verification required."
-- [ ] Still describe what was tested manually
+**No running dev server for UI evidence:** Start dev server. If unable: note in PR what browser steps reviewer should follow. NEVER skip UI evidence just because "it's inconvenient".
 
-**No running dev server for UI evidence:**
-- [ ] Start dev server: `npm run dev` or `python -m flask run`
-- [ ] If unable to start: note in PR what browser steps reviewer should follow
-- [ ] NEVER skip UI evidence just because "it's inconvenient"
+**Draft PR requested:** Add `--draft` flag to `gh pr create`.
 
-**Draft PR requested:**
-Add `--draft` flag to `gh pr create`.
+## Assumptions & Escalation
 
----
+- **Tier 1 (reversible):** commit message typos — proceed, amend before push, flag for review
+- **Tier 2 (architecture):** branch naming conflicts — check existing branches, block if overlap
+- **Tier 3 (security):** accidentally staged secrets — **STOP**, unstage, run `git filter-repo` if necessary, block and alert.
 
-## Safety Rules
+## Examples (Few-Shot)
 
-- NEVER force-push to main/master
-- NEVER commit .env, credentials, or secret files
-- NEVER skip the secrets check (Phase 1.5)
-- NEVER use `git push --force` unless explicitly asked
-- NEVER amend commits that have been pushed to remote
-- NEVER leave evidence files (.evidence/) in the final branch HEAD — always remove them after capturing the commit SHA
-- Always verify `git status` shows clean after commit before pushing
+**Example 1: UI Change**
+Input: "Create a PR for the new login page"
+Output: Commit + Push + Browser screenshot capture + `gh pr create` with evidence.
+
+**Example 2: Backend Fix**
+Input: "Push my API fix and open a PR"
+Output: Commit + Push + Pytest log capture + `gh pr create` with logs.

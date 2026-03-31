@@ -1,0 +1,33 @@
+# Cursor Rules for Skills Repository
+
+## Project Context
+
+This is a skills repository for AI agents. Each skill is a specialized tool that agents can invoke to perform complex tasks.
+
+## Key Files
+
+- `STANDARDS.md` — **ALWAYS read first** for architectural decisions and resolved questions
+- `AGENTS.md` — Guidelines for working in this repository
+- `skill-discovery-index.md` — List of all available skills
+- `.tickets/` — Ticket specifications and requirements
+
+## Working Here
+
+1. **Read before editing** — Always read the full file before making changes to capture exact indentation
+2. **Match existing patterns** — Follow naming conventions, structure, and style of existing skills
+3. **Document changes** — Update skill READMEs when modifying behavior
+4. **Test skills** — Run skills manually to verify they work as expected
+
+## Common Patterns
+
+- **Skill structure:** Entry point script (`.sh`/`.ps1`) + implementation (`.py`) + `README.md`
+- **Naming:** kebab-case for directories and files (`my-skill/`, not `my_skill/`)
+- **Documentation:** TL;DR, decision tree, usage examples, when to use/avoid
+
+## Before Committing
+
+- [ ] Checked STANDARDS.md for relevant decisions
+- [ ] Read entire file before editing
+- [ ] Matched existing code style
+- [ ] Updated documentation if needed
+- [ ] Tested skill manually

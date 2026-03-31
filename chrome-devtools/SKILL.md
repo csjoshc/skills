@@ -8,6 +8,34 @@ metadata:
   use-case: browser-testing
 ---
 
+## TL;DR (Quick Start)
+
+Use Chrome DevTools for browser-based testing, debugging, and validation of frontend changes. Requires chrome-devtools-mcp installed in opencode.json.
+
+**When to use:** Browser testing, UI validation, performance measurement, accessibility checks, network analysis.
+
+**Invocation:** Configure MCP server, then use tool calls like `navigate_page`, `take_screenshot`, `click`.
+
+## Decision Tree
+
+Use this skill when you need to:
+
+1. **Is this a browser-based task?**
+   - YES → Continue
+   - NO → Use other testing skills
+
+2. **What type of browser task?**
+   - Visual validation → `take_screenshot`, `resize_page`
+   - Accessibility → `take_snapshot`
+   - Performance → `performance_start_trace`, `performance_analyze_insight`
+   - Network → `list_network_requests`, `get_network_request`
+   - Interaction → `click`, `fill`, `hover`
+   - Debugging → `evaluate_script`, `get_console_message`
+
+3. **Isolate mode required?**
+   - YES → Use `--isolated=true` flag
+   - NO → Standard connection
+
 ## Overview
 
 This skill enables browser-based testing and validation of frontend changes using Chrome DevTools Protocol through the chrome-devtools-mcp server.
@@ -111,4 +139,8 @@ Navigate to the dashboard and export all network requests as HAR
 - Test on multiple viewport sizes (mobile, tablet, desktop)
 - Always check console for JavaScript errors
 - Validate accessibility on every major UI change
-- Measure performance before and after optimizations
+## Assumptions & Escalation
+
+- **Tier 1 (reversible):** Page rendering differences — proceed, capture screenshot, flag for review
+- **Tier 2 (performance):** Performance regressions — check baseline, block if budget exceeded
+- **Tier 3 (security):** Navigating to suspicious third-party domains — always block

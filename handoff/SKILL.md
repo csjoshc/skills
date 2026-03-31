@@ -8,9 +8,31 @@ description: >-
   new chat.
 ---
 
-# Session handoff
+## TL;DR (Quick Start)
 
-When the user wants to **hand off** work to another agent (new chat, teammate, or async continuation), produce **one block of text they can copy and paste as the sole initial message** to that agent. Assume the recipient has **zero** conversation history and **no** implicit project knowledge beyond what you put in the prompt.
+Produces a self-contained, copy-pasteable markdown prompt to transition work to a new agent or session. Summarizes goals, state, constraints, and next actions with absolute file paths.
+
+**When to use:** "handoff", "session handoff", "context transfer", "continue in new chat".
+
+**Invocation:**
+```bash
+/handoff
+```
+
+## Decision Tree
+
+1. **How complex is the remaining work?**
+   - Trivial (<10 lines, single file) → Generate prompt only.
+   - Non-trivial (multiple files, migrations, multi-step) → **MANDATORY** Create `.handoff/plan-<slug>.md` and link it in the prompt.
+
+2. **Are there non-obvious ordering constraints?**
+   - YES → Detail them in the plan file; point to the specific task order in the prompt.
+   - NO → List tasks directly in the prompt.
+
+3. **Does the task involve specialized domains?**
+   - YES → Reference the relevant **Skill Cluster** (e.g., Frontend UI, Backend Tests).
+
+## Workflow
 
 ## Output contract
 
@@ -174,3 +196,19 @@ Add an optional line under "Constraints" or "Context":
 - [ ] Complex work has `.handoff/plan-<slug>.md` and that path is in the prompt.
 - [ ] Verification / acceptance criteria included.
 - [ ] Skill cluster guidance included if applicable (see "Skill Clusters" section)
+
+## Assumptions & Escalation
+
+- **Tier 1 (reversible):** Missing secondary file path — proceed, note the gap in "Open questions".
+- **Tier 2 (conflict):** Handoff request contradicts current implementation — **STOP**, clarify with user before generating the prompt.
+- **Tier 3 (security):** Handoff prompt includes secrets (API keys, tokens) — **STOP**, redact immediately, block and alert.
+
+## Examples (Few-Shot)
+
+**Example 1: Simple UI Polish**
+Input: "Handoff the button styling to a new agent"
+Output: Markdown prompt block with current CSS path and specific "Your task" to adjust hover states.
+
+**Example 2: Complex Feature Implementation**
+Input: "Handoff the user auth feature"
+Output: `.handoff/plan-auth.md` created; Prompt generated referencing the plan, database schema path, and auth standards.

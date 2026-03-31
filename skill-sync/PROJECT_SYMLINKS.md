@@ -2,28 +2,23 @@
 
 This table defines the recommended project-level symlink targets for each supported IDE/CLI agent. Project-level symlinks are optional but recommended for agent discovery and onboarding.
 
-| Agent / IDE              | Project Path         | Symlink Target | Purpose                                                                     | Required?      |
-| :----------------------- | :------------------- | :------------- | :-------------------------------------------------------------------------- | :------------- |
-| **Gemini / Antigravity** | `./.gemini/skills`   | `~/.skills`    | Native project discovery; Gemini looks here automatically                   | ✅ Yes         |
-| **Cursor**               | `./.cursor/skills`   | `~/.skills`    | Custom organization; not natively discovered but useful for project context | ⚠️ Optional    |
-| **Cursor (Rules)**       | `./.cursor/rules`    | `~/.skills`    | Legacy `.mdc` organization; aids in project-scoped rule discovery           | ⚠️ Optional    |
-| **Claude Code**          | `./.claude/skills`   | `~/.skills`    | Shim for project discovery; Claude reads `CLAUDE.md` from root by default   | ⚠️ Optional    |
-| **OpenCode**             | `./.opencode/skills` | `~/.skills`    | Custom shim; OpenCode reads `AGENTS.md` from root by default                | ⚠️ Optional    |
-| **Qwen Code**            | `./.qwen/skills`     | `~/.skills`    | Not natively discovered; useful as a documentation hook                     | ⚠️ Optional    |
-| **VS Code**              | `./.vscode/skills`   | `~/.skills`    | Recommended; Copilot searches here for workspace-specific customizations    | ✅ Recommended |
-| **ChatGPT / Codex**      | N/A                  | N/A            | No project-local pattern; relies on web UI uploads                          | N/A            |
+| Agent / IDE              | macOS/Linux Project Path | Windows Project Path       | Symlink Target    | Purpose                            | Required?      |
+| :----------------------- | :----------------------- | :------------------------- | :---------------- | :--------------------------------- | :------------- |
+| **Gemini / Antigravity** | `./.gemini/skills`       | `.\.gemini\skills`         | `~/.skills` (OS path) | Native discovery; Gemini looks here | ✅ Yes         |
+| **Project-Wide Skills**  | `./.skills`              | `.\.skills`                | `~/.skills` (OS path) | Universal project shortcut         | ✅ Yes         |
+| **Cursor**               | `./.cursor/skills`       | `.\.cursor\skills`         | `~/.skills` (OS path) | Custom organization                 | ⚠️ Optional    |
+| **Cursor (Rules)**       | `./.cursor/rules`        | `.\.cursor\rules`          | `~/.skills` (OS path) | Legacy / project-scoped rules       | ⚠️ Optional    |
+| **Claude Code**          | `./.claude/skills`       | `.\.claude\skills`         | `~/.skills` (OS path) | Shim for project discovery          | ⚠️ Optional    |
+| **OpenCode**             | `./.opencode/skills`     | `.\.opencode\skills`       | `~/.skills` (OS path) | Custom shim                         | ⚠️ Optional    |
+| **Qwen Code**            | `./.qwen/skills`         | `.\.qwen\skills`           | `~/.skills` (OS path) | Not natively discovered             | ⚠️ Optional    |
+| **VS Code / Copilot**    | `./.vscode/skills`       | `.\.copilot\skills`        | `~/.skills` (OS path) | Copilot searches workspace settings | ✅ Recommended |
+| **ChatGPT / Codex**      | N/A                      | N/A                        | N/A               | Relies on global or web UI uploads  | N/A            |
 
 ## Setup by Project Type
 
-### Minimal (Global Only)
-
-```bash
-# Skip project-level setup; rely on global symlinks
-# This works for all agents
-```
-
 ### Standard (Gemini + VS Code)
 
+#### macOS / Linux
 ```bash
 #!/bin/bash
 # Set up project-level symlinks for Gemini and VS Code
@@ -33,26 +28,21 @@ ln -sf ~/.skills .gemini/skills
 ln -sf ~/.skills .vscode/skills
 ```
 
-### Full (All Agents)
-
-```bash
-#!/bin/bash
-# Set up complete project-level symlinks for all agents
-
-mkdir -p .cursor .gemini .claude .opencode .qwen .vscode
-ln -sf ~/.skills .cursor/skills
-ln -sf ~/.skills .cursor/rules
-ln -sf ~/.skills .gemini/skills
-ln -sf ~/.skills .claude/skills
-ln -sf ~/.skills .opencode/skills
-ln -sf ~/.skills .qwen/skills
-ln -sf ~/.skills .vscode/skills
+#### Windows (Git Bash / CMD)
+```cmd
+:: Set up project-level symlinks for Gemini, Copilot and Project-Wide Skills
+ 
+mkdir ".gemini" ".copilot"
+mklink /D ".skills" "%USERPROFILE%\.skills"
+mklink /D ".gemini\skills" "%USERPROFILE%\.skills"
+mklink /D ".copilot\skills" "%USERPROFILE%\.skills"
 ```
 
 ## Exception: Project-Specific Skills
 
 In rare cases, a project may want **local-only** skills that don't sync to the master store:
 
+### macOS / Linux
 ```bash
 # Instead of symlinking, create a physical directory
 mkdir -p .vscode/skills
@@ -62,28 +52,27 @@ cat > .vscode/skills/project-local.md << 'EOF'
 # Project-Specific Skill
 This skill is local to this project and not synced to ~/.skills
 EOF
+```
 
-# Configure VS Code to search this location first
-# .vscode/settings.json
+### Windows (CMD)
+```cmd
+mkdir ".copilot\skills"
+echo # Project-Specific Skill > .copilot\skills\project-local.md
+echo This skill is local to this project and not synced to %%USERPROFILE%%\.skills >> .copilot\skills\project-local.md
+```
+
+## Configuration for VS Code
+Once the directory (symlinked or local) is set, prioritize it in `.vscode/settings.json`:
+```json
 {
   "github.copilot.advanced": {
-    "instructionsPath": ".vscode/skills"
+    "instructionsPath": ".vscode/skills" // Adjust to .copilot/skills on Windows if applicable based on the extension usage
   }
 }
 ```
 
 ## Verification
+To verify project symlinks, check standard link creation:
 
-```bash
-# Check which project-level symlinks exist
-echo "=== Project Symlinks ==="
-for path in .gemini/skills .cursor/skills .cursor/rules .claude/skills .opencode/skills .qwen/skills .vscode/skills; do
-  if [ -L "$path" ]; then
-    echo "✓ $path → $(readlink -f $path)"
-  elif [ -d "$path" ]; then
-    echo "⚠ $path (physical directory)"
-  else
-    echo "✗ $path (missing)"
-  fi
-done
-```
+- **macOS/Linux:** `ls -la .gemini/skills`
+- **Windows (Git Bash):** `ls -la .gemini/skills` or use native `dir` command.

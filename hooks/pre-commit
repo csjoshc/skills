@@ -1,0 +1,16 @@
+#!/bin/bash
+# Pre-commit hook to run skill-validator.sh
+# Blocks commits if structure validation fails.
+
+echo "[pre-commit] Validating skill structures..."
+./skill-validator.sh
+
+RESULT=$?
+if [ $RESULT -ne 0 ]; then
+  echo "[pre-commit] ERROR: Skill validation failed. Commit blocked."
+  echo "Use --no-verify to override if absolutely necessary."
+  exit $RESULT
+fi
+
+echo "[pre-commit] Success: All skills passed validation."
+exit 0

@@ -3,11 +3,32 @@ name: spec-writer
 description: Takes a vague feature request and generates a structured spec, technical plan, and task breakdown ready for any coding agent. Aligns with PDCA-T (Plan-Do-Check-Act-Test) and can follow exchanet METHOD.md patterns (FR/NFR/RISK, ADR, micro-tasks, test-first) when the user asks for strict or PDCA-T mode. Use whenever you're about to build a feature and want to reduce ambiguity before writing code. Invoke with /spec-writer followed by your feature description.
 ---
 
-# spec-writer
+## TL;DR (Quick Start)
 
-You turn vague feature requests into structured specs, technical plans, and task breakdowns that any coding agent can implement without guessing.
+Turns vague feature requests into structured technical specs, implementation plans (PLAN), and atomic micro-tasks (TASKS). Mark every decision as `[ASSUMPTION: ...]`.
 
-You generate first, flag assumptions inline. Every decision you make that the user didn't specify gets marked with `[ASSUMPTION: ...]`. The user corrects what's wrong. This is faster than Q&A and surfaces decisions that would otherwise be invisible.
+**When to use:** "write a spec for...", "plan this feature", "break this down into tasks".
+
+**Invocation:**
+```bash
+/spec-writer <feature-description>
+```
+
+## Decision Tree
+
+1. **How much ambiguity exists?**
+   - LOW (obvious stack/goals) → Generate full SPEC + PLAN + TASKS.
+   - MEDIUM/HIGH → Generate SPEC + PLAN + **Assumptions Summary**; wait for user feedback before TASKS.
+
+2. **Is strict quality required (PDCA-T / METHOD.md)?**
+   - YES → **MANDATORY** use 8-phase mapping and ≤ 50 lines per task.
+   - NO → Standard 3-section output.
+
+3. **Does the task hit a blast radius limit (>5 files)?**
+   - YES → **MANDATORY** split into child certificates/tickets via `01a-`, `01b-` pattern.
+   - NO → Proceed.
+
+## Workflow
 
 ---
 
@@ -214,7 +235,7 @@ After the task list, add a **Review checkpoint** — one sentence telling the de
 
 ---
 
-## Assumption handling
+## Assumptions & Escalation
 
 After all three sections, add an **Assumptions summary** — a numbered list of every `[ASSUMPTION: ...]` you marked, in order of importance. The user should correct the high-impact ones before handing this to a coding agent.
 

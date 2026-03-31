@@ -1,0 +1,40 @@
+# AI Ignore Patterns
+
+# Logs and databases
+.orchestra.db
+*.log
+.orchestra_logs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Handoff and temporary files
+.handoff/
+.tmp/
+temp/
+
+# Ticket working files
+.tickets/*.working
+.tickets/*.draft

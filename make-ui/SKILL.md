@@ -3,43 +3,67 @@ name: make-ui
 description: Use when building or redesigning frontend UI, choosing design direction, or when the user says "make ui vibe", "make ui consult", "UI polish", "design system", or "help me design"
 ---
 
-# Make UI — High-Variance Frontend Architect
+# Make UI
 
-**Anti-AI Slop.** If it looks like a bootstrapped template, it failed. Every project must feel uniquely crafted.
+## TL;DR (Quick Start)
 
-## Two Modes
+Architect and implement high-variance frontend designs. Avoids "AI slop" and generic templates by matching aesthetic direction to product verticals.
 
-### A. Vibe Mode
+**When to use:** "make ui vibe", "ui polish", "design system", "help me design".
 
-**Trigger:** "make ui vibe", immediate coding task, or end-to-end without consultation.
+**Invocation:**
+- **Vibe Mode:** Proceed directly to coding (for small tasks).
+- **Consultation Mode:** Mandatory approval gate before coding (for redesigns).
 
-1. **Pre-flight:** Read `AGENTS.md`/`README`, scan `package.json` + CSS/config. Existing stack takes precedence — extend, don't replace.
-2. **Pick aesthetic:** Match vertical to direction via `decision-matrix.md`. Existing component hierarchy and usage patterns drive theming.
-3. **Execute** with production-grade code. Defaults in `technical-standards.md`.
+## When to Use
+- Building new UI components or pages from scratch.
+- Redesigning existing interfaces for premium "vibe".
+- Establishing or extending a design system/theme.
+- **NOT for:** E2E testing (use `test-ui`) or basic bug fixing (use standard tools).
 
-### B. Consultation Mode
+## Decision Tree
 
-**Trigger:** "make ui consult", "help me design", or aesthetic decisions on existing codebase.
+1. **Is the task a full redesign or large component?**
+   - YES → Use **Consultation Mode** (approval gate required).
+   - NO (small polish/fix) → Use **Vibe Mode**.
 
-<HARD-GATE>
-No code until user approves the final design summary.
-</HARD-GATE>
+2. **Does an existing design system exist?**
+   - YES → Extend and match existing tokens/components.
+   - NO → Establish foundational tokens via `technical-standards.md`.
 
-Structured decision funnel. One question per message. Multiple choice preferred. Full process: `consultation-checklist.md`. Summary:
+3. **Is the user unsure of the direction?**
+   - YES → Provide 2-3 product anchors (e.g., "Linear-style", "Vercel-clean") and trade-offs.
 
-1. **Audit** current state — stack, component patterns, design system, consistency issues
-2. **Offer** Chrome DevTools companion for live inspection
-3. **Assess** against quality bar — gap analysis on typography, color, motion, depth, composition
-4. **Anchor** with product references — name 2-3 real products per direction
-5. **Narrow** aesthetic direction — "keep current, just polish" is always valid
-6. **Scope** — foundational? +motion? full pass? full migration?
-7. **Propose** 2-3 approaches with trade-offs
-8. **Present** design section by section with approval gates (tokens, typography, primitives, depth, motion, cleanup)
-9. **Final summary** — recap, get explicit approval
-10. **Output** — spec-writer task files or implementation plan
+## Workflow
 
-## Companion Files
+### 1. Pre-flight (Audit)
+Read `AGENTS.md`, `README`, and scan `package.json`/CSS. Existing stack takes precedence.
 
-- `decision-matrix.md` — Vertical-to-aesthetic mapping with reference products, prohibited patterns
-- `technical-standards.md` — Colors, typography, motion, layout, accessibility, responsive defaults
-- `consultation-checklist.md` — Full step-by-step guide, reference tables, section presentation requirements
+### 2. Mode Selection (Vibe vs. Consult)
+- **Vibe:** Match aesthetic directly and execute.
+- **Consult:** Walk through binary decision gates with the user before any code.
+
+### 3. Execution
+Implement with production-grade code using foundational tokens (colors, typography, spacing).
+
+## Assumptions & Escalation
+
+- **Tier 1 (reversible):** Color/spacing tweaks — proceed, explain rationale, flag for feedback.
+- **Tier 2 (conflict):** Requested UI contradicts project style — check previous commits, block if still ambiguous.
+- **Tier 3 (UX):** Requested UI pattern violates core accessibility or usability — **STOP**, block and propose safer alternative.
+
+## Examples (Few-Shot)
+
+**Example 1: Polishing a component**
+Input: "Make the login button pop more"
+Output: Implementation using gradients, subtle shadows, and hover transitions.
+
+**Example 2: Designing a dashboard**
+Input: "Consult me on a new dark mode dashboard"
+Output: Audit of current state, presentation of 3 aesthetic directions, and token-level spec after approval.
+
+## Related Skills
+| Skill | When to use instead |
+|-------|---------------------|
+| test-ui | For verifying visual behavior via E2E |
+| chrome-devtools | For manual CSS inspection and live testing |

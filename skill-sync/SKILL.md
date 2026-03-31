@@ -1,89 +1,73 @@
 ---
 name: skill-sync
-description: >-
-  Synchronizes and audits AI skills across multiple IDEs and CLI agents using ~/.skills
-  as the authoritative store. Use when the user asks to sync skills, audit skill symlinks,
-  ingest new skills into the master folder, or unify skills across Cursor, Claude Code,
-  Gemini/Antigravity, OpenCode, VS Code (global and project-level), or ChatGPT. Handles 
-  propagation of removals from master store.
+description: Synchronizes and audits AI skills across multiple IDEs and CLI agents across macOS, Linux, and Windows.
 ---
 
 # Skill Sync
 
-**Version:** 1.1.0
+## TL;DR (Quick Start)
 
-## Context
+Synchronize and audit AI skills from a master store (`~/.skills`) to platform-specific directories (Cursor, Gemini, VS Code) using symlinks. Ensures consistency across all AI agents and IDEs.
 
-The user maintains a "Universal Skills" directory at `~/.skills`. This is the authoritative source for all AI behavior, tool definitions, and SOPs.
+**When to use:** Setting up a new IDE, troubleshooting missing skills, or after manual updates to the master skill store.
 
-## Objectives
+**Invocation:**
+```bash
+python3 ~/.skills/sync.py
+```
 
-1. **Identify New Skills:** Scan the current working directory and common skill locations for any `.md` files that are NOT yet present in `~/.skills`.
-2. **Ingest:** If a new skill is found, copy it to `~/.skills` after confirming with the user.
-3. **Audit Symlinks:** Verify that each platform path is a **symlink** to `~/.skills`.
-4. **Propagate Removals (Audit Stale):** 
-   - Identify broken symlinks in platform paths (pointing to deleted master skills).
-   - Identify files in "Local-only" platforms that have been deleted from the master `~/.skills` store.
-   - Propose removal to keep all tools in sync with the authoritative state.
+## When to Use
+- Syncing new skills from `~/.skills` to all platforms.
+- Auditing existing symlinks for health and correct targets.
+- Repairing broken links after an OS update or file move.
+- **NOT for:** Editing skills directly (always edit in `~/.skills/`).
 
-## Companion Files
+## Decision Tree
 
-Before running the sync audit, review these companion files for authoritative symlink mappings:
+1. **Are you on Windows?**
+   - YES → Use `mklink /D` via CMD/Git Bash. Refer to `GLOBAL_SYMLINKS.md` Windows columns.
+   - NO (macOS/Linux) → Use `ln -sf`. Refer to POSIX columns.
 
-- **[GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)** — Table of global symlinks (`~/.cursor/skills`, `~/.vscode/skills`, etc.) for each agent/IDE. Use this to set up or verify global-level syncing.
-- **[PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)** — Table of project-level symlinks (`./.cursor/skills`, `./.vscode/skills`, etc.). Use this to determine which projects need local skill discovery.
+2. **Is a platform directory missing its skills link?**
+   - YES → Create symlink pointing to the master store.
+   - NO → Audit existing link integrity.
 
-## Execution Steps
+3. **Did a skill get deleted from the master store?**
+   - YES → The sync audit will identify the stale link; confirm and remove.
 
-### Step 1: Discovery & Audit
+## Workflow
 
-- List all files in the current agent's local skill repository.
-- Compare filenames and checksums against `~/.skills`.
-- Report any "untracked" (new) skills OR "stale" (removed from master but still local) skills.
+### 1. Environment Check
+Check if you are running on Windows vs macOS/Linux. Refer to [GLOBAL_SYMLINKS.md](./GLOBAL_SYMLINKS.md) for correct paths.
 
-### Step 2: The "Master Sync"
+### 2. Platform Audit
+Iterate through platforms (Cursor, Gemini, VS Code/Copilot). Verify each skills directory is a symlink pointing to `~/.skills`.
 
-- **New Skills:** If a skill exists in the local project but not in `~/.skills`, offer to `cp` it to the master directory.
-- **Stale Skills:** If a skill is missing from `~/.skills` but still exists in a local-only or non-symlinked folder, offer to `rm` it.
-- **Broken Links:** If a symlink exists but its target in `~/.skills` is gone, offer to remove the broken link.
+### 3. Verification & Repair
+- Report status: "Synced", "Out of Sync", or "Broken".
+- Re-create broken or missing links using OS-appropriate commands.
 
-### Step 3: Symlink Verification (The Bridge)
+### 4. Project-Level Setup
+Optionally link project-specific `.skills/` directories to the master store for local agent access.
 
-For global symlinks, refer to [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md) for the complete list of paths to audit.
+## Assumptions & Escalation
 
-For each path:
-1. Check whether it is a **symlink** (and where it points) or a **regular directory/file**
-2. If a path is a physical directory instead of a symlink, alert the user that the platform is "Out of Sync"
-3. Propose a migration: Move physical files to `~/.skills` and replace with a symlink: `ln -sf ~/.skills [target_path]`
+- **Tier 1 (reversible):** Missing symlink — proceed with re-creation.
+- **Tier 2 (conflict):** Physical directory exists where symlink should be — **STOP**, backup content to master store before replacing.
+- **Tier 3 (permission):** Permission denied on `mklink` (Windows) — block and request Developer Mode or Admin rights.
 
-### Step 4: Project-Level Symlink Setup
+## Examples (Few-Shot)
 
-Refer to [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md) to determine:
-- Whether the current project requires project-level symlinks
-- Which symlinks to create (Gemini and VS Code are recommended; others are optional)
-- How to handle project-specific (non-synced) skills vs. master-synced skills
+**Example 1: Basic Audit**
+Input: "Audit my skill symlinks"
+Output: Status table showing all platforms are synced to `~/.skills`.
 
-For VS Code workspaces specifically:
-- Global skills are available via `~/.vscode/skills`
-- Project-level `.vscode/skills` can provide local overrides or discovery
-- Use `.vscode/settings.json` to prioritize: `"github.copilot.advanced": { "instructionsPath": ".vscode/skills" }`
+**Example 2: Repairing Broken Link**
+Input: "Fix broken skills in Cursor"
+Output: Command execution of `mklink /D` (Windows) or `ln -sf` (POSIX) to restore the link.
 
-## Output Format
-
-Always provide a **Sync Status Report** table with the following structure:
-
-| Agent / Platform | Global Status | Project Status | Notes |
-| :--- | :--- | :--- | :--- |
-| Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to GLOBAL_SYMLINKS.md and PROJECT_SYMLINKS.md |
-| Gemini / Antigravity | Synced / Out of Sync / Missing | Setup / Missing / N/A | Gemini natively supports project-level symlinks |
-| VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
-| *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See GLOBAL_SYMLINKS.md for details |
-
-Add a **Stale/Broken Links** section below if any removals are required to propagate state from the master store.
-
-## Quick Reference
-
-For detailed setup instructions and platform-specific paths:
-- **Setting up global symlinks** → See [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)
-- **Setting up project-level symlinks** → See [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)
-- **VS Code workspace configuration** → See [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md#setup-by-project-type)
+## Related Skills
+| Skill | When to use instead |
+|-------|---------------------|
+| project-onboarding | When first setting up a new project |
+| mcp-sync | For syncing Model Context Protocol settings |

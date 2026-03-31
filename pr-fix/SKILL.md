@@ -6,12 +6,36 @@ description: >-
   review feedback, resolve PR review issues, or respond to code review.
 ---
 
-# PR Fix
+## TL;DR (Quick Start)
 
-Address PR review comments systematically — one at a time, with a
-verification gate after each fix to prevent regressions.
+Address PR review comments one at a time using a systematic fix-verify cycle. Ensures every change is validated (lint/test) before moving to the next.
 
-## Invocation
+**When to use:** "fix PR comments", "respond to code review", "apply review feedback".
+
+**Invocation:**
+```bash
+/pr-fix <owner/repo> <pr-number>
+```
+
+## Decision Tree
+
+1. **How many comments are actionable?**
+   - 0 → Done.
+   - 1+ → Continue to step 2.
+
+2. **Is it a C3 platform backend change?**
+   - YES → **MANDATORY** query C3AI-MCP for Type/API context first.
+   - NO → Proceed with standard language tools.
+
+3. **Does the comment have a `suggestion` block?**
+   - YES → Apply it verbatim first; only deviate if it fails verification.
+   - NO → Draft minimal fix based on reviewer text.
+
+4. **Does verification fail?**
+   - YES → Retry up to 3 times with different approaches; if still failing, revert and skip.
+   - NO → Move to next comment.
+
+## Workflow
 
 ```
 /pr-fix <owner/repo> <pr-number>
@@ -279,9 +303,11 @@ These rules prevent the fix process from injecting new problems:
    logging without changing control flow. Add types without changing
    runtime behavior.
 
-7. **Don't cascade** — if fixing comment A reveals that comment B's
-   fix needs to be different, finish A's cycle completely before
-   starting B. Do not interleave fixes.
+## Assumptions & Escalation
+
+- **Tier 1 (reversible):** Style/Linter nits — proceed, apply fix, verify.
+- **Tier 2 (logic):** Implementation requirements are ambiguous — check PR comments for clarification, block if still unclear.
+- **Tier 3 (architecture):** Requested change violates `STANDARDS.md` or core architecture — **STOP**, block and request human resolution.
 
 ---
 
