@@ -45,9 +45,9 @@ Honor repo rules, `AGENTS.md`, Cursor rules, and linked skills: **strict context
 
 **Risk-tiered assumptions**
 Not all assumptions need human review. Before blocking:
-1. Check `~/.skills/STANDARDS.md` for resolved questions
+1. Check embedded Architecture Decisions below for resolved questions
 2. Tier 1 (reversible, low impact) → proceed, flag for post-review
-3. Tier 2 (architecture, medium impact) → check STANDARDS.md, block if unresolved
+3. Tier 2 (architecture, medium impact) → check Architecture Decisions, block if unresolved
 4. Tier 3 (security/safety, high impact) → always block for human confirmation
 
 **PDCA-T cycle**
@@ -110,6 +110,230 @@ DEBT-01: [Title]
   Impact: High | Medium | Low
   Plan: [Next step]
 ```
+
+---
+
+## Architecture Decisions (Embedded from STANDARDS.md)
+
+**Purpose:** Resolve common architectural questions autonomously. Check this section before blocking on assumptions.
+
+### API Pattern
+- **Default:** REST with JSON responses
+- **Endpoint structure:** `/api/{domain}/{action}` or `/api/{resource}/{id}`
+- **Error format:** `{error: string, details?: object}`
+- **Status codes:** 200 (success), 201 (created), 400 (bad request), 401 (unauthorized), 403 (forbidden), 404 (not found), 409 (conflict), 422 (validation error), 500 (server error)
+
+### Authentication & Authorization
+- **Auth mechanism:** JWT via `Authorization: Bearer <token>` header
+- **Session storage:** Stateless JWT (no server-side sessions)
+- **Role-based access:** `is_admin` role for admin endpoints
+- **Rate limiting:** 100 requests/minute per user (adjust per project)
+
+### Data Layer
+- **Database:** PostgreSQL (default), SQLAlchemy ORM
+- **Migrations:** Alembic (Python) or Prisma (Node)
+- **Connection pooling:** Use framework defaults unless performance requires tuning
+
+### Testing Strategy
+- **Backend:** pytest (Python) / Vitest (Node)
+- **Frontend:** Vitest + React Testing Library
+- **E2E:** Playwright (preferred) or Cypress
+- **Coverage targets:** 80% line coverage for new code, 70% for refactors
+- **Test structure:** Co-develop tests with implementation (TDD where specified)
+
+### Code Organization
+- **Backend structure:**
+```
+src/
+├── api/
+│ ├── routes/ # HTTP endpoint handlers
+│ ├── dto/ # Data transfer objects (Pydantic models)
+│ └── helpers.py # Shared helper functions
+├── domain/ # Pure business logic (no external deps)
+├── services/ # Orchestration, calls domain + infrastructure
+├── config/ # Configuration loading
+└── models/ # Database models
+```
+
+- **Frontend structure:**
+```
+react-app/src/
+├── components/ # Reusable UI components
+├── pages/ # Route-level components
+├── hooks/ # Custom React hooks
+├── stores/ # State management (Zustand, Redux, etc.)
+├── api/ # API client functions
+└── types/ # TypeScript types
+```
+
+### File Size Limits
+- **Soft limit:** 300 lines (proactively suggest refactoring)
+- **Hard limit:** 500 lines (must refactor before merging)
+- **Exceptions:** DTO files, generated code, test fixtures
+
+---
+
+## Layer Ownership
+
+### Domain Layer
+- **Purpose:** Pure business logic, business rules
+- **Dependencies:** Standard library only
+- **No:** Database calls, HTTP requests, file I/O, external APIs
+- **Examples:** `TaskRecord`, `TaskState`, validation logic, business calculations
+
+### Service Layer
+- **Purpose:** Orchestration, business workflows
+- **Dependencies:** Domain layer + infrastructure (DB, HTTP, files)
+- **Responsibilities:** Transaction management, error handling, logging
+- **Examples:** `generation_service.py`, `batch_service.py`
+
+### Application Layer (if used)
+- **Purpose:** Adapters for external interfaces
+- **Dependencies:** Service layer + frameworks
+- **Responsibilities:** HTTP handlers, CLI commands, message queue consumers
+- **Examples:** FastAPI route handlers, CLI commands
+
+### Infrastructure Layer
+- **Purpose:** External system adapters
+- **Dependencies:** Frameworks, drivers, SDKs
+- **Responsibilities:** Database access, HTTP clients, file operations
+- **Examples:** Database repositories, ComfyUI client, S3 client
+
+---
+
+## Resolved Questions
+
+**Q: Where do new endpoints go?**
+**A:** `src/api/routes/{domain}.py` following FastAPI router pattern. One router per domain (wildcards, batches, generation, queue, uploads, presets, health).
+
+**Q: How to handle validation errors?**
+**A:** Return 422 Unprocessable Entity with schema:
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    {"field": "email", "message": "Invalid email format"},
+    {"field": "password", "message": "Must be at least 8 characters"}
+  ]
+}
+```
+
+**Q: When to add tests?**
+**A:** Every public function in domain/service layers; integration tests for all routes. Refactors that change public APIs require verification tests.
+
+**Q: How to name batch output folders?**
+**A:** Incremental numbering: `batch_0001`, `batch_0002`, etc. (4-digit zero-padded). Counter persists in `.batch_counter` JSON file.
+
+**Q: How to handle file uploads securely?**
+**A:**
+1. Validate file type (magic bytes, not just extension)
+2. Sanitize filename (remove path separators, limit length)
+3. Store in dedicated uploads directory (not user-accessible paths)
+4. Serve via controlled endpoint (not direct file access)
+
+**Q: When is subprocess execution acceptable?**
+**A:** Only when:
+1. No alternative (e.g., must run external tool)
+2. Arguments are fully validated (whitelist, regex)
+3. Process is isolated (resource limits, no network)
+4. User input cannot affect command (no shell injection)
+5. Logged for audit trail
+
+**Q: What state management pattern for frontend?**
+**A:**
+- Global state: Zustand stores (`src/stores/`)
+- Page state: React local state or URL query params
+- Form state: React Hook Form or similar
+- Cleanup: Clear global state on navigation/logout
+
+**Q: How to handle API response size limits?**
+**A:**
+- Default limit: 100 items per response
+- Pagination: `?limit=20&offset=0` or cursor-based
+- Large payloads: Return job ID, async completion notification
+
+**Q: What's the refactoring priority?**
+**A:** Pain-based, not line-count-based:
+1. Files with highest merge conflict frequency
+2. Files with highest churn (commits in last 3 months)
+3. Files blocking feature work
+4. Files >500 lines (only if causing problems)
+
+---
+
+## Security Checklist
+
+**Before implementing any feature, verify:**
+
+- [ ] **User input validation:** All user input validated (type, length, format, range)
+- [ ] **Path traversal prevention:** File paths sanitized, allowlist directories
+- [ ] **Subprocess isolation:** Arguments validated, `shell=False`, resource limits
+- [ ] **Auth requirements:** Endpoints require authentication if sensitive
+- [ ] **Authorization checks:** User has permission for requested action
+- [ ] **Rate limiting:** Endpoints protected from abuse
+- [ ] **Audit logging:** Sensitive operations logged (who, what, when)
+- [ ] **Error messages:** No sensitive info in error responses
+
+**If any box unchecked → block for security review before Task 1**
+
+---
+
+## Performance Budgets
+
+**Default targets (adjust per project):**
+
+- **API response time:** <200ms for simple queries, <1s for complex
+- **Frontend render:** <3s for initial load, <100ms for interactions
+- **File upload:** <10s for files <10MB
+- **Queue processing:** <60s per job (timeout at 90s)
+- **Memory usage:** <500MB per process (alert at 400MB)
+
+**Cleanup strategies:**
+
+- In-memory caches: LRU eviction, max 100 entries, 1-hour TTL
+- Temp files: Clean on startup, 24-hour TTL
+- Run history: Keep last 10 entries, archive older
+
+---
+
+## Decision Framework
+
+### When to Block vs. Proceed
+
+**Proceed without blocking if:**
+
+- Question answered in Architecture Decisions above
+- Assumption is Tier 1 (reversible, low impact)
+- Change is behind feature flag
+- Test coverage exists to catch mistakes
+
+**Block for human clarification if:**
+
+- Security vulnerability possible
+- Architecture contradiction (conflicting tickets)
+- Dependency not implemented/merged
+- Success criteria undefined
+- Tier 3 assumption (auth, data model, public API)
+
+### Assumption Tiers
+
+**Tier 1: Reversible (LOW impact)**
+
+- Naming conventions, file locations, UI copy
+- Library choices with easy migration path
+- **Action:** Proceed, flag for post-review
+
+**Tier 2: Architecture (MEDIUM impact)**
+
+- API patterns, data model structure, layer ownership
+- Harder to change but not breaking
+- **Action:** Check Architecture Decisions above, block if unresolved
+
+**Tier 3: Safety/Security (HIGH impact)**
+
+- Authentication, authorization, data sensitivity
+- Public API contracts, database schema
+- **Action:** Always block for human confirmation
 
 ---
 
@@ -240,13 +464,13 @@ After the task list, add a **Review checkpoint** — one sentence telling the de
 After all three sections, add an **Assumptions summary** — a numbered list of every `[ASSUMPTION: ...]` you marked, in order of importance. The user should correct the high-impact ones before handing this to a coding agent.
 
 **Before listing assumptions:**
-1. Check `~/.skills/STANDARDS.md` for each assumption
-2. If STANDARDS.md resolves it → auto-apply, mark as "Resolved via STANDARDS.md"
+1. Check embedded Architecture Decisions above for resolved questions
+2. If Architecture Decisions resolves it → auto-apply, mark as "Resolved via Architecture Decisions"
 3. If not resolved → tier by impact and list for review
 
 **Tier definitions:**
 - **Tier 1 (LOW impact):** Reversible, naming, file locations, UI copy → proceed without blocking
-- **Tier 2 (MEDIUM impact):** Architecture patterns, data model, library choices → check STANDARDS.md, block if unresolved
+- **Tier 2 (MEDIUM impact):** Architecture patterns, data model, library choices → check Architecture Decisions, block if unresolved
 - **Tier 3 (HIGH impact):** Security, auth, public API, database schema → always block for human confirmation
 
 Format:
@@ -255,14 +479,14 @@ Format:
 
 1. [ASSUMPTION text] — Impact: HIGH / MEDIUM / LOW — Tier: 1 / 2 / 3
    Correct this if: [when it matters]
-   [Optional: Resolved via STANDARDS.md section X]
+   [Optional: Resolved via Architecture Decisions section X]
 
 2. ...
 ```
 
 **Blocking guidance:**
 - Tier 1: No block needed, flag for post-review
-- Tier 2: Block if STANDARDS.md doesn't resolve
+- Tier 2: Block if Architecture Decisions doesn't resolve
 - Tier 3: Always block before Task 1
 
 ---

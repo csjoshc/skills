@@ -1,10 +1,9 @@
 ---
 name: project-onboarding
 description: >-
-  Onboards a project root by creating AGENTS.md, .cursorignore, .cursorrules, CLAUDE.md, GEMINI.md,
-  and symlink infrastructure for multi-tool agent consistency. Detects npm/Python stacks, applies
-  stack-specific templates, and establishes STANDARDS.md. Use when starting a new project or
-  adding AI tooling to an existing repo.
+  Onboards a project root by creating AGENTS.md, .cursorignore, .cursorrules, and symlinks for CLAUDE.md/GEMINI.md
+  pointing to AGENTS.md (OS-specific symlinks). Detects npm/Python stacks, applies stack-specific templates,
+  and establishes STANDARDS.md. Use when starting a new project or adding AI tooling to an existing repo.
 ---
 
 # Project Onboarding (Multi-Tool)

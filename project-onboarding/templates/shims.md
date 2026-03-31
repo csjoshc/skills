@@ -44,19 +44,38 @@ Pick the stack variant matching detection. If appending to an existing `.cursorr
 
 ## Cross-tool shims
 
-### `CLAUDE.md` (Claude Code)
+Create symlinks for `CLAUDE.md` and `GEMINI.md` pointing to `AGENTS.md`. Use OS-specific commands:
 
-```markdown
-Read and follow AGENTS.md in this directory for project conventions,
-context exclusions, and operational rules.
+### Windows (cmd.exe)
+
+```batch
+mklink CLAUDE.md AGENTS.md
+mklink GEMINI.md AGENTS.md
 ```
 
-### `GEMINI.md` (Gemini CLI)
+### Windows (PowerShell)
 
-```markdown
-Read and follow AGENTS.md in this directory for project conventions,
-context exclusions, and operational rules.
+```powershell
+New-Item -ItemType SymbolicLink -Path "CLAUDE.md" -Target "AGENTS.md"
+New-Item -ItemType SymbolicLink -Path "GEMINI.md" -Target "AGENTS.md"
 ```
+
+### macOS/Linux
+
+```bash
+ln -s AGENTS.md CLAUDE.md
+ln -s AGENTS.md GEMINI.md
+```
+
+### Python (cross-platform)
+
+```python
+import os
+os.symlink('AGENTS.md', 'CLAUDE.md')
+os.symlink('AGENTS.md', 'GEMINI.md')
+```
+
+**Note:** Only create these symlinks if they don't already exist. Add `CLAUDE.md` and `GEMINI.md` to `.gitignore` to avoid committing symlinks.
 
 ### Other tools
 
