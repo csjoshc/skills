@@ -6,12 +6,14 @@ This index maps common use cases to the appropriate AI skills in the `.skills` r
 - **[write-prd](.system/write-prd/SKILL.md)** — Turn vague ideas into structured Product Requirements Documents (PRDs).
 - **[spec-writer](spec-writer/SKILL.md)** — Generate technical implementation plans and atomic tasks.
 - **[ticket-critic](ticket-critic/SKILL.md)** — Pre-flight audit for tickets to catch blockers before coding.
+- **[skillsmith](skillsmith/SKILL.md)** — Create/edit skills following context engineering principles.
 
 ## Development & Implementation
 - **[tdd](tdd/SKILL.md)** — Test-Driven Development workflow (Red-Green-Refactor).
 - **[make-ui](make-ui/SKILL.md)** — Frontend UI design, polish, and theme consulting.
 - **[run-ticket](run-ticket/SKILL.md)** — Execute Orchestra tickets against a project.
 - **[orchestrate](orchestrate/SKILL.md)** — State machine and status transition protocol.
+- **[orchestra](orchestra/SKILL.md)** — CLI ticket runner: modes, concurrency, runtime failover.
 
 ## Documentation & Maintenance
 - **[cleanup](cleanup/SKILL.md)** — Code health audit against the Quality Rubric.

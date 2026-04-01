@@ -62,7 +62,7 @@ gh pr view <PR> --comments --json comments
 
 ### Step 2: Gather standards
 
-1. Read [STANDARDS.md](STANDARDS.md) from this skill
+1. Read **Architecture Decisions** in `~/.skills/spec-writer/SKILL.md`
 2. Read any project-level standards files (CLAUDE.md, .cursorrules, AGENTS.md, copilot-instructions.md) at root and in directories containing modified files
 3. Merge into a single standards context for the agents
 
@@ -214,7 +214,7 @@ Do NOT flag: pre-existing issues; code that looks wrong but is correct; pedantic
 ## Assumptions & Escalation
 
 - **Tier 1 (reversible):** Flagged issue is a minor style nit — proceed, categorize as "Standards", post.
-- **Tier 2 (logic):** Reviewer disagrees with agent's finding — check `STANDARDS.md`, block if unresolved.
+- **Tier 2 (logic):** Reviewer disagrees with agent's finding — check Architecture Decisions, block if unresolved.
 - **Tier 3 (security):** Critical security bug (M1-M4) detected — **STOP**, block and alert human immediately (top-level comment).
 
 ## Examples (Few-Shot)

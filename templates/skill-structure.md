@@ -30,7 +30,7 @@ description: <one-liner, third-person>
 
 ## Assumptions & Escalation
 - Tier 1 (reversible): proceed, flag for post-review
-- Tier 2 (architecture): check STANDARDS.md, block if unresolved
+- Tier 2 (architecture): check Architecture Decisions (spec-writer skill), block if unresolved
 - Tier 3 (security/safety): always block
 
 ## Examples (Few-Shot)

@@ -4,7 +4,7 @@
 
 **Not for ticket markdown:** Use the **ticket-critic** skill for `.tickets/*.md` hardening, blast-radius splits, and implementation-ready specs.
 
-**Precedence:** Any **organization review packet** (dimensions, prompts, anchors in JSON) **overrides** this file. Then **`STANDARDS.md`** / **`AGENTS.md`**. This rubric fills gaps with portable patterns.
+**Precedence:** Any **organization review packet** (dimensions, prompts, anchors in JSON) **overrides** this file. Then **Architecture Decisions (spec-writer skill)** / **`AGENTS.md`**. This rubric fills gaps with portable patterns.
 
 **Why weights matter:** Many health programs blend a **holistic** pool (~three-quarters of the composite) with **mechanical** checks (~one-quarter). Prioritize **file-cited evidence** on **high-weight dimensions** when writing review notes.
 
@@ -277,5 +277,5 @@ Optional: if your org keeps **local tooling state** (open findings, queues), use
 | Path | Role |
 |------|------|
 | `AGENTS.md` | Agent rules, exclusions |
-| `STANDARDS.md` | Blockers, architecture decisions |
+| Architecture Decisions (spec-writer skill) | Blockers, architecture decisions |
 | `README.md` | How to run tests and the product |

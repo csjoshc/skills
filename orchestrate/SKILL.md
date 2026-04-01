@@ -1,105 +1,218 @@
 ---
 name: orchestrate
 description: >-
-  Defines the state machine, stage transitions, and routing rules for the headless 
-  agent orchestration framework. Use this skill to understand how to read, update, 
-  and transition ticket files through the pipeline.
----
+  Runs Orchestra tickets against a target project. Prompts for runtime config (profile, mode, model, concurrency)
+  then executes the CLI command. Also covers state machine rules, stage transitions, and ticket splitting.
+  Use when you want to execute tickets, transition ticket states, or understand orchestration flow.
 
 ## TL;DR (Quick Start)
 
+**This skill is a CLI wrapper — it does NOT make code changes directly.** Instead, it:
+1. Prompts you for runtime configuration (profile, mode, model, concurrency)
+2. Constructs and executes the `python main.py ...` command
+3. Reports results from the Orchestra run
+
 Headless, file-driven agent orchestration. Agents communicate via `Stage:` fields in ticket markdown files. **Zero chat history dependency.**
 
-**When to use:** Transitioning statuses, understanding the state machine, explaining how agents cooperate.
+**When to use:** "run the tickets", "execute orchestra", "run tickets with profile X".
 
 **Invocation:**
-- **Status Change:** Edit the `Stage:` field in the ticket YAML header.
-- **Rules:** Never leave a ticket in the same stage unless interrupted.
+- **Run tickets:** This skill will prompt you for config, then execute `python main.py ...`
+- **Transition state:** Edit the `Stage:` field in the ticket YAML header.
+
+## Important: This Skill Does NOT
+
+- ❌ Make code changes to tickets or implementation files
+- ❌ Implement ticket requirements directly
+- ❌ Act as the agent that writes code
+
+**The chat agent invoking this skill is the ORCHESTRATOR, not the IMPLEMENTER.** Orchestra spawns external CLI agents (opencode, cursor, gemini, etc.) that do the actual coding work.
 
 ## Decision Tree
 
-1. **What is the current state?**
-   - No `.handoff/plan-*.md`? → Move to `Stage: SPEC`.
-   - Implementation done? → Move to `Stage: REVIEW`.
-   - Implementation + Audit done? → Move to `Stage: COMPLETE`.
+1. **Do tickets exist and are ready to run?**
+   - YES → Go to "Running Tickets" workflow below
+   - NO → Use spec-writer to create tickets first
 
-2. **Is the ticket too large (>250 lines or >5 files)?**
-   - YES → **MANDATORY** Move to `Stage: SPEC_SPLIT` and create child tickets using `01a-` pattern.
-   - NO → Proceed with standard transition.
+2. **What environment are you in?**
+   - Work laptop, proprietary code → Profile: `work` (Cursor only)
+   - Work laptop, side projects → Profile: `mixed` (Cursor + opencode)
+   - Home computer → Profile: `private` (opencode + qwen, default)
 
-3. **Is work blocked?**
-   - YES → Move to `Stage: BLOCKED`; detail reasons in the ticket body.
-   - NO → Continue.
+3. **Are tickets narrow and well-scoped?**
+   - YES → Mode: `single`, consider cheaper model via `--model`
+   - NO (architectural, ambiguous) → Mode: `sequential`, use frontier model
 
 ## Workflow
 
+### Running Tickets
+
+**Important:** This skill is an **interactive CLI wrapper**. When invoked, you must:
+
+1. **Discover tickets** — Scan `.tickets/` directory
+2. **Prompt the user** — Ask for runtime configuration (do NOT assume defaults)
+3. **Execute the command** — Run `python main.py ...` with user's choices
+4. **Report outcomes** — Summarize what completed/failed/blocked
+
+---
+
+**Step 1: Discover tickets**
+
+Determine the target project directory:
+- Use the **current working directory** (where the skill was invoked)
+- Append OS-specific path separator + `.tickets/`:
+  - Windows: `<cwd>\.tickets\`
+  - macOS/Linux: `<cwd>/.tickets/`
+
+Check for pending tickets:
+```bash
+ls .tickets/*.md
+```
+
+Report how many tickets exist and their current stages.
+
+**Step 2: Prompt for runtime config (REQUIRED)**
+
+**Do not skip this step.** You MUST ask the user these questions before running:
+
+| Question | Options | Default |
+|----------|---------|---------|
+| Which profile? | `work`, `mixed`, `private`, `cost_saver`, `qwen_chain`, `qwen_only`, `opencode_stepfun` | `private` |
+| Which mode? | `single` (one agent), `sequential` (spec→build→review) | `single` |
+| Override model? | Any model name, or "none" | Profile default |
+| Concurrency? | 1-4 | 1 (or number of independent tickets) |
+| Dry run? | `yes` (preview only), `no` (execute) | `no` |
+
+Use `ask_user_question` or equivalent to get explicit user input for each question.
+
+**Note on custom profiles:** If the user wants a profile not in the standard list (e.g., `qwen_chain`), they must provide a custom runtime config file via `--runtime-config`.
+
+**Step 3: Construct and run the command**
+
+Build the command from answers:
+```bash
+python main.py --project <project_dir> \
+  --runtime-profile <profile> \
+  --mode <mode> \
+  [--runtime-config <path>] \
+  [--model <model>] \
+  [--concurrency <N>] \
+  [--dry-run]
+```
+
+**CLI Arguments Reference:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `--project <path>` | ✅ | Absolute path to target project |
+| `--runtime-profile <name>` | ❌ | Profile name: `work`, `mixed`, `private`, `cost_saver`, `qwen_chain`, `qwen_only`, `opencode_stepfun` (default: `private`) |
+| `--runtime-config <path>` | ❌ | Optional custom runtime config YAML/JSON (rarely needed) |
+| `--mode <mode>` | ❌ | `single` or `sequential` (default: `single`) |
+| `--model <name>` | ❌ | Override model (e.g., `qwen3.5-plus`, `opencode/big-pickle`) |
+| `--concurrency <N>` | ❌ | Parallel tickets 1-4 (default: 1) |
+| `--dry-run` | ❌ | Preview tickets and routing without executing |
+| `--debug` | ❌ | Enable debug logging |
+
+Execute it and report results.
+
+**Step 4: Report outcome**
+
+After execution, report:
+- How many tickets completed
+- Any failures or blocks
+- Which stages tickets ended up in
+
+### Profile Reference
+
+| Profile | Where | Runtimes | Models |
+|---------|-------|----------|--------|
+| **work** | Work laptop, proprietary code | Cursor only | Sonnet 4.6 (or Opus/Composer) |
+| **mixed** | Work laptop, side projects | Cursor + opencode | Sonnet 4.6 + big-pickle |
+| **private** | Home computer | opencode + qwen | big-pickle + qwen3.5-plus |
+| **cost_saver** | Cost-optimized | qwen → opencode | qwen3.5-plus → big-pickle |
+| **qwen_chain** | Qwen-first fallback chain | qwen → opencode → gemini → cursor | qwen3.5-plus → qwen3.6-plus-free → gemini-3-flash → Composer 2 |
+| **qwen_only** | Qwen single runtime | qwen only | qwen3.5-plus |
+| **opencode_stepfun** | Opencode with StepFun model | opencode only | openrouter/stepfun/step-3.5-flash:free |
+
+### Model Tiers
+
+| Tier | Models | When |
+|------|--------|------|
+| **Frontier** | Opus 4.6, Sonnet 4.6, opencode/big-pickle | Complex/ambiguous tickets |
+| **Standard** | Composer 2 Fast, qwen3.5-plus | Narrow, well-scoped tickets |
+
+**Rule of thumb:** If tickets are <50 lines with clear acceptance criteria → Standard. If architectural → Frontier.
+
+---
+
 ## The State Machine
 
-Every ticket markdown file must contain a header with a `Stage:` field. The allowed stages and their flow are strictly defined as:
+Every ticket markdown file must contain a header with a `Stage:` field.
 
-1. **`Stage: NEW`** → Initial state. Ready for the Spec/Planner agent.
-2. **`Stage: SPEC`** → The Planner is currently breaking the ticket into a handoff plan. (`Stage: PLAN` is a legacy alias, normalized to `SPEC`.)
-3. **`Stage: SPEC_SPLIT`** → Ticket is oversized (>250 lines body). The Planner is splitting it into sub-tickets.
-4. **`Stage: BUILD`** → A `.handoff/plan-<slug>.md` exists. Ready for the Execution/Builder agent.
-5. **`Stage: REVIEW`** → Implementation is complete. Ready for the QA/Reviewer agent to audit.
-6. **`Stage: REVISION_ROUTER`** → Routes to affected facets for PRD-style revision when stage demands it.
-7. **`Stage: COMPLETE`** → Fully implemented, tested, and audited. Terminal state.
+### Stages
 
-**Exception States:**
+1. **`Stage: NEW`** → Initial state. Ready for execution.
+2. **`Stage: SPEC`** → Planner breaking ticket into handoff plan.
+3. **`Stage: SPEC_SPLIT`** → Ticket oversized (>250 lines), being split into sub-tickets.
+4. **`Stage: BUILD`** → Ready for implementation.
+5. **`Stage: REVIEW`** → Implementation complete, ready for audit.
+6. **`Stage: COMPLETE`** → Done. Terminal state.
 
-- **`Stage: BLOCKED`** → Work cannot proceed (missing dependencies, failing tests, ambiguous specs). Requires the Architect agent to unblock.
-- **`Stage: FAILED`** → The Architect cannot unblock the ticket. Requires human intervention. Terminal state.
+**Exception States:** `BLOCKED`, `FAILED`
 
-> **Note:** The PRD expansion subsystem (`orchestra/expansion/`) is a separate pipeline. Use the **`write-prd`** skill to generate PRDs from raw intent. The ticket graph may hand off to `REVISION_ROUTER` for expansion-style revision flows.
+### Mode-Specific Routing
+
+**Single mode** (default):
+```
+entry → build → complete
+```
+
+**Sequential mode**:
+```
+entry → spec → build → review → complete
+```
 
 ## How to Transition State
 
-When you finish your assigned task, you **MUST** update the state.
-Use your file editing tools to modify the top of the ticket file.
-
-**Correct:**
+When you finish your assigned task, you **MUST** update the stage. Edit the YAML header:
 
 ```yaml
-Title: Implement user login
 Stage: REVIEW
 ```
 
-**Rule:** Never leave a ticket in the stage you found it in unless your execution timed out or was interrupted.
+**Rule:** Never leave a ticket in the stage you found it in unless interrupted.
 
 ## Ticket Splitting (Blast Radius Control)
 
-Every ticket created must represent a distinct 1:1 mapping of implementable work. **Do not create tickets that merely act as wrappers or epics for other tickets.**
+If a ticket requires modifying >5 files or has 2+ distinct concerns, split it:
 
-If an existing ticket requires modifying more than 5 files or contains 2+ distinct architectural concerns, it is too large for a single isolated context window.
-
-**If you are the Planner Agent, you must split it:**
-
-1. Create new, strictly bounded sub-tickets in the same directory (e.g., `01a-ticket-name.md`, `01b-ticket-name.md`).
-2. Give each sub-ticket the header `Stage: NEW`.
-3. Ensure each new ticket defines actionable work, not just a container for others.
-4. Update the original parent ticket to `Stage: COMPLETE` or `Stage: BLOCKED` so it no longer executes.
-5. Do not write a handoff plan for the original parent ticket.
-6. The graph routes oversized tickets (body >250 lines) automatically to `Stage: SPEC_SPLIT`.
+1. Create sub-tickets: `01a-ticket-name.md`, `01b-ticket-name.md`
+2. Each sub-ticket gets `Stage: NEW`
+3. Update parent to `Stage: COMPLETE` or `BLOCKED`
+4. Graph auto-routes oversized tickets (>250 lines) to `SPEC_SPLIT`
 
 ## Inter-Agent Communication
 
-- **Do NOT** leave messages for other agents in the ticket body unless documenting a bug/blocker.
-- **Do NOT** wrap your file outputs in triple backticks (```). You are writing raw files to disk, not printing code blocks to a UI.
-- All technical context, ordered steps, and absolute file paths must be written to `.handoff/plan-<slug>.md` using the `handoff` skill.
+- **Do NOT** leave messages for other agents in ticket body (except blockers)
+- **Do NOT** wrap file outputs in triple backticks — write raw files to disk
+- Handoff context goes to `.handoff/plan-<slug>.md` using the `handoff` skill
 
 ## Assumptions & Escalation
 
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for orchestrate:**
 - **Tier 1 (reversible):** Missing status update — proceed, but add Task N to update the ticket before finishing.
 - **Tier 2 (logic):** Ticket stage transition is illegal (e.g., NEW -> COMPLETE) — **STOP**, clarify via spec-writer.
 - **Tier 3 (security):** Ticket implementation attempts to bypass stage-gate security — **STOP**, block and alert immediately.
 
 ## Project Setup
 
-When running the orchestrate skill on a new project, ensure the following are added to the project's `.gitignore`:
+When running Orchestra on a new project, ensure these are in `.gitignore`:
 
 ```
 .orchestra.db
 .orchestra/
 ```
 
-These are runtime artifacts created by the orchestration framework and should not be committed.
+These are runtime artifacts and should not be committed.

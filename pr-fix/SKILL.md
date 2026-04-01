@@ -307,7 +307,7 @@ These rules prevent the fix process from injecting new problems:
 
 - **Tier 1 (reversible):** Style/Linter nits — proceed, apply fix, verify.
 - **Tier 2 (logic):** Implementation requirements are ambiguous — check PR comments for clarification, block if still unclear.
-- **Tier 3 (architecture):** Requested change violates `STANDARDS.md` or core architecture — **STOP**, block and request human resolution.
+- **Tier 3 (architecture):** Requested change violates Architecture Decisions or core architecture — **STOP**, block and request human resolution.
 
 ---
 

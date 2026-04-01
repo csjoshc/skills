@@ -18,13 +18,13 @@ Verification:
 
 Required before Task 1:
 - [ ] Backend endpoint merged and deployed, OR
-- [ ] API contract defined in STANDARDS.md, OR
+- [ ] API contract defined in Architecture Decisions, OR
 - [ ] Task 0 added: "Verify backend endpoint exists"
 
 Evidence: Section 2 "API contracts" assumes endpoint exists
 ```
 
-## Example 2: Auto-Resolved via STANDARDS.md
+## Example 2: Auto-Resolved via Architecture Decisions
 
 **Ticket excerpt:**
 > "Open question: Should API use REST or GraphQL?"
@@ -35,12 +35,12 @@ Evidence: Section 2 "API contracts" assumes endpoint exists
 
 Issue: API pattern undecided
 
-Resolution: STANDARDS.md section "API Pattern" says:
+Resolution: Architecture Decisions section "API Pattern" says:
 > "Default: REST with JSON responses"
 
 Action: Applied REST pattern, updated ticket assumptions
 
-Evidence: STANDARDS.md "API Pattern" section
+Evidence: Architecture Decisions "API Pattern" section
 ```
 
 ## Example 3: Security Vulnerability
@@ -64,7 +64,7 @@ Touchpoints needing security review:
 Required before Task 1:
 - [ ] Path validation strategy (sanitize, allowlist)
 - [ ] Directory allowlist defined
-- [ ] STANDARDS.md security checklist applied
+- [ ] Architecture Decisions security checklist applied
 
 Evidence: Section 2 "API contracts" lacks validation spec
 ```

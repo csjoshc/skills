@@ -15,7 +15,6 @@ test("user can checkout with valid cart", async () => {
 ```
 
 Characteristics:
-
 - Tests behavior users/callers care about
 - Uses public API only
 - Survives internal refactors
@@ -36,7 +35,6 @@ test("checkout calls paymentService.process", async () => {
 ```
 
 Red flags:
-
 - Mocking internal collaborators
 - Testing private methods
 - Asserting on call counts/order
@@ -69,6 +67,73 @@ Good test names describe behavior:
 | `test_checkout_calls_payment` | `test_checkout_succeeds_with_valid_card` |
 | `test_user_controller_validates_email` | `test_rejects_invalid_email_format` |
 | `test_order_service_calculates_total` | `test_total_includes_tax_and_shipping` |
+
+---
+
+## Test Antipatterns
+
+### Structure Antipatterns
+
+| Antipattern | Trigger | Solution |
+|-------------|---------|----------|
+| God Test File | > 500 lines | Split by feature |
+| Duplicate Suites | Same tests in 2 dirs | Consolidate to one location |
+| No Assertions | `assert` missing | Add meaningful assertions |
+| Over-Mocking | Mocking internal classes | Test through public API |
+| Multi-Behavior | > 3 assertions per test | Split into separate tests |
+| Fat Fixtures | Excessive setup (> 20 lines) | Create focused fixtures |
+| Conditional Logic | `if`/`else` in tests | Split into separate tests |
+| Dry-Run Dependency | Always `backend="dry_run"` | Use real backend for feature tests |
+
+### Naming Antipatterns
+
+| Bad | Good |
+|-----|------|
+| `test_checkout_calls_payment_gateway` | `test_checkout_succeeds_with_valid_card` |
+| `test_user_validation_regex` | `test_rejects_invalid_email_format` |
+| `test_1()`, `test_process()` | `test_rejects_negative_quantity()` |
+
+### Logic Antipatterns
+
+**Test without assertions:**
+```python
+# BAD
+def test_something():
+    process_data()  # No assertions!
+
+# GOOD
+def test_something():
+    result = process_data()
+    assert result.status == "completed"
+```
+
+**Testing multiple things:**
+```python
+# BAD - too much!
+def test_order_processing():
+    # Creates order, validates inventory, charges payment, sends email
+
+# GOOD - one thing per test
+def test_order_creation_returns_order_id(): ...
+def test_order_charges_payment(): ...
+def test_order_sends_confirmation_email(): ...
+```
+
+**Dry-run dependency:**
+```python
+# BAD - Always using dry-run for feature tests
+def test_generation():
+    init_pipeline(backend="dry_run")
+    result = generate_image(params)
+    assert result is not None  # Doesn't verify real generation
+
+# GOOD - Use real backend for feature verification
+def test_generation():
+    init_pipeline(backend="comfyui")
+    result = generate_image(params)
+    assert result is not None
+    assert result.size == expected_size
+```
 
 ---
 
@@ -120,11 +185,8 @@ import { useEffect } from 'react';
 
 function createMockEventSource() {
   return {
-    onmessage: null,
-    onerror: null,
-    onopen: null,
-    close: jest.fn(),
-    readyState: 1 // OPEN
+    onmessage: null, onerror: null, onopen: null,
+    close: jest.fn(), readyState: 1 // OPEN
   };
 }
 
@@ -132,46 +194,11 @@ beforeEach(() => {
   global.EventSource = jest.fn().mockImplementation(createMockEventSource);
 });
 
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
 test('connects to SSE endpoint', () => {
   const { result } = renderHook(() => useSSEStream('test-batch-123'));
-  
   expect(EventSource).toHaveBeenCalledWith(
     '/api/generate/stream?batchId=test-batch-123'
   );
-});
-
-test('parses preview events', async () => {
-  const previewHandler = jest.fn();
-  let eventSourceInstance: ReturnType<typeof createMockEventSource>;
-  
-  global.EventSource = jest.fn().mockImplementation((url: string) => {
-    eventSourceInstance = createMockEventSource();
-    return eventSourceInstance;
-  });
-  
-  renderHook(() => {
-    const handler = useSSEStream('test-batch-123');
-    useEffect(() => {
-      handler.onPreview = previewHandler;
-    }, []);
-  });
-  
-  act(() => {
-    eventSourceInstance!.onmessage?.({ data: JSON.stringify({
-      imageBase64: 'abc123',
-      imageIdx: 0,
-      minibatchIdx: 0
-    })});
-  });
-  
-  expect(previewHandler).toHaveBeenCalledWith(expect.objectContaining({
-    imageBase64: 'abc123',
-    imageIdx: 0
-  }));
 });
 ```
 
@@ -195,27 +222,13 @@ async def test_sse_stream_opens():
 
 @pytest.mark.asyncio
 async def test_sse_preview_events():
-    """Test that preview events contain expected fields."""
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", "http://testserver/api/generate/stream?batchId=test123") as response:
             events = []
             async for line in response.aiter_lines():
                 if line.startswith("data:"):
                     events.append(json.loads(line[5:]))
-            
             assert any(e.get("event") == "preview" for e in events)
-
-@pytest.mark.asyncio
-async def test_sse_done_event():
-    """Test that done event is emitted on completion."""
-    async with httpx.AsyncClient() as client:
-        async with client.stream("GET", "http://testserver/api/generate/stream?batchId=test123") as response:
-            done_events = []
-            async for line in response.aiter_lines():
-                if line.startswith("event: done"):
-                    done_events.append(line)
-            
-            assert len(done_events) >= 1
 ```
 
 ### Event Buffer Testing
@@ -227,31 +240,16 @@ from src.sse_buffer import EventBuffer
 class TestEventBuffer:
     def test_add_and_get_events(self):
         buffer = EventBuffer(max_events=50, ttl_seconds=3600)
-        
         buffer.add_event("batch1", {"type": "preview", "data": "test"})
         buffer.add_event("batch1", {"type": "status", "data": "progress"})
-        
         events = buffer.get_events_since("batch1", after_index=0)
         assert len(events) == 2
     
     def test_max_events_eviction(self):
         buffer = EventBuffer(max_events=3, ttl_seconds=3600)
-        
         for i in range(5):
             buffer.add_event("batch1", {"index": i})
-        
         events = buffer.get_events_since("batch1", after_index=-1)
         assert len(events) == 3
         assert events[-1]["index"] == 4
-    
-    def test_reconnect_resume(self):
-        buffer = EventBuffer(max_events=50, ttl_seconds=3600)
-        
-        for i in range(10):
-            buffer.add_event("batch1", {"index": i})
-        
-        # Client reconnects, wants events after index 5
-        events = buffer.get_events_since("batch1", after_index=5)
-        assert len(events) == 4
-        assert events[0]["index"] == 6
 ```

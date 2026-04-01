@@ -37,14 +37,14 @@ Evidence: [specific line/section in ticket that assumes existence]
 ```
 ❌ BLOCKED: Architecture Contradiction
 
-Issue: This ticket says [X], but [Ticket Y / STANDARDS.md] says [not-X]
+Issue: This ticket says [X], but [Ticket Y / Architecture Decisions] says [not-X]
 
 Required before Task 1:
 - [ ] Coordinating ticket resolves contradiction, OR
-- [ ] Architectural decision documented in STANDARDS.md, OR
+- [ ] Architectural decision documented in spec-writer skill, OR
 - [ ] One ticket marked authoritative, others updated/withdrawn
 
-Evidence: This ticket line [N] vs [Ticket Y line M / STANDARDS.md section]
+Evidence: This ticket line [N] vs [Ticket Y line M / Architecture Decisions section]
 ```
 
 ## Pattern 3: Scope Gaps (lines 159-175)
@@ -101,7 +101,7 @@ Touchpoints needing security review:
 Required before Task 1:
 - [ ] Security review completed
 - [ ] Validation/isolation strategy specified
-- [ ] STANDARDS.md security checklist applied
+- [ ] Architecture Decisions security checklist applied
 
 Evidence: Section [N] lacks [security spec]
 ```
@@ -119,7 +119,7 @@ Open questions:
 
 Required before Task 1:
 - [ ] Decision made and documented in ticket, OR
-- [ ] STANDARDS.md updated with decision, OR
+- [ ] Architecture Decisions checked for existing decision, OR
 - [ ] Task 0 added: "Decide [question]"
 
 Evidence: "Open questions" section or "TBD" in Section [N]
@@ -161,7 +161,7 @@ Changes needing tests:
 Required before Task 1:
 - [ ] Test strategy updated with specific tests
 - [ ] Verification tests added for public API changes
-- [ ] STANDARDS.md test requirements applied
+- [ ] Architecture Decisions test requirements applied
 
 Evidence: "Testing strategy" section lacks [specific test]
 ```
@@ -181,7 +181,7 @@ Required before Task 1:
 - [ ] Layer architecture documented
 - [ ] Module assigned to specific layer
 - [ ] Dependencies match layer rules
-- [ ] STANDARDS.md layer ownership applied
+- [ ] Architecture Decisions layer ownership applied
 
 Evidence: Task [N] creates [module] with [mixed responsibilities]
 ```
@@ -202,7 +202,7 @@ Required before Task 1:
 - [ ] Cleanup strategy (eviction, TTL, max size)
 - [ ] Performance budget (response time, memory)
 - [ ] Size limits for user input
-- [ ] STANDARDS.md defaults applied
+- [ ] Architecture Decisions defaults applied
 
 Evidence: Section [N] lacks [resource spec]
 ```

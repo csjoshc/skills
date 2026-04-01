@@ -178,6 +178,9 @@ The skill reads this manifest on subsequent calls to merge answers across rounds
 
 ## Assumptions & Escalation
 
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for write-prd:**
 - **Tier 1 (reversible):** Low ambiguity (score < 0.2) — proceed without HITL.
 - **Tier 2 (conflict):** PRD draft contradicts existing project requirements — **STOP**, clarify with user.
 - **Tier 3 (security):** PRD request involves PII or security-sensitive infrastructure — **STOP**, block and alert immediately.

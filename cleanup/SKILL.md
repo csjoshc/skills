@@ -23,16 +23,16 @@ Apply **[`QUALITY_RUBRIC.md`](./QUALITY_RUBRIC.md)** to **source code already in
 
 ## Mandatory pre-reads
 
-1. **`AGENTS.md`** — exclusions, layout, agent rules.  
-2. **`STANDARDS.md`** (project + `~/.skills/STANDARDS.md` if referenced) — resolve ambiguities; do not invent policy.  
+1. **`AGENTS.md`** — exclusions, layout, agent rules.
+2. **Architecture Decisions** (in `~/.skills/shared/ARCHITECTURE_DECISIONS.md`) — resolve ambiguities; do not invent policy.
 3. **`QUALITY_RUBRIC.md`** — full criteria (mechanical **M1–M12**, subjective tiers, anti-patterns, layers).
 
 ## Workflow
 
-1. **Scope** — paths, package, or PR diff the user named; default to project source per `AGENTS.md`.  
-2. **Map** observations to rubric **§Part 2–4** (which dimension or M-pattern).  
-3. **Evidence** — every finding: **file path**, symbol or line region, **why** it violates the rubric, **suggested fix** (or “needs STANDARDS decision” if policy gap).  
-4. **Output** — structured review (markdown sections per dimension/pattern, or org-required JSON).  
+1. **Scope** — paths, package, or PR diff the user named; default to project source per `AGENTS.md`.
+2. **Map** observations to rubric **§Part 2–4** (which dimension or M-pattern).
+3. **Evidence** — every finding: **file path**, symbol or line region, **why** it violates the rubric, **suggested fix** (or "needs Architecture Decisions" if policy gap).
+4. **Output** — structured review (markdown sections per dimension/pattern, or org-required JSON).
 5. **Prioritize** — address **Tier A–C** subjective issues and **M** patterns that affect reliability/security first.
 
 ## Persona
@@ -69,8 +69,11 @@ Output: Findings categorized by severity (Tier A-C), M-patterns violated, and pr
 
 ## Assumptions & Escalation
 
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for cleanup:**
 - **Tier 1 (reversible):** Minor style issues — proceed, flag for post-review
-- **Tier 2 (architecture):** Design concerns blocking — check STANDARDS.md, block if unresolved
+- **Tier 2 (architecture):** Design concerns blocking — check Architecture Decisions, block if unresolved
 - **Tier 3 (security):** Security vulnerabilities — always block for human confirmation
 
 ## Decision Tree

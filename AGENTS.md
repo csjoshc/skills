@@ -35,9 +35,10 @@ This is a **skills repository** containing AI agent skills for various developme
 
 ### 1. Before Making Changes
 
-1. **Read STANDARDS.md** — Contains architectural decisions and resolved questions
-2. **Check existing skills** — Avoid duplicating functionality
-3. **Review ticket specs** — Located in `.tickets/` directory
+1. **Check `~/.skills/STANDARDS.md`** — Now an index pointing to specialized skills
+2. **Read the specific skill** for your task (spec-writer for architecture, ticket-critic for blockers)
+3. **Check existing skills** — Avoid duplicating functionality
+4. **Review ticket specs** — Located in `.tickets/` directory
 
 ### 2. Creating New Skills
 
@@ -84,18 +85,20 @@ skill-name/
 3. Register in `skill-discovery-index.md`
 4. Test invocation via agent tool
 
-### Updating STANDARDS.md
+### Updating Architecture Decisions
 
-1. Add new resolved questions under "Resolved Questions"
-2. Document architectural decisions
-3. Update security checklist if needed
-4. Append project-specific section if major changes
+Architecture decisions are now embedded in the `spec-writer` skill:
+
+1. Add new resolved questions under "Resolved Questions" in spec-writer skill
+2. Document architectural decisions in spec-writer skill
+3. Update security checklist in spec-writer skill if needed
+4. For project-specific patterns, update local STANDARDS.md
 
 ### Working with Tickets
 
 1. Check `.tickets/` for ticket specifications
 2. Use `ticket-critic` skill to review tickets
-3. Follow blocker detection checklist in STANDARDS.md
+3. Follow blocker detection checklist in ticket-critic skill
 4. Update ticket status as you work
 
 ---
@@ -143,13 +146,13 @@ skill-name/
 | Write spec | `/spec-writer` |
 | Create PR | `/create-pr` |
 | Sync skills | `python sync.py` |
-| Check standards | Read `STANDARDS.md` |
+| Check standards | Read `~/.skills/STANDARDS.md` (index) → specific skill |
 
 ---
 
 ## Getting Help
 
 - **Skill documentation:** Check skill's `README.md`
-- **Architecture questions:** See `STANDARDS.md`
+- **Architecture questions:** See `~/.skills/STANDARDS.md` → points to spec-writer skill
 - **Ticket specs:** `.tickets/` directory
 - **Logs:** `.orchestra_logs/` directory

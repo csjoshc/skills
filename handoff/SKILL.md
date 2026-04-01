@@ -199,6 +199,9 @@ Add an optional line under "Constraints" or "Context":
 
 ## Assumptions & Escalation
 
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for handoff:**
 - **Tier 1 (reversible):** Missing secondary file path — proceed, note the gap in "Open questions".
 - **Tier 2 (conflict):** Handoff request contradicts current implementation — **STOP**, clarify with user before generating the prompt.
 - **Tier 3 (security):** Handoff prompt includes secrets (API keys, tokens) — **STOP**, redact immediately, block and alert.

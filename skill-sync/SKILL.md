@@ -25,7 +25,7 @@ python3 ~/.skills/skill-sync/sync.py
 ## Decision Tree
 
 1. **Are you on Windows?**
-   - YES → Use `mklink /D` via CMD/Git Bash. Refer to `GLOBAL_SYMLINKS.md` Windows columns.
+   - YES → Use `mklink /D` via CMD/Git Bash. Refer to `~/.skills/shared/SYMLINK_MAP.md` for correct paths.
    - NO (macOS/Linux) → Use `ln -sf`. Refer to POSIX columns.
 
 2. **Is a platform directory missing its skills link?**
@@ -38,7 +38,7 @@ python3 ~/.skills/skill-sync/sync.py
 ## Workflow
 
 ### 1. Environment Check
-Check if you are running on Windows vs macOS/Linux. Refer to [GLOBAL_SYMLINKS.md](./GLOBAL_SYMLINKS.md) for correct paths.
+Check if you are running on Windows vs macOS/Linux. Refer to [`~/.skills/shared/SYMLINK_MAP.md`](~/.skills/shared/SYMLINK_MAP.md) for correct paths.
 
 ### 2. Platform Audit
 Iterate through platforms (Cursor, Gemini, VS Code/Copilot). Verify each skills directory is a symlink pointing to `~/.skills`.

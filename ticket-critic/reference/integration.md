@@ -21,9 +21,11 @@ With missing/invalid `Stage:` header, ticket-critic must block and route remedia
 ## With project-onboarding
 
 **Flow:**
-1. project-onboarding checks for `~/.skills/STANDARDS.md`
-2. If exists → merge into project context
-3. ticket-critic uses merged STANDARDS.md for auto-resolution
+1. project-onboarding checks for `~/.skills/STANDARDS.md` (now an index)
+2. If exists → creates local STANDARDS.md index pointing to global skills
+3. ticket-critic uses Architecture Decisions in spec-writer skill for auto-resolution
+
+**Note:** The global `STANDARDS.md` is now a thin index (~100 lines) pointing to specialized skills. Local STANDARDS.md files should follow the same pattern.
 
 ## With cleanup (QUALITY_RUBRIC only)
 

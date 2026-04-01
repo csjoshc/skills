@@ -1,16 +1,18 @@
 ---
 name: ticket-critic
 description: >-
-  Pre-implementation critic for .tickets/*.md — 10 blocking patterns, STANDARDS.md auto-resolve,
-  Stage header gate, blast-radius splits (≤5 files / epic), TDD & verification mandates, and
-  optional ticket hardening using the cleanup QUALITY_RUBRIC. Use before
+  Pre-implementation critic for .tickets/*.md — 10 blocking patterns (embedded), auto-resolve
+  via Architecture Decisions, Stage header gate, blast-radius splits (≤5 files / epic), TDD &
+  verification mandates, and optional ticket hardening using the cleanup QUALITY_RUBRIC. Use before
   spec-writer or tdd when work is ticket-driven; use cleanup skill for reviewing existing code only.
 
 ## Assumptions & Escalation
 
 - **Tier 1 (reversible):** Missing dependency in the ticket — proceed, flag for review.
-- **Tier 2 (conflict):** Ticket violates `STANDARDS.md` core patterns — **STOP**, block and alert.
+- **Tier 2 (conflict):** Ticket violates Architecture Decisions (spec-writer skill) — **STOP**, block and alert.
 - **Tier 3 (security):** Ticket implementation touches sensitive auth logic without a plan — **STOP**, block immediately.
+
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
 
 ## TL;DR (Quick Start)
 
@@ -46,17 +48,177 @@ Adversarial pre-flight audit for tickets in `.tickets/`. Prevents wasted effort 
 You do **not** write specs or implementation. You **audit tickets** for the 10 blocking patterns and either:
 1. **Clear the ticket** (all patterns addressed)
 2. **Block with specific reasons** (which patterns failed, what's needed)
-3. **Auto-resolve** via STANDARDS.md (if question already answered)
+3. **Auto-resolve** via Architecture Decisions (if question already answered)
 
 ## Operating Principles
 
 **Block early, block clearly:** Better to block for 10 minutes now than waste 4 hours implementing the wrong thing. Be **specific** about what's missing and **actionable** about how to fix it.
 
-**Auto-resolve when possible:** Check `./STANDARDS.md` and `~/.skills/STANDARDS.md` before blocking on any question.
+**Auto-resolve when possible:** Check embedded Architecture Decisions below before blocking on any question.
 
-**Risk-tier assumptions:** Tier 1 (reversible) → proceed. Tier 2 (architecture) → check STANDARDS.md. Tier 3 (security/safety) → always block. See [Assumption Tiers](#assumption-tiers).
+**Risk-tier assumptions:** Tier 1 (reversible) → proceed. Tier 2 (architecture) → check Architecture Decisions. Tier 3 (security/safety) → always block. See [Assumption Tiers](#assumption-tiers).
 
 **Evidence-based:** Cite specific lines/sections. Don't say "might be a problem."
+
+---
+
+## Pre-Flight Checklist (Embedded from STANDARDS.md)
+
+**Purpose:** Catch blocking issues during ticket review, not during implementation. Run this checklist BEFORE marking a ticket READY.
+
+### 1. Dependency Detection
+
+**Trigger:** Ticket mentions functionality that may not exist yet.
+
+**Check for these patterns:**
+
+- [ ] "Already returns X" without file reference
+- [ ] "Backend provides X" without endpoint specification
+- [ ] "Frontend calls X" without API contract
+- [ ] "Uses existing X" without linking to existing implementation
+- [ ] Depends on another ticket that's not merged
+
+**If any match → Add to ticket:**
+
+```markdown
+### Dependencies
+
+**Blocking Dependencies:**
+
+- [ ] #TicketNumber — [what's needed, e.g., "POST /api/workflow/load endpoint"]
+- [ ] #TicketNumber — [what's needed]
+
+**Dependency Status:**
+
+- [ ] All dependencies merged to main
+- [ ] API contracts stable (no pending changes)
+- [ ] OR Task 0 added: "Verify [dependency] exists"
+```
+
+**Action:** Create linked dependency ticket or add Task 0 verification.
+
+---
+
+### 2. Redesign / Redarchitecture Triggers
+
+**Trigger:** Original design has flaws that block implementation.
+
+**Check for these patterns:**
+
+- [ ] "OUT of scope: X" but X is required for feature to work
+- [ ] Security vulnerability (user input → sensitive operation without validation)
+- [ ] Subprocess execution from HTTP endpoint
+- [ ] Direct file path exposure (path traversal risk)
+- [ ] Architecture contradicts existing patterns
+- [ ] Layer confusion (domain logic + infrastructure in same module)
+
+**If any match → Add to ticket:**
+
+```markdown
+### Design Issues
+
+**Critical Flaws:**
+
+- [ ] [Describe flaw, e.g., "Security: user input to subprocess without validation"]
+- [ ] [Describe flaw, e.g., "Scope gap: X is OUT of scope but required for Y"]
+
+**Required Redesign:**
+
+- [ ] Security review completed
+- [ ] Scope boundary updated (move X from OUT to IN scope)
+- [ ] OR Task 0 added: "Redesign [component] to address [flaw]"
+
+**Proposed Solution:** [brief description of fix]
+```
+
+**Action:** Redesign before implementation, or add Task 0 for redesign spike.
+
+---
+
+### 3. Contradicting Ticket Detection
+
+**Trigger:** Multiple tickets make conflicting recommendations.
+
+**Check for these patterns:**
+
+- [ ] Ticket A says "split X", Ticket B says "keep X cohesive"
+- [ ] Both tickets approved for same system with different approaches
+- [ ] No coordinating ticket for related refactors
+- [ ] Refactor tickets without dependency sequencing
+
+**If any match → Add to ticket:**
+
+```markdown
+### Architectural Contradictions
+
+**Conflicts With:**
+
+- [ ] #TicketNumber — [describe contradiction, e.g., "says split api_types.py, this says keep as-is"]
+
+**Resolution Required:**
+
+- [ ] Coordinating ticket (#TicketNumber) approves this approach
+- [ ] Architecture Decisions updated with architectural decision
+- [ ] OR Task 0 added: "Resolve contradiction with #TicketNumber"
+
+**Coordinating Ticket:** #TicketNumber (if applicable)
+```
+
+**Action:** Designate coordinating ticket, resolve contradiction before implementation.
+
+---
+
+### 4. Research / Vagueness Detection
+
+**Trigger:** Ticket lacks detail needed for implementation.
+
+**Check for these patterns:**
+
+- [ ] "Open questions" section with unanswered items
+- [ ] "TBD" or "FIXME" in spec
+- [ ] Multiple approaches listed without selection
+- [ ] UI location, API pattern, or data model undecided
+- [ ] Success criteria without baseline/target/measurement
+- [ ] "Works correctly" (not binary)
+- [ ] No tests specified for refactor
+
+**If any match → Add to ticket:**
+
+```markdown
+### Research Needed
+
+**Unanswered Questions:**
+
+- [ ] [Question 1, e.g., "Where does import UI live: Generator tab or settings modal?"]
+- [ ] [Question 2, e.g., "What's the baseline coverage for target files?"]
+
+**Required Research:**
+
+- [ ] Architecture Decisions checked for resolved questions
+- [ ] Task 0 added: "Research [topic]"
+- [ ] OR decision made and documented in ticket
+
+**Research Type:** [dependency / redesign / contradiction / vagueness]
+```
+
+**Action:** Add Task 0 research spike, or answer questions before implementation.
+
+---
+
+### Quick Reference: Blocker Patterns
+
+| Pattern             | Example                              | Action                           |
+| ------------------- | ------------------------------------ | -------------------------------- |
+| **Dependency**      | "Backend returns X" without endpoint | Add dependency ticket or Task 0  |
+| **Security**        | User input → subprocess              | Redesign + security review       |
+| **Scope Gap**       | "OUT of scope: X" but X required     | Move to IN scope or split ticket |
+| **Contradiction**   | Ticket A vs Ticket B conflict        | Coordinating ticket resolves     |
+| **Vagueness**       | "Works correctly"                    | Define binary criteria           |
+| **No Baseline**     | "≥90% coverage"                      | Measure baseline first           |
+| **No Tests**        | Refactor without tests               | Add verification tests           |
+| **Layer Confusion** | Domain + infrastructure mixed        | Clarify layer ownership          |
+
+---
 
 ## Mandatory Preflight: Stage Header Gate
 
@@ -71,9 +233,7 @@ Stage: BUILD
 ---
 ```
 
-Allowed enum: `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
-
-If `Stage:` is missing or invalid, block immediately. Block message: see [templates/block-messages.md](templates/block-messages.md) — Stage Header Gate section.
+For the canonical stage enum and transitions, see the **orchestrate** skill.
 
 ## The 10 Blocking Patterns
 
@@ -87,19 +247,19 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Verification:** List all external dependencies → verify existence (codebase, PR status, merge state) → if not merged, check for stable API contract → if no contract, add Task 0 or block.
 
-**Auto-resolve:** If dependency is a standard pattern defined in STANDARDS.md → proceed.
+**Auto-resolve:** If dependency is a standard pattern defined in Architecture Decisions → proceed.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 1.
 
 ### Pattern 2: Architecture Contradictions
 
-**Check:** Does this ticket conflict with other approved tickets or STANDARDS.md?
+**Check:** Does this ticket conflict with other approved tickets or Architecture Decisions?
 
 **Red flags:** Ticket proposes X, another proposes not-X; multiple tickets with different approaches for same system; no coordinating ticket for related refactors.
 
-**Verification:** Search for tickets affecting same files/systems → check STANDARDS.md for resolved decisions → if contradiction, determine authoritative ticket → if unclear, block.
+**Verification:** Search for tickets affecting same files/systems → check Architecture Decisions for resolved decisions → if contradiction, determine authoritative ticket → if unclear, block.
 
-**Auto-resolve:** If STANDARDS.md already decides this question → apply that decision.
+**Auto-resolve:** If Architecture Decisions already decides this question → apply that decision.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 2.
 
@@ -123,7 +283,7 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Verification:** List all assumptions → for each, check for evidence (file reference, test, log) → if no evidence, add Task 0 "Verify [assumption]".
 
-**Auto-resolve:** If assumption matches STANDARDS.md default → proceed.
+**Auto-resolve:** If assumption matches Architecture Decisions default → proceed.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 4.
 
@@ -133,9 +293,9 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Red flags:** User input → backend without validation spec; file path exposure; subprocess from HTTP endpoint; auth requirements not specified; rate limiting not mentioned.
 
-**Verification:** Identify all user input touchpoints and sensitive operations → check for validation/isolation → apply STANDARDS.md security checklist.
+**Verification:** Identify all user input touchpoints and sensitive operations → check for validation/isolation → apply Security Checklist in Architecture Decisions.
 
-**Auto-resolve:** If STANDARDS.md security checklist covers this → apply those requirements.
+**Auto-resolve:** If Security Checklist in Architecture Decisions covers this → apply those requirements.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 5.
 
@@ -145,9 +305,9 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Red flags:** "Open questions" section unanswered; "TBD" or "FIXME" in spec; multiple approaches listed without selection.
 
-**Verification:** List all open questions → check if each blocks implementation → if yes, check STANDARDS.md → if not answered, block.
+**Verification:** List all open questions → check if each blocks implementation → if yes, check Architecture Decisions → if not answered, block.
 
-**Auto-resolve:** If question answered in STANDARDS.md → apply that answer.
+**Auto-resolve:** If question answered in Architecture Decisions → apply that answer.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 6.
 
@@ -159,7 +319,7 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Verification:** Check each criterion is binary (pass/fail) → check metrics have baseline, target, measurement method → check verification plan exists.
 
-**Auto-resolve:** If metric is a project default per STANDARDS.md → apply default.
+**Auto-resolve:** If metric is a project default per Architecture Decisions → apply default.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 7.
 
@@ -171,7 +331,7 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Verification:** Identify all public API/behavior changes → check for verification tests → check test strategy matches change type.
 
-**Auto-resolve:** If STANDARDS.md defines test requirements → apply those.
+**Auto-resolve:** If Architecture Decisions defines test requirements → apply those.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 8.
 
@@ -181,9 +341,9 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Red flags:** Function does domain logic + DB calls + HTTP; "Service" layer with no orchestration; domain layer with external dependencies.
 
-**Verification:** List all new/modified modules → determine layer ownership → check dependencies match layer rules → apply STANDARDS.md layer ownership.
+**Verification:** List all new/modified modules → determine layer ownership → check dependencies match layer rules → apply Layer Ownership in Architecture Decisions.
 
-**Auto-resolve:** If STANDARDS.md defines layers → apply those rules.
+**Auto-resolve:** If Layer Ownership in Architecture Decisions defines layers → apply those rules.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 9.
 
@@ -195,14 +355,14 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 **Verification:** Identify all data storage and user-triggered operations → check for cleanup strategy, performance budgets, size limits.
 
-**Auto-resolve:** If STANDARDS.md defines defaults (e.g., "LRU eviction, max 100 entries") → apply those.
+**Auto-resolve:** If Architecture Decisions defines defaults (e.g., "LRU eviction, max 100 entries") → apply those.
 
 **Block message:** see [templates/block-messages.md](templates/block-messages.md) — Pattern 10.
 
 ## Workflow
 
 1. **Read ticket** — Identify purpose, scope, dependencies, assumptions, open questions, success criteria, test strategy.
-2. **Check STANDARDS.md** — Before blocking, check `./STANDARDS.md` and `~/.skills/STANDARDS.md`. If answered → auto-resolve.
+2. **Check Architecture Decisions** — Before blocking, check embedded Architecture Decisions in spec-writer skill. If answered → auto-resolve.
 3. **Stage Header Gate** — Validate `Stage:` field against allowed enum. Block immediately if missing/invalid.
 4. **Audit 10 patterns** — For each: check red flags, run verification, mark ✅/⚠️/❌, document evidence.
 5. **Generate report** — Use the format below.
@@ -225,8 +385,8 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 ### Pattern N: [Name] — [STATUS]
 [Findings, evidence, required actions]
 
-## Auto-Resolved via STANDARDS.md
-- [Question X]: Applied STANDARDS.md section [Y]
+## Auto-Resolved via Architecture Decisions
+- [Question X]: Applied Architecture Decisions section [Y]
 
 ## Required Actions Before Task 1
 1. [Specific action 1]
@@ -243,7 +403,7 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 ```
 [ ] Stage Header Gate passed (`Stage:` present and valid enum)
 [ ] All 10 patterns audited
-[ ] STANDARDS.md checked for each open question
+[ ] Architecture Decisions checked for each open question
 [ ] Evidence cited for each blocker (specific line/section)
 [ ] Required actions are specific and actionable
 [ ] Risk assessment completed
@@ -252,21 +412,22 @@ Audit every ticket against these 10 patterns. For each: ✅ (pass), ⚠️ (warn
 
 ## Assumption Tiers
 
-| Tier | Impact | Examples | Action |
-|------|--------|----------|--------|
-| 1: Reversible | LOW | Naming, file locations, UI copy, easy-migration libraries | Proceed, flag for post-review |
-| 2: Architecture | MEDIUM | API patterns, data model, layer ownership | Check STANDARDS.md, block if unresolved |
-| 3: Safety/Security | HIGH | Auth, data sensitivity, public API contracts | Always block for human confirmation |
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for ticket-critic:**
+- **Tier 1:** Missing dependency in ticket — proceed, flag for review
+- **Tier 2:** Ticket violates Architecture Decisions — **STOP**, block and alert
+- **Tier 3:** Ticket touches sensitive auth logic without a plan — **STOP**, block immediately
 
 ## Ticket Shape & Implementation Readiness
 
-When creating or auditing tickets (orchestrate + spec-writer alignment), ensure:
+For ticket format requirements, see **spec-writer** skill Section 3 (TASKS output format) and **orchestrate** skill for state machine rules. Key checkpoints:
 
-1. **YAML front matter** — `Stage:`, `Type`, `Order`, `Depends-On`, `Parent` per pipeline.
-2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to files.
-3. **Target files** — explicit list; **≤ 5 production files** per implementation ticket (see blast radius below).
-4. **Verification (TDD)** — floor: project test suite; new tests when behavior changes.
-5. **Ticket critic preflight** — this skill's 10 patterns + Stage gate.
+1. **YAML front matter** — `Stage:`, `Type`, `Order`, `Depends-On`, `Parent` per pipeline
+2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to files
+3. **Target files** — explicit list; **≤ 5 production files** per implementation ticket (see blast radius below)
+4. **Verification (TDD)** — floor: project test suite; new tests when behavior changes
+5. **Ticket critic preflight** — this skill's 10 patterns + Stage gate
 
 ## Blast Radius & Epic Split
 
@@ -276,15 +437,13 @@ When creating or auditing tickets (orchestrate + spec-writer alignment), ensure:
 
 ## Strict TDD & Verification (BUILD-bound tickets)
 
-When the ticket implies implementation:
+When the ticket implies implementation, follow the **tdd** skill for test-first development. Key mandates:
 
-- **TDD:** State explicitly: tests written first (red → green → refactor) unless docs/planning-only.
-- **Frontend:** Mandate Playwright (or project E2E standard) for new/changed user-visible behavior.
-- **Backend (Python):** pytest for contracts, I/O boundaries, happy + unhappy paths.
-- **Other stacks:** Name the actual test runner.
-- **Verification section:** Concrete commands (e.g., `pytest tests/ -q`, `npx playwright test`) plus linters/typecheck.
-- **Self-review (pre-REVIEW):** DRY, maintainability, boundaries per QUALITY_RUBRIC.md; no unjustified god files.
-- **Principal staff lens:** Prioritize code deletion and pragmatic modularity; unify scattered AI patterns into one predictable standard per concern.
+- **TDD:** Tests written first (red → green → refactor) unless docs/planning-only
+- **Frontend:** Mandate Playwright (or project E2E standard) for new/changed user-visible behavior
+- **Backend (Python):** pytest for contracts, I/O boundaries, happy + unhappy paths
+- **Verification section:** Concrete commands (e.g., `pytest tests/ -q`) plus linters/typecheck
+- **Self-review (pre-REVIEW):** DRY, maintainability, boundaries per QUALITY_RUBRIC.md
 
 ## Integration & Reference Files
 
@@ -295,6 +454,6 @@ When the ticket implies implementation:
 
 ## Maintenance
 
-**Update this skill when:** New blocking pattern identified; STANDARDS.md structure changes; audit process refined.
+**Update this skill when:** New blocking pattern identified; Architecture Decisions structure changes; audit process refined.
 
 **Metrics to track:** Blocker detection rate; false positive rate; auto-resolution rate.

@@ -119,5 +119,5 @@ Use this skill when you need to:
 ## Assumptions & Escalation
 
 - **Tier 1 (reversible):** Minor style issues — proceed, flag for post-review
-- **Tier 2 (architecture):** Design concerns blocking — check STANDARDS.md, block if unresolved
+- **Tier 2 (architecture):** Design concerns blocking — check Architecture Decisions (spec-writer skill), block if unresolved
 - **Tier 3 (security):** Security vulnerabilities — always block for human confirmation

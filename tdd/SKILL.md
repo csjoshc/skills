@@ -15,14 +15,16 @@ Write ONE failing test → write minimal code to pass → refactor. Repeat for e
 
 ## Assumptions & Escalation
 
-**[ASSUMPTION: Test framework available]** — If no test framework exists, add Task 0 to install pytest/vitest/jest per STANDARDS.md.
+See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.md) for canonical tier definitions.
+
+**Domain-specific examples for tdd:**
+- **Tier 1 (reversible):** Test naming, file location → proceed, flag for post-review
+- **Tier 2 (architecture):** Test framework choice, mocking strategy → check Architecture Decisions
+- **Tier 3 (security):** Testing auth/encryption flows → always block for human confirmation
+
+**[ASSUMPTION: Test framework available]** — If no test framework exists, add Task 0 to install pytest/vitest/jest per Architecture Decisions.
 
 **[ASSUMPTION: User can identify behaviors to test]** — If user unsure what to test, prompt: "What should the public interface do?" Focus on user-facing behaviors.
-
-**Escalation thresholds:**
-- Tier 1 (reversible): Test naming, file location → proceed, flag for post-review
-- Tier 2 (architecture): Test framework choice, mocking strategy → check STANDARDS.md
-- Tier 3 (security): Testing auth/encryption flows → always block for human confirmation
 
 ## Decision Tree
 
@@ -35,7 +37,7 @@ Use this skill when you need to:
 2. **What type of test is needed?**
    - Unit test (single function/class) → Test public methods, edge cases
    - Integration test (multiple components) → Test through public API
-   - E2E test (full user flow) → Use Playwright/cypress per STANDARDS.md
+   - E2E test (full user flow) → Use Playwright/cypress per Architecture Decisions
 
 3. **Is mocking appropriate?**
    - External services (API, DB) → Use mocks/stubs
@@ -136,7 +138,7 @@ RED: Add tests for JWT-specific behavior (expiry, refresh)
 
 **Bad tests** are coupled to implementation. They mock internal collaborators, test private methods, or verify through external means (like querying a database directly instead of using the interface). The warning sign: your test breaks when you refactor, but behavior hasn't changed. If you rename an internal function and tests fail, those tests were testing implementation, not behavior.
 
-See [TESTS.md](./TESTS.md) for examples and [MOCKING.md](./MOCKING.md) for mocking guidelines.
+See [TESTS.md](./TESTS.md) for test examples and antipatterns, [TEST_DESIGN.md](./TEST_DESIGN.md) for interface design and refactoring, and [MOCKING.md](./MOCKING.md) for mocking guidelines.
 
 ---
 
