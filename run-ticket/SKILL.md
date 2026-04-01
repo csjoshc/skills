@@ -10,7 +10,7 @@ description: >-
 
 Executes Orchestra tickets against a target project root using a selectable model runtime (Cursor, OpenCode, Gemini). Handles fallback chains and execution monitoring.
 
-**Orchestrator code lives outside the target repo:** resolve the Python entry under **`~/Projects/orchestrate`** (see [Orchestrator resolution](#orchestrator-resolution)). Do **not** assume `main.py` exists in the app project’s cwd.
+**Orchestrator code lives outside the target repo:** resolve the Python entry under **`~/Projects/orchestra`** (see [Orchestrator resolution](#orchestrator-resolution)). Do **not** assume `main.py` exists in the app project’s cwd.
 
 **When to use:** "run tickets", "execute ticket 001", "start orchestra".
 
@@ -43,15 +43,15 @@ run-ticket
 
 The ticket runner is **not** bundled inside arbitrary product repos. Before any execution step:
 
-1. **Canonical checkout:** `ORCHESTRA_HOME` = **`~/Projects/orchestrate`** (expand `~` to the user’s home directory, e.g. `/Users/<user>/Projects/orchestrate` on macOS).
-2. **Verify it exists:** `test -d "$HOME/Projects/orchestrate"` (or list that path). If missing, tell the user the orchestrator repo is absent or not cloned to that path—do **not** silently fall back to inventing a different command without stating this.
+1. **Canonical checkout:** `ORCHESTRA_HOME` = **`~/Projects/orchestra`** (expand `~` to the user’s home directory, e.g. `/Users/<user>/Projects/orchestra` on macOS).
+2. **Verify it exists:** `test -d "$HOME/Projects/orchestra"` (or list that path). If missing, tell the user the orchestrator repo is absent or not cloned to that path—do **not** silently fall back to inventing a different command without stating this.
 3. **Resolve the Python entrypoint** inside `ORCHESTRA_HOME`:
    - Prefer **`main.py`** at the root of that repo if present.
    - If there is no `main.py`, inspect the repo for the real entry (e.g. `pyproject.toml` `[project.scripts]`, `python -m <package>`, or a `cli/` script) and use **that** path—still under `ORCHESTRA_HOME`.
-4. **Run from `ORCHESTRA_HOME`:** Either `cd ~/Projects/orchestrate && python main.py ...` or `python ~/Projects/orchestrate/main.py ...` so the working directory and imports match how the orchestrator is meant to run.
+4. **Run from `ORCHESTRA_HOME`:** Either `cd ~/Projects/orchestra && python main.py ...` or `python ~/Projects/orchestra/main.py ...` so the working directory and imports match how the orchestrator is meant to run.
 5. **Target project stays separate:** `--project` (or equivalent) must still point at the **customer repo** root (the one containing `.tickets/`), not `ORCHESTRA_HOME`.
 
-**Failure mode:** If `~/Projects/orchestrate` is missing or has no runnable entrypoint, **stop** and report that explicitly. Optionally offer to **implement ticket work manually** in the target repo (same as when no orchestrator is installed)—but never claim “no CLI” without checking **`~/Projects/orchestrate` first**.
+**Failure mode:** If `~/Projects/orchestra` is missing or has no runnable entrypoint, **stop** and report that explicitly. Optionally offer to **implement ticket work manually** in the target repo (same as when no orchestrator is installed)—but never claim “no CLI” without checking **`~/Projects/orchestra` first**.
 
 ## When to Use
 
@@ -194,12 +194,17 @@ Advanced options (press Enter to skip)?
 
 ## Execution
 
-After the 5-step configuration, the skill constructs and runs the command using the **resolved orchestrator** under `~/Projects/orchestrate` (see [Orchestrator resolution](#orchestrator-resolution)). Replace `main.py` with the actual entry file if different.
+After the 5-step configuration, the skill constructs and runs the command using the **resolved orchestrator** under `~/Projects/orchestra` (see [Orchestrator resolution](#orchestrator-resolution)). Replace `main.py` with the actual entry file if different.
+
+See [`~/.skills/shared/ORCHESTRA_DEFAULTS.md`](~/.skills/shared/ORCHESTRA_DEFAULTS.md) for:
+- [ ] **Execution Profiles** (`work`, `mixed`, `private`)
+- [ ] **Model Tiers** (Frontier vs Standard)
+- [ ] **State Machine stages**
 
 ### Live Mode (default)
 Runs in foreground, streaming output to the current CLI session:
 ```bash
-cd ~/Projects/orchestrate && python main.py \
+cd ~/Projects/orchestra && python main.py \
   --project /path/to/project \
   --runtime-profile <profile_name> \
   [--ticket <ticket_file>] \
@@ -211,7 +216,7 @@ cd ~/Projects/orchestrate && python main.py \
 ### Background Mode
 Runs in background with output redirected, provides PID for monitoring:
 ```bash
-cd ~/Projects/orchestrate && python main.py \
+cd ~/Projects/orchestra && python main.py \
   --project /path/to/project \
   --runtime-profile <profile_name> \
   [--ticket <ticket_file>] \
@@ -220,46 +225,12 @@ cd ~/Projects/orchestrate && python main.py \
   [--ctx <context_size>] &
 ```
 
-### Profile Matching
+## Advanced Configuration & Runtimes
 
-If the user's selections match a pre-built profile in `runtime-policy.yaml`, use that profile name:
-
-| Selection | Matching Profile |
-|-----------|-----------------|
-| cursor, single | `only_cursor` |
-| cursor, chain [cursor, opencode] | `cursor_opencode` |
-| opencode, chain [opencode, qwen, gemini, cursor] | `opencode_chain` |
-| cursor, tiered | `cursor` (tier preset) |
-| opencode/gemini/qwen, tiered | `free` (tier preset) |
-
-If no matching pre-built profile exists, write a temporary runtime config:
-```bash
-cd ~/Projects/orchestrate && python main.py \
-  --project /path/to/project \
-  --runtime-config /tmp/orchestra-runtime-<timestamp>.yaml \
-  --runtime-profile default
-```
-
-## Available Runtimes
-
-| Runtime | Default Model | Requires |
-|---------|--------------|----------|
-| `cursor` | Auto (Composer 2) | Cursor installed and licensed |
-| `opencode` | opencode/qwen3.6-plus-free | opencode installed |
-| `gemini` | gemini-3-flash-preview | Google API key |
-| `qwen` | qwen3.5-plus | API access |
-| `ollama` | varies (user-configured) | Ollama running locally |
-
-## Pre-built Profiles (from runtime-policy.yaml)
-
-| Profile | Primary | Chain | Mode | Description |
-|---------|---------|-------|------|-------------|
-| `default` | cursor | [cursor] | single | Cursor-only, no fallback |
-| `only_cursor` | cursor | [cursor] | single | Same as default, explicit |
-| `cursor_opencode` | cursor | [cursor, opencode] | chain | Cursor with opencode fallback |
-| `opencode_chain` | opencode | [opencode, qwen, gemini, cursor] | chain | Full fallback chain |
-| `free` | varies | tiered | tiered | Free-model tier presets |
-| `cursor` | varies | tiered | tiered | Claude/Cursor tier presets |
+See **[`../orchestra/DETAILS.md`](../orchestra/DETAILS.md)** for progressive disclosure on:
+- **Profile Matching Logic** (Implicit vs Explicit)
+- **Custom Config YAML** (Examples and schema)
+- **Available Runtimes & Models** (Detailed lists)
 
 ## Monitoring Output
 
@@ -291,8 +262,8 @@ FAILED
 
 ## Common Mistakes
 
-- **`python main.py` in the product repo** — the orchestrator is under **`~/Projects/orchestrate`**, not the app monorepo; running `which`/glob in the wrong tree yields “not found” and wasted turns. Always resolve the entrypoint there first.
-- **Skipping existence checks** — if `~/Projects/orchestrate` is missing, say so and either clone/install per user docs or switch to manual ticket execution—do not pretend the generic skill invocation exists.
+- **`python main.py` in the product repo** — the orchestrator is under **`~/Projects/orchestra`**, not the app monorepo; running `which`/glob in the wrong tree yields “not found” and wasted turns. Always resolve the entrypoint there first.
+- **Skipping existence checks** — if `~/Projects/orchestra` is missing, say so and either clone/install per user docs or switch to manual ticket execution—do not pretend the generic skill invocation exists.
 - **Running without `--project` in wrong directory** — skill should detect missing `.tickets/` and prompt for project path
 - **Using `free` profile without API keys** — tiered profiles require valid credentials for all listed models
 - **Forgetting `ollama serve`** — ollama runtime requires the daemon running locally
@@ -300,16 +271,16 @@ FAILED
 
 ## CLI Reference
 
-All examples assume the orchestrator repo at **`~/Projects/orchestrate`** and entry **`main.py`**—adjust if that repo uses a different module/script name.
+All examples assume the orchestrator repo at **`~/Projects/orchestra`** and entry **`main.py`**—adjust if that repo uses a different module/script name.
 
 ```bash
-cd ~/Projects/orchestrate && python main.py --project /path/to/project
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --ticket 001-feature.md
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --dry-run
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --debug
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --runtime-profile only_cursor
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --runtime-config custom.yaml
-cd ~/Projects/orchestrate && python main.py --project /path/to/project --ctx 65536
+cd ~/Projects/orchestra && python main.py --project /path/to/project
+cd ~/Projects/orchestra && python main.py --project /path/to/project --ticket 001-feature.md
+cd ~/Projects/orchestra && python main.py --project /path/to/project --dry-run
+cd ~/Projects/orchestra && python main.py --project /path/to/project --debug
+cd ~/Projects/orchestra && python main.py --project /path/to/project --runtime-profile only_cursor
+cd ~/Projects/orchestra && python main.py --project /path/to/project --runtime-config custom.yaml
+cd ~/Projects/orchestra && python main.py --project /path/to/project --ctx 65536
 ```
 
 ### Key CLI Options
