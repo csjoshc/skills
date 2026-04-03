@@ -47,11 +47,11 @@ If selections don't match a pre-built profile, the orchestrator generates a temp
 
 | Selection | Resulting Policy |
 |-----------|------------------|
-| cursor, single | `only_cursor` |
-| cursor, chain [cursor, opencode] | `cursor_opencode` |
-| opencode, chain [...] | `opencode_chain` |
+| cursor, single | `work` |
+| cursor, chain [cursor, opencode] | `mixed` |
+| opencode, chain [...] | `qwen_chain` |
 | cursor, tiered | `cursor` (tier preset) |
-| free models, tiered | `free` (tier preset) |
+| free models, tiered | `cost_saver` (tier preset) |
 
 ### Custom Runtime Config
 For advanced users, provide a `.yaml` config:

@@ -16,6 +16,7 @@ Automated code review using specialized parallel agents (Bug Hunter, Standards, 
 **When to use:** "review this PR", "PR review", "code review".
 
 **Invocation:**
+
 ```bash
 /pr-review <owner/repo> <pr-number>
 ```
@@ -88,13 +89,13 @@ Launch **4 sub-agents in parallel**. Pass each the PR diff, summary, and merged 
 
 **Checklist — report if 4 of 5 criteria are YES:**
 
-| # | Criterion | Yes/No |
-|---|-----------|--------|
-| 1 | Can trace the exact code path to the failure | |
-| 2 | Failure occurs regardless of external state or input | |
-| 3 | No defensive code in the diff prevents this scenario | |
-| 4 | Issue is in changed code, not pre-existing | |
-| 5 | Can describe a concrete failing input or test case | |
+| #   | Criterion                                            | Yes/No |
+| --- | ---------------------------------------------------- | ------ |
+| 1   | Can trace the exact code path to the failure         |        |
+| 2   | Failure occurs regardless of external state or input |        |
+| 3   | No defensive code in the diff prevents this scenario |        |
+| 4   | Issue is in changed code, not pre-existing           |        |
+| 5   | Can describe a concrete failing input or test case   |        |
 
 #### Agent 2 — Standards Compliance
 
@@ -106,12 +107,12 @@ Launch **4 sub-agents in parallel**. Pass each the PR diff, summary, and merged 
 
 **Checklist — report if 4 of 4 criteria are YES:**
 
-| # | Criterion | Yes/No |
-|---|-----------|--------|
-| 1 | Can quote the exact rule code and text being violated | |
-| 2 | The rule applies to this file type and context | |
-| 3 | The violation is in changed code, not pre-existing | |
-| 4 | No documented override or exception exists for this case | |
+| #   | Criterion                                                | Yes/No |
+| --- | -------------------------------------------------------- | ------ |
+| 1   | Can quote the exact rule code and text being violated    |        |
+| 2   | The rule applies to this file type and context           |        |
+| 3   | The violation is in changed code, not pre-existing       |        |
+| 4   | No documented override or exception exists for this case |        |
 
 #### Agent 3 — Error Handling Auditor
 
@@ -123,12 +124,12 @@ Launch **4 sub-agents in parallel**. Pass each the PR diff, summary, and merged 
 
 **Checklist — report if 3 of 4 criteria are YES:**
 
-| # | Criterion | Yes/No |
-|---|-----------|--------|
-| 1 | Error handler exists in changed code (not pre-existing) | |
-| 2 | Can demonstrate a concrete scenario where the error is silently lost | |
-| 3 | No upstream handler catches and logs this error | |
-| 4 | A developer debugging production would be unable to diagnose this | |
+| #   | Criterion                                                            | Yes/No |
+| --- | -------------------------------------------------------------------- | ------ |
+| 1   | Error handler exists in changed code (not pre-existing)              |        |
+| 2   | Can demonstrate a concrete scenario where the error is silently lost |        |
+| 3   | No upstream handler catches and logs this error                      |        |
+| 4   | A developer debugging production would be unable to diagnose this    |        |
 
 **Severity:** CRITICAL (4/4 YES); HIGH (3/4 YES); MEDIUM (below threshold — do not report).
 
@@ -142,18 +143,19 @@ Launch **4 sub-agents in parallel**. Pass each the PR diff, summary, and merged 
 
 **Checklist — report if 3 of 4 criteria are YES:**
 
-| # | Criterion | Yes/No |
-|---|-----------|--------|
-| 1 | New or modified public function has no corresponding test | |
-| 2 | Can name a specific bug or regression this gap would miss | |
-| 3 | No integration or e2e test covers this behavior elsewhere | |
-| 4 | The untested code is in the changed files, not pre-existing | |
+| #   | Criterion                                                   | Yes/No |
+| --- | ----------------------------------------------------------- | ------ |
+| 1   | New or modified public function has no corresponding test   |        |
+| 2   | Can name a specific bug or regression this gap would miss   |        |
+| 3   | No integration or e2e test covers this behavior elsewhere   |        |
+| 4   | The untested code is in the changed files, not pre-existing |        |
 
 ### Step 5: Validate issues
 
 For each issue that met its checklist threshold, launch a **validation sub-agent** to independently re-evaluate the checklist. The validator receives the issue description, filled checklist, PR title/body, and relevant source code.
 
 **Validation process:**
+
 1. Read the flagged issue and its completed checklist
 2. For each YES criterion, independently verify it (trace code path, check defensive code, confirm rule exists, search for tests elsewhere)
 3. Flip any criterion from YES to NO if evidence doesn't hold
@@ -169,9 +171,10 @@ For each issue that met its checklist threshold, launch a **validation sub-agent
 ### Step 7: Post review
 
 **IMPORTANT**: Every comment must end with attribution:
+
 ```
 ---
-*Generated by Claude*
+*Generated by Cursor*
 ```
 
 **If issues found:** Post inline comments on the PR using `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments`. For small fixes, include a GitHub suggestion block. For larger fixes, describe the issue and approach. Then post a summary comment.

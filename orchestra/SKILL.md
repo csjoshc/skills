@@ -23,11 +23,9 @@ Headless, file-driven agent orchestration. Agents communicate via `Stage:` field
 
 **Invocation:**
 ```bash
-# Run all pending tickets (single mode, default)
-python main.py --project ~/Projects/myapp
-
-# Sequential mode for less capable providers
-python main.py --project ~/Projects/myapp --mode sequential
+orch run                            # interactive, prompts for config
+orch run --profile private          # non-interactive
+orch run --mode sequential          # sequential pipeline
 ```
 
 ## Decision Tree
@@ -98,28 +96,7 @@ Write `.tickets/<number>-<slug>.md` files directly. Required field: `Stage:` (mu
 
 ## Running Orchestra
 
-### CLI Flags
-
-| Flag | Purpose | Default |
-|------|---------|---------|
-| `--profile` | Select runtime profile | `private` (or `ORCHESTRA_PROFILE` env var) |
-| `--mode` | `single` or `sequential` | `single` |
-| `--model` | Override model for this run | Profile default |
-| `--concurrency` | Parallel workers (1-4) | `1` |
-| `--runtime-config` | Path to custom config file | None |
-
-### CLI Reference
-
-```bash
-# Run all pending tickets
-python main.py --project ~/Projects/myapp
-
-# Run a single ticket
-python main.py --project ~/Projects/myapp --ticket ~/Projects/myapp/.tickets/42-batch.md
-
-# Preview without executing
-python main.py --project ~/Projects/myapp --dry-run
-```
+Run `orch run --help` for the full flag reference, or `orch config list` for available profiles.
 
 ---
 
@@ -144,7 +121,7 @@ See [`~/.skills/shared/ORCHESTRA_DEFAULTS.md`](~/.skills/shared/ORCHESTRA_DEFAUL
 
 ## Advanced Usage & Deep Dives
 
-See [`DETAILS.md`](DETAILS.md) for progressive disclosure on:
+See [`DETAILS.md`](~/.skills/orchestra/DETAILS.md) for progressive disclosure on:
 - **Mode Comparisons** (Single vs Sequential deep-dives)
 - **Common Execution Patterns** (Standard delegate, Sequential fallback)
 - **Detailed Troubleshooting** (Symptoms and fixes)
@@ -160,4 +137,4 @@ See [`DETAILS.md`](DETAILS.md) for progressive disclosure on:
 | Agent exits without updating stage | Prompt too vague, model confused | Run **ticket-critic** |
 | All tickets route to build | Running in single mode (default) | Use `--mode sequential` |
 
-For more symptoms and fixes, see **[`DETAILS.md`](DETAILS.md)**.
+For more symptoms and fixes, see **[`DETAILS.md`](~/.skills/orchestra/DETAILS.md)**.

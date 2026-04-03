@@ -17,7 +17,7 @@ Review source code against a quality rubric with file-cited evidence. Maps obser
 
 ## Purpose
 
-Apply **[`QUALITY_RUBRIC.md`](./QUALITY_RUBRIC.md)** to **source code already in the repo**: structure, contracts, tests, security hygiene, and subjective dimensions (with **file-cited evidence**).
+Apply **[`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md)** to **source code already in the repo**: structure, contracts, tests, security hygiene, and subjective dimensions (with **file-cited evidence**).
 
 **Out of scope:** Editing **`.tickets/*.md`**, epic splits, or implementation-ready spec shaping → **ticket-critic** skill.
 
@@ -25,7 +25,7 @@ Apply **[`QUALITY_RUBRIC.md`](./QUALITY_RUBRIC.md)** to **source code already in
 
 1. **`AGENTS.md`** — exclusions, layout, agent rules.
 2. **Architecture Decisions** (in `~/.skills/shared/ARCHITECTURE_DECISIONS.md`) — resolve ambiguities; do not invent policy.
-3. **`QUALITY_RUBRIC.md`** — full criteria (mechanical **M1–M12**, subjective tiers, anti-patterns, layers).
+3. **`~/.skills/cleanup/QUALITY_RUBRIC.md`** — full criteria (mechanical **M1–M12**, subjective tiers, anti-patterns, layers).
 
 ## Workflow
 
@@ -54,7 +54,7 @@ Apply **[`QUALITY_RUBRIC.md`](./QUALITY_RUBRIC.md)** to **source code already in
 
 | File | Role |
 |------|------|
-| [`QUALITY_RUBRIC.md`](./QUALITY_RUBRIC.md) | Full merged rubric |
+| [`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md) | Full merged rubric |
 | **ticket-critic** | Ticket markdown, blast radius, TDD/verification in specs |
 
 ## Examples

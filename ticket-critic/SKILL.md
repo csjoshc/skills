@@ -46,7 +46,7 @@ Adversarial pre-flight audit for tickets in `.tickets/`. Prevents wasted effort 
 
 ## Workflow
 
-You do **not** write specs or implementation. You **audit tickets** against 10 blocking patterns (see [PATTERNS.md](PATTERNS.md)) and either:
+You do **not** write specs or implementation. You **audit tickets** against 10 blocking patterns (see [PATTERNS.md](~/.skills/ticket-critic/PATTERNS.md)) and either:
 1. **Clear the ticket** (all patterns addressed)
 2. **Block with specific reasons** (which patterns failed, what's needed)
 3. **Auto-resolve** via Architecture Decisions (if question already answered)
@@ -65,7 +65,7 @@ You do **not** write specs or implementation. You **audit tickets** against 10 b
 
 ## Pre-Flight Checklist & Blocker Patterns
 
-See [`PATTERNS.md`](PATTERNS.md) for the detailed adversarial audit checks:
+See [`PATTERNS.md`](~/.skills/ticket-critic/PATTERNS.md) for the detailed adversarial audit checks:
 1. **Dependency Detection**
 2. **Security Vulnerabilities**
 3. **Scope Gaps**
@@ -140,7 +140,7 @@ For ticket format requirements, see **spec-writer** skill Section 3 (TASKS outpu
 2. **Goal / Problem / Requirements / Acceptance criteria** — spec-writer style; traceability to files
 3. **Target files** — explicit list; **≤ 5 production files** per implementation ticket
 4. **Verification (TDD)** — floor: project test suite; new tests when behavior changes
-5. **Ticket critic preflight** — `PATTERNS.md` + Stage gate
+5. **Ticket critic preflight** — `~/.skills/ticket-critic/PATTERNS.md` + Stage gate
 
 ## Blast Radius & Epic Split
 

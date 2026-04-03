@@ -1,9 +1,8 @@
 ---
 name: orchestrate
 description: >-
-  Runs Orchestra tickets against a target project. Prompts for runtime config (profile, mode, model, concurrency)
-  then executes the CLI command. Also covers state machine rules, stage transitions, and ticket splitting.
-  Use when you want to execute tickets, transition ticket states, or understand orchestration flow.
+  State machine rules for Orchestra ticket stage transitions, ticket splitting, and inter-agent communication.
+  Used by prompts.py to guide downstream LLM agents through the orchestration pipeline.
 
 ## Assumptions & Escalation
 
@@ -14,93 +13,45 @@ See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.m
 - **Tier 2 (conflict):** Ticket stage transition is illegal (e.g., NEW -> COMPLETE) — **STOP**, clarify via spec-writer.
 - **Tier 3 (security):** Ticket implementation attempts to bypass stage-gate security — **STOP**, block and alert.
 
-## TL;DR (Quick Start)
+## TL;DR
 
-**This skill is a CLI wrapper — it does NOT make code changes directly.** Instead, it:
-1. Prompts you for runtime configuration (profile, mode, model, concurrency)
-2. Constructs and executes the `python main.py ...` command
-3. Reports results from the Orchestra run
+This skill defines **state machine rules** for agents executing Orchestra tickets — stage transitions, ticket splitting, and inter-agent communication. It does NOT wrap or invoke any CLI. For running tickets, see **`run-ticket`**.
 
 Agents communicate via `Stage:` fields in ticket markdown files. **Zero chat history dependency.**
 
-**When to use:** "run the tickets", "execute orchestra", "run tickets with profile X".
-
-**Invocation:**
-- **Run tickets:** This skill will prompt you for config, then execute `python main.py ...`
-- **Transition state:** Edit the `Stage:` field in the ticket YAML header.
-
-## Important: This Skill Does NOT
-
-- ❌ Make code changes to tickets or implementation files
-- ❌ Implement ticket requirements directly
-- ❌ Act as the agent that writes code
-
-**The chat agent invoking this skill is the ORCHESTRATOR, not the IMPLEMENTER.** Orchestra spawns external CLI agents (opencode, cursor, gemini, etc.) that do the actual coding work.
-
 ## Decision Tree
 
-1. **Do tickets exist and are ready to run?**
-   - YES → Proceed to "Running Tickets" workflow below.
-   - NO → Use **spec-writer** to create tickets first.
+1. **Is the stage transition legal?**
+   - Check the State Machine table below. Illegal transitions (e.g., `NEW → COMPLETE`) must be blocked.
+   - When in doubt → **STOP**, escalate via spec-writer.
 
-2. **What environment are you in?**
-   - See [`~/.skills/shared/ORCHESTRA_DEFAULTS.md`](~/.skills/shared/ORCHESTRA_DEFAULTS.md) for **Execution Profiles** (`work`, `mixed`, `private`).
+2. **Should this ticket be split?**
+   - Modifies >5 production files OR has 2+ distinct concerns → YES, split.
+   - >250 lines → auto-route to `SPEC_SPLIT`.
 
-3. **Are tickets narrow and well-scoped?**
-   - YES → Mode: `single`, consider cheaper model via `--model`.
-   - NO (architectural, ambiguous) → Mode: `sequential`, use **Frontier** model.
-
-## Workflow
-
-### Running Tickets
-
-**Important:** This skill is an **interactive CLI wrapper**. You MUST:
-
-1. **Discover tickets** — Scan `.tickets/` directory.
-2. **Prompt the user** — Ask for runtime configuration (do NOT assume defaults).
-3. **Execute the command** — Run `python main.py ...` with user's choices.
-4. **Report outcomes** — Summarize what completed/failed/blocked.
-
----
-
-**Step 2: Prompt for runtime config (REQUIRED)**
-
-You MUST ask the user these questions:
-
-| Question | Options | Default |
-|----------|---------|---------|
-| Which profile? | See `ORCHESTRA_DEFAULTS.md` | `private` |
-| Which mode? | `single` or `sequential` | `single` |
-| Override model?| Any model name, or "none" | Profile default |
-| Concurrency? | 1-4 | 1 |
-| Dry run? | `yes` (preview only), `no` | `no` |
-
----
-
-### Step 3: Construct and run the command
-
-Build the command from answers:
-```bash
-python main.py --project <project_dir> \
-  --runtime-profile <profile> \
-  --mode <mode> \
-  [--model <model>] \
-  [--concurrency <N>] \
-  [--dry-run]
-```
-
----
+3. **Should this ticket be blocked?**
+   - Upstream `Depends-On:` not `COMPLETE` → mark `BLOCKED`.
+   - Ambiguous scope or missing acceptance criteria → mark `BLOCKED`, escalate.
 
 ## The State Machine (Stages)
 
 Every ticket markdown file must contain a `Stage:` field.
 
 See [`~/.skills/shared/ORCHESTRA_DEFAULTS.md`](~/.skills/shared/ORCHESTRA_DEFAULTS.md) for the canonical stage list:
-- **`Stage: NEW`**
-- **`Stage: SPEC`**
-- **`Stage: BUILD`**
-- **`Stage: REVIEW`**
-- **`Stage: COMPLETE`**
+
+| Stage | Meaning | Transition From |
+|-------|---------|-----------------|
+| **`NEW`** | Initial state, ready for execution | N/A |
+| **`SPEC`** | Planning/Decomposition phase | `NEW` / `REVISION_ROUTER` |
+| **`BUILD`** | Implementation phase (Coding) | `SPEC` / `NEW` (Single Mode) |
+| **`REVIEW`** | Audit/QA phase | `BUILD` |
+| **`COMPLETE`** | Terminal state (Merged) | `REVIEW` / `BUILD` (Single Mode) |
+| **`BLOCKED`** | Halted due to dependency/logic | Any non-terminal stage |
+| **`FAILED`** | Technical execution failure | Any non-terminal stage |
+
+**Routing Patterns:**
+- **Single Mode:** `entry → build → complete`
+- **Sequential Mode:** `entry → spec → build → review → complete`
 
 ## How to Transition State
 
@@ -110,19 +61,18 @@ Stage: REVIEW
 ```
 **Rule:** Never leave a ticket in the stage you found it in unless interrupted.
 
-## Advanced Details & Deep Dives
-
-See **[`../orchestra/DETAILS.md`](../orchestra/DETAILS.md)** for progressive disclosure on:
-- **Inter-Agent Communication Rules** (Mandatory isolation)
-- **Detailed Mode Comparisons** (Single vs Sequential)
-- **Common Execution Patterns**
-
 ## Ticket Splitting (Blast Radius Control)
 
 If a ticket requires modifying **>5 production files** or has 2+ distinct concerns, split it:
 1. Create sub-tickets: `01a-slug.md`, `01b-slug.md` (`Stage: NEW`).
 2. Update parent to `Stage: COMPLETE` or `BLOCKED`.
 3. Tickets >250 lines auto-route to `SPEC_SPLIT`.
+
+## Inter-Agent Communication Rules
+
+- **Strict Isolation:** Each agent session is fresh. Communication is only via `Stage:` and `.handoff/` files.
+- **No Messages in Body:** Do NOT leave notes/questions for other agents in the ticket body. Use the `handoff` skill or mark the ticket `BLOCKED`.
+- **Raw File Output:** Do NOT wrap file outputs in triple backticks in implementation steps — write directly to the filesystem.
 
 ## Project Setup
 

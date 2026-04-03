@@ -4,3 +4,4 @@
 .orchestra.db
 .orchestra/
 *.log
+*.DS_Store

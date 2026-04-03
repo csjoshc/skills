@@ -2,28 +2,12 @@
 
 This shared file contains the authoritative definitions for the **Orchestra** ticket runner's runtime configuration.
 
-## Execution Profiles
+## Profiles, Models, and Chains
 
-Select a profile via `--profile` or `ORCHESTRA_PROFILE` env var.
+See `~/Projects/orchestra/profiles.yaml` for the canonical runtime config.
+Run `orch config list` to see currently loaded values.
 
-| Profile | Target Environment | Runtimes used | Primary Model |
-|---------|-------------------|--------------|---------------|
-| **work** | Corporate laptop, proprietary code | Cursor only | Sonnet 4.6 (Frontier) |
-| **mixed** | Hybrid work/side projects | Cursor + opencode | Sonnet 4.6 + big-pickle |
-| **private** | Personal computer (Default) | opencode + qwen | big-pickle + qwen3.5-plus |
-| **cost_saver** | Heavily used for simple tasks | qwen → opencode | qwen3.5-plus |
-| **qwen_only** | Single-model isolation | qwen only | qwen3.5-plus |
-
-## Model Tiers
-
-Use the appropriate tier based on ticket complexity.
-
-| Tier | Recommended Models | Use Case |
-|------|--------------------|----------|
-| **Frontier** | Sonnet 4.6, Opus 4.6, opencode/big-pickle | Architecture, complex logic, ambiguous scope |
-| **Standard** | Composer 2 Fast, qwen3.5-plus, gemini-3-flash | Narrow bugfixes, well-defined features, cost-sensitive |
-
-**Rule of thumb:** If a ticket touches >3 files or requires a `Task 0: Design` phase, use **Frontier**.
+Available profiles: `work`, `mixed`, `private` (default), `cost_saver`, `qwen_chain`, `qwen_only`, `opencode_stepfun`.
 
 ---
 

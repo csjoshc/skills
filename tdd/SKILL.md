@@ -138,7 +138,7 @@ RED: Add tests for JWT-specific behavior (expiry, refresh)
 
 **Bad tests** are coupled to implementation. They mock internal collaborators, test private methods, or verify through external means (like querying a database directly instead of using the interface). The warning sign: your test breaks when you refactor, but behavior hasn't changed. If you rename an internal function and tests fail, those tests were testing implementation, not behavior.
 
-See [TESTS.md](./TESTS.md) for test examples and antipatterns, [TEST_DESIGN.md](./TEST_DESIGN.md) for interface design and refactoring, and [MOCKING.md](./MOCKING.md) for mocking guidelines.
+See [TESTS.md](~/.skills/tdd/TESTS.md) for test examples and antipatterns, [TEST_DESIGN.md](~/.skills/tdd/TEST_DESIGN.md) for interface design and refactoring, and [MOCKING.md](~/.skills/tdd/MOCKING.md) for mocking guidelines.
 
 ---
 
