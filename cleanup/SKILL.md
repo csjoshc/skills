@@ -41,6 +41,7 @@ Apply **[`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md)** to **source
 
 ## Optional cross-skills
 
+- **arch-review** — when checking architecture patterns (bounded contexts, hexagonal, vertical slices, module boundaries)
 - **make-ui** — when reviewing frontend visuals if the project uses it.  
 - **chrome-devtools** / **test-ui** — when validating UI behavior after fixes (not required to *invoke* for a read-only audit).
 
@@ -55,6 +56,7 @@ Apply **[`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md)** to **source
 | File | Role |
 |------|------|
 | [`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md) | Full merged rubric |
+| **arch-review** | Architecture pattern enforcement and review |
 | **ticket-critic** | Ticket markdown, blast radius, TDD/verification in specs |
 
 ## Examples
@@ -94,3 +96,7 @@ Use this skill when you need to:
 3. **Need visual validation?**
    - YES → Pair with chrome-devtools or test-ui
    - NO → Standalone audit
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

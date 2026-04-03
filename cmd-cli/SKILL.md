@@ -121,3 +121,7 @@ Use this skill when you need to:
 - **Tier 1 (reversible):** Minor style issues — proceed, flag for post-review
 - **Tier 2 (architecture):** Design concerns blocking — check Architecture Decisions (spec-writer skill), block if unresolved
 - **Tier 3 (security):** Security vulnerabilities — always block for human confirmation
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

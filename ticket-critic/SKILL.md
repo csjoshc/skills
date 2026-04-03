@@ -161,6 +161,7 @@ When the ticket implies implementation, follow the **tdd** skill for test-first 
 ## Integration & Reference Files
 
 - **Integration with other skills:** See [reference/integration.md](reference/integration.md)
+- **Architecture review:** Use [arch-review](~/.skills/arch-review) skill for pattern compliance checks (bounded contexts, hexagonal, vertical slices)
 - **Super-prompts (harden tickets, generate new tickets):** See [reference/super-prompts.md](reference/super-prompts.md)
 - **Block message templates:** See [templates/block-messages.md](templates/block-messages.md)
 - **Audit finding examples:** See [examples/audit-findings.md](examples/audit-findings.md)
@@ -170,3 +171,7 @@ When the ticket implies implementation, follow the **tdd** skill for test-first 
 **Update this skill when:** New blocking pattern identified; Architecture Decisions structure changes; audit process refined.
 
 **Metrics to track:** Blocker detection rate; false positive rate; auto-resolution rate.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

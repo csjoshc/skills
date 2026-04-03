@@ -72,3 +72,7 @@ Output: Playwright script that fills email, leaves password empty, clicks submit
 |-------|---------------------|
 | chrome-devtools | For manual exploration and performance debugging |
 | make-ui | For building or styling components (not testing) |
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

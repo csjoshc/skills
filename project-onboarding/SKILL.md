@@ -89,3 +89,7 @@ _(Add project-specific patterns below this line)_
 ## 1. Symlink Setup
 
 See [`~/.skills/shared/SYMLINK_MAP.md`](~/.skills/shared/SYMLINK_MAP.md) for the authoritative global and project-level symlink map. Create all symlinks listed there.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

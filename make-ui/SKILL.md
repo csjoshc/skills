@@ -67,3 +67,7 @@ Output: Audit of current state, presentation of 3 aesthetic directions, and toke
 |-------|---------------------|
 | test-ui | For verifying visual behavior via E2E |
 | chrome-devtools | For manual CSS inspection and live testing |
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

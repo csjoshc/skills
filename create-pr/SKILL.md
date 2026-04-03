@@ -184,3 +184,7 @@ Output: Commit + Push + Browser screenshot capture + `gh pr create` with evidenc
 **Example 2: Backend Fix**
 Input: "Push my API fix and open a PR"
 Output: Commit + Push + Pytest log capture + `gh pr create` with logs.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

@@ -71,3 +71,7 @@ Output: Command execution of `mklink /D` (Windows) or `ln -sf` (POSIX) to restor
 |-------|---------------------|
 | project-onboarding | When first setting up a new project |
 | mcp-sync | For syncing Model Context Protocol settings |
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

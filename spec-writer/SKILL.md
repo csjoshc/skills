@@ -243,3 +243,7 @@ Then they receive a 401 response
    Correct this if: your order volumes are low and synchronous is fine
 3. REST API pattern — Impact: HIGH
    Correct this if: you're using GraphQL, tRPC, or another pattern
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

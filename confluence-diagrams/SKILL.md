@@ -325,3 +325,7 @@ Confirm:
 - **Tier 1 (reversible):** Diagram styling (colors, fonts) — proceed, flag for review.
 - **Tier 2 (logic):** Sequence/Flowchart logic errors — verify against requirement, block if ambiguous.
 - **Tier 3 (security):** Sensitive data in diagram text (keys, PII) — always block.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

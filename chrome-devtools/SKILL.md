@@ -139,8 +139,13 @@ Navigate to the dashboard and export all network requests as HAR
 - Test on multiple viewport sizes (mobile, tablet, desktop)
 - Always check console for JavaScript errors
 - Validate accessibility on every major UI change
+
 ## Assumptions & Escalation
 
 - **Tier 1 (reversible):** Page rendering differences — proceed, capture screenshot, flag for review
 - **Tier 2 (performance):** Performance regressions — check baseline, block if budget exceeded
 - **Tier 3 (security):** Navigating to suspicious third-party domains — always block
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

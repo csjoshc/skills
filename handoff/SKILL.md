@@ -215,3 +215,7 @@ Output: Markdown prompt block with current CSS path and specific "Your task" to 
 **Example 2: Complex Feature Implementation**
 Input: "Handoff the user auth feature"
 Output: `.handoff/plan-auth.md` created; Prompt generated referencing the plan, database schema path, and auth standards.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

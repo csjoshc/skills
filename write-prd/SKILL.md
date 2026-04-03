@@ -188,3 +188,7 @@ See [`~/.skills/shared/ASSUMPTION_TIERS.md`](~/.skills/shared/ASSUMPTION_TIERS.m
 ## Examples
 
 See `examples/interactive-session.md` for a full interactive HITL session transcript and `examples/non-interactive.md` for a simple --approve flow.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

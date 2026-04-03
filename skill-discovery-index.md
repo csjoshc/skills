@@ -17,6 +17,7 @@ This index maps common use cases to the appropriate AI skills in `~/.skills/`.
 
 ## Documentation & Maintenance
 - **[cleanup](~/.skills/cleanup/SKILL.md)** — Code health audit against the Quality Rubric.
+- **[arch-review](~/.skills/arch-review/SKILL.md)** — Architectural pattern enforcement and review.
 - **[openai-docs](~/.skills/.system/openai-docs/SKILL.md)** — Official OpenAI API and model selection guidance.
 - **[confluence-diagrams](~/.skills/confluence-diagrams/SKILL.md)** — Render and embed SVG diagrams in Confluence.
 

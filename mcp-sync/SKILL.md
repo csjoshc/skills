@@ -73,3 +73,7 @@ Output: `figma` server removed from `mcpServers` and all tools synced.
 |-------|---------------------|
 | skill-sync | For syncing behavior/documentation (`.skills/`) |
 | mcp-cli | For local command-line exploration of MCP tools |
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

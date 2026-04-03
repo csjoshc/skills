@@ -229,3 +229,7 @@ Output: `Bug Hunter` flags an XSS vulnerability with trace evidence; `Validation
 **Example 2: Standards Violation**
 Input: "Audit PR #42 for project standards"
 Output: `Standards Compliance` flags a naming convention violation (LG-001); `Post` to GitHub with rule quote.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

@@ -105,11 +105,9 @@ Minimize token consumption and prevent context window pollution while maintainin
 - **Encourage Refactoring:** If a file exceeds 300 lines, proactively suggest breaking it into smaller modules. This makes future edits cheaper and more accurate.
 - **Spec-First Workflow:** Always request or generate a minimal test case/spec before implementation. This prevents "shotgun debugging" which wastes thousands of tokens.
 
-### 5. Resource Allocation (Model Matching)
-- **Tiered Processing:**
-    - Use "Flash" or smaller models for boilerplate, documentation, and simple refactors.
-    - Reserve "Pro/Sonnet" models for architectural changes and complex logic.
-- **MCP Management:** Deactivate Model Context Protocol (MCP) tools that are not relevant to the current file type (e.g., disable SQL tools when editing CSS).
+### 5. Post-Implementation Validation
+- **Mandatory Verification:** After modifying any code, identify and execute the most relevant unit or integration tests to verify the change. 
+- **Continuous Feedback:** If a modification causes a test failure, prioritize fixing the regression before proceeding or finishing the task.
 
 ## Trigger Phrases
 - "Applying Tokenify Protocol": When the agent starts pruning context.

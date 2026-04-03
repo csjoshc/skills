@@ -52,3 +52,7 @@ Run `orch config list` to see loaded profiles, models, and chains.
 - **Tier 1 (reversible):** Model timeout — proceed with fallback chain.
 - **Tier 2 (logic):** Ambiguous error — check `.orchestra.db`, block if unclear.
 - **Tier 3 (security):** Unauthorized access attempt — **STOP**, block and alert.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

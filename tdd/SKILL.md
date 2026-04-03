@@ -302,3 +302,7 @@ RED:   Write test that fails due to bug → test fails
 GREEN: Fix bug → test passes
 REFACTOR: Clean up if needed
 ```
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

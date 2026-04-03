@@ -356,3 +356,7 @@ missed with `tsc --noEmit` or `grep`.
 ### "This could crash / null check"
 Add the null/undefined guard. Do not refactor the surrounding logic.
 Match the existing defensive coding style in the file.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

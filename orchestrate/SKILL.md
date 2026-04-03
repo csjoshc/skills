@@ -81,3 +81,7 @@ Ensure these are in `.gitignore`:
 .orchestra.db
 .orchestra/
 ```
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.

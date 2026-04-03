@@ -16,6 +16,7 @@ This is a **skills repository** containing AI agent skills for various developme
 - **Markdown:** Documentation, standards, ticket specs
 
 **Key Directories:**
+- `arch-review/` — Architecture pattern enforcement and review
 - `chrome-devtools/` — Browser testing and debugging
 - `cleanup/` — Code cleanup utilities
 - `cmd-cli/` — CLI tool wrappers (git, docker, npm)
@@ -73,6 +74,7 @@ skill-name/
 - Run skill manually to verify behavior
 - Check logs in `.orchestra_logs/` if applicable
 - Update `skill-discovery-index.md` if adding new skill
+- **Verify no circular references** — run the check script in `SKILL_DEPENDENCY_GRAPH.md`
 
 ---
 

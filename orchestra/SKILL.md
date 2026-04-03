@@ -138,3 +138,7 @@ See [`DETAILS.md`](~/.skills/orchestra/DETAILS.md) for progressive disclosure on
 | All tickets route to build | Running in single mode (default) | Use `--mode sequential` |
 
 For more symptoms and fixes, see **[`DETAILS.md`](~/.skills/orchestra/DETAILS.md)**.
+
+---
+
+**Editing this skill?** Use [`~/.skills/skillsmith`](~/.skills/skillsmith) for skill creation guidelines.
