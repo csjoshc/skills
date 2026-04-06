@@ -1,5 +1,10 @@
 # Consultation Mode — Full Checklist & Reference
 
+## Contents
+
+- Step-by-Step Process
+
+
 Companion to `SKILL.md`. Read this when running Consultation Mode.
 
 ## Step-by-Step Process

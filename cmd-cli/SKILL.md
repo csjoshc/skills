@@ -1,6 +1,6 @@
 ---
 name: cmd-cli
-description: Local CLI toolbox — prefer these over manual file manipulation. Use when you need to run git, github, docker, npm, or other CLI tools.
+description: Provides a local CLI toolbox for common development and automation tasks. Use when tasks require git, GitHub CLI, docker, npm, package managers, shell utilities, or command-line workflows.
 ---
 
 # Local CLI Toolbox

@@ -1,5 +1,16 @@
 # PR Fix — Complete Workflow
 
+## Contents
+
+- Step 1: Gather context
+- Step 2: Plan the work
+- Step 3: Fix loop
+- Step 4: Handle test gap comments
+- Step 5: Final verification
+- Step 6: Report
+- PR Fix Summary
+
+
 ## Step 1: Gather context
 
 Fetch all pending review comments and the current diff.

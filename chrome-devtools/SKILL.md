@@ -1,6 +1,6 @@
 ---
 name: chrome-devtools
-description: Test, validate, and debug frontend changes in a real browser. Take screenshots, measure performance, check accessibility, automate interactions, and capture network traffic.
+description: Tests, validates, and debugs frontend behavior in a real browser with Chrome DevTools Protocol tooling. Use when verifying UI changes, collecting screenshots, checking accessibility, profiling performance, or capturing network interactions.
 license: MIT
 compatibility: opencode
 metadata:

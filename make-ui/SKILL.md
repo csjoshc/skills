@@ -1,6 +1,6 @@
 ---
 name: make-ui
-description: Use when building or redesigning frontend UI, choosing design direction, or when the user says "make ui vibe", "make ui consult", "UI polish", "design system", or "help me design"
+description: Designs and implements high-variance frontend interfaces with either direct execution or consultation mode. Use when building or redesigning UI, choosing design direction, or when users request "make ui vibe", "make ui consult", "UI polish", or design-system help.
 ---
 
 # Make UI — High-Variance Frontend Architect

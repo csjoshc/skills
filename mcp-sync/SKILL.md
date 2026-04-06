@@ -4,7 +4,8 @@ description: >-
   Synchronizes and audits Model Context Protocol (MCP) configurations across multiple
   IDEs, CLI agents, and desktop apps. Uses ~/.secrets/mcp.json as the master store.
   Supports global syncing, project-specific MCP enabling, and toggling specific
-  MCP servers across all platforms.
+  MCP servers across all platforms. Use when standardizing MCP configs, enabling
+  or disabling MCP servers, or onboarding MCP settings in new projects.
 ---
 
 # MCP Sync & Toggle

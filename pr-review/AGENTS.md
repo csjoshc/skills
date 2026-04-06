@@ -1,5 +1,15 @@
 # PR Review — Agent Definitions and Output
 
+## Contents
+
+- Parallel Review Agents
+- Validation Process
+- Filter and Deduplicate
+- Issue Output Format
+- [Category]: [Brief description]
+- False Positive Checklist
+
+
 ## Parallel Review Agents
 
 ### Agent 1 — Bug Hunter

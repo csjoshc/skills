@@ -1,5 +1,14 @@
 # CI/CD and Test Execution
 
+## Contents
+
+- Running Tests
+- Coverage Targets
+- Test Markers
+- CI Configuration
+- Test Fixtures Reference
+
+
 Reference for running tests locally and in CI pipelines.
 
 ---

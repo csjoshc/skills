@@ -1,6 +1,16 @@
+---
+name: project-onboarding
+description: Creates and reconciles project agent-instruction files across tools, including AGENTS.md, Cursor rules, and stack-specific ignore patterns. Use when onboarding a repository, standardizing agent behavior files, or syncing multi-tool project setup.
+---
+
 # Project Onboarding (Multi-Tool)
 
 Target the **project root** the user is onboarding (usually workspace root). **Default:** write `AGENTS.md`, `.cursorignore`, and `.cursorrules` at that root even when markers live only in subfolders (monorepo), so one workspace sees one set of rules—unless the user asks to onboard a subfolder as its own root.
+
+Companion files:
+- Windows notes: [WINDOWS.md](WINDOWS.md)
+- Global symlink map: [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)
+- Project symlink map: [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)
 
 ---
 

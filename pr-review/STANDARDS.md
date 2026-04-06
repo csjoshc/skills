@@ -1,5 +1,20 @@
 # Project Coding Standards
 
+## Contents
+
+- 1. Function Declarations (FN)
+- 2. Data Access (DA)
+- 3. Runtime & Language (RT)
+- 4. Logging (LG)
+- 5. Testing (TS)
+- 6. Documentation (DC)
+- 7. Naming Conventions (NM)
+- 8. React & Frontend (FE)
+- 9. Display & Formatting (DD)
+- 10. Type Definition Files (TD)
+- References
+
+
 Standards reference for PR review. Each rule has a code for easy citation
 in review comments (e.g., "Violates FN-001"). Organized by category.
 
