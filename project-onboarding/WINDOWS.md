@@ -1,5 +1,19 @@
 # WINDOWS.md — File Operations & Shell Reference for Git Bash on Windows
 
+## Contents
+
+- 1. Path Syntax Rules (Critical)
+- 2. Reading Files
+- 3. Creating & Writing Files
+- 4. Editing Files In-Place with `sed`
+- 5. Multi-location Edits with `awk`
+- 6. Searching Files
+- 7. Finding Files
+- 8. Copy, Move, Delete
+- 9. Directory Operations
+- 10. Running Node / npm / npx
+
+
 > **Environment:** Git Bash (MINGW64 / MSYS2), running on Windows.
 > This is NOT PowerShell and NOT WSL. Unix commands (`ls`, `grep`, `sed`, `find`) work,
 > but Windows-native path syntax and PowerShell cmdlets do NOT work natively.
@@ -285,4 +299,4 @@ npm install
 npm run build
 npx tsc --noEmit
 
-# Capture last 30 
+# Capture last 30

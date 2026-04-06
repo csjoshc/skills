@@ -1,6 +1,6 @@
 ---
 name: test-ui
-description: Use when testing web application UIs, documenting bugs, or verifying frontend functionality across tabs, forms, and navigation
+description: Tests web application UIs and documents functional or visual defects across forms, tabs, navigation, and stateful interactions. Use when validating frontend behavior, reproducing UI bugs, or running manual/e2e verification workflows.
 ---
 
 # Test UI Skill

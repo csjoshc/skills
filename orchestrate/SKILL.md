@@ -2,8 +2,8 @@
 name: orchestrate
 description: >-
   Defines the state machine, stage transitions, and routing rules for the headless 
-  agent orchestration framework. Use this skill to understand how to read, update, 
-  and transition ticket files through the pipeline.
+  agent orchestration framework. Use when interpreting ticket stages, applying
+  transition rules, or updating stage metadata through the orchestration pipeline.
 ---
 
 # Agent Orchestration Protocol

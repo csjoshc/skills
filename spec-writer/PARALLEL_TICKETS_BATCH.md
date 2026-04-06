@@ -1,5 +1,15 @@
 # Parallel / batched markdown tickets (Orchestra & similar runners)
 
+## Contents
+
+- When `-j` / `--concurrency` > 1 is appropriate
+- When to keep default concurrency 1
+- Authoring checklist (batch mode)
+- Orchestra-specific conventions
+- Creating Parallelizable Tickets
+- Canonical copy of this file
+
+
 Companion to **spec-writer** (`SKILL.md` in this directory). Load when the user asks for **parallel tickets**, **batch tickets for `-j` / `--concurrency`**, or **one session that emits many ordered tickets** for a runner that schedules from explicit edges only.
 
 ## When `-j` / `--concurrency` > 1 is appropriate

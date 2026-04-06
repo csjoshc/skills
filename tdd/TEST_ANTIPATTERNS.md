@@ -1,5 +1,16 @@
 # Test Antipatterns
 
+## Contents
+
+- Test Structure Antipatterns
+- Test Naming Antipatterns
+- Test Logic Antipatterns
+- Fixture Antipatterns
+- Integration vs Unit Confusion
+- Decision Checklist
+- Quick Reference
+
+
 A catalog of common testing antipatterns to avoid. See also: [SKILL.md](./SKILL.md), [TESTS.md](./TESTS.md).
 
 ---

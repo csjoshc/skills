@@ -1,5 +1,15 @@
 # Code Antipatterns
 
+## Contents
+
+- File/Module Antipatterns
+- API/Endpoint Antipatterns
+- Testing Antipatterns
+- General Anti-patterns
+- Decision Checklist
+- Quick Reference
+
+
 A catalog of common antipatterns to avoid when writing specs and plans. Use this as a checklist during spec review.
 
 ---

@@ -1,5 +1,11 @@
 # When to Mock
 
+## Contents
+
+- Designing for Mockability
+- Concrete Mocking Patterns
+
+
 Mock at **system boundaries** only:
 
 - External APIs (payment, email, etc.)

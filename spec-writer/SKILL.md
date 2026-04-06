@@ -1,6 +1,6 @@
 ---
 name: spec-writer
-description: Takes a vague feature request and generates a structured spec, technical plan, and task breakdown ready for any coding agent. Aligns with PDCA-T (Plan-Do-Check-Act-Test) and can follow exchanet METHOD.md patterns (FR/NFR/RISK, ADR, micro-tasks, test-first) when the user asks for strict or PDCA-T mode. Use whenever you're about to build a feature and want to reduce ambiguity before writing code. Invoke with /spec-writer followed by your feature description.
+description: Converts vague feature requests into structured specs, technical plans, and implementation-ready task breakdowns for coding agents. Aligns with PDCA-T (Plan-Do-Check-Act-Test) and can follow exchanet METHOD.md patterns (FR/NFR/RISK, ADR, micro-tasks, test-first) for strict planning mode. Use when preparing feature work and reducing ambiguity before implementation.
 ---
 
 # spec-writer

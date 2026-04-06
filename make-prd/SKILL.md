@@ -1,6 +1,6 @@
 ---
 name: make-prd
-description: Interactive PRD expansion and ticket drafting workflow with explicit in-session fan-out, human checkpoints, and final synthesis. Use this when the user wants a real back-and-forth to turn ideas into a PRD plus implementation-ready tickets.
+description: Runs an interactive PRD expansion and ticket drafting workflow with explicit in-session fan-out, human checkpoints, and final synthesis. Use when users want a collaborative back-and-forth to turn rough ideas into a PRD and implementation-ready tickets.
 metadata:
   short-description: Interactive PRD + ticket orchestrator
 ---
