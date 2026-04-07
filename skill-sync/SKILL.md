@@ -30,8 +30,7 @@ The user maintains a "Universal Skills" directory at `~/.skills`. This is the au
 
 Before running the sync audit, review these companion files for authoritative symlink mappings:
 
-- **[GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)** — Table of global symlinks (`~/.cursor/skills`, `~/.vscode/skills`, etc.) for each agent/IDE. Use this to set up or verify global-level syncing.
-- **[PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)** — Table of project-level symlinks (`./.cursor/skills`, `./.vscode/skills`, etc.). Use this to determine which projects need local skill discovery.
+- **[shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)** — Table of global and project-level symlinks for each agent/IDE. Use this to set up or verify syncing.
 
 ## Execution Steps
 
@@ -49,7 +48,7 @@ Before running the sync audit, review these companion files for authoritative sy
 
 ### Step 3: Symlink Verification (The Bridge)
 
-For global symlinks, refer to [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md) for the complete list of paths to audit.
+For global symlinks, refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) for the complete list of paths to audit.
 
 For each path:
 1. Check whether it is a **symlink** (and where it points) or a **regular directory/file**
@@ -58,7 +57,7 @@ For each path:
 
 ### Step 4: Project-Level Symlink Setup
 
-Refer to [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md) to determine:
+Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 - Whether the current project requires project-level symlinks
 - Which symlinks to create (Gemini and VS Code are recommended; others are optional)
 - How to handle project-specific (non-synced) skills vs. master-synced skills
@@ -74,16 +73,14 @@ Always provide a **Sync Status Report** table with the following structure:
 
 | Agent / Platform | Global Status | Project Status | Notes |
 | :--- | :--- | :--- | :--- |
-| Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to GLOBAL_SYMLINKS.md and PROJECT_SYMLINKS.md |
+| Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to shared/SYMLINK_MAP.md |
 | Gemini / Antigravity | Synced / Out of Sync / Missing | Setup / Missing / N/A | Gemini natively supports project-level symlinks |
 | VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
-| *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See GLOBAL_SYMLINKS.md for details |
+| *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See shared/SYMLINK_MAP.md |
 
 Add a **Stale/Broken Links** section below if any removals are required to propagate state from the master store.
 
 ## Quick Reference
 
 For detailed setup instructions and platform-specific paths:
-- **Setting up global symlinks** → See [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)
-- **Setting up project-level symlinks** → See [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)
-- **VS Code workspace configuration** → See [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md#setup-by-project-type)
+- **Setting up symlinks** → See [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
