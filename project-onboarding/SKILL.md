@@ -78,6 +78,47 @@ Do not guess extra frameworks beyond npm/Python for this skill; only the blocks 
 
 ---
 
+## 0c. Enforce static analysis via pre-commit hooks (required)
+
+The repo should have **static analysis / linting checks** that run as a **git commit hook** and **block commits** when they fail (type errors, invalid returns/inputs, unreachable code, obvious null/None hazards, etc.).
+
+### Where to encode the policy
+
+1. **`./STANDARDS.md` (authoritative)**: Add a short section like:
+   - Commits must be blocked by pre-commit hooks that run static analysis appropriate to the stack.
+   - The “run everything” command(s) must be documented (see below).
+
+2. **`AGENTS.md` (operational)**: Add a brief bullet reminding agents to ensure hooks exist and are kept passing.
+
+### Hook mechanism defaults (use these unless the repo already has something else)
+
+If the repo already uses a hook framework (e.g. `pre-commit`, `husky`, `lefthook`, `lint-staged`, `simple-git-hooks`), **extend the existing one**; do not introduce a second framework without a strong reason.
+
+If the repo does not have hooks yet:
+
+- **Python present** → use **`pre-commit`** with (at minimum):
+  - `ruff` (format + lint) and
+  - `mypy` (type checking).
+
+- **npm/Node present** → use **`husky`** with (at minimum):
+  - `eslint` (lint) and
+  - `tsc -p <tsconfig>` (type checking) when TypeScript is present.
+  - If no TypeScript config exists, run `eslint` only (do not invent `tsconfig.json`).
+
+- **npm + Python present**:
+  - Prefer keeping both checks enforced. If adopting two hook frameworks would be messy, prefer a single hook runner that can call both toolchains (commonly `lefthook`), but only if adding it is low-risk for the repo. Otherwise, use the repo’s existing mechanism and add the missing checks there.
+
+### “Run everything” documentation (required)
+
+Ensure the repo has a documented way to run the same checks outside git hooks, ideally in one place (choose the natural home for the stack):
+
+- **Python**: `make check`, `uv run pre-commit run -a`, `python -m ruff check . && python -m mypy ...`, etc.
+- **Node**: `npm run lint`, `npm run typecheck`, or a combined `npm run check`.
+
+The exact commands depend on what the repo already uses; do not guess package manager or tooling beyond “npm/Python present” detection. The goal is: **hooks enforce**, and **developers can run the same checks directly**.
+
+---
+
 ## 1. `AGENTS.md` — canonical agent instructions
 
 This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `CLAUDE.md`, `GEMINI.md`) are thin shims that reference it.
@@ -97,6 +138,7 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 
 - **Stack:** npm / Node
 - Prefer app source under `src/` or this repo's layout.
+- Commits must be blocked by pre-commit hooks running static analysis (e.g. `eslint`, `tsc` where applicable).
 - **Do not read** these paths unless they are the direct subject of the task:
   `node_modules/`, `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `.svelte-kit/`,
   `.parcel-cache/`, `.vite/`, `.cache/`, `.turbo/`, `storybook-static/`,
@@ -112,6 +154,7 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 
 - **Stack:** Python
 - Prefer package/app source directories.
+- Commits must be blocked by pre-commit hooks running static analysis (e.g. `ruff`, `mypy`).
 - **Do not read** these paths unless they are the direct subject of the task:
   `.venv/`, `venv/`, `env/`, `__pycache__/`, `*.py[cod]`, `*.so`,
   `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `.tox/`, `.hypothesis/`,
@@ -127,6 +170,7 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 
 - **Stack:** npm / Node + Python
 - Prefer app/package source directories.
+- Commits must be blocked by pre-commit hooks running static analysis (e.g. `eslint`/`tsc`, `ruff`/`mypy` as applicable).
 - **Do not read** these paths unless they are the direct subject of the task:
   `node_modules/`, `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `.svelte-kit/`,
   `.parcel-cache/`, `.vite/`, `.cache/`, `.turbo/`, `storybook-static/`,
@@ -445,6 +489,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] Stack detection recorded (npm / python / both / neither), including **nested** paths and **Python-without-manifest** when applicable.
 - [ ] Global STANDARDS.md checked (`~/.skills/STANDARDS.md`)
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
+- [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
 - [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, Tokenify block, and STANDARDS.md reference
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.

@@ -1,2 +1,7 @@
 .backup/
 acme*/**
+.runner/*
+.runner.log
+.runner/
+.reports/
+.system/
