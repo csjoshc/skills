@@ -9,8 +9,7 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
-- Global symlink map: [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md)
-- Project symlink map: [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md)
+- Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
 
 ---
 
@@ -473,8 +472,7 @@ To ensure consistency across Cursor, Gemini CLI, Claude Code, and other agents, 
 
 Before completing onboarding, audit and establish symlinks according to these references:
 
-- **Global Symlinks:** See [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md) for \`~/\` home directory mappings.
-- **Project Symlinks:** See [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md) for local repo mappings.
+- **Symlinks:** See [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) for global and project-level mappings.
 
 ### Symlinking Principles
 
@@ -495,7 +493,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
 - [ ] Cross-tool shims (`CLAUDE.md`, `GEMINI.md`) exist if multi-tool support was requested or defaulted.
-- [ ] Global and Project symlinks audited against [GLOBAL_SYMLINKS.md](GLOBAL_SYMLINKS.md) and [PROJECT_SYMLINKS.md](PROJECT_SYMLINKS.md).
+- [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
 
 ---
 
