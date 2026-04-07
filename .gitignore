@@ -1,2 +1,7 @@
 .backup/
 c3*/**
+.orchestra/*
+.orchestra.log
+.orchestra/
+.reports/
+.system/
