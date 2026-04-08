@@ -12,9 +12,26 @@ This project uses a headless, file-driven agent orchestration framework. Agents 
 
 As an agent in this system, your primary administrative duty is to transition tickets between stages based on the outcome of your work.
 
-## The State Machine
+## The State Machine (Authoritative Source of Truth)
 
-Every ticket markdown file must contain a header with a `Stage:` field. The allowed stages and their flow are strictly defined as:
+Every ticket markdown file must contain a **YAML frontmatter** block at the very top of the file. This is the only stable interface for tracking state.
+
+**Correct (Mandatory):**
+
+```yaml
+---
+Stage: REVIEW
+---
+# Ticket Title
+...
+```
+
+**Legacy (To be upgraded by System):**
+- `Stage: REVIEW` (Loose header)
+- `**Status:** REVIEW` (Markdown bold)
+
+## Allowed Stages
+The allowed stages and their flow are strictly defined as:
 
 1. **`Stage: NEW`** → Initial state. Ready for the Planner agent.
 2. **`Stage: PLAN`** → The Planner is currently breaking the ticket into a handoff plan.
