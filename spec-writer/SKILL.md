@@ -182,6 +182,13 @@ What needs unit tests, integration tests, and end-to-end tests. Specify coverage
 **Security and performance constraints**
 Authentication requirements, authorization rules, rate limits, response time targets. Mark each unknown as `[ASSUMPTION: ...]`.
 
+**Failure paths (conditional — include when ticket carries `[FALLIBLE_IO]` tags)**
+For each external boundary the ticket touches (API, LLM, database, stream,
+third-party service): state what happens when it fails. Errors must propagate
+(re-throw or structured error response), never be silently caught and
+swallowed. Format:
+- **Boundary:** [name] — **On failure:** [what the user sees + what gets logged]
+
 **Architecture decisions (optional)**
 For non-trivial choices, add **ADR-NN** entries (see Operating principles). Trivial patterns can stay prose-only.
 

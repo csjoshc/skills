@@ -131,6 +131,8 @@ Evidence: [ticket line/section + verification result]
 - "Works correctly" style criteria
 - Missing observable verification conditions
 - Missing unhappy-path requirements
+- Ticket carries `[FALLIBLE_IO]` tag but no AC specifies failure behavior →
+  auto-escalate to BLOCKER
 
 **Verification:**
 1. Convert AC to explicit pass/fail behavior.
@@ -173,6 +175,8 @@ Evidence: [ticket line/section + verification result]
 - Unbounded queries or loops
 - No pagination or limits for list endpoints
 - No timeout/retry/backoff rules for network boundaries
+- Ticket carries `[FALLIBLE_IO]` tag but spec has no `## Failure Paths`
+  section → auto-escalate to BLOCKER
 
 **Verification:**
 1. Identify potential unbounded operations.

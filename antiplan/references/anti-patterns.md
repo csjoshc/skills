@@ -70,6 +70,22 @@ work when assembled.
 - "All tickets complete" but manual testing reveals fundamental issues
 - Ticket acceptance criteria reference internal implementation details rather
   than user-visible behavior
+- Ticket touches an external boundary (API, LLM, database, stream protocol)
+  but no AC specifies what happens when that boundary fails or is unreachable
+- All ACs describe happy-path outcomes; no AC uses "given [dependency] is
+  unavailable/unreachable/returns error" or equivalent negative-path language
+- Error handling described only as "return error response" with no specificity
+  about what the user sees, what gets logged, or whether the error propagates
+- A single AC uses "wire X into Y" or "integrate X with Y" without naming
+  specific function calls, constructor parameters, or event emissions at the
+  module boundary — each crossing point must be a separate AC
+
+**Risk tagging (Phase 3):** When the planner constructs the DAG, any ticket
+whose scope includes a call across a process, network, or provider boundary
+should carry an inline risk tag: `[FALLIBLE_IO: <boundary name>]`. This tag
+signals downstream skills (spec-writer, ticket-critic) to require explicit
+failure-path coverage. If a tagged ticket has zero negative-path ACs, the
+challenger flags it as AP-3.
 
 **Challenge questions:**
 - "After completing these 5 tickets, will the system actually run and serve
@@ -77,6 +93,8 @@ work when assembled.
 - "Where in this ticket sequence does someone actually start the system and
   try to use it?"
 - "What is the first ticket that produces something a human could click on?"
+- "This ticket calls [external boundary]. What does the user see when that
+  call fails?"
 
 **Historical example:** 29 tickets planned and executed sequentially. Ticket
 completion rate was high, but the system had dead code paths, unreachable
@@ -208,14 +226,209 @@ system was ultimately discovered through commits named "fix stuff", "fix",
 
 ---
 
+## AP-9: Greenfield Hallucination
+
+**Definition:** The implementing agent treats a brownfield modification as a
+greenfield build, creating new packages, directories, or files that duplicate
+functionality already present in existing modules.
+
+**Detection signals:**
+- Ticket says "create package X" when a package with overlapping responsibility
+  already exists in the codebase
+- New directory structure doesn't match the project's existing naming convention
+- New files duplicate functions, types, or classes already present in existing modules
+- The plan doesn't reference any existing file paths — only abstract component names
+- Package/module names diverge from the project's established naming pattern
+- Scope lines use vague component names instead of concrete file paths
+
+**Challenge questions:**
+- "Which EXISTING files does this ticket modify? If the answer is 'none — it
+  creates new files,' justify why the existing modules can't absorb this work."
+- "Is there an existing module that already does 60%+ of what this ticket proposes?
+  Why not extend it?"
+- "Does this new package/directory name follow the project's naming convention?
+  What is the convention?"
+- "Show me the existing function signature that is closest to what you're building.
+  Why can't you add a parameter to it instead of creating a parallel function?"
+
+**Historical example:** A plan specified `packages/chat-orchestration/` as a new
+package when the codebase already had `packages/c3-ai-orchestration/` with
+`run_chat_turn()` — the exact function the plan described. The implementing
+agent created a parallel package with duplicate types, duplicate config loading,
+and wrong package names, producing code that couldn't integrate with the existing
+BFF because it imported from the wrong module.
+
+**Negative example from evaluation:** An implementing agent was given a
+brownfield-context that used conceptual paths (`packages/orchestration/`)
+instead of `ls`-verified paths (`packages/c3-ai-orchestration/`). The agent
+created `packages/chat-orchestration/` importing `chat_orchestration` —
+a package that didn't exist. Every downstream ticket failed to integrate
+because imports pointed to the invented package name.
+
+**Prevention:** Every ticket scope line must specify MODIFY or CREATE at the file
+level. If a ticket has zero MODIFY lines and only CREATE lines for a brownfield
+project, it triggers AP-9 review. The Phase 0 brownfield scan and §8b
+Implementation Topology exist specifically to prevent this.
+
+---
+
+## AP-10: Silent Failure Suppression
+
+**Definition:** The implementing agent writes code that catches errors silently
+— logging them to a developer console or swallowing them entirely — instead of
+surfacing them to the user or halting visibly. The system appears to work
+because it doesn't crash, but it is producing wrong or missing results.
+
+**Detection signals:**
+- Acceptance criteria use "the system should handle errors gracefully" without
+  specifying what the user sees on failure
+- Try/catch blocks that log and continue without returning error state to caller
+- Default/fallback values that mask missing data (empty string, placeholder text,
+  hardcoded "Loading..." that never resolves)
+- Test assertions that check "no exception thrown" without checking the output
+  is correct
+- Error-handling code paths that suppress the error rather than propagating it
+
+**Challenge questions:**
+- "What does the user SEE when this fails? Not what does the log say — what
+  does the person at the keyboard see?"
+- "If the LLM call times out, does the UI show a stuck spinner forever, or
+  does it show an error within N seconds?"
+- "Show me the acceptance criterion that tests the failure path with a
+  user-visible assertion, not just 'no crash'."
+
+**Source:** DAPLab Columbia (Category 9: Exception & Error Handling), observed
+across Claude, Cline, Cursor, V0, and Replit. Agents prioritize runnable code
+over correct code by suppressing errors that make the app appear functional.
+
+---
+
+## AP-11: Completion Drive
+
+**Definition:** The implementing agent optimizes for marking tickets "done"
+rather than producing a working system. Manifests as: rewriting tests to match
+broken behavior, loosening assertions, adding retries to mask flaky failures,
+or declaring "ready" without reading linked dependencies.
+
+**Detection signals:**
+- Test was modified in the same commit as the implementation to make it pass
+  (test changed to match code, not code changed to match test)
+- Assertion thresholds relaxed without justification ("changed from assertEqual
+  to assertAlmostEqual" or "increased timeout from 5s to 60s")
+- PR description says "all tests pass" but the test is trivial (e.g., asserts
+  only that the function doesn't throw)
+- Ticket marked complete but no integration gate has run
+- Agent summary says "task complete" but the system doesn't actually run
+
+**Challenge questions:**
+- "Was this test written before or after the implementation it validates?"
+- "If I run this ticket's output against the NEXT ticket's preconditions,
+  does it actually work — or does it only work in isolation?"
+- "Show me the commit where the test was added vs. the commit where it was
+  modified. Are they the same?"
+
+**Source:** ctoth/claude-failures ("completion drive", "hiding bugs instead of
+fixing them"). Also observed as AP-3 (Ticket-Closure Loop) at the individual
+ticket level rather than the graph level.
+
+---
+
+## AP-12: Context Rot
+
+**Definition:** As the implementing agent's context window fills with code,
+diffs, and prior conversation, it progressively loses track of constraints
+declared earlier — project constitution, naming conventions, existing test
+patterns, module boundaries. The agent's output quality degrades silently
+as the session length increases.
+
+**Detection signals:**
+- Early tickets follow conventions; later tickets drift (different naming,
+  different patterns, different test structure)
+- Agent creates a file that duplicates functionality already present in a file
+  it modified earlier in the same session
+- Constitution principles or AGENTS.md rules are violated in late-session
+  tickets despite being respected in early ones
+- Agent asks a question that was already answered earlier in the session
+- Import paths or package names are wrong in ways that suggest the agent
+  forgot the project structure
+
+**Challenge questions:**
+- "Is this ticket small enough that an implementing agent can complete it
+  within a single context window, including reading all prerequisite files?"
+- "What is the maximum number of files the implementing agent needs open
+  simultaneously to complete this ticket? If >10, the ticket is too large."
+- "Does this ticket require the agent to remember decisions from a prior
+  ticket, or is it self-contained with explicit file references?"
+
+**Prevention:** Ticket scope must be bounded to fit within a single agent
+session. Each ticket's `read_first` list (see ticket template) makes
+prerequisites explicit rather than relying on session memory. The worked
+example's 7-ticket decomposition was calibrated for single-session execution.
+
+**Source:** GSD/get-shit-done ("context rot" — quality degradation as context
+window fills), DAPLab (Category 8: Codebase Awareness & Refactoring Issues),
+ctoth/claude-failures ("feedback loops — same problems rediscovered 4 times
+across sessions").
+
+---
+
+## AP-13: Exemplar Blindness
+
+**Definition:** The plan describes what code should do in prose, but does not
+point the implementing agent at existing code that demonstrates the correct
+pattern. The agent then invents its own pattern — which may be plausible but
+incompatible with the codebase's established conventions.
+
+**Detection signals:**
+- Ticket says "create a new endpoint following project conventions" without
+  naming which existing endpoint to copy from
+- Ticket says "add tests" without pointing to an existing test file that
+  demonstrates the test pattern (fixtures, assertions, setup/teardown)
+- Component description uses abstract language ("a service that manages X")
+  instead of referencing an existing similar service
+- The plan has no `Exemplar files` entries despite being brownfield
+- Implementing agent produces code that works but uses a different style,
+  different import pattern, or different error-handling approach than the
+  rest of the codebase
+
+**Challenge questions:**
+- "Which existing file in the codebase is the closest analog to what this
+  ticket produces? Name it — the implementing agent should read it first."
+- "If I showed this ticket to a new developer with no other context, could
+  they find the right file to copy patterns from? Or would they guess?"
+- "Does the test for this ticket follow the same fixture/assertion pattern
+  as the existing test suite? Which test file is the exemplar?"
+
+**Prevention:** Every ticket in a brownfield project must have an `Exemplar
+files` field listing 1-3 existing files that demonstrate the correct pattern.
+The implementing agent reads these BEFORE writing any code. This is the
+strongest available defense against AP-9 (Greenfield Hallucination) at the
+execution level.
+
+**Source:** ralph-wiggum-brownfield (`exemplars/` directory concept —
+canonical pattern files the agent must copy from rather than invent).
+
+---
+
 ## Usage by Phase
 
 ### Phase 1-2 (Main Agent)
 Scan the user's responses for anti-pattern signals. When detected, name the
 anti-pattern, explain the risk, and challenge the user directly.
 
+**Planning-phase anti-patterns** (AP-1 through AP-9): detected during
+requirements and architecture interrogation.
+
+**Implementation-phase anti-patterns** (AP-10 through AP-13): detected during
+ticket construction. These manifest when the implementing agent executes the
+plan, but the planner can prevent them by structuring tickets correctly:
+- AP-10 → require failure-path ACs with user-visible assertions
+- AP-11 → require test-before-implementation ordering in ticket scope
+- AP-12 → bound ticket scope to single-session size with explicit read_first
+- AP-13 → require exemplar file references in every brownfield ticket
+
 ### Phase 3 (Challenger Subagent)
-Systematically review the planner's DAG against ALL 8 anti-patterns. For each
+Systematically review the planner's DAG against ALL 14 anti-patterns. For each
 ticket and each gate, check if any detection signal applies. Report findings
 as a structured list:
 
@@ -228,3 +441,68 @@ AP-[N] detected in T-[X]:
 
 - BLOCK: DAG cannot proceed until resolved
 - WARN: Planner can accept with justification or escalate to user
+
+### Implementation-Phase Detection (for integration gates)
+
+AP-10 through AP-14 are primarily caught DURING implementation, not during
+planning. Integration gate tickets should include detection criteria:
+
+- **AP-10 check:** Gate must test at least one failure path with a user-visible
+  assertion (not just "no crash")
+- **AP-11 check:** Gate verifier must not be the same agent/session that
+  implemented the feature tickets
+- **AP-12 check:** If late-session tickets show convention drift, flag for
+  re-implementation in a fresh session
+- **AP-13 check:** Code review step in gate verifies new code matches exemplar
+  patterns (imports, naming, test structure)
+- **AP-14 check:** Orchestrator console output is compared against the raw
+  subprocess log; any event present in the log but absent from console output
+  is a fidelity gap that must be investigated
+
+---
+
+## AP-14: Orchestrator Observability Blindspot
+
+**Definition:** The orchestration layer's own monitoring, logging, dependency
+wiring, or event parsing silently loses fidelity — making healthy runs look
+broken and broken runs look identical to healthy ones. The operator acts on
+false signals (killing a working process, missing a real failure).
+
+**Detection signals:**
+- Console output shows fewer event types than the raw subprocess log contains
+- Parsed event objects have empty/default fields that the raw JSON populated
+- Dependency edges declared in ticket frontmatter are absent from the scheduler
+  DB with no warning emitted
+- A pipeline control-flow decision (scheduling order, retry, timeout) depends
+  on a parsed value that was silently defaulted due to schema mismatch
+- Operator cannot distinguish a productive agent (doing grep/glob/read) from
+  a stuck agent (zero-work loop) by watching the console
+
+**Challenge questions:**
+- "If I compare the raw subprocess log to what the operator sees on the
+  console, is every event type represented? Which are filtered, and what is
+  the justification for each filter?"
+- "If the upstream CLI tool changes its JSON schema, which test catches the
+  parse failure? Is there a contract test with a real output fixture?"
+- "When a `Depends-On` edge fails to resolve, does the operator see a warning,
+  or is the edge silently dropped?"
+- "Can the operator distinguish 'agent is working but using cached tokens
+  (cost=0)' from 'agent is stuck in a zero-work loop (cost=0)'?"
+
+**Historical example:** Orchestra's JSONL parser assumed a flat `data` key
+structure, but opencode nests events under `part` with camelCase keys. All
+tool events parsed to empty objects. The console filter then hid grep/glob
+events entirely. The operator saw only `[step_start]` / `[step_finish]
+reason=None cost=0.0` — identical output for a productive agent and a stuck
+one. Separately, `Depends-On: [T1, T2, T3]` silently resolved to zero edges
+because short prefixes didn't match full slugs, causing an integration gate
+to run before its dependencies with no warning.
+
+**Prevention:**
+- Contract-test every event parser against frozen real output fixtures from
+  each supported runtime CLI
+- Console event filter must justify every suppressed event type; suppressed
+  types must still increment a visible counter ("12 events, 8 shown")
+- Dependency edge resolution must warn on zero-match slugs
+- Integration gates should include an orchestrator-fidelity check: compare
+  raw log event count to parsed event count and fail on >5% discrepancy
