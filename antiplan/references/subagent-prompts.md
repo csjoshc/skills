@@ -32,6 +32,24 @@ but limit to 2 rounds maximum to avoid infinite loops.
 
 ---
 
+## Context Compression
+
+Before launching subagents, the main agent must distill the Phase 1-2
+interrogation into a structured summary. Do NOT pass the full chat log.
+
+**Compression protocol:**
+1. Extract all Resolved decisions with their one-line justification
+2. Extract the non-goals list
+3. Extract the Assumption Register (current state)
+4. Extract the Artifact Ingestion Log (if any)
+5. Extract the Constitution principles
+6. Extract the Complexity Justification Register entries
+7. Discard all back-and-forth, repeated questions, and frustration handling
+
+This compressed packet is the input for all subagents.
+
+---
+
 ## Planner Subagent Prompt
 
 Use this as the `prompt` parameter when launching the planner subagent via
@@ -56,6 +74,8 @@ You will receive:
 4. The **Artifact Ingestion Log** (if any reference artifacts were provided) —
    what was examined, what was adopted with justification, what was rejected.
 5. The ordering rules from the convergence engine
+6. The **Constitution** — declared project principles that every ticket must
+   respect
 
 ## Ordering Rules (MANDATORY)
 
@@ -94,6 +114,8 @@ For each ticket, output:
 - **blocks:** [list of ticket IDs]
 - **gate:** [ID of integration gate that validates this]
 - **Phase 1 feature:** [which feature from Phase 1 this implements]
+- **Priority:** P1 | P2 (P3 features are excluded from the DAG)
+- **Origin:** phase-1 | phase-2 | constitution | brownfield
 
 For integration gate tickets, additionally include:
 - **Validates:** [list of ticket IDs being tested]
@@ -119,6 +141,13 @@ T-1: [title]
 - [ ] First gate validates a working end-to-end flow (MTP)
 - [ ] No orphan tickets (all reachable from root)
 - [ ] Dependencies form a DAG (no cycles)
+- [ ] No P3 features in the DAG
+- [ ] Every ticket has an origin tag
+- [ ] No ticket violates a Constitution principle
+- [ ] No `[NEEDS CLARIFICATION]` markers remain
+
+After the DAG, output a **Parallel Execution Windows** section listing
+tickets that can run concurrently (same dependency level, no mutual deps).
 ```
 
 ---
@@ -144,11 +173,20 @@ You will receive:
    assumption that was not explicitly accepted by the user.
 5. The **Artifact Ingestion Log** (if any) — verify adopted items are justified
    and rejected items haven't crept back in.
-6. An anti-pattern checklist (AP-1 through AP-8)
+6. An anti-pattern checklist (AP-1 through AP-13)
 
 ## Your Task
 
 Review EVERY ticket and EVERY integration gate against:
+
+### Constitution Check
+- Does any ticket violate a declared Constitution principle?
+- If yes: automatic BLOCK.
+
+### Non-Goals / Artifact Ingestion Check
+- Does any ticket build something on the non-goals list?
+- Does any ticket reintroduce a rejected artifact ingestion item?
+- If yes: automatic BLOCK (scope creep).
 
 ### Structural Rules
 - No dependency chain has >3 feature tickets without a gate
@@ -156,10 +194,14 @@ Review EVERY ticket and EVERY integration gate against:
 - No orphan tickets
 - No cycles in dependencies
 - Gate tickets specify real (non-mock) test environment
+- Every ticket has a Read First section with ≥1 file path
+- Every brownfield ticket has an Exemplar Files section
+- Every AC has a Verify line with grep/test/curl command
+- Every ticket has at least one failure-path AC
 
 ### Anti-Pattern Checklist
 
-For each of AP-1 through AP-8, scan EVERY ticket:
+For each of AP-1 through AP-13, scan EVERY ticket:
 
 AP-1 (Speculative Architecture): Does this ticket build something not demanded
 by a Phase 1 feature?
@@ -185,10 +227,38 @@ depth?
 AP-8 (Ceremony as Rigor): Do the acceptance criteria test user-visible
 behavior or just internal implementation details?
 
+AP-9 (Greenfield Hallucination): Does this ticket create new files/packages
+when existing modules with overlapping responsibility exist? Are all MODIFY
+vs CREATE actions justified?
+
+AP-10 (Silent Failure Suppression): Do the acceptance criteria test failure
+paths with user-visible assertions? Or do they only test the happy path and
+"no crash" on errors?
+
+AP-11 (Completion Drive): Could a lazy implementing agent mark this ticket
+"done" by writing trivial tests that assert only "no exception thrown"? Are
+the verification commands specific enough to catch wrong-but-running code?
+
+AP-12 (Context Rot): Is this ticket small enough for a single agent session?
+Does it modify >5 production files? Does its Read First list make all
+prerequisites explicit?
+
+AP-13 (Exemplar Blindness): Does this brownfield ticket point the
+implementing agent at existing code to copy patterns from? Or does it rely
+on prose descriptions of conventions the agent may invent its own version of?
+
 ### Coverage Check
 - Every Phase 1 feature has at least one ticket
 - Every Phase 1 acceptance criterion appears in at least one ticket's AC
 - No Phase 1 feature is deferred without explicit user approval
+- No non-goal item has crept back into the DAG
+
+### Requirements Coverage Cross-Check
+- For each feature in the Phase 1-2 decision summary, verify at least one
+  ticket references it
+- For each AC in the decision summary, verify a matching AC exists in the
+  ticket DAG
+- Report any gaps as COVERAGE GAP findings
 
 ## Output Format
 
@@ -269,3 +339,46 @@ The user never sees the raw challenge/reconciliation exchange. They see:
 - The final DAG
 - Any decisions that need their input (from ESCALATE)
 - A summary of how many challenges were raised and resolved
+
+---
+
+## Additional Subagents (Heavy Projects Only)
+
+For projects classified as **Heavy** in Phase 0, add two review passes after
+the plan-challenge-reconcile loop completes:
+
+### Implementability Reviewer
+
+```
+You review a ticket DAG for technical feasibility. For each ticket:
+
+- Can this realistically be implemented with the stated dependencies?
+- Are the effort estimates reasonable (not 1 ticket for 3 weeks of work)?
+- Are required technologies/libraries available and compatible?
+- Does the acceptance criterion require infrastructure that doesn't exist yet?
+
+Output: a list of FEASIBILITY CONCERN findings, each with:
+- Ticket ID
+- Concern: [what is infeasible or unrealistic]
+- Suggestion: [how to make it feasible — split, reorder, add infra ticket]
+```
+
+### User Advocate
+
+```
+You review a ticket DAG from the end-user perspective. Your job:
+
+- When does the user FIRST see value? Is the first visible output too late?
+- Is the ticket ordering optimized for user feedback, not developer convenience?
+- After IG-1, is there something a human could actually use and react to?
+- Are there tickets that produce no user-visible change for 3+ consecutive steps?
+
+Output: a list of UX CONCERN findings, each with:
+- Ticket range (e.g., T-3 through T-6)
+- Concern: [why the user is waiting too long for value]
+- Suggestion: [reorder to surface user value earlier]
+```
+
+These reviewers run AFTER the Planner/Challenger reconciliation. Their findings
+are presented to the user alongside the final DAG, not fed back into the
+plan-challenge loop.

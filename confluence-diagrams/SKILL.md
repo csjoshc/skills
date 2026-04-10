@@ -100,6 +100,60 @@ Mermaid CLI generates SVGs with `width="100%"` and a `viewBox` attribute.
 Confluence ignores `viewBox` and needs a concrete pixel width, otherwise
 the image renders as a tiny thumbnail. Always set `ac:width`.
 
+## Visual Conventions
+
+When authoring diagrams, apply consistent color and line-style conventions
+based on C4, UML, and ArchiMate standards. A companion example is at
+`confluence-diagrams/example-conventions.mmd`.
+
+### Node colors (classDef)
+
+| classDef | Hex | Entity type |
+|----------|-----|-------------|
+| `person` | `#E8EAED` (light grey) | User, browser, actor |
+| `service` | `#4285F4` (blue) | Application, API, deployed service |
+| `library` | `#4FC3F7` (light blue) | In-process library or module |
+| `guard` | `#F9AB00` (gold/amber) | Security boundary, guardrail, policy |
+| `external` | `#9AA0A6` (grey) | External system outside your control |
+| `state` | `#A142F4` (purple) | State, data store, configuration |
+| `errBlock` | `#EA4335` (red) | Error state, blocked path |
+| `passNode` | `#34A853` (green) | Success outcome, data-in-motion |
+| `auditNode` | `#9AA0A6` (grey) | Audit, logging (side-effect) |
+
+### Edge styles
+
+| Style | Mermaid syntax | Meaning |
+|-------|---------------|---------|
+| Solid + filled arrow | `A --> B` | Synchronous call |
+| Solid + label | `A -->\|"label"\| B` | HTTP call (use blue labels for HTTP) |
+| Dashed + filled arrow | `A -.-> B` | Async, streaming, or exceptional path |
+| Dotted + open arrow | `A -.-\|"label"\| B` | Dependency, side-effect, optional |
+
+### Legend block
+
+Include a legend subgraph at the bottom of complex diagrams:
+
+```
+subgraph Legend ["LEGEND"]
+  direction LR
+  L_svc["Service / API"]:::service
+  L_lib["Library / Module"]:::library
+  L_guard["Security / Guardrail"]:::guard
+  L_ext["External System"]:::external
+  L_state["State / Data"]:::state
+  L_err["Error / Block"]:::errBlock
+end
+```
+
+### Mermaid-specific notes
+
+- Use `<br/>` for line breaks in node labels (not `\n`).
+- `classDef` only works in `flowchart` diagrams — `sequenceDiagram` and
+  `stateDiagram-v2` ignore it.
+- Edge styling via `linkStyle N` is index-based and fragile. Prefer
+  solid vs dashed arrows and descriptive labels over edge colors.
+- Avoid `{}` and HTML entities in labels — they break the Mermaid parser.
+
 ## Key gotchas
 
 - **Use storage format** when embedding images. If you update via

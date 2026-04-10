@@ -56,7 +56,11 @@ After identifying the MTP, determine the project context:
 
 - "Is this greenfield (new codebase) or brownfield (changes to existing code)?"
 
-If **brownfield**:
+If **brownfield**, the agent should have already scanned the codebase in
+Phase 0. Present the discovered conventions:
+- "I found [framework], [test runner], [architecture pattern]. These are
+  tagged Observed in the Assumption Register. In Phase 2, you must justify
+  deviations from these, not justify them."
 - "List every existing behavior that must NOT break."
 - "What is the current test coverage for those behaviors?"
 - A **regression gate ticket** is mandatory before the first new vertical slice.
@@ -84,20 +88,126 @@ For each feature surviving minimum + boundary questions:
 
 - "How will you know this works? Describe the test in given/when/then."
 - "What does the user see when this succeeds? What do they see when it fails?"
+- "For every output path in the user-visible flow, what does the user see? If
+  the system completes an internal operation but produces no text output, what
+  is shown — empty response, synthesized summary, or error?"
 - "What is the latency target? Throughput target? Error budget?"
 - "What is your deploy target: local, staging, production? In what order?"
 
+When a feature involves **computation, conditional logic, pricing rules, or
+data transformation**: demand at least one worked example with concrete
+input values and expected output values. Prose-only ACs for logic-heavy
+features are ambiguous by default — the implementing agent will pick one
+interpretation and write tests that validate it, producing code that runs
+correctly but computes the wrong result.
+
+- "Walk me through a concrete example: given input [X], what is the exact
+  output? Show me the numbers."
+- "Is the rule applied per-item or per-aggregate? Give me both cases with
+  specific values so we can see the difference."
+
 Every feature must exit Phase 1 with at least one concrete acceptance criterion
-written as given/when/then. No exceptions.
+written as given/when/then. Features with computation or conditional logic must
+include at least one **worked example with literal values**. No exceptions.
+
+#### 5b. Prompt Composition (for LLM-driven features)
+
+For any feature that involves composing a system prompt, context injection, or
+model behavioral constraints:
+
+- "What sections does the prompt contain? List them."
+- "Does any section change per-turn (e.g., current date, prior tool results,
+  user context)? Or is it static?"
+- "What behavioral constraints does the prompt impose on the model (e.g.,
+  'do not narrate wire protocol,' 'summarize tool results in prose')?"
+- "What happens after a tool call returns? Does the prompt include formatting
+  rules for how the model should present tool results to the user?"
+
+Do not accept: "system prompt includes a catalog." That is one section. Ask:
+"What else? Date context? Behavioral framing? Post-tool formatting rules?"
+Every section is a design decision that should be explicit in the plan, not
+invented by the implementing agent.
+
+#### 6. Measurable Success Criteria
+
+After features are established, demand non-functional success metrics:
+
+- "What does success look like numerically? Latency, throughput, adoption,
+  error rate — give me at least 2 concrete thresholds."
+- "If this project ships and all acceptance criteria pass, but nobody uses it,
+  did it succeed? What is the adoption target?"
+
+At least 2 measurable success criteria (SC-001, SC-002, etc.) must be defined
+before Phase 1 completes.
+
+#### 7. Priority Tiers
+
+Require the user to assign P1/P2/P3 to each surviving feature:
+
+- **P1 (MTP):** Must be in the first vertical slice. Ship-blocking.
+- **P2 (First release):** Needed for the product to be useful beyond demo.
+- **P3 (Nice-to-have):** Can be deferred without user pain.
+
+For each assignment: "Why is [feature] P2 and not P3? What user story breaks
+if we defer it?" P3 features are cut from the initial DAG by default — they
+become a follow-up epic.
+
+#### 8. Statefulness Questions (for interactive systems)
+
+For any system with a user-facing UI or multi-step interaction:
+
+- "Does the user interact once, or do they have a conversation / multi-step flow?"
+- "If conversational: who holds the state — client, server, or both?"
+- "What is the maximum session length? What happens at the boundary?"
+- "When the user sends message N, does the backend see messages 1 through N-1?"
+- "How does conversation/session state flow through the ENTIRE stack — from the
+  client, through the API layer, to the processing layer?"
+- "What happens if the user refreshes the page? Is state lost?"
+
+Do not accept: "It's a chat interface" without specifying the state management
+model. Single-turn vs. multi-turn is an architectural decision that affects
+every layer of the stack. This is the most commonly under-specified aspect of
+interactive systems.
+
+**Hard rule:** If the system is interactive, the statefulness model must be
+explicitly resolved (client-side / server-side / hybrid) before Phase 1 exits.
+
+#### 9. Security Boundary Questions
+
+For every HTTP endpoint, tool execution path, or data flow in the system:
+
+- "What authentication does this endpoint require? Bearer token, mTLS,
+  API key, none?"
+- "What happens when an unauthenticated request arrives? 401? Silent drop?
+  Default behavior?"
+- "For every runtime that executes tool calls, what policy governs which
+  tools can run? Is this configurable or hardcoded?"
+- "Where do secrets (API keys, tokens, shared secrets) live at runtime?
+  Environment variables? YAML config? Vault?"
+
+Do not accept: "demo scope — no auth needed" without the user explicitly
+acknowledging the risk. If endpoints will eventually need auth, the plan
+must include placeholder auth that can be upgraded, not zero auth that must
+be retrofitted.
 
 ### Phase 1 Completion Criteria
 
 All of the following must be true:
 - [ ] Every feature has a named user with a stated need
 - [ ] Every feature has at least one given/when/then acceptance criterion
+- [ ] Features with computation or conditional logic include at least one
+  worked example with literal input/output values
+- [ ] Every feature has a priority tier (P1/P2/P3) with justification
+- [ ] At least 2 measurable success criteria (SC-001, SC-002) are defined
 - [ ] The user has named at least 3 things explicitly NOT in scope
 - [ ] The Minimum Testable Product (MTP) has been identified
+- [ ] Greenfield/brownfield is determined; if brownfield, existing behaviors
+  that must not break are listed
+- [ ] If interactive: statefulness model is explicitly resolved
+- [ ] Every HTTP endpoint has stated auth requirements (even if "none — demo
+  scope, acknowledged risk")
 - [ ] The Convergence Ledger shows zero Unresolved items in the product domain
+- [ ] No `[NEEDS CLARIFICATION]` markers remain in any Phase 1 artifact
 
 ---
 
@@ -174,13 +284,105 @@ For every boundary between components:
 - "What happens on error? What status codes or error types are returned?"
 - "Show me the type signature (TypeScript interface, Python Protocol, etc.)"
 - "Is this contract tested independently of the implementations on each side?"
+- "For every error type, what specific status code or error shape is returned?
+  'Returns error response' is not a contract — name the code and the body."
+- "How do errors propagate across layer boundaries? Does the orchestration
+  layer raise typed exceptions that the BFF maps to HTTP status codes? Or
+  does each layer handle errors independently? If exceptions propagate, name
+  the exception types and what each maps to at the HTTP boundary."
+- "For every callback or hook parameter at an async boundary, what is the
+  exact type signature? If the caller is async and the callback is sync, how
+  is event-loop blocking prevented?"
 
 API contracts must be defined BEFORE implementation tickets are created. Not
 after. Not "TBD." Now.
 
+### Contract Precision Demands
+
+For every tool definition, external API call, or upstream service integration:
+
+- "What are the EXACT field names the upstream system expects? Show me the
+  source — OpenAPI spec, actual API response, or curl transcript."
+- "Is there a known mismatch between common/intuitive names and the actual API
+  field names? Document it explicitly." (e.g., `fromAirport` not `origin`)
+- "What does the upstream return on success vs. error? Show me a real response
+  payload, not a guess."
+- "What is the authentication mechanism? Header name, token format, where does
+  the token come from at runtime?"
+
+Do not accept: Plausible-sounding field names without verification. LLM-generated
+API schemas are wrong by default until proven against the real API or spec.
+
+**Internal seams:** Contract precision applies to internal function signatures
+at critical boundaries, not just external APIs. If a function accepts
+configuration, ask: "Does the caller pass a loaded config object, or a
+path/locator? Where do security-relevant settings (classification,
+permissions, guardrail config) come from at runtime — hardcoded, env var,
+or loaded from file?" A bag type (e.g., `config: Any`, `options: dict`) at a
+module boundary defers the design question into implementation.
+
+**Hard rule:** Tool definitions with unverified field names are flagged as
+Inferred in the Assumption Register and cannot enter the DAG until verified.
+
+### Trace and Log Data Safety
+
+For any data model that appears in logs, traces, audit events, or debug output:
+
+- "Does this object carry raw values (arguments, responses, user content) or
+  digested summaries (sorted-key hash, truncated preview)?"
+- "Are these objects immutable/frozen? Could a downstream consumer mutate them?"
+- "Could raw values in traces leak sensitive information (PII, secrets, API
+  keys, classified data)? If so, the trace model must carry summaries, not
+  raw values."
+
+### Implementation Topology Demands (Brownfield)
+
+For brownfield projects, after all components and contracts are resolved:
+
+- "For each feature in the MTP, which EXISTING file(s) will change?"
+- "Will any new packages, directories, or modules need to be created? If yes,
+  justify why the existing structure can't absorb the work."
+- "For each proposed component in the Component Map, does a module with that
+  responsibility already exist? Name the file path."
+- "What is the existing function signature closest to what you're building?
+  Can you add a parameter to it instead of creating a parallel function?"
+
+**Hard rule:** If the user says "create new package X" and a package with
+overlapping responsibility already exists, challenge with AP-9: "Why can't
+this live in [existing package]?" The result is PRD §8b (Implementation
+Topology) — a table mapping every ticket to MODIFY/CREATE + file paths.
+
+### Pre-Existing Component Audit
+
+For every component marked "pre-existing (not a ticket)" in the Component Map
+or brownfield scan — i.e., something the plan depends on but does not modify:
+
+- "What specific operations does this component currently support? List them."
+- "Does it support the operations the new tickets require? Show me the code
+  path, API endpoint, or test that proves it."
+- "If a required capability is missing, does this component need a modification
+  ticket — or is the architecture decision that depends on it wrong?"
+
+Do not accept: "Component X handles Y" without evidence that it handles
+the *specific* operations the new tickets require (correct auth mechanism,
+correct schemas, correct response format).
+
+**Hard rule:** Every pre-existing component that new tickets depend on must
+have its assumed capabilities verified against code or runtime evidence. If
+verification reveals a capability gap, either add a modification ticket for
+that component or revisit the Phase 2 architecture decision that assumed
+the capability existed.
+
+**Scope estimation:** When a capability gap is found, enumerate every
+operation the component currently supports AND every operation the plan
+requires. The delta between these two sets is the real ticket scope. If the
+delta is large (>50% of the component's existing code), challenge whether
+modifying this component is the right approach — the architecture decision
+that selected it may need revisiting.
+
 ### Anti-Pattern Detection
 
-During Phase 2, actively scan for anti-patterns AP-1 through AP-8 from
+During Phase 2, actively scan for anti-patterns AP-1 through AP-13 from
 [anti-patterns.md](anti-patterns.md). When you detect one:
 
 1. Name it explicitly: "This looks like AP-4: God Function."
@@ -197,8 +399,17 @@ All of the following must be true:
 - [ ] Every component has passed the Reinvention Test (no existing solution)
 - [ ] Every new boundary has passed the Activation Checklist
 - [ ] Every inter-component boundary has a defined API contract
+- [ ] Tool/API field names are verified against upstream source (not guessed)
 - [ ] Mock dependencies have been identified with real-integration-test plans
-- [ ] No unresolved anti-patterns remain
+- [ ] No unresolved anti-patterns remain (AP-1 through AP-13)
+- [ ] If brownfield: Implementation Topology (§8b) maps every ticket to
+  MODIFY/CREATE + file paths; zero unjustified CREATE actions
+- [ ] If brownfield: every pre-existing component's assumed capabilities are
+  verified against code or runtime evidence (Pre-Existing Component Audit)
+- [ ] If brownfield: Exemplar files identified for each ticket (AP-13) —
+  at least one existing file per ticket that demonstrates the correct pattern
+- [ ] Every proposed ticket is scoped to ≤5 production files (context budget,
+  AP-12 prevention)
 - [ ] The Convergence Ledger shows zero Unresolved items in the architecture
   domain
 
@@ -236,3 +447,62 @@ Acceptable. "I don't know" is vastly better than a bad assumption.
 - Ask: "Is this a decision you need to make, or can we cut the feature that
   depends on it?"
 - If it blocks other decisions, it must be resolved before Phase 3
+
+**Edge-case unknowns within approved features:** If the user committed to a
+feature but can't detail a specific edge case or behavioral choice, offer
+2-3 common patterns as a forced choice instead of blocking. The feature is
+already approved — the user needs help specifying behavior, not deciding
+scope. Present options concretely:
+
+> "You said the system calls tools. When a tool call completes but the model
+> returns no text, common patterns are: (a) empty response, (b) synthesized
+> summary from tool results, (c) error message. Which matches your intent?"
+
+This is NOT suggesting features (Persona Rule #2) — the feature exists. It
+is offering bounded implementation options for an acknowledged requirement
+the user can't detail from memory alone. If none of the offered options fit,
+the user describes what they want. If the user still can't decide, record as
+Deferred with a named validation gate.
+
+---
+
+## Focused Re-Interrogation
+
+After the initial Phase 1 or Phase 2 pass, either the agent or user may
+request a focused re-interrogation on a specific area (e.g., security,
+performance, error handling, data model). This adds depth without restarting:
+
+1. Agent identifies the focus area from Contested or low-confidence items
+2. Ask 3-5 targeted questions on that area only
+3. New resolutions add to the Convergence Ledger without resetting it
+4. Repeat for additional focus areas as needed
+
+Use when: persistent Contested items, user seems uncertain about a specific
+domain, or Phase 2 reveals a deep technical area that Phase 1 skimmed.
+
+---
+
+## Advanced Elicitation Methods
+
+When the standard adversarial challenge isn't breaking through a Contested
+item, offer the user an alternative reasoning lens:
+
+- **Pre-mortem:** "Assume this already failed. Why did it fail?"
+- **Inversion:** "How would you guarantee this project fails?"
+- **Constraint Removal:** "What if you had no constraints? What would change?"
+- **Analogical:** "What other domain solved a similar problem? What did they do?"
+
+These are optional — offered only when the user seems stuck and the standard
+interrogation isn't resolving the issue.
+
+---
+
+## Constitution Gate
+
+During Phase 2, every proposed component must pass the user's declared
+constitution principles (from Phase 0) in addition to the standard tests.
+
+- "Your constitution says '[principle]'. Does this component violate it?"
+- If yes: the component must be cut or the constitution must be amended
+  (amendments require explicit user acknowledgment and are recorded in the
+  Complexity Justification Register)
