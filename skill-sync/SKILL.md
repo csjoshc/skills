@@ -4,7 +4,7 @@ description: >-
   Synchronizes and audits AI skills across multiple IDEs and CLI agents using ~/.skills
   as the authoritative store. Use when the user asks to sync skills, audit skill symlinks,
   ingest new skills into the master folder, or unify skills across Cursor, Claude Code,
-  Gemini/Antigravity, OpenCode, VS Code (global and project-level), or ChatGPT. Handles 
+  Gemini/Antigravity, OpenCode, Codex, VS Code (global and project-level), or ChatGPT. Handles 
   propagation of removals from master store.
 ---
 
@@ -74,6 +74,7 @@ Always provide a **Sync Status Report** table with the following structure:
 | Agent / Platform | Global Status | Project Status | Notes |
 | :--- | :--- | :--- | :--- |
 | Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to shared/SYMLINK_MAP.md |
+| Codex | Synced / Out of Sync / Missing | N/A | Global `~/.codex/skills` symlink required |
 | Gemini / Antigravity | Synced / Out of Sync / Missing | Setup / Missing / N/A | Gemini natively supports project-level symlinks |
 | VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
 | *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See shared/SYMLINK_MAP.md |

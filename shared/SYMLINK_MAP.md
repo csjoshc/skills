@@ -9,6 +9,7 @@ All paths symlink to the master store at `~/.skills`.
 | Tool / Platform | Global Path | Target |
 | :--- | :--- | :--- |
 | **Master Store** | `~/.skills` | (Authoritative) |
+| **Codex** | `~/.codex/skills` | `~/.skills` |
 | **Cursor (Skills)** | `~/.cursor/skills` | `~/.skills` |
 | **Cursor (Rules)** | `~/.cursor/rules/master` | `~/.skills` |
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
