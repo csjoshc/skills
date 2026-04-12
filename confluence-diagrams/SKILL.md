@@ -145,6 +145,96 @@ subgraph Legend ["LEGEND"]
 end
 ```
 
+### Layout rules (Confluence whiteboard rendering)
+
+Confluence whiteboards use an OpenGL-backed renderer with absolute
+positioning and dynamic connector routing. Mermaid's DAG layout
+algorithm is ignored — only the **node set, edges, and order** carry
+over. These rules produce cleaner whiteboard output:
+
+#### 1. Error-bus pattern — never fan-out block arrows
+
+**Bad:** N guardrail nodes each connect individually to a single error
+outcome node far away → N diagonal arrows crossing the happy path.
+
+**Good:** Add one local collector node per cascade, then one outbound
+arrow to the error outcome.
+
+```
+IG1 --> IG2 --> IG3 --> IG4
+IG4 --> PassInput
+
+IG1 & IG2 & IG3 & IG4 -.-> InputErr["⛔ Block"]:::errBlock
+InputErr -.-> BlockInput
+```
+
+This replaces 4 long crossing arrows with 4 short downward stubs + 1
+outbound arrow. The whiteboard router handles short same-region
+connectors well.
+
+#### 2. Cascade-local outcomes — no far-right column
+
+Keep pass/block nodes **inside or immediately after** their subgraph,
+not in a separate column. In the Mermaid source, define outcome nodes
+inside the subgraph so the whiteboard groups them spatially:
+
+```
+subgraph InputCascade ["INPUT GUARDRAILS"]
+  direction LR
+  IG1 --> IG2 --> IG3 --> IG4
+  IG4 --> PassInput["Filtered text"]:::passNode
+  IG1 & IG2 & IG3 & IG4 -.-> BlockInput["Blocked"]:::errBlock
+end
+```
+
+**Rule of thumb:** no arrow should span more than ~800px horizontally.
+If outcome nodes are further, move them closer.
+
+#### 3. One exit per subgraph
+
+Each subgraph should expose **one** outbound happy-path connector and
+**one** outbound error connector. Internal fan-out stays inside.
+
+The whiteboard router degrades badly when many connectors cross subgraph
+boundaries from different internal nodes.
+
+#### 4. Consistent anchor direction
+
+For horizontal cascades (LR flow), all connectors should use:
+- **Source:** right-center `{left: 1, top: 0.5}`
+- **Target:** left-center `{left: 0, top: 0.5}`
+
+For vertical section-to-section flow (entry → cascade):
+- **Source:** bottom-center `{left: 0.5, top: 1}`
+- **Target:** top-center `{left: 0.5, top: 0}`
+
+**Never mix** (e.g., bottom-center → left-center) — this forces the
+router into steep diagonals it cannot clean up.
+
+In Mermaid terms: keep `direction LR` inside subgraphs and use the
+outer flowchart direction for inter-section flow. Don't create edges
+that fight the declared direction.
+
+#### 5. Max one subgraph crossing per arrow
+
+If an arrow must cross more than one subgraph boundary, introduce an
+intermediary node at the boundary. This gives the router a waypoint
+and prevents long diagonal spans.
+
+#### 6. Side-effect arrows (audit/logging) — single aggregation point
+
+Instead of 3 separate section→AuditLogger arrows, add one invisible
+aggregation node:
+
+```
+InputCascade -.-> AuditBus[" "]
+OutputCascade -.-> AuditBus
+ToolCascade -.-> AuditBus
+AuditBus -.-|"all results logged"| Audit
+```
+
+This collapses 3 long parallel arrows into 3 short stubs + 1 trunk.
+
 ### Mermaid-specific notes
 
 - Use `<br/>` for line breaks in node labels (not `\n`).
