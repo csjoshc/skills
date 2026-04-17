@@ -15,6 +15,10 @@ description: Test-driven development with red-green-refactor loop. Use when user
 
 See [TESTS.md](./TESTS.md) for examples and [MOCKING.md](./MOCKING.md) for mocking guidelines.
 
+Companion files to load at specific phases:
+- [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) — required when the red-step test introduces a boundary mock (HTTP, DB, FS, time, SDK). Enforces that every mock references a real contract artifact and rejects conditional-branch mocks.
+- [MUTATION.md](./MUTATION.md) — optional gate at green-step completion. Runs a 3-mutant pass against the changed function to catch tautological tests that pass whether the code runs or not.
+
 ---
 
 ## Anti-Pattern: Horizontal Slices

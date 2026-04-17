@@ -30,10 +30,44 @@ Apply **[`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md)** to **source
 ## Workflow
 
 1. **Scope** — paths, package, or PR diff the user named; default to project source per `AGENTS.md`.
-2. **Map** observations to rubric **§Part 2–4** (which dimension or M-pattern).
-3. **Evidence** — every finding: **file path**, symbol or line region, **why** it violates the rubric, **suggested fix** (or "needs Architecture Decisions" if policy gap).
-4. **Output** — structured review (markdown sections per dimension/pattern, or org-required JSON).
-5. **Prioritize** — address **Tier A–C** subjective issues and **M** patterns that affect reliability/security first.
+2. **Phase 0 — Mechanical pass (deterministic first).** Run the tool matrix below and collect all findings before any subjective review. Do NOT skip to rubric mapping until the mechanical pass is complete. This prevents the LLM from rationalizing mechanical violations away.
+3. **Map** observations to rubric **§Part 2–4** (which dimension or M-pattern).
+4. **Evidence** — every finding: **file path**, symbol or line region, **why** it violates the rubric, **suggested fix** (or "needs Architecture Decisions" if policy gap).
+5. **Output** — structured review (markdown sections per dimension/pattern, or org-required JSON).
+6. **Prioritize** — address **Tier A–C** subjective issues and **M** patterns that affect reliability/security first.
+
+## Phase 0 — Mechanical pass
+
+Run these deterministic checks on the changed/reviewed files before any
+LLM-driven reasoning. Every finding from Phase 0 is non-negotiable — it
+cannot be dismissed by a later subjective judgment.
+
+| Check | Python | TypeScript/JS | Notes |
+|---|---|---|---|
+| Unused imports / vars | `ruff check --select F401,F841` | `npx eslint --rule 'no-unused-vars: error'` | Fail = delete |
+| Unused exports | `vulture --min-confidence 80` | `npx ts-prune`, `npx knip` | Fail = delete or justify |
+| File size | `wc -l` vs 300/500 thresholds in STANDARDS.md | same | Over cap = split |
+| Cyclomatic complexity | `radon cc -n C` | `npx complexity-report` | > 10 = refactor |
+| Dup detection | `jscpd .` | same | > 5% = consolidate |
+| Import cycles | `pycycle` / `importlinter` | `npx madge --circular` | Any cycle = break |
+| Layer boundaries | invoke `layer-boundary-critic` | same | Any BLOCK = fix |
+| Dead code | `vulture` / grep `if False` / `# TODO someday` | `knip` / grep | Review list |
+| Dead branches | `# pragma: no cover` without reason | `istanbul ignore` without reason | Justify or remove |
+| Commented-out blocks | `grep -En '^\s*(#\|//)[^!]'` runs | same | Remove |
+
+Emit Phase 0 output before Phase 1:
+
+```markdown
+## Phase 0 — Mechanical findings (N)
+
+| Check | File | Line | Finding |
+|---|---|---|---|
+| F401 | src/auth.py | 4 | unused `from os import path` |
+| file-size | src/ui/Dashboard.tsx | 847 | exceeds 500 LOC cap |
+```
+
+If Phase 0 is non-empty, resolve those findings (or get explicit override)
+before proceeding to subjective rubric mapping.
 
 ## Persona
 
@@ -56,8 +90,14 @@ Apply **[`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md)** to **source
 | File | Role |
 |------|------|
 | [`QUALITY_RUBRIC.md`](~/.skills/cleanup/QUALITY_RUBRIC.md) | Full merged rubric |
+| [`WRITE_TIME_GUARD.md`](./WRITE_TIME_GUARD.md) | Blocks duplication and "just in case" code at write time (invoked on any new file or new export) |
+| [`LAYER_ENFORCEMENT.md`](./LAYER_ENFORCEMENT.md) | Enforces downward-only dependencies from AGENTS.md layer cake (invoked during Phase 0 on every import change) |
 | **arch-review** | Architecture pattern enforcement and review |
 | **ticket-critic** | Ticket markdown, blast radius, TDD/verification in specs |
+
+**When to load companions:**
+- Load `WRITE_TIME_GUARD.md` before any `Write` of a new file or new exported symbol.
+- Load `LAYER_ENFORCEMENT.md` during Phase 0 whenever the changed files add or modify an import statement.
 
 ## Examples
 

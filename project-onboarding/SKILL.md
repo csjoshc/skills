@@ -10,6 +10,9 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
+- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — defines which skills fire at which phase (spec, implement, test, done, PR) and provides the SessionStart digest the agent emits on open. Load this when setting up the agent loop for a repo, not for file-level onboarding.
+- Token budget strategy: [shared/TOKEN_BUDGET.md](../shared/TOKEN_BUDGET.md) — install RTK (input-side CLI proxy) during onboarding; caveman (output-side) activates automatically above 50% context usage if hooks are installed.
+- Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
 ---
 

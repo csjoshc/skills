@@ -142,10 +142,34 @@ verbatim. Reviewer suggestions are pre-approved fixes.
 If the comment is ambiguous, implement the smallest reasonable
 interpretation. The user can always ask for more.
 
-#### 3c. Verify
+#### 3c. Verify (includes test-staleness check)
 
 Run the project's verification commands after each fix. Detect the
-stack and use the appropriate commands:
+stack and use the appropriate commands.
+
+**Before running the suite, perform a test-staleness check:** if the
+fix modified lines inside a function that has a claimed test, run
+`mutation-critic` in single-mutant mode (return-early) against that
+function. If the test still passes under the mutant, the test does
+not actually exercise this branch — escalate:
+
+```markdown
+## TEST STALE — fix landed but test does not cover the branch
+
+File: src/cart.ts
+Function: applyDiscount
+Test: cart.test.ts::"applies 10% discount"
+
+A return-early mutant of `applyDiscount` did not fail the test. The
+test passes whether the code runs or not. Options:
+
+1. Strengthen the assertion (describe what changed, not that a value
+   was returned).
+2. Add a second test that fails when the function short-circuits.
+3. Acknowledge and proceed (requires explicit user "ack-stale").
+```
+
+Only after the staleness check is GREEN or ack'd, run the suite:
 
 | Stack | Commands |
 |-------|----------|

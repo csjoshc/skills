@@ -1,0 +1,58 @@
+---
+title: "Diagram Convention Example"
+---
+flowchart TB
+  classDef person fill:#E8EAED,stroke:#9AA0A6,color:#000
+  classDef service fill:#4285F4,stroke:#1a73e8,color:#fff
+  classDef library fill:#4FC3F7,stroke:#0097A7,color:#000
+  classDef guard fill:#F9AB00,stroke:#e8a000,color:#000
+  classDef external fill:#9AA0A6,stroke:#6e7479,color:#fff
+  classDef state fill:#A142F4,stroke:#8430ce,color:#fff
+  classDef errBlock fill:#EA4335,stroke:#c5221f,color:#fff
+  classDef passNode fill:#34A853,stroke:#1e8e3e,color:#fff
+
+  %% ─── Nodes by category ───────────────────────────────────
+  User["User<br/>(Browser)"]:::person
+  API["API Gateway<br/>FastAPI :8090"]:::service
+  Orch["Orchestration<br/>Python library"]:::library
+  Guard["Input Guardrails<br/>PromptInjectionDetector<br/>ClassificationLevelCheck"]:::guard
+  LLM["LLM Provider<br/>Ollama / Cloud"]:::external
+  Config["AgentConfig<br/>(frozen Pydantic)"]:::state
+  Blocked["GuardrailBlockedError<br/>→ HTTP 400"]:::errBlock
+  Success["Sanitized response<br/>→ SSE stream"]:::passNode
+
+  %% ─── Edges by style ──────────────────────────────────────
+
+  %% Solid = synchronous call
+  User -->|"POST /v1/chat/stream<br/>ChatStreamRequest"| API
+  API -->|"run_chat_turn_stream()"| Orch
+  Orch -->|"load_config()"| Config
+
+  %% Solid = HTTP call
+  Orch -->|"generate_stream_with_tools()<br/>Messages + ToolDefinition[]"| LLM
+
+  %% Solid = guardrail check
+  Orch -->|"filter_input(text, ctx)"| Guard
+
+  %% Dashed = async / streaming return
+  LLM -.->|"StreamEvent chunks<br/>text_delta, tool_call"| Orch
+  Orch -.->|"SSE text/event-stream"| User
+
+  %% Dashed = error / block path
+  Guard -. "block → raise" .-> Blocked
+
+  %% Solid = success path
+  Guard -->|"filtered_text: str"| Success
+
+  %% ─── Legend ──────────────────────────────────────────────
+  subgraph Legend ["LEGEND"]
+    direction LR
+    L_person["Person / Client"]:::person
+    L_svc["Service / API"]:::service
+    L_lib["Library / Module"]:::library
+    L_guard["Security / Guardrail"]:::guard
+    L_ext["External System"]:::external
+    L_state["State / Data"]:::state
+    L_err["Error / Block"]:::errBlock
+    L_pass["Success / Pass"]:::passNode
+  end
