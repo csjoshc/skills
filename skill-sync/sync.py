@@ -94,9 +94,17 @@ PLATFORMS = {
         template_name="codex-permissions.toml",
         platform_key="codex",
     ),
-    "gemini": PlatformConfig(
-        name="Gemini/Antigravity",
+    "antigravity": PlatformConfig(
+        name="Antigravity",
         skills_symlink=HOME / ".gemini" / "antigravity" / "skills",
+        permission_type="policy",
+        config_path=HOME / ".gemini" / "policies" / "skills.toml",
+        template_name="gemini-policy.toml",
+        platform_key="antigravity",
+    ),
+    "gemini": PlatformConfig(
+        name="Gemini CLI",
+        skills_symlink=HOME / ".gemini" / "skills",
         permission_type="policy",
         config_path=HOME / ".gemini" / "policies" / "skills.toml",
         template_name="gemini-policy.toml",
@@ -125,7 +133,7 @@ PLATFORMS = {
     ),
     "copilot": PlatformConfig(
         name="Copilot",
-        skills_symlink=HOME / ".copilot" / "skills",
+        skills_symlink=HOME / ".vscode" / "skills",
         permission_type="trust",
         platform_key="copilot",
     ),

@@ -468,6 +468,21 @@ context exclusions, and operational rules.
 
 To ensure consistency across Cursor, Gemini CLI, Claude Code, and other agents, we use a single authoritative store (\`~/.skills\`) and map all tool-specific paths to it via symlinks.
 
+### Claude Code CLI (global symlink)
+
+The global symlink at `~/.claude/skills → ~/.skills` gives Claude Code CLI access to all skills. No project-level action needed for CLI sessions.
+
+### Claude Desktop (project-level recursive copy)
+
+Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Ensure it has access to skills via a **recursive copy**:
+
+```bash
+rm -rf /path/to/project/.claude/skills
+cp -r ~/.skills /path/to/project/.claude/skills
+```
+
+Re-run `cp -r` (or use the `skill-sync` skill) whenever the master store is updated to keep the project copy current.
+
 ### Multi-Tool Symlink Mapping
 
 Before completing onboarding, audit and establish symlinks according to these references:
@@ -476,9 +491,10 @@ Before completing onboarding, audit and establish symlinks according to these re
 
 ### Symlinking Principles
 
-1. **Link, Don't Copy:** Never duplicate skill folders; always symlink to the master store at \`~/.skills\`.
-2. **Ignore Local Shims:** Always add project-level symlink folders (\`.skills/\`, \`.gemini/skills/\`, etc.) to \`.gitignore\`.
-3. **Automate Sync:** Use the \`skill-sync\` skill to audit and fix broken or missing links across all platforms.
+1. **Link, Don't Copy** (default): Symlink to the master store at \`~/.skills\`.
+   - **Exception — Claude Desktop:** Use \`cp -r ~/.skills .claude/skills\` instead of a symlink (sandbox cannot follow external symlinks). Re-copy when the master store changes. Claude Code CLI uses the global symlink and needs no project-level copy.
+2. **Ignore Local Shims:** Always add project-level skill folders (\`.skills/\`, \`.gemini/skills/\`, \`.claude/skills/\`, etc.) to \`.gitignore\`.
+3. **Automate Sync:** Use the \`skill-sync\` skill to audit and fix broken or missing links (and stale copies for Claude Desktop) across all platforms.
 
 ---
 
@@ -493,6 +509,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
 - [ ] Cross-tool shims (`CLAUDE.md`, `GEMINI.md`) exist if multi-tool support was requested or defaulted.
+- [ ] `.claude/skills` is a recursive copy of `~/.skills` for Claude Desktop (run `cp -r ~/.skills /path/to/project/.claude/skills`). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
 
 ---

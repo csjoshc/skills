@@ -90,6 +90,45 @@ When you finish your assigned task, update the frontmatter `Stage:` field.
 **Rule:** Never leave a ticket in the stage you found it in unless your execution
 timed out or was interrupted.
 
+## Assertion-Driven Intake (optional)
+
+If the target project has a `ticket_graph.json` at its root, the file is
+**optional but strict-when-present**: schema or reference errors abort the run
+with a deterministic message. Projects without the file keep baseline scheduler
+behavior.
+
+Downstream tickets may depend on a validated assertion by declaring it in
+frontmatter:
+
+```yaml
+---
+Stage: NEW
+Type: feature
+Depends-On: [02-ig1-graph-contract-tracer-bullet]
+Requires-Assertions: [A2]
+---
+```
+
+`unified_gate` blocks tickets whose required assertions are not `validated`.
+Validator tickets use `Type: integration-gate` and prove one or more
+assertions (`A1-A6` in this repo — see `.tickets/202, 206, 209, 213, 216, 218`).
+Their `COMPLETE` transition flips the assertion to `validated` and releases
+downstream fanout.
+
+## Merge Queue and End-Of-Run Promotion
+
+When `ORCHESTRA_MERGE_QUEUE=1` (default ON), completed tickets land serially on
+a dedicated run branch `orch/<run-id>`; the source branch is advanced once at
+end-of-run. States: `PENDING / LANDING / LANDED / PAUSED / FAILED`.
+
+- Conflicts pause the queue and write
+  `.orchestra/merge_conflicts/<run_id>/<slug>.json`. Resume with
+  `orch merge-resume --project <path> --run-id <run-id>`.
+- End-of-run promotion is automatic for full `orch run`; on demand use
+  `orch promote-run --project <path> [--run-id <id>] [--delete-run-branch]`.
+  Idempotent; aborts safely if the queue is not drained.
+- See `docs/MERGE_QUEUE.md` for the troubleshooting playbook.
+
 ## Ticket Splitting
 
 If a ticket body exceeds the token threshold (~2200 tokens) or requires modifying

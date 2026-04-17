@@ -5,3 +5,5 @@ c3*/**
 .orchestra/
 .reports/
 .system/
+.DS_Store
+sync.log
