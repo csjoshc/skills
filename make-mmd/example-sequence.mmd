@@ -1,0 +1,29 @@
+%% Example: sequence diagram with mode-agnostic rect highlights.
+%% rgba() fills blend with the host background so both light- and
+%% dark-mode viewers see readable contrast.
+sequenceDiagram
+    participant Client
+    participant Token as OAuth Token Endpoint
+    participant API as Resource API
+
+    rect rgba(168, 85, 247, 0.25)
+        Note over Client,Token: state — acquire token
+        Client->>Token: POST /oauth/token
+        Token-->>Client: 200 access_token
+    end
+
+    rect rgba(59, 130, 246, 0.25)
+        Note over Client,API: service — authenticated call
+        Client->>API: GET /resource [Bearer]
+        API-->>Client: 200 payload
+    end
+
+    rect rgba(34, 197, 94, 0.25)
+        Note over Client,API: passNode — success outcome
+        Client->>Client: Cache & use response
+    end
+
+    rect rgba(239, 68, 68, 0.25)
+        Note over Client,API: errBlock — 401 → re-acquire (back to state)
+        API-->>Client: 401 Unauthorized
+    end

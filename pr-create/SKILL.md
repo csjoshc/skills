@@ -16,11 +16,38 @@ and evidence-based descriptions (UI recordings for frontend, test logs for backe
 ## Workflow
 
 ```
+Phase 0: Pre-flight gates (verify-claim, pr-review self-check)
 Phase 1: Git Preparation
 Phase 2: Commit & Push
 Phase 3: Evidence Collection (conditional)
 Phase 4: Create PR with rich description
 ```
+
+## Phase 0: Pre-flight gates
+
+Before any git work, run the enforcement skills that prevent shipping
+false completions or scope-creep PRs.
+
+```
+Checklist:
+- [ ] 0.1 Run `verify-claim` on the current session's claims. If it
+        writes CLAIM_UNVERIFIED.md at the repo root, halt and surface
+        the gap table to the user. Do not proceed without evidence or
+        an explicit `override: <reason>`.
+- [ ] 0.2 Run `pr-review` self-check in advisory mode against the
+        pending diff. Report BLOCKs from the 5 sub-agents (Bug Hunter,
+        Standards Compliance, Error Handling, Test Analyzer, Spec-
+        Traceability Auditor). Fix or acknowledge before continuing.
+- [ ] 0.3 If the changed files touch backend production code, run
+        `tdd/MUTATION.md` in single-mutant mode on the touched
+        functions. Survivors → user decides whether to strengthen the
+        test or acknowledge.
+- [ ] 0.4 If the changed files introduce a new boundary mock, run
+        `tdd/MOCK_CONTRACT.md`. Missing contract refs → BLOCK.
+```
+
+These gates are cheap relative to opening and re-opening a PR. Skipping
+them costs far more in review cycles than it saves now.
 
 ---
 

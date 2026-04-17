@@ -1,6 +1,6 @@
 # Symlink Map
 
-Authoritative symlink mapping for all AI coding agents. Used by `project-onboarding` and `skill-sync`.
+Authoritative symlink mapping for all AI coding agents. Used by `project-onboarding`, `skill-sync`, `mcp-sync`, and `hook-sync`.
 
 ## Global Symlinks
 
@@ -20,6 +20,22 @@ All paths symlink to the master store at `~/.skills`.
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
+
+## Global Hook Paths
+
+All paths are managed by `hook-sync` using `~/.hooks/` as the master store of hook definitions. Hooks are JSON files per definition; some targets embed hooks in a settings file (surgical write required), others accept a directory (symlink-compatible).
+
+| Tool / Platform | Hook Path | Method |
+| :--- | :--- | :--- |
+| **Master Store** | `~/.hooks/` | (Authoritative, JSON files) |
+| **Claude Code (user)** | `~/.claude/settings.json` → `hooks` | Surgical `jq` merge |
+| **Claude Code (project)** | `.claude/settings.json` → `hooks` | Surgical `jq` merge |
+| **Cursor** | `~/.cursor/hooks/` | Symlink to `~/.hooks/` |
+| **Codex CLI** | `~/.codex/hooks.yaml` | Transform (`yq` write) |
+| **Gemini CLI** | `~/.gemini/hooks.json` | JSON rewrite |
+| **Antigravity** | `~/.gemini/antigravity/hooks.json` | JSON rewrite |
+
+**Note:** Embedded-hook targets (Claude Code) must NEVER be fully overwritten — other user settings share the file. `hook-sync` merges by hook `name` only.
 
 ## Project-Level Symlinks
 

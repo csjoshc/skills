@@ -1,0 +1,331 @@
+# ═══════════════════════════════════════════════════════════════
+# C3 PPT Cookbook — Reference examples for every layout type.
+#
+# This file is a living reference. Each slide demonstrates one
+# layout type with inline comments explaining every field.
+# Claude should use this as a template when generating deck YAML.
+#
+# Run:  python adapter.py examples/cookbook.yaml
+# ═══════════════════════════════════════════════════════════════
+
+title: "C3 PPT Cookbook"
+subtitle: "Reference examples for every layout type"
+author: "ppt-make skill"
+date: "2026-04-17"
+sources:
+  - label: "SKILL.md"
+    url: "https://github.com/c3-joshchiu/c3cdao-pfty/.claude/skills/ppt-make/SKILL.md"
+
+slides:
+
+  # ═══════════════════════════════════════════════════════════
+  # TITLE — uses template placeholders (index 0, 15, 16)
+  # ═══════════════════════════════════════════════════════════
+  - title: "C3 PPT Cookbook"
+    layout: title
+
+  # ═══════════════════════════════════════════════════════════
+  # PANELS — 2-4 columns with colored header bars
+  # Best for: problem/constraint/solution overviews,
+  #           feature comparisons, SWOT-style layouts
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: panels"
+    layout: panels
+    panels:
+      - header: "Problem"
+        color: orange              # Named palette colors
+        content: |
+          • First pain point goes here
+          • Second pain point
+          • Third — keep to 4-6 bullets max
+      - header: "Constraints"
+        color: dark
+        content: |
+          • Technical constraint A
+          • Organizational constraint B
+          • Timeline constraint C
+      - header: "Proposed Solution"
+        color: green
+        content: |
+          • Solution approach one
+          • Solution approach two
+          • Expected outcome
+    notes: "Panels auto-size: 2 panels = 6.14\" each, 3 = 4.05\", 4 = 3.01\"."
+
+  # ═══════════════════════════════════════════════════════════
+  # FLOW — linear sequence with directional connectors
+  # Best for: request flows, pipelines, step-by-step processes
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: flow"
+    layout: flow
+    subtitle: "Boxes auto-size based on count; connectors have arrowheads"
+    rows:
+      # Row 1: left-to-right (forward path)
+      - items:
+          - text: "Step 1\n(start)"
+            fill: gray              # External/user
+          - text: "Step 2\n(process)"
+            fill: dark              # Internal
+          - text: "Step 3\n(decision)"
+            fill: orange            # CDAO-owned
+          - text: "Step 4\n(output)"
+            fill: green             # C3 platform
+        direction: right            # left-to-right connectors
+        # Optional: branch from the last box
+        branch:
+          from_index: 2             # 0-based; branch from "Step 3"
+          label: "YES"
+          direction: down           # vertical connector downward
+          color: orange
+          no:                       # NO-branch terminal box
+            text: "Done"
+            fill: green
+            w: 0.85                 # override width
+
+      # Row 2: right-to-left (return path)
+      - items:
+          - text: "Return C\n(aggregate)"
+            fill: green
+          - text: "Return B\n(transform)"
+            fill: dark
+          - text: "Return A\n(respond)"
+            fill: gray
+        direction: left
+
+    # Optional: output path (separate row below)
+    output_path:
+      label: "Alternate output:"
+      items:
+        - text: "Filter"
+          fill: blue
+        - text: "Deliver"
+          fill: gray
+
+    # Optional: color legend at bottom
+    legend:
+      - color: gray
+        label: "External"
+      - color: orange
+        label: "CDAO-Owned"
+      - color: green
+        label: "C3 Platform"
+      - color: blue
+        label: "Security"
+
+    notes: "Flow auto-sizes: ≤5 items → 2.0\" boxes, 6-8 → 1.5\", >8 → 1.0\"."
+
+  # ═══════════════════════════════════════════════════════════
+  # DIAGRAM — architecture with layers, elements, and edges
+  # Best for: system architecture, component diagrams,
+  #           layered views (L0/L1/L2 diagrams)
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: diagram"
+    layout: diagram
+    subtitle: "Layered architecture with auto-positioned elements"
+    layers:
+      - label: "Frontend"
+        color: gray
+      - label: "Backend"
+        color: orange
+      - label: "Platform"
+        color: green
+    elements:
+      - id: web-ui                  # unique ID for edge references
+        text: "Web UI\n(React)"
+        fill: gray
+        layer: 0                    # which layer row (0-based)
+      - id: api
+        text: "API Server\n(FastAPI)"
+        fill: orange
+        layer: 1
+        # Optional explicit position overrides:
+        # left: 1.60
+        # w: 5.00
+      - id: db
+        text: "Database\n(PostgreSQL)"
+        fill: green
+        layer: 2
+    edges:
+      - from: web-ui
+        to: api
+        label: "REST / JSON"
+        color: orange
+        direction: down             # auto, down, up, left, right
+      - from: api
+        to: db
+        label: "SQL"
+        color: green
+    legend:
+      - color: gray
+        label: "Frontend"
+      - color: orange
+        label: "Backend"
+      - color: green
+        label: "Data Layer"
+    notes: "Diagram elements auto-distribute within each layer."
+
+  # ═══════════════════════════════════════════════════════════
+  # PIPELINE — horizontal strip + detail sections below
+  # Best for: security pipelines, data processing stages,
+  #           guardrail overviews with per-stage detail tables
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: pipeline"
+    layout: pipeline
+    pipeline:
+      boxes:
+        - text: "Input"
+          fill: gray
+        - text: "Validate"
+          fill: blue
+        - text: "Process"
+          fill: orange
+        - text: "Output"
+          fill: green
+    sections:
+      - header: "Validate"
+        color: blue
+        table:
+          headers: ["Check", "Action"]
+          rows:
+            - ["Schema validation", "Reject malformed"]
+            - ["Auth check", "Verify token"]
+      - header: "Process"
+        color: orange
+        table:
+          headers: ["Step", "Detail"]
+          rows:
+            - ["Transform", "Normalize data"]
+            - ["Enrich", "Add metadata"]
+      - header: "Output"
+        color: green
+        content: |
+          • Filter PII
+          • Format response
+          • Log audit trail
+    notes: "Pipeline sections auto-divide the slide width equally."
+
+  # ═══════════════════════════════════════════════════════════
+  # COMPARISON — side-by-side with optional bridge + table
+  # Best for: cloud vs local, before/after, option A vs B
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: comparison"
+    layout: comparison
+    subtitle: "Side-by-side with bridge connector and bottom table"
+    sides:
+      - header: "Option A"
+        elements:
+          - type: box
+            text: "Component 1"
+            fill: gray
+            h: 0.70                 # explicit height
+          - type: arrow
+            label: "via protocol X"
+            color: orange
+            h: 0.50
+          - type: box
+            text: "Component 2"
+            fill: orange
+            h: 0.75
+          - type: label             # small italic annotation
+            text: "Note about Option A"
+      - header: "Option B"
+        elements:
+          - type: box
+            text: "Component 1"
+            fill: gray
+            h: 0.70
+          - type: arrow
+            label: "via protocol Y"
+            color: green
+            h: 0.50
+          - type: box
+            text: "Component 2"
+            fill: green
+            h: 0.75
+    bridge:                         # optional connector between sides
+      text: "Shared\nService"
+      fill: dark
+      y: 3.60                      # vertical position
+    table:                          # optional bottom comparison table
+      headers: ["Aspect", "Option A", "Option B"]
+      rows:
+        - ["Latency", "Low", "Medium"]
+        - ["Cost", "High", "Low"]
+        - ["Complexity", "Simple", "Complex"]
+      top: 5.30                     # Y position for the table
+
+  # ═══════════════════════════════════════════════════════════
+  # TABLE — structured data with auto column widths
+  # Best for: feature matrices, status tables, reference data
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: table"
+    layout: table
+    subtitle: "Auto column widths, auto font scaling"
+    table:
+      headers: ["Feature", "Status", "Owner", "Notes"]
+      rows:
+        - ["Auth flow", "Complete", "Platform", "OAuth + JWT"]
+        - ["Guardrails", "In progress", "CDAO", "3-layer pipeline"]
+        - ["Monitoring", "Planned", "SRE", "Prometheus + Grafana"]
+        - ["Rate limiting", "Not started", "Platform", "Token bucket"]
+      col_widths: [2.50, 1.80, 1.80, 6.30]  # optional; auto if omitted
+    footnote: "Status as of Q2 2026 sprint review."
+    notes: "Tables auto-scale fonts: <6 rows → 11pt, 6-8 → 10pt, >8 → 9pt."
+
+  # ═══════════════════════════════════════════════════════════
+  # MIXED — compose multiple element types on one slide
+  # Best for: summary slides, complex layouts that combine
+  #           boxes + tables + callout bars
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: mixed"
+    layout: mixed
+    elements:
+      # Horizontal box row at top
+      - type: boxes
+        items:
+          - text: "Phase 1"
+            fill: dark
+          - text: "Phase 2"
+            fill: orange
+          - text: "Phase 3"
+            fill: green
+
+      # Table in the middle
+      - type: table
+        headers: ["Phase", "Duration", "Deliverable"]
+        rows:
+          - ["Phase 1", "2 weeks", "Prototype"]
+          - ["Phase 2", "4 weeks", "MVP"]
+          - ["Phase 3", "2 weeks", "Production"]
+        w: 12.40
+        h: 2.00
+
+      # Callout bar at bottom
+      - type: callout
+        label: "Key Insight"
+        detail: "Phase 2 is the critical path — allocate extra buffer for integration testing."
+        fill: dark
+
+    notes: "Mixed layout composes elements top-to-bottom with auto spacing."
+
+  # ═══════════════════════════════════════════════════════════
+  # BULLETS — enhanced bullet list
+  # Best for: simple content, key takeaways, agendas
+  # ═══════════════════════════════════════════════════════════
+  - title: "Layout: bullets"
+    layout: bullets
+    subtitle: "Auto font sizing based on content density"
+    items:
+      - "First key point — brief and impactful"
+      - "Second point with more detail about the architecture"
+      - "Third point covering timeline and next steps"
+      - text: "Fourth point in bold orange"
+        bold: true
+        color: orange
+
+  # ═══════════════════════════════════════════════════════════
+  # CLOSING — Q&A / thank you
+  # ═══════════════════════════════════════════════════════════
+  - title: "Questions?"
+    layout: closing
+    content: "Contact: team@example.com | Slack: #project-channel"

@@ -91,7 +91,7 @@ Create a brief summary before launching agents:
 
 ### Step 4: Launch parallel review agents
 
-Launch **4 sub-agents in parallel**. Pass each the PR diff, summary, and
+Launch **5 sub-agents in parallel**. Pass each the PR diff, summary, and
 merged standards. Each agent returns a list of issues. Every issue must
 include evidence, the checklist evaluation, and the reason it was flagged.
 
@@ -214,6 +214,50 @@ behavior already covered by integration/e2e tests.
 | 2 | Can name a specific bug or regression this gap would miss | |
 | 3 | No integration or e2e test covers this behavior elsewhere | |
 | 4 | The untested code is in the changed files, not pre-existing | |
+
+---
+
+#### Agent 5 — Spec-Traceability Auditor
+
+**Focus**: Scope integrity. Every hunk must map to an acceptance criterion;
+every AC must map to a hunk. Catches scope creep ("while I was in there...")
+and incomplete work ("forgot AC-3").
+
+**Inputs:**
+- Linked ticket(s) with ACs (fetch via `gh` / Jira MCP if URL present in PR body)
+- The diff hunks
+- Output of `verify-claim` if available (`CLAIM_UNVERIFIED.md`)
+- Output of `layer-boundary-critic` if available
+
+**Build the traceability matrix:**
+
+| AC | Hunk(s) | Evidence | Status |
+|---|---|---|---|
+| AC-1 "User sees confirmation toast" | src/ui/Toast.tsx:42-58 | Screenshot in PR body | MAPPED |
+| AC-2 "Retry on 5xx" | — | none | MISSING |
+| — | src/utils/dateFmt.ts (full file) | no AC references date formatting | SCOPE CREEP |
+
+**Check for:**
+- Hunks with no AC (scope creep)
+- ACs with no hunk (incomplete work)
+- Any BLOCK verdict from `layer-boundary-critic`
+- Any gap in `CLAIM_UNVERIFIED.md`
+- Hunks touching files outside the ticket's stated scope
+
+**Do NOT flag:** Test files supporting claimed ACs, typo fixes under 3 lines,
+mechanical refactors the ticket explicitly authorizes.
+
+**Checklist — report if 3 of 4 criteria are YES:**
+
+| # | Criterion | Yes/No |
+|---|-----------|--------|
+| 1 | The hunk/AC mismatch is clear and unambiguous | |
+| 2 | No other agent caught this (prevents duplicate reports) | |
+| 3 | Fixing it is cheap (drop the hunk, or add the missing AC hunk) | |
+| 4 | Leaving it hurts reviewability or ships incomplete work | |
+
+**Output:** Traceability matrix + a comment listing unmapped hunks and
+unimplemented ACs.
 
 ---
 

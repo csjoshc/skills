@@ -50,8 +50,48 @@ Run deterministic checks before subjective judgment:
 4. Referenced standards files are present:
 - `~/.skills/STANDARDS.md`
 - Local `./STANDARDS.md` (if project-local standards exist)
+5. **AC→Test traceability table is present** (see below).
 
 Only then run the 10-pattern review.
+
+## AC → Test Traceability (Mandatory for Stage: BUILD)
+
+Every acceptance criterion must name the test function that will verify
+it before the ticket can move to `Stage: BUILD`. The test does not have
+to exist yet — TDD's red phase is the correct place to create it — but
+the name, file, and behavior to be asserted must be chosen in advance.
+This is what prevents tautological tests: the assertion is committed
+before the implementation exists to copy from.
+
+### Required section in every ticket
+
+```markdown
+## Acceptance Criteria → Tests
+
+| AC | Test file | Test name | Assertion shape |
+|---|---|---|---|
+| AC-1 Given a logged-in user, when they click "Save", then a toast appears | src/ui/__tests__/SaveButton.test.tsx | "shows toast on save" | `expect(screen.getByRole('alert'))` |
+| AC-2 Given a 5xx response, retry up to 3 times | src/api/__tests__/retry.test.ts | "retries 3× on 5xx then throws" | counter-based mock |
+| AC-3 Export CSV contains header row | src/export/__tests__/csv.test.ts | "emits header as first line" | string match |
+```
+
+### Block conditions
+
+- Any AC without a named test → **BLOCKED**
+- Any test name matching `.*works.*`, `.*handles.*`, or `.*should.*` →
+  **BLOCKED** (too vague; rename to describe the behavior)
+- Any "Assertion shape" that is just `toBe(true)` → **BLOCKED** (describe
+  what's being checked)
+- Any test that exists but asserts only the return value of the function
+  under test with no further condition → **WARN** (tautology risk; let
+  `mutation-critic` decide on the implementation side)
+
+### Why this works
+
+A test named and described before the implementation describes **user
+intent**. A test written after the implementation describes **what the
+code happens to do**. Locking the name and assertion shape at ticket
+time forces the intent-first orientation.
 
 ## 10-Pattern Audit Workflow
 
