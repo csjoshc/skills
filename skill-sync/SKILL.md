@@ -62,6 +62,8 @@ Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 - Which symlinks to create (Gemini and VS Code are recommended; others are optional)
 - How to handle project-specific (non-synced) skills vs. master-synced skills
 
+**Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use `cp -r ~/.skills .claude/skills` instead of a symlink. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+
 For VS Code workspaces specifically:
 - Global skills are available via `~/.vscode/skills`
 - Project-level `.vscode/skills` can provide local overrides or discovery
@@ -74,8 +76,10 @@ Always provide a **Sync Status Report** table with the following structure:
 | Agent / Platform | Global Status | Project Status | Notes |
 | :--- | :--- | :--- | :--- |
 | Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to shared/SYMLINK_MAP.md |
+| Claude Code | Synced / Out of Sync / Missing | Setup / Stale / Missing / N/A | Project-level uses `cp -r` (not symlink) |
 | Codex | Synced / Out of Sync / Missing | N/A | Global `~/.codex/skills` symlink required |
-| Gemini / Antigravity | Synced / Out of Sync / Missing | Setup / Missing / N/A | Gemini natively supports project-level symlinks |
+| Antigravity | Synced / Out of Sync / Missing | N/A | Path: ~/.gemini/antigravity/skills |
+| Gemini CLI | Synced / Out of Sync / Missing | Setup / Missing / N/A | Path: ~/.gemini/skills |
 | VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
 | *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See shared/SYMLINK_MAP.md |
 

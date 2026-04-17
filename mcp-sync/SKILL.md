@@ -10,59 +10,166 @@ description: >-
 
 # MCP Sync & Toggle
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 
 ## Context
-MCP configurations are fragmented across different tools. This skill unifies them using `~/.secrets/mcp.json` as the authoritative source.
+MCP configurations are fragmented across different tools. This skill unifies them using `~/.secrets/mcp.json` as the authoritative source, then projects entries into each tool's native format — **not a blind copy**. Tool-specific schemas, file locations, and validation rules must be respected or the tool will silently reject the whole config.
 
-## Objectives
-1. **Global Sync:** Propagate servers from `~/.secrets/mcp.json` to all platform-specific config files.
-2. **Project Setup:** Create project-local MCP shims if needed (e.g., `.gemini/mcp_config.json`).
-3. **Toggle (Enable/Disable):** Globally or locally enable/disable a specific MCP server by name.
-4. **Secret Protection:** Ensure no actual secrets are in the skill; always reference `~/.secrets/mcp.json`.
+## Master store schema (`~/.secrets/mcp.json`)
 
-## Core Commands & Workflows
+```json
+{
+  "mcpServers": {
+    "<name>": {
+      "type": "http" | "sse" | "stdio",
+      "url": "...",               // http/sse only
+      "headers": { ... },         // http/sse only
+      "command": "...",           // stdio only
+      "args": [ ... ],            // stdio only
+      "env": { ... },             // stdio only
+      "enabled": true | false,    // mcp-sync extension — NOT synced to targets
+      "allowedTools": [ ... ]     // mcp-sync extension — NOT synced to targets
+    }
+  }
+}
+```
 
-### 1. Sync All Platforms
-- Read `~/.secrets/mcp.json`.
-- Audit [GLOBAL_MCP.md](references/GLOBAL_MCP.md) for target paths.
-- For each path, merge the master JSON into the target.
-- **Handling Wrappers:** If the target is Claude Desktop, ensure servers are under the `"mcpServers"` key.
+`enabled` and `allowedTools` are **mcp-sync extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
 
-### 2. Project Onboarding (MCP)
-- Check for `.gemini/mcp_config.json` or `.mcp.json`.
-- Reference [PROJECT_MCP.json](references/PROJECT_MCP.json) for project-specific overrides.
-- Add these local configs to `.gitignore`.
+## Critical rules (learned the hard way)
 
-### 3. MCP Toggle (`mcp-toggle`)
-When the user asks to "enable/disable [server]":
-- **Global Toggle:** Modify `~/.secrets/mcp.json` (comment out or set an `enabled: false` flag if supported by the tool, or remove/add the entry).
-- **Multi-Tool Propagation:** Immediately run the Sync workflow to update all IDEs and CLIs so the change is reflected everywhere.
-- **Project-Specific Toggle:** Enable/Disable only for the current project by modifying the local `.mcp.json` or `.gemini/mcp_config.json`.
+1. **Claude Code user-scope MCPs live in `~/.claude.json` at the root `mcpServers` key — NOT in `~/.claude/settings.json`.** Putting `mcpServers` into `settings.json` is a documented schema violation (per [code.claude.com/docs/en/settings](https://code.claude.com/docs/en/settings)) and will cause the entire settings file to fail validation, which in turn prevents any user-scope MCPs from loading. Symptom: `claude mcp list` shows only claude.ai-hosted connectors; `claude mcp get <name>` returns "No MCP server found". Fix: delete the `mcpServers` key from `settings.json`.
 
-## Step-by-Step Implementation
+2. **Always include an explicit `type` field on target entries.** `stdio`/`http`/`sse`. Newer Claude Code versions require it; older ones tolerate its absence for stdio but not for URL transports.
 
-### 1. Initialize Master Store
-- If `~/.secrets/mcp.json` does not exist:
-  - Create the `~/.secrets` directory.
-  - Seed it from `~/.config/mcp/mcp_servers.json` or create a new JSON with `{ "mcpServers": {} }`.
+3. **Strip mcp-sync extensions (`enabled`, `allowedTools`) when writing to any target.** These are not part of the standard MCP server schema. Keep them only in the master store.
 
-### 2. Update Master Store
-- Add or modify the desired MCP server configuration in `~/.secrets/mcp.json`.
-- Ensure the configuration follows the standard `{ "mcpServers": { "serverName": { "command": "...", "args": [...] } } }` format.
+4. **A disabled server (`enabled: false` in master) means "omit from target entirely."** Do not emit `{"enabled": false}` into a target's config.
 
-### 3. Propagate to Targets (Sync)
-- For each target defined in `GLOBAL_MCP.md`:
-  - Read the existing target configuration.
-  - Merge the `mcpServers` object from the master store into the target's relevant key (e.g., `mcpServers`, `context_servers`, or `mcp`).
-  - Write the updated configuration back to the target path.
-  - Create parent directories if they are missing.
+5. **Surgical writes only for multi-purpose files.** `~/.claude.json` and `~/.claude/settings.json` hold far more than MCP config (project history, OAuth, hooks, model prefs). Read → mutate only the MCP-relevant key → write. Never overwrite the whole file.
 
-### 4. Verification
-- Use `mcp-cli` to verify the server is recognized by the CLI.
-- Check IDE settings to confirm the server appears.
+6. **Never put `mcpServers` in `~/.claude/settings.json`.** Explicitly prune it during every sync as a safety net, even if the skill didn't put it there.
+
+## Claude Code scope model (authoritative)
+
+| Scope | File | Key path | Use for |
+| --- | --- | --- | --- |
+| Managed | `/Library/Application Support/ClaudeCode/managed-mcp.json` (macOS) | `mcpServers` | IT-deployed org policy |
+| User | `~/.claude.json` | root `mcpServers` | Personal, across all projects |
+| Project | `<repo>/.mcp.json` | `mcpServers` | Shared with team via VCS |
+| Local | `~/.claude.json` | `projects["<abs-path>"].mcpServers` | Personal, single project |
+| Plugin | plugin's `.mcp.json` or inline in `plugin.json` | `mcpServers` | Bundled with a plugin |
+
+Precedence when the same name appears in multiple scopes: **Local → Project → User → Plugin → claude.ai connectors**.
+
+## Standard workflows
+
+### 1. Full sync (master → all targets)
+
+1. Read `~/.secrets/mcp.json`.
+2. Filter: keep only entries where `enabled != false`.
+3. For each entry, produce a clean copy without `enabled` / `allowedTools`, and ensure `type` is explicit.
+4. For each target in [GLOBAL_MCP.md](references/GLOBAL_MCP.md):
+   - Read current target JSON (preserve unrelated keys).
+   - Apply target-specific transform (root key, transport whitelist, etc.).
+   - Write back surgically using `jq` or equivalent — never overwrite the whole file.
+5. Run verification commands (§Verification).
+
+### 2. Toggle a server
+
+- **Global disable:** set `enabled: false` in `~/.secrets/mcp.json`, then re-run full sync. Sync removes the entry from all targets.
+- **Global enable:** set `enabled: true` (or remove the field), re-run sync.
+- **Project-only override:** add/remove the entry in the project's `.mcp.json` (or `projects["<abs-path>"].mcpServers` for a personal local-scope override). Do not modify the master.
+
+### 3. Project onboarding
+
+- If the repo needs a committed MCP config, create `.mcp.json` at the project root (user must approve once per project via Claude Code's trust dialog).
+- If it needs a personal-only MCP for this repo, add under `~/.claude.json → projects["<abs-path>"].mcpServers`.
+- For non-Claude tools (Gemini CLI, OpenCode), see target-specific paths in [GLOBAL_MCP.md](references/GLOBAL_MCP.md).
+- Add project-local personal configs (`.claude/settings.local.json`, `.gemini/mcp_config.json`) to `.gitignore`.
+
+## Target-specific transforms
+
+### Claude Code (`~/.claude.json`)
+- Key: root `.mcpServers`
+- Schema: official — `type` + (`command`/`args`/`env` for stdio | `url`/`headers` for http/sse)
+- Strip: `enabled`, `allowedTools`
+- Also: ensure `~/.claude/settings.json` has NO `mcpServers` key (schema violation).
+
+Example jq sync snippet (safe pattern):
+
+```bash
+jq '
+  .mcpServers as $m |
+  [ $m | to_entries[] | select(.value.enabled != false) |
+    { key: .key,
+      value: (.value
+        | del(.enabled, .allowedTools)
+        | if has("url") then
+            (if has("type") then . else . + {"type":"http"} end)
+          elif has("command") then
+            (if has("type") then . else . + {"type":"stdio"} end)
+          else . end) }
+  ] | from_entries
+' ~/.secrets/mcp.json > /tmp/clean_mcp.json
+
+jq --slurpfile clean /tmp/clean_mcp.json \
+  '.mcpServers = $clean[0]' ~/.claude.json > ~/.claude.json.tmp \
+  && mv ~/.claude.json.tmp ~/.claude.json
+
+# Belt-and-braces: ensure settings.json never holds mcpServers
+jq 'del(.mcpServers)' ~/.claude/settings.json > ~/.claude/settings.json.tmp \
+  && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
+```
+
+### Claude Desktop
+- Stdio-only. Skip any server with `url` (http/sse not supported).
+- File: `~/Library/Application Support/Claude/claude_desktop_config.json`, root key `mcpServers`.
+
+### Cursor, Cline, Roo, Gemini CLI
+- Root key `mcpServers`. Stdio + URL generally supported; check tool docs per major-version change.
+
+### Zed
+- Root key `context_servers` (different!).
+
+### OpenCode
+- Root key `mcp`. Uses `"type": "local"` + `"command": ["..."]` (array, not string).
 
 ## Verification
-- [ ] `~/.secrets/mcp.json` exists and is valid JSON.
-- [ ] Target config files are updated with the correct format (standard vs. wrapped).
-- [ ] Toggled servers are successfully removed or added across all audited paths.
+
+Run ALL of the following after a sync — pure file-write success is not proof.
+
+1. `claude mcp list` — every enabled server must show "✓ Connected". "Failed to connect" means the entry is valid but the runtime isn't working (docker daemon, network, VPN, token, etc.).
+2. `claude mcp get <name>` — verifies Claude Code parsed the entry.
+3. **Subprocess E2E test** — actually invoke a tool:
+   ```bash
+   claude -p "Use <server> tool <toolname> to ..." \
+     --allowedTools "mcp__<server>__<toolname>" \
+     --output-format json
+   ```
+   A successful `"subtype":"success"` with a non-empty `result` field proves end-to-end: config parsed, server reachable, tool invoked, result returned.
+4. For other tools: restart the tool and confirm the server appears in its UI / MCP panel.
+
+## Common failure modes and fixes
+
+| Symptom | Root cause | Fix |
+| --- | --- | --- |
+| `claude mcp list` shows only claude.ai-hosted connectors | `mcpServers` in `~/.claude/settings.json` causing schema-validation failure | Delete `.mcpServers` from `settings.json`; MCP belongs in `~/.claude.json` |
+| URL server fails to connect | Missing `"type"` field | Add `"type": "http"` (or `"sse"`) |
+| `docker` stdio server fails to connect | Docker daemon off, image not pulled, or env var (`-e VAR`) not in parent env | Start Docker; `docker pull <image>`; set env in entry's `env` block |
+| Entry exists in master but doesn't appear | `enabled: false` in master | Set `enabled: true` and re-sync |
+| Tool returns stale config after edit | MCP servers only load at session startup | Restart Claude Code (exit + relaunch) |
+
+## Secret hygiene
+
+- Never inline secrets into the skill or committed files.
+- `~/.secrets/mcp.json` is the only place tokens live. It must be outside any repo (`~/.secrets/` is user-only).
+- Do not echo full tokens in logs; redact in any diagnostic output.
+
+## Verification checklist
+
+- [ ] `~/.secrets/mcp.json` is valid JSON and follows the master schema.
+- [ ] `~/.claude/settings.json` does NOT contain an `mcpServers` key.
+- [ ] `~/.claude.json → mcpServers` matches `~/.secrets/mcp.json` filtered by `enabled != false`, stripped of custom keys, with `type` set.
+- [ ] `claude mcp list` shows each enabled server as "✓ Connected".
+- [ ] Subprocess E2E test on at least one server returns a real tool result.

@@ -5,3 +5,5 @@ acme*/**
 .runner/
 .reports/
 .system/
+.DS_Store
+sync.log

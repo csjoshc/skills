@@ -13,7 +13,8 @@ All paths symlink to the master store at `~/.skills`.
 | **Cursor (Skills)** | `~/.cursor/skills` | `~/.skills` |
 | **Cursor (Rules)** | `~/.cursor/rules/master` | `~/.skills` |
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
-| **Gemini CLI** | `~/.gemini/antigravity/skills` | `~/.skills` |
+| **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
+| **Gemini CLI** | `~/.gemini/skills` | `~/.skills` |
 | **OpenCode** | `~/.config/opencode/skills` | `~/.skills` |
 | **Qwen Code** | `~/.qwen/skills` | `~/.skills` |
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
@@ -22,17 +23,18 @@ All paths symlink to the master store at `~/.skills`.
 
 ## Project-Level Symlinks
 
-| Tool / Platform | Project Path | Target | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Universal Shim** | `.skills/` | Granular links to `~/.skills/` | General discovery (primary onboarding output) |
-| **Gemini CLI** | `.gemini/skills` | `~/.skills` | Native discovery |
-| **Cursor** | `.cursor/rules/master` | `~/.skills` | .mdc indexing |
-| **VS Code / Copilot** | `.vscode/skills` | `~/.skills` | Copilot workspace settings |
-| **Aider** | `.aider.conf.yml` | (Refers to AGENTS.md) | Config-based |
-| **Windsurf** | `.windsurfrules` | (Refers to AGENTS.md) | Shim file |
-| **Cline** | `.clinerules` | (Refers to AGENTS.md) | Shim file |
+| Tool / Platform | Project Path | Target | Method | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Universal Shim** | `.skills/` | Granular links to `~/.skills/` | Symlink | General discovery (primary onboarding output) |
+| **Claude Code** | `.claude/skills` | `~/.skills` | **Copy** (`cp -r`) | Claude Code resolves relative to project root |
+| **Gemini CLI** | `.gemini/skills` | `~/.skills` | Symlink | Native discovery |
+| **Cursor** | `.cursor/rules/master` | `~/.skills` | Symlink | .mdc indexing |
+| **VS Code / Copilot** | `.vscode/skills` | `~/.skills` | Symlink | Copilot workspace settings |
+| **Aider** | `.aider.conf.yml` | (Refers to AGENTS.md) | Config | Config-based |
+| **Windsurf** | `.windsurfrules` | (Refers to AGENTS.md) | Shim file | Shim file |
+| **Cline** | `.clinerules` | (Refers to AGENTS.md) | Shim file | Shim file |
 
-**Note:** All project-level symlink folders (`.skills/`, `.gemini/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`.
+**Note:** All project-level skill folders (`.skills/`, `.gemini/skills/`, `.claude/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`. Claude Code uses `cp -r` at the project level because Claude Desktop is sandboxed and cannot follow symlinks outside the workspace — re-copy when master store changes. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
 
 ## Setup: Local `.skills` Granular Loop
 
