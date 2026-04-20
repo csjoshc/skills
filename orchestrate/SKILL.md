@@ -1,217 +1,170 @@
 ---
 name: orchestrate
 description: >-
-  Defines the state machine, stage transitions, and routing rules for the headless 
-  agent orchestration framework. Use when interpreting ticket stages, applying
-  transition rules, running tickets via the CLI, or updating stage metadata
-  through the orchestration pipeline.
+  Guide for agents and operators working outside the Orchestra repo itself.
+  Explains how to prepare ticket files and project structure so Orchestra can
+  ingest them correctly via the runtime CLI such as `orch run`.
 ---
 
-# Agent Orchestration Protocol
+# Orchestra Runtime Intake Guide
 
-Orchestra is a headless, file-driven agent orchestration framework built on LangGraph.
-Agents do not pass context through chat history; they communicate entirely through
-file state on disk (ticket frontmatter, handoff files, worktrees).
+Use this skill when you are **outside the Orchestra repo** and need to prepare a
+target project for ingestion by Orchestra's runtime CLI.
 
-As an agent in this system, your primary administrative duty is to transition tickets
-between stages based on the outcome of your work.
+This skill is **not** the authoritative internal state machine for Orchestra's
+own prompt artifacts. It is an operator guide for people and agents creating or
+editing `.tickets/*.md` files that Orchestra will later consume.
 
-## Directory Layout
+## What This Skill Is For
 
-```
-<target-project>/
-  .tickets/                          # Ticket markdown files
+- Preparing a target project so `orch` or `python main.py --project ...` can run
+- Creating implementation-ready tickets in a target repo's `.tickets/` folder
+- Verifying the minimum filesystem layout before handing the project to Orchestra
+- Explaining which stage a newly created ticket should use for runtime ingestion
+
+## What This Skill Is Not For
+
+- Defining Orchestra's internal prompt-stage semantics
+- Replacing the in-repo prompt artifacts under
+  `orchestra/prompts/artifacts/skills/`
+- Writing handoff files manually unless the workflow explicitly requires it
+
+## Minimum Project Layout
+
+Orchestra expects a **target project** with this structure:
+
+```text
+<project-root>/
+  .tickets/
   .orchestra/
-    handoff/<slug>.md                # Per-ticket handoff/build logs
-    worktrees/<slug>/                # Isolated git worktrees per ticket
-    logs/                            # Runtime logs
-    orchestra.db                     # SQLite state database
-  .reports/                          # Run reports (run-YYYY-MM-DD.md)
+  AGENTS.md           # recommended
+  STANDARDS.md        # recommended
 ```
 
-## The State Machine
+Notes:
 
-Every ticket markdown file must contain a **YAML frontmatter** block. This is the
-only stable interface for tracking state.
+- `.tickets/` is where Orchestra discovers work items
+- `.orchestra/` stores internal runtime state, handoff files, logs, worktrees,
+  and the database after Orchestra starts running
+- `AGENTS.md` and `STANDARDS.md` are strongly recommended because Orchestra
+  agents use them for constraints and conventions
+
+## Ticket Intake Rules
+
+Every ticket file must:
+
+1. Live under `<project-root>/.tickets/`
+2. Start with YAML frontmatter
+3. Include a canonical `Stage:` field
+4. Be executable as a single work item with clear acceptance criteria
+
+Minimal example:
 
 ```yaml
 ---
-Title: Implement user login
-Slug: implement_user_login
-Order: 01
 Stage: BUILD
-DependsOn: []
+Priority: P1
+Depends-On: []
 ---
+
+# Add Example Feature
+
+## Goal
+
+Describe the user-visible outcome.
+
+## Acceptance Criteria
+
+- Given ...
+- When ...
+- Then ...
 ```
 
-### Stages
+## Which Stage To Use For New Tickets
 
-Primary flow (sequential mode):
+For **implementation tickets being created for Orchestra ingestion**, default to:
 
-1. **`NEW`** → Initial state. Routed to spec node.
-2. **`SPEC`** → Planner writes spec/plan sections. (`PLAN` is a legacy alias.)
-3. **`BUILD`** → Builder agent implements the ticket in an isolated worktree.
-4. **`REVIEW`** → Reviewer agent audits the implementation.
-5. **`COMPLETE`** → Fully implemented, gates passed, audited. Terminal state.
+- `Stage: BUILD`
 
-Exception/internal stages:
+Use `BUILD` when:
 
-- **`SPEC_SPLIT`** → Ticket exceeds token threshold (~2200 tokens); auto-split into child tickets.
-- **`BLOCKED`** → Work cannot proceed. Requires human or architect intervention.
-- **`FAILED`** → Terminal failure after exhausting retries. Requires human intervention.
-- **`REVISION_ROUTER`** → Routes review feedback to affected facets for rework.
+- The ticket is ready for implementation work
+- The ticket already contains enough scope, requirements, and acceptance
+  criteria for the runtime to act on it
+- You want Orchestra to pick it up as executable work
 
-### Execution Modes
+Use `SPEC` or `SPEC_SPLIT` only when:
 
-- **`single`** — entry → build → unified_gate → complete (skips spec and review)
-- **`sequential`** — entry → spec → spec_gate → build → unified_gate → review → unified_gate → complete
+- The ticket is intentionally a planning/specification artifact
+- The runtime should not treat it as ready-to-build implementation work yet
 
-### Deterministic Gates
+Practical rule:
 
-Gates are pure-Python checks that run after spec and build/review, **not** LLM calls:
+- `.tickets/*.md` created for `orch run` should usually start at `Stage: BUILD`
+- planning docs and PRD-like artifacts should stay in `SPEC` / `SPEC_SPLIT`
 
-- **spec_gate** — file count limits, god-file detection, acceptance criteria, dependency approval, DAG cycles
-- **unified_gate** — plan drift, god-file limits, secrets scan, AST violations, complexity, test pass + coverage, working tree cleanliness, commit hygiene, mutation testing, regression tests
+## Handoff Guidance
 
-Gate failure routes the ticket back to its source stage for rework (build → build, review → review).
+Do **not** assume you must manually create handoff files before Orchestra can
+run.
 
-### Circuit Breakers
+For normal runtime ingestion:
 
-- `MAX_ATTEMPTS = 3` per stage
-- `MAX_TOTAL_ATTEMPTS = 10` across all stages
-- `MAX_BLOCKED_ATTEMPTS = 2`
+- Humans/agents prepare the ticket in `.tickets/`
+- Orchestra ingests the ticket
+- Orchestra writes runtime artifacts under `.orchestra/`, including handoff
+  context as the workflow progresses
 
-Exceeding any limit routes to `FAILED`.
+Only write a handoff file manually if the current repo's workflow explicitly
+calls for that. Otherwise, treat handoff content as an Orchestra-managed
+artifact, not an intake prerequisite.
 
-## How to Transition State
+## Pre-Run Checklist
 
-When you finish your assigned task, update the frontmatter `Stage:` field.
+Before calling `orch run` or the equivalent project command, verify:
 
-**Rule:** Never leave a ticket in the stage you found it in unless your execution
-timed out or was interrupted.
+- The target project root is correct
+- `.tickets/` exists
+- At least one ticket is present with `Stage: BUILD`
+- Ticket frontmatter is valid YAML
+- `Depends-On` references only tickets that already exist
+- The ticket body includes concrete acceptance criteria
+- `AGENTS.md` and `STANDARDS.md` are present if the project relies on them
 
-## Assertion-Driven Intake (optional)
+## Common Intake Mistakes
 
-If the target project has a `ticket_graph.json` at its root, the file is
-**optional but strict-when-present**: schema or reference errors abort the run
-with a deterministic message. Projects without the file keep baseline scheduler
-behavior.
+Avoid these:
 
-Downstream tickets may depend on a validated assertion by declaring it in
-frontmatter:
+- Creating implementation tickets with `Stage: SPEC` by default
+- Treating handoff files as mandatory pre-ingestion inputs
+- Putting tickets outside `.tickets/`
+- Writing vague tickets with no observable acceptance criteria
+- Referencing dependencies that do not exist yet
 
-```yaml
----
-Stage: NEW
-Type: feature
-Depends-On: [02-ig1-graph-contract-tracer-bullet]
-Requires-Assertions: [A2]
----
-```
+## Operator Commands
 
-`unified_gate` blocks tickets whose required assertions are not `validated`.
-Validator tickets use `Type: integration-gate` and prove one or more
-assertions (`A1-A6` in this repo — see `.tickets/202, 206, 209, 213, 216, 218`).
-Their `COMPLETE` transition flips the assertion to `validated` and releases
-downstream fanout.
-
-## Merge Queue and End-Of-Run Promotion
-
-When `ORCHESTRA_MERGE_QUEUE=1` (default ON), completed tickets land serially on
-a dedicated run branch `orch/<run-id>`; the source branch is advanced once at
-end-of-run. States: `PENDING / LANDING / LANDED / PAUSED / FAILED`.
-
-- Conflicts pause the queue and write
-  `.orchestra/merge_conflicts/<run_id>/<slug>.json`. Resume with
-  `orch merge-resume --project <path> --run-id <run-id>`.
-- End-of-run promotion is automatic for full `orch run`; on demand use
-  `orch promote-run --project <path> [--run-id <id>] [--delete-run-branch]`.
-  Idempotent; aborts safely if the queue is not drained.
-- See `docs/MERGE_QUEUE.md` for the troubleshooting playbook.
-
-## Ticket Splitting
-
-If a ticket body exceeds the token threshold (~2200 tokens) or requires modifying
-many files across distinct concerns, Orchestra auto-routes to `SPEC_SPLIT`.
-
-The spec_split agent creates child tickets (e.g., `01a-sub-task.md`, `01b-sub-task.md`)
-with `Stage: NEW` and marks the parent `Stage: COMPLETE`.
-
-## Running Orchestra (CLI)
-
-The `orch` CLI lives in the Orchestra repo. Call the binary directly:
+Common patterns:
 
 ```bash
-/Users/joshc/Projects/orchestra/.venv/bin/orch <command> [options]
+orch run /path/to/project
 ```
 
-### Kick off a single ticket build
+or, inside the Orchestra repo:
 
 ```bash
-/Users/joshc/Projects/orchestra/.venv/bin/orch run \
-  --project /path/to/target-project \
-  --ticket /path/to/target-project/.tickets/<slug>.md \
-  --runtime-profile work \
-  --mode sequential \
-  --concurrency 1 \
-  --model gemma4:26b
+python main.py --project /path/to/project
 ```
 
-**Key flags:**
-- `--project` — absolute path to the target project (not the orchestra repo)
-- `--ticket` — absolute path to a single ticket file to run
-- `--mode single` — build only (no review pass); `--mode sequential` — build then review
-- `--model` — model name; common values: `gemma4:26b`, `auto`, or any model from `profiles.yaml`
-- `--runtime-profile` — named profile from `profiles.yaml` (e.g. `work`, `mixed`, `cost_saver`)
+If supported by the current wrapper or local shell setup, dry-run and
+single-ticket invocations can also be used to verify discovery before full
+execution.
 
-### Reset a ticket for a fresh run
+## Rule Of Thumb
 
-Before re-running a ticket, clean up all stale state:
+If you are preparing tickets **for Orchestra to execute**, think like an intake
+operator:
 
-```bash
-cd /path/to/target-project
-
-# 1. Reset the ticket stage to BUILD
-sed -i '' 's/^Stage: .*/Stage: BUILD/' .tickets/<slug>.md
-
-# 2. Remove stale handoff (carries rework context from previous attempts)
-rm -f .orchestra/handoff/<slug>.md
-
-# 3. Remove stale worktree and branch (if they exist)
-git worktree remove --force .orchestra/worktrees/<slug> 2>/dev/null
-git worktree prune
-git branch -D ticket/<slug> 2>/dev/null
-```
-
-All three steps matter. If you skip the handoff removal, the agent gets injected with
-error context from a prior failed run. If you skip the branch deletion, a foreign branch
-with unrelated commits can pollute validation (Orchestra auto-detects this, but cleaning
-up is faster).
-
-### Process lifetime
-
-Orchestra runs are long-lived (5–30+ minutes per ticket depending on model speed and
-rework loops). **Wait at least 30 minutes before attempting to capture output or kill
-the process.** The shell tool's background capture will kill the process prematurely —
-for monitored runs, prefer checking progress via:
-
-```bash
-# Check if the process is still alive
-pgrep -f "orch run"
-
-# Check the ticket's current stage
-head -6 /path/to/target-project/.tickets/<slug>.md
-
-# Check the latest run report
-cat /path/to/target-project/.reports/run-$(date +%Y-%m-%d).md
-```
-
-If you need to launch from a shell tool and monitor, use `block_until_ms` of at least
-1800000 (30 minutes). Shorter timeouts will background and eventually orphan the process.
-
-## Inter-Agent Communication
-
-- **Do NOT** leave messages for other agents in the ticket body unless documenting a bug/blocker.
-- **Do NOT** wrap your file outputs in triple backticks (```). You are writing raw files to disk, not printing code blocks to a UI.
-- Handoff context lives in `.orchestra/handoff/<slug>.md` (not `.handoff/`).
-- Technical context, ordered steps, and absolute file paths go in the handoff file.
+- put the ticket in `.tickets/`
+- make it concrete
+- default it to `Stage: BUILD`
+- let Orchestra generate runtime artifacts after ingestion
