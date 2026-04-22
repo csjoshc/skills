@@ -7,3 +7,4 @@ c3*/**
 .system/
 .DS_Store
 sync.log
+hooks/hook.log
