@@ -4,8 +4,8 @@ description: >-
   Syncs agent hooks (PreToolUse, PostToolUse, SessionStart, etc.) across
   Claude Code, Cursor, Codex CLI, and Gemini CLI from a single authoritative
   master store at ~/.hooks/. Models on skill-sync and mcp-sync. Applies
-  per-target transforms (JSON vs YAML, embedded vs file-per-hook). Use
-  after adding, editing, or removing a hook definition.
+  per-target transforms (JSON vs YAML, embedded vs file-per-hook). Use when
+  adding, editing, or removing a hook definition.
 ---
 
 # hook-sync

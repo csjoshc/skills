@@ -22,8 +22,8 @@ FIRST_SECOND_PERSON_RE = re.compile(
     re.IGNORECASE,
 )
 WHEN_RE = re.compile(r"\buse when\b|\bwhen the user\b|\bwhen users\b", re.IGNORECASE)
-CONTENTS_RE = re.compile(r"^##\s+(contents|table of contents)\b", re.IGNORECASE | re.MULTILINE)
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+DESC_MIN_CHARS = 60
 
 
 @dataclass
@@ -57,12 +57,28 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], int]:
         else:
             raise ValueError("yaml parser unavailable")
     except Exception:
-        # Fallback parser for malformed blocks.
-        for line in block.splitlines():
-            if ":" not in line:
+        # Fallback parser — handles simple key: value and YAML folded/literal block scalars (>- >, |- |).
+        lines = block.splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if ":" not in line or line.lstrip().startswith("#"):
+                i += 1
                 continue
             key, value = line.split(":", 1)
-            data[key.strip()] = value.strip().strip('"').strip("'")
+            key = key.strip()
+            value = value.strip()
+            if value in {">", ">-", "|", "|-"}:
+                folded = value.startswith(">")
+                parts: list[str] = []
+                i += 1
+                while i < len(lines) and (lines[i].startswith((" ", "\t")) or lines[i] == ""):
+                    parts.append(lines[i].strip())
+                    i += 1
+                data[key] = (" " if folded else "\n").join(p for p in parts if p)
+                continue
+            data[key] = value.strip('"').strip("'")
+            i += 1
 
     fm_line_count = block.count("\n") + 3
     return data, fm_line_count
@@ -74,10 +90,9 @@ def is_local_md_link(link: str) -> bool:
     return link.lower().endswith(".md")
 
 
-def one_level_deep(link: str) -> bool:
+def resolve_link(skill_path: Path, link: str) -> Path:
     link = link.split("#", 1)[0].split("?", 1)[0]
-    parts = [p for p in link.split("/") if p not in ("", ".")]
-    return len(parts) <= 2
+    return (skill_path.parent / link).resolve()
 
 
 def audit_skill(skill_path: Path) -> list[Issue]:
@@ -121,6 +136,15 @@ def audit_skill(skill_path: Path) -> list[Issue]:
                 issues.append(
                     Issue("FAIL", skill_path, "description-length", "`description` exceeds 1024 characters.")
                 )
+            if len(description) < DESC_MIN_CHARS:
+                issues.append(
+                    Issue(
+                        "WARN",
+                        skill_path,
+                        "description-min-length",
+                        f"`description` is {len(description)} chars; aim for >= {DESC_MIN_CHARS} for discoverability.",
+                    )
+                )
             if FIRST_SECOND_PERSON_RE.search(description):
                 issues.append(
                     Issue(
@@ -140,6 +164,17 @@ def audit_skill(skill_path: Path) -> list[Issue]:
                     )
                 )
 
+        # name must match parent directory (skill is invoked by dir name)
+        if name and skill_path.parent.name != name:
+            issues.append(
+                Issue(
+                    "FAIL",
+                    skill_path,
+                    "name-matches-dir",
+                    f"Frontmatter `name` ({name!r}) must match skill directory ({skill_path.parent.name!r}).",
+                )
+            )
+
         body_lines = max(0, len(text.splitlines()) - fm_lines)
 
     if body_lines > 500:
@@ -152,35 +187,18 @@ def audit_skill(skill_path: Path) -> list[Issue]:
             )
         )
 
+    # Broken local .md references — prevents dead traversal paths
     for link in LINK_RE.findall(text):
         if not is_local_md_link(link):
             continue
-        if not one_level_deep(link):
+        target = resolve_link(skill_path, link)
+        if not target.exists():
             issues.append(
                 Issue(
                     "FAIL",
                     skill_path,
-                    "reference-depth",
-                    f"Reference is deeper than one level: {link}",
-                )
-            )
-
-    # Companion file TOC warnings (>100 lines)
-    skill_dir = skill_path.parent
-    for companion in sorted(skill_dir.rglob("*.md")):
-        if companion.name == "SKILL.md":
-            continue
-        content = companion.read_text(encoding="utf-8")
-        if len(content.splitlines()) <= 100:
-            continue
-        top = "\n".join(content.splitlines()[:40])
-        if not CONTENTS_RE.search(top):
-            issues.append(
-                Issue(
-                    "WARN",
-                    companion,
-                    "companion-contents",
-                    "Companion file over 100 lines should include `## Contents` near the top.",
+                    "broken-ref",
+                    f"Local reference does not exist: {link}",
                 )
             )
 

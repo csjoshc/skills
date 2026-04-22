@@ -73,7 +73,15 @@ For review skills, enforce:
 3. Evidence requirements for each finding.
 4. Role separation between generator and reviewer.
 
-### Step 5: Verify and report
+### Step 5: Stop-slop and caveman integration (conditional)
+
+For skills that generate prose output (specs, PRDs, docs, briefs, handoffs, reframes):
+- **stop-slop** should be mandatory in the skill's Quality Rules or final step — invoke `/stop-slop` on all prose output to remove AI writing patterns.
+- **caveman** is NOT for all skills. Use only when: (1) the skill's output is long agent prose (500+ lines) that needs token compression, OR (2) the skill's instructions themselves are verbose and token optimization matters.
+
+**Guidance**: Stop-slop is a quality gate (all prose skills); caveman is a token optimization tool (selective, for specific compression contexts).
+
+### Step 6: Verify and report
 
 Re-run audit until no failures remain.
 Return a concise report with:

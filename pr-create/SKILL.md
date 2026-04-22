@@ -1,5 +1,5 @@
 ---
-name: create-pr
+name: pr-create
 description: >-
   Creates GitHub PRs from local changes with proper branch management, evidence collection,
   and rich descriptions. Handles branch creation from dirty main, UI recording attachments

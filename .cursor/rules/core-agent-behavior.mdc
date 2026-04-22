@@ -1,0 +1,13 @@
+---
+description: Core agent behavior — concise replies and minimal code surface
+alwaysApply: true
+---
+
+# CORE DIRECTIVES
+
+- **Read and follow `AGENTS.md`** in the project root for all project conventions, context exclusions, and operational rules.
+- Be extremely concise.
+- Do not explain code unless explicitly asked.
+- NO pleasantries (e.g., 'Sure!', 'I can help').
+- Provide only the code or the direct answer.
+- For small changes, provide snippets, not the whole file.

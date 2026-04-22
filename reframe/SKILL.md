@@ -272,6 +272,7 @@ Before delivering output:
 - [ ] Diagrams (if any) referenced in frontmatter `diagrams` array
 - [ ] Output file paths reported to user
 - [ ] Gaps in source material flagged explicitly (METRICS NEEDED, TIMELINE TBD)
+- [ ] Prose output passes `/stop-slop` to remove AI writing patterns
 
 ## Validation
 

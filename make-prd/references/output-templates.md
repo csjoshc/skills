@@ -1,6 +1,36 @@
 # Output Templates
 
-## PRD Template (Concise)
+## PRD Output Template (conforms to docs/PRD_FORMAT.md)
+
+<!-- PRD-CONTRACT-VERSION: 1 -->
+
+# <Feature Title>
+
+## Problem Statement
+<Brief context about the "Why">
+
+## Goals
+- <High-level objective 1>
+- <High-level objective 2>
+
+## Requirements
+- <Requirement 1>
+  ### Acceptance Criteria
+  - <AC 1.1>
+  - <AC 1.2>
+- <Requirement 2>
+- ## Integration Gate
+- <Requirement 3>
+
+## Verification
+<Recommended manual verification steps>
+
+> See [Runner PRD Contract](https://github.com/<repo>/blob/main/docs/PRD_FORMAT.md) for the authoritative spec.
+
+---
+
+## PRD Template (Concise - Non-Contract)
+*Use this only if the user explicitly opts out of the Runner contract.*
 
 1. Title
 2. Problem
