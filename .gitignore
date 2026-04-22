@@ -7,3 +7,4 @@ acme*/**
 .system/
 .DS_Store
 sync.log
+hooks/hook.log

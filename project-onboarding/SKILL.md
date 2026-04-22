@@ -127,9 +127,18 @@ This is the **single source of truth** read by every tool. All other instruction
 
 Tools that auto-read `AGENTS.md`: OpenCode, GitHub Copilot (`.github/copilot-instructions.md` can reference it), and any agent given a cold-start prompt.
 
-Create **`AGENTS.md`** at the project root using the appropriate stack template below, followed by the Tokenify block.
+Create **`AGENTS.md`** at the project root using the appropriate stack template below.
 
-When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings.
+If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the stack preamble and before broader behavior/style sections.
+If none of those signals are present, do **not** add the MCP block.
+
+Insertion order is mandatory:
+1. stack preamble
+2. optional MCP block (only when MCP is in use)
+3. Tokenify block
+4. Karpathy Guidelines block
+
+When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. If MCP is in use, ensure exactly one MCP block and place it immediately after the stack preamble.
 
 ### Stack-specific preamble (pick one)
 
@@ -197,7 +206,48 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 - Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
 ```
 
-### Tokenify block (append after stack preamble — copy verbatim)
+### Codebase-Memory-MCP block (add when project uses it)
+
+Place this block early in `AGENTS.md` (before generic coding style rules) so it shapes tool selection first:
+
+```markdown
+## Codebase-Memory-MCP
+
+- **Critical rule:** For code discovery, navigation, and impact analysis, use `codebase-memory-mcp` first. Do not start with grep/glob for code symbols.
+
+### Discovery Order (Mandatory)
+
+1. `search_graph` — find functions, classes, routes, and variables by name/pattern
+2. `trace_call_path` — identify callers/callees and impact
+3. `get_code_snippet` — read implementation for exact qualified names
+4. `query_graph` — use for multi-hop or aggregate questions
+5. `get_architecture` — use for high-level structure when needed
+
+### Fallback Rules (Only When Needed)
+
+Use grep/glob/file search only for:
+
+- string literals, error messages, and config values
+- non-code files (`Dockerfile`, YAML/TOML/JSON configs, shell scripts, docs)
+- cases where MCP returns insufficient results
+
+### Required Self-Check Before Finalizing
+
+- Confirm MCP graph tools were used for code discovery
+- If fallback search was used, explicitly state why MCP was insufficient
+- Keep evidence concise: symbol queried, tool used, and result
+
+### MCP Query Tips (Tests)
+
+- In many repos, code files (including tests) are represented primarily as `Module` nodes rather than `File` nodes.
+- For test discovery, start with:
+  - `search_graph(label="Module", name_pattern=".*test.*")`
+  - `search_graph(label="Function", name_pattern="test_.*")`
+- `search_code` is content-based grep; it is not a filename index.
+- If `label="File"` looks sparse, retry with `label="Module"` before using grep/glob fallback.
+```
+
+### Tokenify block (append after optional MCP block; otherwise after stack preamble — copy verbatim)
 
 ```markdown
 # Tokenify — Context & Token Optimization
@@ -234,6 +284,53 @@ Minimize token consumption and prevent context window pollution while maintainin
 ## Trigger Phrases
 - "Applying Tokenify Protocol": When the agent starts pruning context.
 - "Context Warning": When the agent detects the chat history is becoming too "heavy" and suggests a new session.
+```
+
+
+### Karpathy Guidelines block (append after Tokenify — copy verbatim)
+
+```markdown
+# Behavioral Guidelines (Karpathy)
+
+## 1. Think Before Coding
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+
+## 2. Simplicity First
+**Minimum code that solves the problem. Nothing speculative.**
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- If you write 200 lines and it could be 50, rewrite it.
+
+## 3. Surgical Changes
+**Touch only what you must. Clean up only your own mess.**
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+**Define success criteria. Loop until verified.**
+- Transform tasks into verifiable goals (e.g. "Add validation" → "Write tests for invalid inputs, then make them pass").
+- For multi-step tasks, state a brief plan and verify each step.
+```
+
+### graphify (if present)
+
+If `graphify-out/` exists, add this block to `AGENTS.md`:
+
+```markdown
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
 ```
 
 ### MCP Tools (optional)
@@ -288,87 +385,34 @@ Verbatim Universal / npm / Python blocks live in [cursorignore-blocks.md](cursor
 
 ---
 
-## 4. `.cursorrules` — thin shim (Cursor-specific)
+## 4. Tool-Specific Shims (Centralizing around AGENTS.md)
 
-`.cursorrules` no longer holds the full instructions. It references `AGENTS.md` and adds Cursor-specific notes.
+Because `AGENTS.md` is the canonical instruction file, other tools only need a minimal shim pointing to it.
 
-Write the following (pick the stack variant that matches detection):
-
-**npm only:**
-
-```markdown
-# Project context (npm / Node)
-
-- Full project conventions, context exclusions, and Tokenify rules: see `AGENTS.md`.
-- Indexing exclusions: `.cursorignore` (separate from `.gitignore`).
-```
-
-**Python only:**
-
-```markdown
-# Project context (Python)
-
-- Full project conventions, context exclusions, and Tokenify rules: see `AGENTS.md`.
-- Indexing exclusions: `.cursorignore` (separate from `.gitignore`).
-```
-
-**npm + Python:**
-
-```markdown
-# Project context (npm / Node + Python)
-
-- Full project conventions, context exclusions, and Tokenify rules: see `AGENTS.md`.
-- Indexing exclusions: `.cursorignore` (separate from `.gitignore`).
-```
-
-**Neither:**
-
-```markdown
-# Project context
-
-- Full project conventions, context exclusions, and Tokenify rules: see `AGENTS.md`.
-- Indexing exclusions: `.cursorignore` (separate from `.gitignore`).
-```
-
-When merging into an existing `.cursorrules` that already contains a full Tokenify block or stack preamble: replace the old preamble with the shim; remove the duplicated Tokenify block (it now lives in `AGENTS.md`).
-
----
-
-## 5. Cross-tool shims (optional — generate when asked or by default)
-
-These files let other agents pick up project context automatically on cold start. Generate them at the project root. If the user only uses Cursor, these can be skipped.
-
-### `CLAUDE.md` (Claude Code)
-
-Claude Code auto-reads `CLAUDE.md` at the project root and `~/.claude/CLAUDE.md` globally.
+If supporting these tools, create their respective files at the project root with this exact content:
 
 ```markdown
 Read and follow AGENTS.md in this directory for project conventions,
 context exclusions, and operational rules.
 ```
 
-### `GEMINI.md` (Gemini CLI)
+- **Cursor**: `.cursorrules` (Note: older `.cursorrules` with full Tokenify/stack blocks should be replaced with this shim).
+- **Claude Code**: `CLAUDE.md`
+- **Gemini CLI**: `GEMINI.md`
+- **Windsurf**: `.windsurfrules`
+- **Cline**: `.clinerules`
 
-Gemini CLI auto-reads `GEMINI.md` at the project root.
-
-```markdown
-Read and follow AGENTS.md in this directory for project conventions,
-context exclusions, and operational rules.
-```
-
-### Other tools
+### Native Support (No Shim Needed)
 
 | Tool | How it picks up `AGENTS.md` |
 |------|----------------------------|
-| **OpenCode** | Reads `AGENTS.md` natively — no shim needed. |
-| **GitHub Copilot** | Reads `AGENTS.md` natively. Optionally reference it from `.github/copilot-instructions.md`. |
-| **Windsurf** | Create `.windsurfrules` with the same shim text as above. |
+| **OpenCode** | Reads `AGENTS.md` natively. |
+| **GitHub Copilot** | Reads `AGENTS.md` natively. |
 | **Aider** | Add `read: AGENTS.md` to `.aider.conf.yml`. |
-| **Cline** | Create `.clinerules` with the same shim text as above. |
 
 ---
 
-## 5b. Agent Synchronization & Symlinking (Multi-Tool)
+## 5. Agent Synchronization & Symlinking (Multi-Tool)
 
 To ensure consistency across Cursor, Gemini CLI, Claude Code, and other agents, we use a single authoritative store (\`~/.skills\`) and map all tool-specific paths to it via symlinks.
 
@@ -408,7 +452,9 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] Global STANDARDS.md checked (`~/.skills/STANDARDS.md`)
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, Tokenify block, and STANDARDS.md reference
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> optional MCP block -> Tokenify -> Karpathy.
+- [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
+- [ ] If included, MCP block appears exactly once, immediately after the stack preamble, with mandatory discovery order, fallback boundaries, and completion self-check.
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
@@ -423,6 +469,8 @@ Before completing onboarding, audit and establish symlinks according to these re
 - `AGENTS.md` is the **canonical source of truth** for project conventions. All other instruction files are shims or references.
 - `STANDARDS.md` (global: `~/.skills/STANDARDS.md`) is the **architectural oracle** — agents check this before blocking on assumptions.
 - Exact patterns live only in this skill—copy blocks verbatim so onboarding stays consistent.
+- When `codebase-memory-mcp` is in use, place its block near the top of `AGENTS.md` so it is not diluted by lower-priority style guidance.
+- Do not add the MCP block to projects where MCP is not in use.
 - Future stacks (Rust, Go, Java, etc.) should be new labeled blocks in this skill, not ad hoc edits during a run.
 - Never replace a user's `AGENTS.md` / `.cursorignore` / `.cursorrules` / `STANDARDS.md` wholesale; merge and dedupe.
 - When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Gemini CLI), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use the **orchestrate** skill for `.tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
