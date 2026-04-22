@@ -131,6 +131,22 @@ Full palette with role assignments and resolver: `palette.py`
 7. **No text-based arrows** (->/<-) — use connectors with arrowheads.
 8. **Target 75-85% fill** — dark background amplifies empty space.
 
+## Layout-Specific Constraints
+
+**Tables vs. Flowcharts:**
+- **Use `table` for side-by-side or point-by-point comparison.** Row-based data, feature matrices, status tracking, configuration options. Data is *static* and *comparable* (feature A vs. B, config X vs. Y).
+- **Use `flow` for relationships and process sequences.** Shows direction, temporal order, entity relationships, decision branches. Data is *dynamic* and *ordered* (request → response, step 1 → 2 → 3).
+- **Use `diagram` for system topology.** Layered architecture, component interaction, logical grouping (not comparison).
+- **Use `comparison` when a bridge or annotation is needed.** Side-by-side layouts that benefit from callout text, unifying summary, or highlighted differences.
+
+**Prose Quality:**
+- All slide content—titles, captions, speaker notes, body text—must pass [stop-slop](stop-slop) review.
+  - Cut filler and throat-clearing.
+  - Use active voice (subject + verb).
+  - Be specific; avoid vague declaratives.
+  - Vary sentence rhythm.
+- Speaker notes (`notes:` field) should carry detail that slides cannot, but also apply stop-slop rules.
+
 ---
 
 ## Skill Files
@@ -154,3 +170,4 @@ Full palette with role assignments and resolver: `palette.py`
 | [reference/charts.md](reference/charts.md)                   | python-pptx chart integration           |
 | [reference/template-mgmt.md](reference/template-mgmt.md)     | Template regen, connectors, layout idx  |
 | [reference/alternatives.md](reference/alternatives.md)       | Gramener, PptxGenJS, comparison matrix  |
+| `/stop-slop` skill                                           | Prose quality: cut filler, use active voice, vary rhythm |

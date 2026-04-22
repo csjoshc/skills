@@ -1,6 +1,36 @@
 # Output Templates
 
-## PRD Template (Concise)
+## PRD Output Template (conforms to docs/PRD_CONTRACT.md)
+
+<!-- PRD-CONTRACT-VERSION: 1 -->
+
+# <Feature Title>
+
+## Problem Statement
+<Brief context about the "Why">
+
+## Goals
+- <High-level objective 1>
+- <High-level objective 2>
+
+## Requirements
+- <Requirement 1>
+  ### Acceptance Criteria
+  - <AC 1.1>
+  - <AC 1.2>
+- <Requirement 2>
+- ## Integration Gate
+- <Requirement 3>
+
+## Verification
+<Recommended manual verification steps>
+
+> See [Orchestra PRD Contract](https://github.com/<repo>/blob/main/docs/PRD_CONTRACT.md) for the authoritative spec.
+
+---
+
+## PRD Template (Concise - Non-Contract)
+*Use this only if the user explicitly opts out of the Orchestra contract.*
 
 1. Title
 2. Problem

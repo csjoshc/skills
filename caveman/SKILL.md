@@ -4,8 +4,8 @@ description: >-
   Token-compression wrapper for long agent outputs. Applies "lithic"
   compression to prose while leaving code, paths, commands, filenames,
   and identifiers untouched. Cuts output tokens by ~65-75% with no loss
-  of technical fidelity. Use for long review summaries, reframe output,
-  multi-agent reports, and any response over ~1,000 words. Skip for
+  of technical fidelity. Use when compressing long review summaries, reframe output,
+  multi-agent reports, or any response over ~1,000 words. Skip for
   specs, ACs, tickets, and user-facing prose.
 ---
 

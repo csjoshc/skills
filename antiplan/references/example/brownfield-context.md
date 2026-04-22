@@ -1,4 +1,4 @@
-# Brownfield Context: Enterprise Chat Agent
+# Brownfield Context: TaskBoard Threaded Comments
 
 Phase 0 research artifact — the agent's written understanding of the codebase
 at planning time. This was written to file (not summarized verbally) and
@@ -10,6 +10,10 @@ It also serves as an early AP-9 (Greenfield Hallucination) detector: if the
 planning agent misunderstands the existing codebase here, it is caught before
 any tickets are generated.
 
+TaskBoard is a fictional multi-user task-tracking application used here as a
+domain-neutral worked example. Substitute your own project's packages, paths,
+and signatures when using this file as a reference.
+
 ---
 
 ## Existing Package Inventory
@@ -18,125 +22,123 @@ These packages exist in the repo before any tickets are implemented:
 
 | Package | Language | Path | Key modules |
 |---------|----------|------|-------------|
-| Orchestration | Python | `packages/c3-ai-orchestration/` | `turn.py` (run_chat_turn, run_chat_turn_stream), `types.py`, `mcp_invoke.py`, `debug_http.py`, `exceptions.py` |
-| BFF | Python | `packages/c3-ai-bff/` | `app.py` (FastAPI create_app), `executor.py`, `settings.py`, `system_prompt.py`, `tools_catalog.py`, `http_debug.py` |
-| React SPA | TypeScript | `react/` (does not exist yet) | **Not present at planning commit.** `packages/ui/` has chat component primitives (ChatMessageLog, ChatMessageComposer, ChatThreadSidebar) but no page-level app. T-3 creates a minimal chat page. |
-| Core framework | Python | `packages/core/` | `runtime/executor.py` (AgentRuntime), `providers/`, `types.py`, `config/manager.py` |
-| Guardrails | Python | `packages/guardrails/` | `factory.py` (create_pipeline), input/output/tool guardrails |
-| Tool gateway | Python | `packages/c3-ai-mcp-bff/` | Pre-existing MCP invoke server (`app.py` FastAPI, `flight_tools.py`, `settings.py`) |
-| MCP data server | TypeScript | `packages/mcp-data-server/` | Fastify server with DataConnector interface, catalog/query/ingest routes (not modified by this plan) |
-| UI primitives | TypeScript | `packages/ui/` | Chat component primitives used by T-3 |
+| Core domain | Python | `packages/taskboard-core/` | `tasks.py` (create_task, list_tasks), `comments.py` (create_comment, list_comments_for_task), `models.py`, `db.py`, `events.py`, `debug_http.py` |
+| HTTP API | Python | `packages/taskboard-api/` | `app.py` (FastAPI create_app), `routes_tasks.py`, `routes_comments.py`, `routes_sse.py`, `settings.py`, `auth.py` |
+| Web SPA | TypeScript | `packages/taskboard-web/` | Vite + React app: `src/pages/TaskListPage.tsx`, `src/pages/TaskDetailPage.tsx`, `src/shared/apiClient.ts`, `src/shared/sseClient.ts` |
+| Shared contracts | TypeScript + Python | `packages/taskboard-contracts/` | `schema.yaml` (canonical), generated `types.ts` + `models.py`, `build.py` codegen, `Makefile` |
+| Notifier worker | Python | `packages/taskboard-notifier/` | `worker.py` (consume_events), `handlers.py`, `settings.py`, `dispatchers/email.py`, `dispatchers/webhook.py` |
+| UI primitives | TypeScript | `packages/taskboard-ui/` | `CommentList`, `CommentComposer`, `TaskBadge`, `UserAvatar` — used by web SPA |
+| Event bus client | Python | `packages/taskboard-eventbus/` | Thin publish/subscribe wrapper over in-repo broker; `publish.py`, `subscribe.py` (not modified by this plan) |
+| Dev tooling | shell + Python | `scripts/` + `docs/` | `start-local-stack.sh`, `seed-db.py`, `local-dev.md`, `secrets-and-env.md` |
 
 ### Pre-Existing Component Capability Audit
 
 | Component | Assumed capability | Verified? | Evidence | Gap |
 |-----------|-------------------|-----------|----------|-----|
-| Tool gateway (`packages/c3-ai-mcp-bff/`) | Accepts `POST /v1/mcp/invoke` with tool name + args | Yes | Route exists in `src/routes/` | — |
-| Tool gateway | Has flight-specific tool definitions (list_searches, create_search, etc.) | **No** | No flight tool schemas in gateway code | **Capability gap:** flight tool definitions, OAuth token flow for Flight API, C3 HTTP client for upstream calls must be added — requires modification ticket or new package |
-| Tool gateway | Returns `{ ok: true, result }` / `{ ok: false, error }` format | Yes | Response shape in existing route handler | — |
+| HTTP API (`packages/taskboard-api/`) | Accepts `POST /v1/tasks/{id}/comments` with body | Yes | Route exists in `routes_comments.py` | — |
+| HTTP API | Accepts `parent_id` on comment creation for threaded replies | **No** | `CommentCreate` schema omits `parent_id`; handler stores comment flat | **Capability gap:** thread-aware fields (`parent_id`, `thread_root_id`, `depth`), thread retrieval endpoint, and event-bus `comment.reply.posted` message must be added — requires modification tickets across core, api, contracts |
+| HTTP API | Returns `{ ok: true, data }` / `{ ok: false, error }` format | Yes | Response shape in existing route handlers | — |
 
-### Tool Gateway Internal Architecture (for T-4a)
+### Core Internal Architecture (for T-1 and T-5)
 
-The implementing agent for T-4a needs to understand the gateway's internals:
+The implementing agent for T-1 needs to understand the core's internals:
 
-- **Language/framework:** Python, FastAPI (same as BFF — not TypeScript).
-  Note: `packages/mcp-data-server/` is the TypeScript Fastify server;
-  `packages/c3-ai-mcp-bff/` is the Python MCP invoke proxy.
-- **Module structure:** `src/c3_ai_mcp_bff/` — `app.py` (FastAPI routes),
-  `flight_tools.py` (flight tool definitions), `settings.py` (env config).
-- **Tool routing:** The MCP invoke endpoint dispatches by tool name. Flight
-  tools need to be registered with schemas and routed to the upstream
-  Flight API via an HTTP client with OAuth.
-- **Auth pattern:** The gateway needs OAuth client-credentials grant against
-  the Flight API's token endpoint, with token caching and refresh on 401.
-- **Existing pattern:** Follow `app.py` route structure for new endpoints;
-  follow `settings.py` for env-var configuration.
+- **Language/framework:** Python, SQLAlchemy 2.0 ORM, Pydantic v2 models,
+  synchronous DB access via `db.session_scope()` context manager.
+  Note: `taskboard-eventbus` is the publish/subscribe wrapper;
+  `taskboard-core` owns domain logic and must not import `taskboard-api`.
+- **Module structure:** `src/taskboard_core/` — `tasks.py` (task CRUD),
+  `comments.py` (comment CRUD + queries), `models.py` (SQLAlchemy ORM),
+  `db.py` (engine + session factory), `events.py` (event-bus publish shims).
+- **Relationship routing:** Comments are currently stored flat with
+  `task_id` FK only. Threading requires a self-referential FK
+  `parent_comment_id` plus derived `thread_root_id` + `depth` columns.
+- **Event pattern:** `events.publish_task_event(task_id, event_type, payload)`
+  fans an event onto the in-repo bus. Notifier subscribes by `event_type`.
+- **Existing pattern:** Follow `comments.py` query structure for new
+  thread-traversal helpers; follow `events.py` for new event types.
 
 ## Existing Architecture (Observed)
 
 ```
-React SPA (Vite) → POST /v1/chat/stream → BFF (FastAPI)
-                                              ↓
-                                         Orchestration (run_chat_turn)
-                                              ↓
-                                         SecureModelProvider + AgentRuntime
-                                              ↓ (tool calls)
-                                         POST /v1/mcp/invoke → Tool Gateway → Flight API
+Web SPA (Vite) → POST /v1/tasks/{id}/comments → API (FastAPI)
+                                                    ↓
+                                               taskboard-core (comments.py)
+                                                    ↓
+                                               SQLAlchemy ORM → Postgres
+                                                    ↓ (publish)
+                                               taskboard-eventbus → Notifier worker
 ```
 
 ## Pre-Existing Behaviors That Must NOT Break
 
 1. `GET /health` returns `{"status": "ok"}`
-2. `GET /v1/meta` returns classification from agent YAML
-3. `POST /v1/chat` (blocking, single message) returns assistant text
-4. `POST /v1/chat/stream` (SSE, single message array) streams text + tool events
-5. All existing guardrail tests pass (injection, PII, permission gate)
-6. Tool gateway accepts `POST /v1/mcp/invoke` with `X-Mcp-Invoke-Secret`
-7. React chat page renders streamed responses with tool status indicators
+2. `GET /v1/meta` returns API version + build SHA from env vars
+3. `POST /v1/tasks` (create task) returns created task with assigned `id`
+4. `POST /v1/tasks/{id}/comments` (flat comment) returns created comment
+5. `GET /v1/tasks/{id}/comments` lists flat comments ordered by created_at
+6. `GET /v1/sse/tasks/{id}` streams server-sent events for a task
+7. Web SPA renders existing task detail page with flat comment list
 
 ## Naming Conventions (Observed)
 
 - Python packages: `packages/{name}/src/{name_underscored}/`
-  (e.g., `packages/c3-ai-orchestration/src/c3_ai_orchestration/`)
+  (e.g., `packages/taskboard-core/src/taskboard_core/`)
 - Test files: `packages/{name}/tests/test_{module}.py`
-- Test support: `packages/{name}/tests/support/` (e.g., `scripted_provider.py`)
-- Agent config: `packages/c3-ai-bff/config/agent.*.yaml`
-- BFF settings: Pydantic `BaseSettings` in `settings.py`, env-var driven
-- BFF routes: all in `app.py` via `create_app()` factory (no separate route files)
-- React pages: `react/src/pages/{Name}Page.tsx`
-- Shared utilities: `react/src/shared/`
+- Test support: `packages/{name}/tests/support/` (e.g., `db_fixtures.py`)
+- API config: Pydantic `BaseSettings` in `settings.py`, env-var driven
+- API routes: one module per resource (`routes_tasks.py`, `routes_comments.py`)
+- Web pages: `packages/taskboard-web/src/pages/{Name}Page.tsx`
+- Web shared utilities: `packages/taskboard-web/src/shared/`
+- Contracts: edit `schema.yaml`; run `make contracts` to regenerate
 
 ## Key Existing Function Signatures
 
-### Orchestration (`turn.py`)
+### Core (`comments.py`)
 
 ```python
-# BEFORE this plan — single-turn only
-async def run_chat_turn(
-    *, user_text: str, turn_config: ChatTurnConfig,
-    session_id: str | None = None,
-    tool_executor: StrToolExecutor, model_provider: ModelProvider,
-    on_tool_event: ToolEventCallback | None = None,
-) -> ChatTurnResult: ...
+# BEFORE this plan — flat comments only
+def create_comment(
+    *, task_id: int, author_id: int, body: str,
+    session: Session | None = None,
+) -> Comment: ...
 
-async def run_chat_turn_stream(
-    *, user_text: str, turn_config: ChatTurnConfig,
-    session_id: str | None = None,
-    tool_executor: StrToolExecutor, model_provider: ModelProvider,
-) -> AsyncIterator[ChatStreamEvent]: ...
+def list_comments_for_task(
+    *, task_id: int,
+    session: Session | None = None,
+) -> list[Comment]: ...
 ```
 
-### BFF (`app.py`)
+### API (`routes_comments.py`)
 
 ```python
-# BEFORE — /v1/chat/stream accepts messages but only uses last user message
-@app.post("/v1/chat/stream")
-async def chat_stream(body: ChatStreamRequest): ...
-# No /v1/chat/full endpoint exists yet
+# BEFORE — endpoint accepts body but no parent_id
+@router.post("/v1/tasks/{task_id}/comments", response_model=CommentRead)
+def post_comment(task_id: int, payload: CommentCreate, ...): ...
+# No thread retrieval endpoint exists yet
 ```
 
-### React (`chatStreamClient.ts`)
+### Web (`apiClient.ts`)
 
 ```typescript
-// BEFORE — sends messages array but BFF ignores prefix
-export async function streamAssistantReply(
-  url: string,
-  messages: ChatTurn[],
-  options: { headers?: Record<string, string>; signal?: AbortSignal;
-             onToolEvent?: (status: ToolStatus) => void;
-             onText?: (delta: string) => void; }
-): Promise<{ text: string; toolTrace: ToolStatus[] }>
+// BEFORE — sends body but no parent_id field
+export async function postComment(
+  taskId: number,
+  payload: { body: string },
+  options: { headers?: Record<string, string>; signal?: AbortSignal }
+): Promise<{ id: number; body: string; createdAt: string }>
 ```
 
 ## What This Plan Changes (Summary)
 
-The central change is **true multi-turn conversation history**:
-- Orchestration gains a `conversation_prefix` parameter
-- BFF gains a `/v1/chat/full` blocking endpoint that accepts full history
-- BFF's `/v1/chat/stream` forwards full message array as prefix
-- React sends the complete conversation history on every turn
-- Core framework gains `tool_exec_start`/`tool_exec_result` stream events
+The central change is **threaded comments with live reply notifications**:
+- Core gains a `parent_comment_id` FK plus `thread_root_id`/`depth` traversal helpers
+- API gains `parent_id` on `POST /v1/tasks/{id}/comments` and a new
+  `GET /v1/tasks/{id}/comment-thread` endpoint returning nested JSON
+- Web SPA renders an indented thread with collapse/expand controls
+- Notifier emits reply notifications when a comment has non-null `parent_id`
+- SSE channel gains a `comment.reply.posted` event type
+- Contracts package adds `CommentThreadNode` and `CommentReplyPosted` DTOs
 
-**No new packages or directories are created** (except a minimal React chat
-page using existing `packages/ui/` primitives). All other tickets modify
-existing files.
+**No new packages or directories are created.** All tickets modify existing
+files within existing packages.

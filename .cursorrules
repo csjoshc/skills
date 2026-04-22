@@ -1,0 +1,4 @@
+# Project context
+
+- Full project conventions, context exclusions, and Tokenify rules: see `AGENTS.md`.
+- Indexing exclusions: `.cursorignore` (separate from `.gitignore`).

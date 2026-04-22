@@ -174,3 +174,4 @@ Add an optional line under "Constraints" or "Context":
 - [ ] Complex work has `.handoff/plan-<slug>.md` and that path is in the prompt.
 - [ ] Verification / acceptance criteria included.
 - [ ] Skill cluster guidance included if applicable (see "Skill Clusters" section)
+- [ ] Handoff prompt prose passes `/stop-slop` to remove AI writing patterns.

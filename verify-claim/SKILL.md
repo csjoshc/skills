@@ -4,7 +4,7 @@ description: >-
   Evidence gate that blocks any "task complete" / "done" / "fixed" claim without
   corroborating proof. Requires passing test output, a screenshot + URL for UI
   changes, a regression test for bug fixes, or a curl response for API changes.
-  Use before reporting completion to the user, before opening a PR, or whenever
+  Use when the agent is about to report completion, when opening a PR, or whenever
   the agent is about to claim success.
 ---
 

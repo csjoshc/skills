@@ -1,4 +1,70 @@
-# spec-writer Example Output
+# spec-writer Example Outputs
+
+---
+
+## Example A: Ralph-eligible ticket (Orchestra codebase)
+
+**Input:**
+`/spec-writer Add a JSONL self-assessment parser for the reflection-3 plugin output`
+
+**Output (abbreviated — shows Ralph-eligible ticket shape):**
+
+```yaml
+---
+Stage: BUILD
+Type: feature
+Ralph: true
+Ralph-Reason: "7 additive ACs: new parser module + wiring into BUILD event consumer + tests, each grep/pytest-checkable, no bootstrap or cross-cutting changes"
+---
+```
+
+### SPEC
+
+**One-line purpose**
+Parse the reflection-3 JSONL output emitted by opencode subprocesses into a structured self-assessment schema usable by Orchestra's observability layer.
+
+**Requirements**
+1. New module `orchestra/observability/self_assessment_parser.py` exposes `parse_self_assessment(events: list[dict]) -> dict | None`
+2. Parser extracts `stuck`, `status`, `confidence`, `missing_work` fields from JSONL events matching the reflection-3 schema
+3. Returns `None` if no matching event is found (non-fatal)
+4. Called from `build_node` after runtime invocation; result recorded via `SelfAssessmentEvent`
+5. No mocks — tests use a fixture JSONL file
+
+### Acceptance Criteria → Tests
+
+| AC | Test file / Command | Assertion shape |
+|---|---|---|
+| AC-1 | `grep -nE '^def parse_self_assessment' orchestra/observability/self_assessment_parser.py` | exit 0 |
+| AC-2 | `pytest tests/test_self_assessment_parser.py -k test_parses_valid_reflection3_event` | `result["stuck"] == False` |
+| AC-3 | `pytest tests/test_self_assessment_parser.py -k test_returns_none_on_empty_events` | `result is None` |
+| AC-4 | `pytest tests/test_self_assessment_parser.py -k test_returns_none_on_missing_schema_key` | `result is None` |
+| AC-5 | `grep -nE 'parse_self_assessment' orchestra/nodes/build.py` | exit 0 (wired in) |
+| AC-6 | `grep -nE 'class SelfAssessmentEvent' orchestra/observability/gate_events.py` | exit 0 |
+| AC-7 | `ruff check orchestra/observability/self_assessment_parser.py orchestra/nodes/build.py` | exit 0 |
+
+**Ralph note:** Each AC is independently verifiable. AC-1 through AC-4 can be checked before AC-5 is wired. No AC depends on a later AC running first. Failure Protocol does NOT mandate full revert — `self_assessment_parser.py` is additive and can be left in place on failure.
+
+---
+
+## Example B: Ralph-ineligible ticket (same codebase)
+
+**Input:**
+`/spec-writer Add --plugin flag to opencode wrapper cmd construction`
+
+```yaml
+---
+Stage: BUILD
+Type: feature
+Ralph: false
+Ralph-Reason: "5 ACs below threshold; 2-file change (wrappers.py + test), one-shot BUILD faster"
+---
+```
+
+**Ralph note:** Small change, 5 ACs, single logical unit. One-shot BUILD is appropriate. No Ralph overhead justified.
+
+---
+
+## Example C: Generic ticket (non-Orchestra)
 
 **Input:**
 `/spec-writer Add a way for users to export their order history as CSV`

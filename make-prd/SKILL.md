@@ -55,13 +55,15 @@ Load companion files only when needed:
 
 1. Start with a short intake summary of what you understood.
 2. Ask only high-leverage questions; batch questions to reduce start/stop overhead.
-3. Keep a visible `Decision Ledger` with:
+3. **If antiplan output exists**, reference its findings on counterarguments and ruled-out alternatives. Do not re-debate settled decisions.
+4. **If no prior analysis**, ask high-leverage questions to surface doubts and assumptions — avoid repeating antiplan's work.
+5. Keep a visible `Decision Ledger` with:
 - decided
 - assumed
 - open (needs human)
-4. If the user asked for fan-out or delegated analysis, run explicit subagent tasks for non-blocking facets.
-5. Do not block the main thread on every subagent result; continue local synthesis while they run.
-6. Reconcile conflicts explicitly before finalizing outputs.
+6. If the user asked for fan-out or delegated analysis, run explicit subagent tasks for non-blocking facets.
+7. Do not block the main thread on every subagent result; continue local synthesis while they run.
+8. Reconcile conflicts explicitly before finalizing outputs.
 
 ## Session Flow
 
@@ -89,8 +91,10 @@ For each gate, present:
 ## Expected Deliverables
 
 1. PRD draft with explicit assumptions and unresolved questions.
-2. Ticket pack with acceptance criteria and dependency notes.
-3. Follow-up question pack only for unresolved blockers.
+2. PRD output conforms to orchestra's docs/PRD_CONTRACT.md (version 1).
+3. Ticket pack with acceptance criteria and dependency notes.
+4. Follow-up question pack only for unresolved blockers.
+5. All prose (PRD narrative and ticket descriptions) must pass `/stop-slop` before delivery to remove AI writing patterns and filler.
 
 ## First Response Contract (When Skill Is Invoked)
 
@@ -98,6 +102,7 @@ In the first response after invocation:
 1. Confirm objective and constraints in 3-6 bullets.
 2. Propose the immediate plan for this session.
 3. Ask the smallest set of clarification questions needed to start drafting.
+3.5. Confirm the PRD output will conform to PRD_CONTRACT.md v1 unless user opts out.
 
 ## Assumptions & Escalation
 

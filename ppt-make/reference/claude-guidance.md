@@ -13,16 +13,18 @@
 
 ## Layout Selection by Content Type
 
-| Source content                         | Best layout    |
-|----------------------------------------|----------------|
-| Sequential steps, request/response     | `flow`         |
-| Categorized lists (problem/solution)   | `panels`       |
-| System layers, component relationships | `diagram`      |
-| Processing stages with per-stage detail| `pipeline`     |
-| Feature matrix, status tracking        | `table`        |
-| Before/after, option A vs B            | `comparison`   |
-| Mixed narrative + data                 | `mixed`        |
-| Simple key takeaways, agendas          | `bullets`      |
+| Source content                         | Layout       | Decision rule                              |
+|----------------------------------------|--------------|---------------------------------------------|
+| Sequential steps, request/response     | `flow`       | Process/relationship: direction matters   |
+| Categorized lists (problem/solution)   | `panels`     | 2-4 related but non-comparable ideas      |
+| System layers, component relationships | `diagram`    | Topology: how pieces fit together          |
+| Processing stages with per-stage detail| `pipeline`   | Flow + detail: stages + associated info    |
+| Feature matrix, status tracking        | `table`      | Comparison: rows vs. columns *are the point*|
+| Before/after, option A vs B            | `comparison` | Comparison + annotation: needs callout    |
+| Mixed narrative + data                 | `mixed`      | One slide, multiple types (use sparingly) |
+| Simple key takeaways, agendas          | `bullets`    | List: simple, not comparative              |
+
+**Key distinction:** Use `table` when the grid structure *is* the message (Config A vs. Config B, Feature 1 vs. Feature 2). Use `flow` when time/process *is* the message (Step 1 → 2 → 3, API request → response). Use `diagram` when spatial relationships *is* the message (Layer X connects to Module Y).
 
 ---
 
@@ -73,7 +75,19 @@ the slide is an underutilized text blob.
 
 ---
 
-## YAML Authoring Tips
+## Prose Quality (Titles, Captions, Speaker Notes)
+
+All text on slides and in speaker notes must follow **stop-slop** principles:
+
+- **Cut filler.** No "here's what," "it should be noted that," "it's important to understand."
+- **Use active voice.** Subject + verb. Not: "The decision emerges." But: "We chose X because..."
+- **Be specific.** Not: "The implications are significant." But: "This removes the 3-minute auth delay."
+- **Vary rhythm.** Mix short and long sentences. Avoid three consecutive sentences of the same length.
+- **Trust readers.** State facts directly. No softening ("perhaps," "arguably," "in some cases") unless warranted by uncertainty.
+
+**Speaker notes are not exempt.** They carry implementation detail, but should also be direct and jargon-light.
+
+---
 
 - Always use `|` (literal block scalar) for multi-line `content` fields.
 - Use `\n` inside `text` fields for line breaks within boxes (e.g.,

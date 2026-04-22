@@ -41,8 +41,12 @@ Slug: implement_user_login
 Order: 01
 Stage: BUILD
 DependsOn: []
+Ralph: true
+Ralph-Reason: "Additive observability feature, 8 independent ACs, each grep/pytest-checkable"
 ---
 ```
+
+Ralph field: Optional; see [`~/.skills/shared/RALPH_DECISION_RULE.md`](~/.skills/shared/RALPH_DECISION_RULE.md). When present, gates whether BUILD uses a fresh-subprocess loop per AC (Ralph mode) or one-shot BUILD.
 
 ### Stages
 
@@ -50,7 +54,7 @@ Primary flow (sequential mode):
 
 1. **`NEW`** → Initial state. Routed to spec node.
 2. **`SPEC`** → Planner writes spec/plan sections. (`PLAN` is a legacy alias.)
-3. **`BUILD`** → Builder agent implements the ticket in an isolated worktree.
+3. **`BUILD`** → Builder agent implements the ticket in an isolated worktree. If `Ralph: true`, uses fresh-subprocess loop per AC; else one-shot BUILD (default).
 4. **`REVIEW`** → Reviewer agent audits the implementation.
 5. **`COMPLETE`** → Fully implemented, gates passed, audited. Terminal state.
 
@@ -136,6 +140,84 @@ many files across distinct concerns, Orchestra auto-routes to `SPEC_SPLIT`.
 
 The spec_split agent creates child tickets (e.g., `01a-sub-task.md`, `01b-sub-task.md`)
 with `Stage: NEW` and marks the parent `Stage: COMPLETE`.
+
+## E2E Validation in Orchestra (Applying ticket-critic principles)
+
+Before a ticket enters the BUILD stage, ticket-critic should audit whether it has
+an E2E validation strategy. In Orchestra's context:
+
+- **Local unit tests** ≠ orchestration correctness. A ticket can have 100% test
+  coverage and still fail unified_gate.
+- **Infrastructure assumptions** are the most common silent failures:
+  - Missing branch-points file → falls back to wrong merge-base
+  - Worktree registration orphaned → gates fail mysteriously
+  - Commit message missing ticket slug → commit_hygiene gate rejects it
+- **Smoke tests** are minimal tickets (10–20 lines) run through the full pipeline to
+  prove infrastructure works before scaling to complex features.
+
+Use the MRA (Minimal Reproducible Artifact) strategy from ticket-critic: if a complex
+ticket fails in unified_gate, create the simplest possible ticket that exercises the
+same code path and run it through the pipeline. If the MRA passes, you have a
+localized integration issue. If the MRA fails too, the root cause is infrastructure.
+
+See `~/.skills/ticket-critic/SKILL.md` for full E2E Validation Gap guidance.
+
+## Infrastructure State Management
+
+Orchestra's correctness depends on persistent state that lives outside LLM execution:
+
+### Branch-Points Persistence
+
+Each ticket must have an explicit merge-base (branch-point) recorded in:
+
+```
+.orchestra/branch-points/<slug>.sha
+```
+
+This file contains a single commit SHA representing the correct base for computing
+the commit range that will be validated by `unified_gate`.
+
+**Why:** Without this, the system falls back to computing `git merge-base main HEAD`
+dynamically, which is wrong for off-trunk branches and can include commits unrelated
+to the ticket.
+
+**Initialization:** This file must be created when the ticket is first created or
+moved to a branch. If missing, read_branch_point() will fail and fallback to merge-base
+(a silent correctness bug). When initializing a new ticket on a feature branch:
+
+```bash
+# Get the current merge-base once (at ticket creation time)
+git merge-base main HEAD > .orchestra/branch-points/<slug>.sha
+```
+
+### Worktree Registration and Lifecycle
+
+Worktree registrations in `.git/worktrees/` must match actual directories on disk.
+
+**State leak:** If a worktree is deleted but `.git/worktrees/<name>/` remains,
+subsequent worktree operations fail silently. Clean up with:
+
+```bash
+git worktree prune  # Remove orphaned worktree metadata
+```
+
+### Commit Metadata Contracts
+
+Every commit in a ticket's range must:
+
+1. **Reference the ticket slug** in the commit message (e.g., `317-add-get-version-helper:`)
+2. **Be authored by the orchestration agent** (verified by `commit_hygiene` gate)
+
+This is not a style choice — it's a safety contract. `commit_hygiene` validation
+will reject commits missing the ticket slug, preventing state leakage across
+isolation boundaries.
+
+### Validation Order (Critical)
+
+1. Check `Base-Ref:` field in ticket frontmatter (if present, use it as override)
+2. Fall back to `.orchestra/branch-points/<slug>.sha`
+3. Fall back to `git merge-base main HEAD` (**last resort, logs warning**)
+4. Never proceed silently if step 2 is needed — this is a sign of incomplete initialization
 
 ## Running Orchestra (CLI)
 

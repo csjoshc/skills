@@ -26,6 +26,8 @@ import os
 import re
 import sys
 from typing import Any
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
 
 from pptx import Presentation
 from pptx.util import Inches as I, Pt as P
@@ -258,10 +260,43 @@ def _add_notes(s, text: str):
         tf.text = str(text)
 
 
+def _normalize_url(url: str) -> str:
+    """Ensure URL has a scheme and is properly formatted."""
+    if not url or not isinstance(url, str):
+        return ""
+    url = url.strip()
+    # Add scheme if missing
+    if url and not re.match(r"^[a-z][a-z0-9+.-]*:", url, re.IGNORECASE):
+        url = "https://" + url
+    return url
+
+
+def _validate_url(url: str, timeout: int = 5) -> tuple[bool, str]:
+    """Check if URL is reachable. Returns (is_valid, error_msg)."""
+    if not url:
+        return False, "Empty URL"
+
+    try:
+        req = Request(url, method="HEAD")
+        req.add_header("User-Agent", "Mozilla/5.0")
+        with urlopen(req, timeout=timeout) as response:
+            status = response.status
+            if 200 <= status < 400:
+                return True, ""
+            return False, f"HTTP {status}"
+    except HTTPError as e:
+        return False, f"HTTP {e.code}"
+    except (URLError, TimeoutError, Exception) as e:
+        error_type = type(e).__name__
+        return False, error_type
+
+
 def _hlink(s, text: str, url: str, left: float, top: float,
            w: float = 3.50, h: float = 0.22, sz: int = 8, color=None):
     """Small clickable hyperlink textbox."""
     color = color or C3_BLUE
+    url = _normalize_url(url)
+
     tb = s.shapes.add_textbox(I(left), I(top), I(w), I(h))
     tf = tb.text_frame
     tf.word_wrap = True
@@ -272,7 +307,15 @@ def _hlink(s, text: str, url: str, left: float, top: float,
     r.font.size = P(sz)
     r.font.bold = False
     r.font.color.rgb = color
-    r.hyperlink.address = url
+
+    # Validate and set hyperlink
+    if url:
+        is_valid, error = _validate_url(url)
+        if is_valid:
+            r.hyperlink.address = url
+        else:
+            print(f"⚠ Warning: Unreachable link — {text}: {url} ({error})", file=sys.stderr)
+
     return tb
 
 

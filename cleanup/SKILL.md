@@ -2,8 +2,9 @@
 name: cleanup
 description: >-
   Review existing code and codebases against a bundled quality rubric (mechanical + subjective
-  dimensions, anti-patterns, layering). Tool-agnostic. Use for audits, PR review prep, holistic
-  code health, and remediation planning. Does NOT edit tickets—use ticket-critic for .tickets/.
+  dimensions, anti-patterns, layering). Tool-agnostic. Use when running audits, PR review prep,
+  holistic code-health checks, or remediation planning. Does NOT edit tickets—use ticket-critic
+  for .tickets/.
 ---
 
 # Cleanup — existing codebase review

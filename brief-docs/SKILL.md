@@ -41,6 +41,7 @@ Apply this skill when producing or editing **short, scannable** technical docsâ€
 - A reader skimming **only bold Summary** still learns what the system is and where to go next.
 - No secret **values**; env and key **names** only.
 - Internal links use **stable paths** relative to the doc tree or repo root as per project convention.
+- Prose output passes `/stop-slop` to remove AI writing patterns and filler.
 
 ## Validation
 
