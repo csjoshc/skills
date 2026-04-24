@@ -112,3 +112,23 @@ python main.py --project /path/to/project
 - **spec-writer** — produces the ticket body (goal, ACs, technical plan).
 - **ticket-critic** — audits the ticket for readiness before BUILD.
 - **antiplan** — upstream, for multi-ticket planning and PRD.
+- **tdd** — runs inside each BUILD session for red-green-refactor.
+
+## TDD Envelope (passed to /tdd at BUILD start)
+
+When a BUILD session starts, pass these fields to /tdd so its Phase 0
+([tdd/SCOPING.md](../tdd/SCOPING.md)) has deterministic inputs and does
+not re-derive scope from prose:
+
+| Field | Value | Source |
+|---|---|---|
+| `ticket_path` | `.tickets/NNN-slug.md` | current BUILD ticket |
+| `diff_base` | merge-base of HEAD with main, or the previous ticket's completion SHA | git |
+| `risk_registry` | `.risk-registry.yaml` at repo root, if present | repo convention |
+| `prd_path` | `.tickets/prep/prd.md` | antiplan output |
+| `toq_path` | `.tickets/tdd/toq-<ticket-id>.yaml` (/tdd writes here) | /tdd Phase 0 |
+
+If a TOQ already exists and is fresher than the ticket (and `diff_base`
+hasn't advanced), /tdd reuses it and skips Phase 0. Otherwise it
+regenerates. This is the signal `/todo` checks when deciding whether to
+recommend a re-scope.

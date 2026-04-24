@@ -1,0 +1,46 @@
+# Copy to repo root as `.risk-registry.yaml`.
+# Consumed by /tdd Phase 0 (SCOPING.md) to derive business_impact tier
+# for every touched path. Falls back to PRD `## Risk Surface` if absent.
+
+tiers:
+  # Tier 1: failures here cause real harm (data loss, security, revenue,
+  # compliance). Mutation-gate auto-fires on T1 entries scoring > 60.
+  T1:
+    - "src/auth/**"
+    - "src/payments/**"
+    - "src/billing/**"
+    - "src/migrations/**"
+    - "**/*schema*"
+    - "**/*security*"
+
+  # Tier 2: core flows, user-visible behavior, API surface.
+  T2:
+    - "src/api/**"
+    - "src/services/**"
+    - "src/state/**"
+    - "src/cart/**"
+
+  # Tier 3: cosmetic, docs, tooling. Deferred unless directly touched.
+  T3:
+    - "src/ui/cosmetic/**"
+    - "src/ui/theme/**"
+    - "docs/**"
+    - "scripts/**"
+
+# Override default scoring weights. Omit a key to use the SCOPING.md default.
+weights_override: {}
+  # Example:
+  # business_impact_T1: 50
+  # churn_cap: 15
+
+# Named critical flows. Entries whose touched files intersect these paths
+# are promoted to T1 regardless of tier match above.
+critical_flows:
+  - name: checkout
+    paths:
+      - "src/cart/**"
+      - "src/payments/checkout.*"
+  - name: login
+    paths:
+      - "src/auth/login.*"
+      - "src/auth/session.*"

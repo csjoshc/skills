@@ -10,6 +10,14 @@ Each anti-pattern includes:
 - **Historical example** — how this anti-pattern manifested in the original
   plan-rebuild-discard incident that motivated this skill
 
+**Cross-reference.** AP codes are the design-time altitude of the
+pattern taxonomy. For the diff-time (ARCH-\*) and mechanical (M-code,
+P5) counterparts of each AP, see
+[`~/.skills/reviews/cross-reference.md`](../../reviews/cross-reference.md).
+When an AP is flagged at Phase 2, the cross-reference gives the
+downstream code smell the speculation is flirting with — cite it in
+the challenge to make the design-time consequence concrete.
+
 ---
 
 ## AP-1: Speculative Architecture
@@ -506,3 +514,117 @@ to run before its dependencies with no warning.
 - Dependency edge resolution must warn on zero-match slugs
 - Integration gates should include an orchestrator-fidelity check: compare
   raw log event count to parsed event count and fail on >5% discrepancy
+
+---
+
+## AP-15: I/O in the Pure Layer
+
+**Definition:** Planning a domain / "pure" module that reaches directly for
+I/O primitives — HTTP clients, filesystem handles, subprocesses, sockets,
+the wall clock, random — instead of receiving the effect behind a port
+the surrounding code injects. The module is declared pure in intent but
+couples to infrastructure in shape, and every downstream problem
+(untestability, mock-chained tests, swallowed exceptions around
+`requests.get`, see also [ARCH-DEP-IO-IN-PURE](../../reviews/arch-violations/01-dependency-direction.md))
+is pre-ordained at plan time.
+
+**Detection signals:**
+- Plan describes a domain/pure module whose function signatures contain
+  URL strings, filenames, socket addresses, or client handles directly
+- Module's dependency list is empty, yet the module performs network /
+  disk / subprocess / clock reads at call time
+- Testability section proposes mocking stdlib primitives (`requests`,
+  `open`, `time.time`, `subprocess.run`) rather than substituting an
+  injected protocol
+- Plan uses phrases like "we'll add a port later" or "for now the
+  function just calls the API directly"
+- Ports are named in the architecture diagram but the domain function's
+  parameters don't include any of them
+
+**Challenge questions:**
+- "Which injected protocols does this pure module depend on? If zero,
+  where does its data come from?"
+- "Can this function run in a process with no network, no filesystem,
+  and no subprocess access? If not, why does it need them?"
+- "When you unit-test this function, what are you mocking — your own
+  protocol, or `requests`/`open`/`socket`/`datetime.now`?"
+- "If the external service is rate-limiting us, who decides the retry
+  policy — this function, or the adapter above it?"
+
+**Historical example:** A review of a statistics module flagged "missing
+error handling around `requests.get()`" — a diff-level nitpick. The
+design-altitude question was never asked: why does a statistics module
+know about HTTP at all? Had the plan named an injected `MetricsPort`
+with a single `fetch(series_id) -> Series` method, the HTTP client would
+have lived in an adapter, the retry and timeout policies would have had
+a clear owner, and the test suite would have substituted an
+in-memory implementation instead of monkey-patching `requests`.
+
+**Prevention:**
+- For every module labeled pure/domain in the plan, enumerate its ports;
+  if the count is zero, assert "no I/O" and verify signatures take values
+  not resource identifiers
+- Function signatures in pure modules take domain values — never URL
+  strings, file paths, socket handles, or a "client" argument whose type
+  is stdlib
+- Test plan for pure modules mocks only declared protocols; any
+  stdlib-primitive mock is an escape hatch flagged in review
+- When a port is genuinely deferred, mark the signature as `TODO(port)`
+  and block merge until the port exists — do not allow an interim
+  direct call
+
+---
+
+## AP-16: Eager Construction of Infrastructure
+
+**Definition:** Planning a class or module that builds its own
+infrastructure — database client, HTTP session, file handle, thread
+pool — during construction or at import time, instead of receiving it
+from a composition root. The class "supports DI" nominally (often a
+defaulted constructor parameter) but reaches for the real dependency
+whenever the default path is taken, which is always in production. See
+also [ARCH-BND-EAGER-INIT](../../reviews/arch-violations/02-boundary-contracts.md).
+
+**Detection signals:**
+- Plan shows a class whose constructor takes `db=None` / `client=None`
+  and falls back to a real constructor (`db or PostgresClient()`)
+- Module-level statements like "the connection pool is initialized at
+  import" or "the settings object is a singleton created on first
+  import"
+- Plan says "we'll add a DI framework later" — construction is eager
+  today, parked forever
+- Testability plan says "monkey-patch the class attribute" or "patch
+  `module.DB_CLIENT`" for tests — patching infrastructure that shouldn't
+  have been a module-level concern
+- Architecture diagram has no composition root or bootstrap module; the
+  question "where is Service X first assembled?" has no answer
+
+**Challenge questions:**
+- "At process start, in what order do things come up? Which module's
+  import triggers which I/O connection?"
+- "If I want to run this class in a unit test with no real database,
+  what do I pass in?"
+- "Name the composition root. Where in the code is this class first
+  handed its real collaborators?"
+- "Who closes the connections this class opens? Is lifecycle symmetric
+  with construction?"
+
+**Historical example:** A service class was written as
+`def __init__(self, db=None): self.db = db or PostgresClient()`. The
+plan said "supports dependency injection" because of the `db=None`
+parameter, but every production caller invoked `Service()` without
+arguments. The default path ran the real constructor, which opened a
+TCP connection at object-creation time. Test suites monkey-patched
+`module.PostgresClient` — leaking global state between tests and
+masking a coupling that belonged at the composition root.
+
+**Prevention:**
+- Plan names the composition root explicitly: "Service X is assembled
+  in `app/bootstrap.py` and handed to the HTTP router."
+- Constructor parameters for infrastructure are required, not
+  defaulted. If a default makes sense, it's a null-object or in-memory
+  fake, never a real client.
+- Module-level code never opens I/O. Connection pools, sessions, and
+  singletons are created by the composition root and passed down.
+- Class diagrams show arrows IN (received) and OUT (called); any "self
+  creates X internally" arrow is the antipattern made visible.

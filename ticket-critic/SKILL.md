@@ -69,12 +69,16 @@ Every acceptance criterion must name the test function or verification command t
 ```markdown
 ## Acceptance Criteria → Tests
 
-| AC | Test file / Command | Test name | Assertion shape |
-|---|---|---|---|
-| AC-1 Given a logged-in user, when they click "Save", then a toast appears | src/ui/__tests__/SaveButton.test.tsx | "shows toast on save" | `expect(screen.getByRole('alert'))` |
-| AC-2 Given a 5xx response, retry up to 3 times | src/api/__tests__/retry.test.ts | "retries 3× on 5xx then throws" | counter-based mock |
-| AC-3 Export CSV contains header row | `pytest -k test_csv_header` | "emits header as first line" | string match |
+| AC | Test file / Command | Test name | Assertion shape | Risk Tier | Ralph-binding? |
+|---|---|---|---|---|---|
+| AC-1 Given a logged-in user, when they click "Save", then a toast appears | src/ui/__tests__/SaveButton.test.tsx | "shows toast on save" | `expect(screen.getByRole('alert'))` | T2 | no |
+| AC-2 Given a 5xx response, retry up to 3 times | src/api/__tests__/retry.test.ts | "retries 3× on 5xx then throws" | counter-based mock | T1 | yes |
+| AC-3 Export CSV contains header row | `pytest -k test_csv_header` | "emits header as first line" | string match | T3 | yes |
 ```
+
+Risk Tier and Ralph-binding columns feed `/tdd` Phase 0 scoping. Values mirror
+the ticket's **Test Obligation Profile** (spec-writer output) — the critic's job
+is to enforce that the mirror is honest, not to re-derive tiers.
 
 ### Block conditions
 
@@ -83,6 +87,9 @@ Every acceptance criterion must name the test function or verification command t
 - Any "Assertion shape" that is just `toBe(true)` → **BLOCKED** (describe what's being checked)
 - Any test that exists but asserts only the return value of the function under test with no further condition → **WARN** (tautology risk; let mutation-critic decide on the implementation side)
 - **(Ralph-specific)** Any AC with a manual verification step ("verify visually", "test manually") → **BLOCKED** if `Ralph: true` (machine-checkable ACs are load-bearing)
+- **Risk Tier missing** on any row → **BLOCKED** (spec-writer Test Obligation Profile is incomplete — send back to spec-writer, do not patch in the critic)
+- **T1 AC with no concrete target** (Test file / Command is vague or points at a non-existent file the ticket does not create) → **BLOCKED** (T1 ACs must be load-bearing; /tdd Phase 0 cannot score what it cannot locate)
+- **Ralph-binding mismatch** between this table and the spec-writer Test Obligation Profile → **BLOCKED** (drift between upstream and local table)
 
 ### Why this works
 

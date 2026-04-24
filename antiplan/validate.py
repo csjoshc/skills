@@ -154,6 +154,63 @@ def tracer_bullets_scheduled(data: PlanData) -> list[str]:
     return errors
 
 
+# ── Transcript checks (optional, --transcript flag) ──────────────────────────
+
+_REQUIRED_YAML_LEDGER_KEYS = {"phase", "resolved", "contested", "unresolved",
+                              "cut", "confidence"}
+_REQUIRED_PHASE_BLOCKS = {
+    "Phase 0": ("BROWNFIELD-CONTEXT", "GREENFIELD-CONTEXT"),
+    "Phase 1": ("PROBLEM-STATEMENT",),
+    "Phase 2": ("ARCHITECTURE-DECISIONS",),
+    "Sign-off": ("SIGNOFF-APPROVALS",),
+    "Phase 3": ("TICKET-DAG", "INTEGRATION-GATES"),
+}
+
+
+def check_transcript(transcript_text: str) -> list[str]:
+    """Validate an antiplan transcript for required output-shape contracts.
+
+    Returns list of errors. Used when --transcript is passed.
+    """
+    errors = []
+
+    ledger_match = re.search(
+        r"```ya?ml\s*\n(.*?ledger:.*?)\n```",
+        transcript_text,
+        flags=re.DOTALL,
+    )
+    if not ledger_match:
+        errors.append("No YAML `ledger:` block found in transcript")
+    else:
+        try:
+            parsed = yaml.safe_load(ledger_match.group(1))
+            ledger = parsed.get("ledger") if isinstance(parsed, dict) else None
+            if not isinstance(ledger, dict):
+                errors.append("`ledger:` block is malformed")
+            else:
+                missing = _REQUIRED_YAML_LEDGER_KEYS - set(ledger.keys())
+                if missing:
+                    errors.append(f"ledger missing keys: {sorted(missing)}")
+        except yaml.YAMLError as e:
+            errors.append(f"ledger block is invalid YAML: {e}")
+
+    for phase, block_names in _REQUIRED_PHASE_BLOCKS.items():
+        if not any(f"```{name}" in transcript_text for name in block_names):
+            errors.append(
+                f"{phase}: no output block found "
+                f"(expected one of: {', '.join(block_names)})"
+            )
+
+    gate_lines = re.findall(r"^PHASE-GATE:.+Proceeding:\s*(\w+)",
+                            transcript_text, flags=re.MULTILINE)
+    if not gate_lines:
+        errors.append("No PHASE-GATE audit lines found")
+    elif any(p.lower() == "no" for p in gate_lines):
+        errors.append("At least one PHASE-GATE has Proceeding: no — plan incomplete")
+
+    return errors
+
+
 # ── Runner ───────────────────────────────────────────────────────────────────
 
 def run(data: PlanData) -> int:
@@ -191,6 +248,10 @@ def main() -> int:
     parser.add_argument("--project-dir", required=True, help="Path to the project root")
     parser.add_argument("--tickets", required=True, help="Path to tickets markdown file")
     parser.add_argument("--prd", default=None, help="Path to PRD markdown file")
+    parser.add_argument("--transcript", default=None,
+                        help="Optional antiplan session transcript to validate for "
+                             "required output-shape contracts (YAML ledger, phase "
+                             "blocks, PHASE-GATE lines)")
     args = parser.parse_args()
 
     project_dir = Path(args.project_dir).resolve()
@@ -210,7 +271,22 @@ def main() -> int:
 
     print("antiplan pre-flight validation")
     print("=" * 40)
-    return run(data)
+    exit_code = run(data)
+
+    if args.transcript:
+        print("\ntranscript contract validation")
+        print("=" * 40)
+        transcript_text = Path(args.transcript).read_text(encoding="utf-8")
+        transcript_errors = check_transcript(transcript_text)
+        if transcript_errors:
+            print("[FAIL] transcript_contracts")
+            for e in transcript_errors:
+                print(f"  {e}")
+            exit_code = 1
+        else:
+            print("[PASS] transcript_contracts")
+
+    return exit_code
 
 
 if __name__ == "__main__":

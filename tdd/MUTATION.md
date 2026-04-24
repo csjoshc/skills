@@ -18,10 +18,17 @@ them.
 
 ## When to invoke
 
-- After `tdd` green step, before declaring the cycle complete
+- **Auto-fire** after the `tdd` green step for any TOQ entry with
+  `mutation_candidate: true` (set in `.tickets/tdd/toq-<ticket-id>.yaml` when
+  tier is T1 AND score > 60 — see [SCOPING.md](./SCOPING.md)). This is the
+  default path; no opt-in required.
+- After `tdd` green step for any other entry, **optional** — invoke on demand
+  when test quality is in question
 - During `pr-review` Test Analyzer agent
 - During `pr-fix` after any fix to code that claims test coverage
-- On demand when test quality is in question
+
+Targeting: run mutants against `TOQ[i].target` only, not the full changed-file
+set. This keeps the mutant pass scoped to the obligation that just turned green.
 
 ## When to skip
 

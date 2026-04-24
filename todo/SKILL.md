@@ -15,6 +15,7 @@ spec-writer → .tickets/NNN-slug.md × N (one per stub in ticket-dag.md)
 ticket-critic → .tickets/prep/critic-report.md (pass/fail per ticket)
 orchestrate  → mutates .tickets/NNN-slug.md frontmatter (Stage: NEW → BUILD → COMPLETE)
 tdd          → runs inside each orchestrate session for red-green-refactor on ONE ticket
+             → writes .tickets/tdd/toq-<ticket-id>.yaml (ranked Test Obligation Queue, Phase 0)
 ```
 
 Each skill runs in its own session. Artifacts on disk are the handoff medium.
@@ -69,6 +70,7 @@ Scan the repo root (from the current working directory) for these paths:
 | `.tickets/prep/critic-report.md` | ticket-critic has run |
 | Any `.tickets/*.md` frontmatter with `Stage: BUILD` | orchestrate has started a ticket |
 | Any `.tickets/*.md` frontmatter with `Stage: COMPLETE` | orchestrate has finished a ticket |
+| `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
 
 Use `Glob` for path discovery and `Read` (or `Grep` on `Stage:`) for
 frontmatter inspection. Do **not** use Bash for this — Glob/Grep are faster
@@ -82,7 +84,11 @@ and quieter.
 - **prd-done-no-dag** — `prd.md` exists but no `ticket-dag.md` → recommend
   resuming antiplan into Phase 3
 - **dag-done** — `ticket-dag.md` exists; no `.tickets/*.md` (outside prep/) →
-  recommend spec-writer session
+  **first** ask the user to run antiplan's pre-flight validator:
+  `python /Users/joshc/.skills/antiplan/validate.py --project-dir . --tickets .tickets/prep/ticket-dag.md --prd .tickets/prep/prd.md`
+  - exit 0 → recommend spec-writer session (emit spec-writer-next template)
+  - non-zero → recommend antiplan-resume instead; the plan is not ready for
+    fan-out
 - **tickets-written-uncriticized** — `.tickets/*.md` exist; no
   `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
   recommend ticket-critic session
@@ -92,6 +98,10 @@ and quieter.
   `Stage: NEW` → recommend orchestrate for the next `NEW` ticket
 - **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → recommend
   continuing orchestrate for remaining `NEW` tickets
+- **build-unscoped** — a ticket is `Stage: BUILD` but no matching
+  `.tickets/tdd/toq-<id>.yaml` exists → recommend invoking `/tdd` Phase 0
+  before continuing the cycle (this catches BUILD sessions that were
+  started before TOQ scoping was adopted)
 - **all-complete** — every ticket `Stage: COMPLETE` → announce the
   pipeline is done
 
@@ -104,6 +114,18 @@ and quieter.
   critic report is stale
 - Orphan tickets (`.tickets/*.md` whose ID is not in `ticket-dag.md`) →
   warn: orphan ticket present, possibly from a prior planning cycle
+- Any `.tickets/*.md` modified after its `.tickets/tdd/toq-<id>.yaml` →
+  warn: TOQ is stale vs ticket — /tdd Phase 0 should re-run before the
+  next RED cycle
+- Current `HEAD` has advanced past the `diff_base` recorded in a
+  BUILD ticket's TOQ → warn: TOQ diff_base is stale; re-scope before
+  continuing
+- If an antiplan session transcript is available alongside
+  `.tickets/prep/ticket-dag.md`, optionally run
+  `python /Users/joshc/.skills/antiplan/validate.py --transcript <path> ...`
+  and surface any `confidence: LOW`, `unresolved > 0`, or
+  `Proceeding: no` hits as soft warnings. Do not block on these — they are
+  advisory alongside the hard-gate `dag-done` validator run.
 
 ## Prompt Templates
 

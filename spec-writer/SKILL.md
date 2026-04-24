@@ -182,8 +182,26 @@ Endpoints or functions needed. For each: method, path or name, inputs, outputs, 
 **Patterns to follow**
 Reference existing patterns in the codebase if mentioned. If not mentioned, flag: `[ASSUMPTION: following standard CRUD pattern — point me to your auth/data layer if you want me to match your conventions]`
 
-**Testing strategy**
-What needs unit tests, integration tests, and end-to-end tests. Specify coverage expectations for critical paths. For PDCA-T / METHOD.md workflows: call out **test-first** where required, categories per feature (happy path, error, edge, security, performance as applicable), and any **quality targets** (e.g. coverage floor) the user or repo mandates.
+**Test Obligation Profile** (required — structured, not prose)
+
+Replaces free-form "testing strategy". Consumed verbatim by `/tdd` Phase 0
+([SCOPING.md](../tdd/SCOPING.md)) as the per-ticket signal feeding the Test
+Obligation Queue. One row per AC.
+
+```markdown
+| AC # | Requirement (1 line) | Risk Tier | Suggested Pattern | Mutation Candidate? | Ralph-binding? |
+|------|----------------------|-----------|-------------------|---------------------|----------------|
+| AC-1 | ...                  | T1/T2/T3  | invariant / contract / state_transition / high_risk_path / characterization / impacted_regression / history_based | yes/no | yes/no |
+```
+
+Rules:
+- **Risk Tier** — inherit from PRD §8c Risk Surface or repo `.risk-registry.yaml`. If the AC touches paths under multiple tiers, use the highest.
+- **Suggested Pattern** — pick from the catalog in [tdd/SCOPING.md](../tdd/SCOPING.md) pattern table. If unsure, default to `invariant` for pure logic, `contract` for boundaries, `state_transition` for flows.
+- **Mutation Candidate** — set `yes` when Risk Tier is T1. /tdd will auto-invoke MUTATION.md on these at green-step.
+- **Ralph-binding** — set `yes` when the AC must pass in a Ralph subprocess (see ticket-critic RALPH_DECISION_RULE.md). If all ACs are Ralph-binding, the ticket is a Ralph ticket.
+- If any AC lacks a concrete target (no file/function name in Technical Notes), ticket-critic blocks the ticket.
+
+For PDCA-T / METHOD.md workflows: add a short line beneath the table calling out **test-first** ordering and any **quality targets** (e.g. coverage floor) the user or repo mandates. Per-AC categories (happy/error/edge/security/performance) are now encoded via Suggested Pattern — not re-listed as prose.
 
 **Security and performance constraints**
 Authentication requirements, authorization rules, rate limits, response time targets. Mark each unknown as `[ASSUMPTION: ...]`.
