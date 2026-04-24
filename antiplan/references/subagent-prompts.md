@@ -201,7 +201,32 @@ Review EVERY ticket and EVERY integration gate against:
 
 ### Anti-Pattern Checklist
 
-For each of AP-1 through AP-13, scan EVERY ticket:
+You MUST emit a **per-AP audit table** covering all 14 anti-patterns
+(AP-1 through AP-14). No AP may be omitted. For each AP, mark one of:
+
+- **BLOCK** — at least one ticket hits a detection signal; DAG cannot proceed
+- **WARN** — signal is weak or ambiguous; planner may justify
+- **PASS** — no signal found across any ticket in the DAG
+
+Each row must include the ticket ID(s) where the signal was found (or
+`—` for PASS) and a **quoted detection signal** from the DAG text (or
+`no signal found` for PASS). Do not summarize in your own words; quote
+the offending scope/AC/dependency line verbatim. Inventing PASS
+verdicts without scanning is a protocol violation.
+
+Required table format (emit before the per-finding list):
+
+```
+| AP   | Verdict | Tickets  | Quoted signal                      |
+|------|---------|----------|------------------------------------|
+| AP-1 | BLOCK   | T-3,T-7  | "base orchestration layer…"        |
+| AP-2 | PASS    | —        | no signal found                    |
+| …    | …       | …        | …                                  |
+| AP-14| PASS    | —        | no signal found                    |
+```
+
+Then, for each BLOCK/WARN row, scan EVERY ticket against the AP's
+detection signals and emit the per-finding entries below:
 
 AP-1 (Speculative Architecture): Does this ticket build something not demanded
 by a Phase 1 feature?
@@ -247,6 +272,11 @@ AP-13 (Exemplar Blindness): Does this brownfield ticket point the
 implementing agent at existing code to copy patterns from? Or does it rely
 on prose descriptions of conventions the agent may invent its own version of?
 
+AP-14 (Orchestrator Observability Blindspot): Do any tickets introduce
+event parsing, dependency resolution, or console filtering without a
+contract test against real runtime output? Are there suppressed event
+types without a visible counter?
+
 ### Coverage Check
 - Every Phase 1 feature has at least one ticket
 - Every Phase 1 acceptance criterion appears in at least one ticket's AC
@@ -262,26 +292,34 @@ on prose descriptions of conventions the agent may invent its own version of?
 
 ## Output Format
 
-For each finding:
+Output in this order:
+
+1. **Per-AP audit table** (AP-1 … AP-14, all 14 rows required — see
+   Anti-Pattern Checklist above). Missing rows = malformed response.
+2. **Per-finding entries** — one block per BLOCK/WARN row in the table:
 
 ```
 [BLOCK|WARN] AP-[N] in T-[X]: [ticket title]
-Signal: [what you detected]
+Signal: [quoted text from the DAG]
 Challenge: [specific demand — what must change or be justified]
 ```
 
 BLOCK means the DAG cannot proceed until resolved.
 WARN means the planner may accept with stated justification.
 
-At the end, output a summary:
+3. **Summary:**
 
 ```
 BLOCKS: [count]
 WARNINGS: [count]
+APS_PASSED: [count, max 14]
 COVERAGE GAPS: [list of Phase 1 features without ticket coverage]
 STRUCTURAL VIOLATIONS: [list]
 VERDICT: PASS | FAIL
 ```
+
+VERDICT is FAIL if the audit table is incomplete (fewer than 14 rows),
+any BLOCK finding exists, or any coverage gap exists.
 
 VERDICT is FAIL if any BLOCK finding exists or any coverage gap exists.
 
@@ -382,3 +420,37 @@ Output: a list of UX CONCERN findings, each with:
 These reviewers run AFTER the Planner/Challenger reconciliation. Their findings
 are presented to the user alongside the final DAG, not fed back into the
 plan-challenge loop.
+
+---
+
+## WARN Reconciliation Throttle
+
+The Challenger emits findings at three severity levels: **BLOCK**, **WARN**,
+and **NOTE**. Without a throttle, accumulated WARN findings can stall DAG
+convergence indefinitely — the adversarial posture is useful precisely
+because it finds things, but every finding does not deserve a blocking
+round trip.
+
+**Rule:**
+
+1. BLOCK findings always require Planner reconciliation. No downgrade.
+2. WARN findings require Planner reconciliation within **one** round. The
+   Planner either accepts the WARN (modifies the DAG), rejects it with a
+   stated reason logged to the reconciliation trace, or escalates it to
+   the user.
+3. Any WARN unreconciled after one round **auto-downgrades to NOTE** and
+   is surfaced in the final report alongside the DAG rather than blocking
+   it.
+4. NOTE findings never block. They are included in the final report for
+   user awareness.
+
+**Rationale:** The Challenger persona ("you are not helpful, you are not
+constructive") is tuned to surface concerns aggressively. That is the
+right posture for catching real problems, but it means the Planner cannot
+be held hostage to every stylistic objection. The one-round throttle
+preserves the Challenger's value while keeping convergence finite.
+
+**Traceability:** Every WARN auto-downgrade must be logged to the
+reconciliation trace with: the finding, the Planner's rationale for not
+addressing it, and the round in which it was downgraded. The final report
+surfaces these for user review.

@@ -73,3 +73,75 @@ When reference artifacts (repos, screenshots, links) are provided:
 - Phase 3: Planner subagent receives the register; Challenger subagent checks
   that no ticket depends on unaccepted Inferred assumptions
 - Artifact ingestion: Add assumptions extracted from reference material
+
+---
+
+## Assumption Approval Gate
+
+When the agent suggests an approach (architectural, technical, process), this
+gate determines whether explicit user approval is required before proceeding.
+
+### Gate Criteria (approval required if ANY are true)
+
+| Criterion | Examples | Action |
+|-----------|----------|--------|
+| **Side effects** | Affects 2+ files; modifies public API; breaks existing tests | Require approval |
+| **Blast radius ≥ 2** | Changes affect multiple modules or layers | Require approval |
+| **Reverts prior decision** | Contradicts a Phase 1 or Phase 2 approved item | Require approval |
+| **Hidden assumption** | Depends on inferred decision not yet tested | Require approval |
+| **Infers stack/vendor choice** | Assumes specific database, framework, library | Require approval |
+| **Scope expansion** | Suggests adding feature not in Phase 1 requirements | Require approval |
+
+### Gate Execution Format
+
+```markdown
+**SUGGESTION:** <approach description>
+
+**Assumption:** This assumes:
+- A1: <e.g., "no breaking changes to UserService contract">
+- A2: <e.g., "we're committed to PostgreSQL">
+
+**Blast Radius:** affects <files/modules>, potential impact on <layer>
+
+**User Approval Required:** Yes / No (based on gate criteria above)
+
+Proceed only if user approves all assumptions, or explicitly overrides the gate.
+```
+
+### No Approval Needed (proceed without asking)
+
+- Local variable naming, function organization within a file
+- Cosmetic UI styling choices
+- Test structure (as long as it doesn't expand scope)
+- Comments, documentation improvements
+- Suggestions marked explicitly as "low-blast-radius" (self-contained, easily reversible)
+
+### When the User Rejects an Assumption
+
+1. Remove the suggestion from the plan.
+2. Update the Convergence Ledger: move from Inferred to Contested.
+3. Ask a follow-up to understand the constraint: "Help me understand why
+   <assumption> won't work. Is it <A>, <B>, or something else?"
+4. Continue interrogation until you find a suggestion that fits.
+
+---
+
+## Complexity Justification Register
+
+When the user successfully defends a complex choice during Phase 2, record it:
+
+```
+| Violation | Why needed | Simpler alternative rejected because |
+```
+
+This audit trail prevents re-litigating settled complexity decisions on
+subsequent passes or in future sessions.
+
+---
+
+## Inline Clarification Markers
+
+Any ambiguity in a PRD or ticket artifact must be marked inline as
+`[NEEDS CLARIFICATION: specific question]` at the point of ambiguity, in
+addition to the ledger entry. No ticket may enter the Phase 3 DAG if it
+contains any `[NEEDS CLARIFICATION]` markers.

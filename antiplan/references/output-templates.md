@@ -387,3 +387,159 @@ Required by tickets: [list of feature tickets that depend on this]
 - [ ] Infrastructure is running
 - [ ] At least one downstream ticket's test can execute against it
 ```
+
+---
+
+## Phase-Block Contracts (Structural Output Requirements)
+
+Every phase exit must emit a fenced block the user can spot on sight. Missing
+blocks are malformed-on-sight. Downstream tools (`validate.py --transcript`,
+`/todo`) grep for these markers.
+
+### Header YAML Ledger (every response)
+
+```yaml
+ledger:
+  phase: 0 | 1 | 2 | signoff | 3 | fast
+  resolved: <int>
+  contested: <int>
+  unresolved: <int>
+  cut: <int>
+  confidence: LOW | MEDIUM | HIGH
+  reclassified: false | "Light→Standard: <reason>"
+```
+
+### Phase 0 Exit
+
+````
+```BROWNFIELD-CONTEXT
+constitution:
+  - "<principle 1>"
+packages:
+  | Package | Directory (ls-verified) | Import name | Key modules |
+conventions:
+  - <convention>
+must_not_break:
+  - <behavior>
+architecture_interpretation: |
+  <agent's written understanding>
+topology_preview:
+  - feature: <name>
+    files_to_modify: [<paths>]
+    files_to_create: [<paths or none>]
+```
+````
+
+Greenfield projects emit `GREENFIELD-CONTEXT` with `constitution` and
+`architecture_interpretation` only.
+
+### Phase 1 Exit
+
+````
+```PROBLEM-STATEMENT
+users:
+  - name: <role>
+    workflow: <1 line>
+mtp: <1–2 sentences>
+features:
+  - id: F-1
+    name: <feature>
+    user: <named user>
+    priority: P1 | P2 | P3
+    acs:
+      - given: <state>
+        when: <action>
+        then: <observable outcome>
+        verify: <grep/test/curl command>
+success_criteria:
+  - id: SC-001
+    metric: <name>
+    threshold: <number + unit>
+non_goals:
+  - <explicit cut>
+```
+````
+
+### Phase 2 Exit
+
+````
+```ARCHITECTURE-DECISIONS
+components:
+  - name: <component>
+    justification: <why; which Phase 1 feature requires it>
+    deletion_test: <what breaks if removed>
+    merge_test: <why it can't be absorbed>
+    contracts:
+      - boundary: <A → B>
+        shape: <type signature or OpenAPI ref>
+        errors: <status codes / exception types>
+topology:
+  - ticket: T-1
+    action: MODIFY | CREATE
+    files: [<paths>]
+    exemplar: <pre-existing file demonstrating pattern>
+risk_surface_ref: §8c
+```
+````
+
+### Sign-off Exit
+
+````
+```SIGNOFF-APPROVALS
+problem_statement: /approve | /reject
+mtp: /approve | /reject
+non_goals: /approve | /reject
+architecture: /approve | /reject
+ig1_scope: /approve | /reject
+topology: /approve | /reject | n/a  # brownfield only
+```
+````
+
+### Phase 3 Exit
+
+````
+```TICKET-DAG
+<text DAG with execution modes; see convergence-engine.md § DAG Text Format>
+```
+
+```INTEGRATION-GATES
+- id: IG-1
+  validates: [T-1]
+  scope: <flow>
+  proof_artifact: <curl transcript | Playwright run | etc.>
+```
+````
+
+---
+
+## PRD §8c Risk Surface
+
+Every PRD must include this section. It is the PRD-fallback source consumed
+by `/tdd` Phase 0 ([SCOPING.md](../../tdd/SCOPING.md)) when a repo has no
+`.risk-registry.yaml`. Tiers are path-based, not component-based, so they
+survive renames.
+
+```markdown
+## §8c Risk Surface
+
+### Tier map (globs)
+- T1 (harm on failure — auth, payments, writes, migrations, schema, security):
+  - <glob>
+- T2 (core flows, API surface, user-visible behavior):
+  - <glob>
+- T3 (cosmetic, docs, tooling):
+  - <glob>
+
+### Critical flows
+- <name>: <1-line scope> — paths: [<glob>, <glob>]
+
+### Expected blast radius
+- <feature/ticket>: touches <modules>; downstream consumers: <modules>
+```
+
+Rules:
+- Every ticket in the DAG must have ≥1 glob in the tier map covering its
+  touch points. If not, trigger the Assumption Approval Gate — planning work
+  with unknown risk.
+- Critical flows promote any touched path under their globs to T1 regardless
+  of tier map.

@@ -443,3 +443,73 @@ After the DAG is constructed, annotate parallelizable ticket groups:
 
 This helps the `orchestrate` skill schedule work efficiently. Tickets in the
 same window can run concurrently.
+
+---
+
+## YAML Convergence Ledger Schema
+
+Every antiplan response must emit a fenced YAML `ledger:` block as the first
+structural artifact. A response without this block is malformed-on-sight —
+the user can demand re-emission, and `validate.py --transcript` greps for it.
+
+```yaml
+ledger:
+  phase: 0 | 1 | 2 | signoff | 3 | fast
+  resolved: <int>           # settled decisions
+  contested: <int>          # decisions under active debate
+  unresolved: <int>         # decisions the user hasn't addressed
+  cut: <int>                # features/components explicitly removed
+  confidence: LOW | MEDIUM | HIGH
+  reclassified: false | "<old>→<new>: <reason>"
+```
+
+**Rules:**
+- Phase 3 cannot begin until `confidence: HIGH` and `contested: 0` and
+  `unresolved: 0` (or all unresolved items are explicitly Deferred with a
+  named validation ticket).
+- If `reclassified` is set, the companion reference files for the new
+  classification must be loaded before the next phase.
+- The detailed per-decision ledger (from the prose template) remains in the
+  body of the response for traceability. The YAML block is the
+  machine-parseable summary.
+
+---
+
+## Phase-Gate Audit Line (every transition)
+
+Before advancing between phases, the agent must emit one line:
+
+```
+PHASE-GATE: Phase <N> → <N+1>. Criteria: [<c1>: met|not met — <why>; ...]. Proceeding: yes|no.
+```
+
+If `Proceeding: no`, surface the specific blocker and stay in the current
+phase. This makes skipped phases visible — a missing PHASE-GATE line, or one
+with `Proceeding: yes` while criteria are not met, is legible to the user
+and to `validate.py --transcript`.
+
+---
+
+## Phase 3 Guardrails (Subagent Orchestration)
+
+These are in addition to the Ordering Rules above. They govern the
+plan/challenge loop, not DAG shape.
+
+- Challenge step (Challenger subagent) cannot be skipped
+- Challenger cannot modify the DAG directly — only flag findings
+- "Evidence insufficient" or "depends on business preference" → escalate to
+  the user, not the Planner
+- Full decision traceability: every challenge maps to accept/reject/escalate
+- Planner subagent must use `convergence-engine.md` ordering rules (this file)
+- Challenger subagent must use `anti-patterns.md` detection checklist
+- **Heavy projects:** add Implementability Reviewer and User Advocate
+  subagents (see `subagent-prompts.md`)
+- **Scope-boxing:** Maximum 10 feature tickets per epic DAG. If scope exceeds
+  this, split into independent epics, each with its own integration gates.
+- **Forced re-justification:** After every 2 reconciliation rounds, pause
+  and re-run a mini adversarial pass: "Is every ticket still justified by
+  an approved Phase 1 feature?"
+- **WARN throttle:** Unreconciled Challenger WARNs auto-downgrade to NOTE
+  after one round (see `subagent-prompts.md` → WARN Reconciliation Throttle)
+- **Plan Validation Gate:** After subagent work, run the DAG Readiness
+  checklist above. Output must be READY before presenting to the user.

@@ -16,8 +16,9 @@ description: Test-driven development with red-green-refactor loop. Use when user
 See [TESTS.md](./TESTS.md) for examples and [MOCKING.md](./MOCKING.md) for mocking guidelines.
 
 Companion files to load at specific phases:
+- [SCOPING.md](./SCOPING.md) — **required Phase 0**. Produces the ranked Test Obligation Queue (`.tickets/tdd/toq-<ticket-id>.yaml`) from diff, dependency graph, risk registry, and churn. Every downstream phase reads from this queue; nothing is invented from prose.
 - [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) — required when the red-step test introduces a boundary mock (HTTP, DB, FS, time, SDK). Enforces that every mock references a real contract artifact and rejects conditional-branch mocks.
-- [MUTATION.md](./MUTATION.md) — optional gate at green-step completion. Runs a 3-mutant pass against the changed function to catch tautological tests that pass whether the code runs or not.
+- [MUTATION.md](./MUTATION.md) — auto-fires at green-step completion for any TOQ entry with `mutation_candidate: true` (T1 + score > 60). Optional otherwise.
 
 ---
 
@@ -94,28 +95,45 @@ When a file/module is confirmed unused or explicitly deprecated:
 
 ## Workflow
 
+### 0. Scoping (deterministic) — REQUIRED
+
+Run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
+ranked Test Obligation Queue at `.tickets/tdd/toq-<ticket-id>.yaml`.
+
+Inputs are pulled from the orchestrate envelope (ticket path, diff base, registry
+path) or discovered from the working tree. Signal collection (diff, blast radius,
+MCP dependency graph, churn, failure history, existing tests, risk tier) is
+deterministic — no LLM inference. The model only **ranks and shapes** candidates
+via the pattern catalog in SCOPING.md.
+
+If the TOQ already exists and is fresh (mtime ≥ ticket mtime AND diff_base
+unchanged), reuse it. Otherwise regenerate.
+
 ### 1. Planning
 
-Before writing any code:
+Present the TOQ to the user. Ask:
 
-- [ ] Confirm with user what interface changes are needed
-- [ ] Confirm with user which behaviors to test (prioritize)
+> "Here is the ranked Test Obligation Queue derived from diff + risk-registry +
+> dependency graph. Confirm, reprioritize, or reject entries before we start the
+> RED loop."
+
+- [ ] User confirms the top-N queue
+- [ ] User may promote deferred entries or demote top entries (record reason)
 - [ ] Identify opportunities for deep modules (small interface, deep implementation)
-- [ ] Design interfaces for testability
-- [ ] List the behaviors to test (not implementation steps)
-- [ ] Identify async/await requirements (pytest-asyncio, httpx for streaming)
-- [ ] Get user approval on the plan
+- [ ] Design interfaces for testability for the confirmed TOQ targets
+- [ ] Identify async/await requirements (pytest-asyncio, httpx for streaming) for confirmed targets
 
-Ask: "What should the public interface look like? Which behaviors are most important to test?"
-
-**You can't test everything.** Confirm with the user exactly which behaviors matter most. Focus testing effort on critical paths and complex logic, not every possible edge case.
+**You can't test everything.** The TOQ caps (top 5 unit / 3 integration / 1
+e2e per ticket) enforce this. Anything outside the caps is deferred, not
+discarded — it stays in the YAML for future reconsideration.
 
 ### 2. Tracer Bullet
 
-Write ONE test that confirms ONE thing about the system:
+Pull the **top non-deferred entry** from the TOQ. Write ONE test for its
+`done_when` condition:
 
 ```
-RED:   Write test for first behavior → test fails
+RED:   Write test for TOQ[0].done_when → test fails
 GREEN: Write minimal code to pass → test passes
 ```
 
@@ -123,19 +141,23 @@ This is your tracer bullet - proves the path works end-to-end.
 
 ### 3. Incremental Loop
 
-For each remaining behavior:
+For each remaining TOQ entry (in score order):
 
 ```
-RED:   Write next test → fails
+RED:   Write test for TOQ[i].done_when → fails
 GREEN: Minimal code to pass → passes
 ```
 
 Rules:
 
-- One test at a time
+- One TOQ entry at a time
 - Only enough code to pass current test
 - Don't anticipate future tests
-- Keep tests focused on observable behavior
+- Keep tests focused on the entry's `done_when` (observable behavior)
+- **Test-run scope**: when you run tests during the cycle, restrict the runner
+  to `TOQ[i].target` + its `existing_tests` mapping. Do not run the full suite.
+  This is what prevents unrelated tests from firing and polluting context.
+  Run the full suite only at end-of-ticket, before marking Stage COMPLETE.
 
 ### 4. Refactor
 
