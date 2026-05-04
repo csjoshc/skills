@@ -49,7 +49,7 @@ comments, use the `pr-review` skill.
 Load on every invocation:
 
 1. **`AGENTS.md`** in the repo root — exclusions, layer map, agent rules.
-2. **`quality-rubric.md`** (this skill's companion) — full criteria.
+2. **`~/.skills/shared/QUALITY_RUBRIC.md`** — full criteria.
 3. **[`~/.skills/reviews/schemas.md`](../reviews/schemas.md)** — required output
    block contracts (`REVIEW-PHASE-0`, `REVIEW-FINDINGS`, `REVIEW-LEDGER`,
    `REVIEW-GATE`).
@@ -153,7 +153,7 @@ Launch each lens as a sub-agent in parallel (one message, multiple
 `Agent` tool calls). Each lens receives:
 
 - The files in scope (Phase 0 may have narrowed the set).
-- Its owning rubric codes from [`quality-rubric.md`](quality-rubric.md).
+- Its owning rubric codes from [`~/.skills/shared/QUALITY_RUBRIC.md`](~/.skills/shared/QUALITY_RUBRIC.md).
 - Its owning `arch-violations/` files.
 - The Phase 0 table (tool-flagged rows may be promoted into lens findings).
 
@@ -192,6 +192,18 @@ the scope.
 
 ---
 
+<!-- pattern: common-rationalizations -->
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "It's working, leave it alone" | Working code with bad layering breaks the next change. |
+| "Refactor is out of scope" | Cleanup is the scope. Flag what's in-scope vs deferred. |
+| "Comments are documentation" | Stale comments mislead. Code is the source of truth. |
+| "We'll revisit later" | "Later" doesn't come. Either fix or file a tracked DEBT-NN. |
+
+---
+
 ## Output Contracts
 
 Every cleanup run emits, in order:
@@ -227,13 +239,14 @@ cross-cutting concern (logging, config, errors, file I/O).
 
 | File                                                   | Role                                                     | Load when                     |
 | ------------------------------------------------------ | -------------------------------------------------------- | ----------------------------- |
-| [`quality-rubric.md`](quality-rubric.md)               | Full rubric: M1–M12, Tiers A–I, anti-patterns, layers    | Every invocation              |
+| [`~/.skills/shared/QUALITY_RUBRIC.md`](~/.skills/shared/QUALITY_RUBRIC.md) | Full rubric: M1–M12, Tiers A–I, anti-patterns, layers    | Every invocation              |
 | [`../reviews/schemas.md`](../reviews/schemas.md)       | Fenced-block schemas and source-tag rules                | Every invocation              |
 | [`../reviews/runbook.md`](../reviews/runbook.md)       | Fixed phase sequence shared with pr-review               | Every invocation              |
 | [`../reviews/validate.py`](../reviews/validate.py)     | Pre-report validator (stdlib-only)                       | Final step, before reporting  |
 | [`../reviews/arch-violations/`](../reviews/arch-violations/) | Architectural-violation catalog (11 files; index in README.md) | When Phase 1 lenses run        |
 | [`redundancy-watcher.md`](redundancy-watcher.md)       | Blocks duplicate implementations at write time           | Before any new file or export |
 | [`layer-boundary-critic.md`](layer-boundary-critic.md) | Enforces downward-only imports from AGENTS.md layer cake | Phase 0 when imports change   |
+| [`ARCHITECTURE_DEPTH.md`](ARCHITECTURE_DEPTH.md)       | Architectural depth lens (module/seam/depth/deletion test) | Phase 1 when scope includes multi-module design |
 
 ---
 

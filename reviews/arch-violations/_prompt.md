@@ -20,7 +20,7 @@ Context files to read first (READ-ONLY):
 - ~/.skills/reviews/arch-violations/01-dependency-direction.md
                                                 (fully worked exemplar — MATCH this quality)
 - ~/.skills/pr-review/reference/review-lenses.md (lens checklists)
-- ~/.skills/cleanup/quality-rubric.md            (M1–M12, Tiers A–I)
+- ~/.skills/shared/QUALITY_RUBRIC.md             (M1–M12, Tiers A–I)
 
 Task: overwrite the target stub file <arch-violations/NN-name.md> with a
 fully populated version following TEMPLATE.md exactly.

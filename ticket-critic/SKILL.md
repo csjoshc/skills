@@ -21,6 +21,7 @@ Ticket Critic is a specialized pre-build reviewer. It does not write code. It bl
 - Findings examples: [examples/audit-findings.md](examples/audit-findings.md)
 - Cross-skill integration: [reference/integration.md](reference/integration.md)
 - Prompt pack: [reference/super-prompts.md](reference/super-prompts.md)
+- Supplementary rubric: [`~/.skills/shared/QUALITY_RUBRIC.md`](../shared/QUALITY_RUBRIC.md) (M1–M12, Tiers A–I)
 
 ## Role Definition
 

@@ -125,6 +125,16 @@ coverage.
   scope before moving to the next.
 - `workflow-guard`: injects verify-claim at phase transitions.
 
+<!-- pattern: common-rationalizations -->
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "It compiled, so it works" | Type-check is not a behavior test. Run the thing. |
+| "I added the test, that's enough" | Did the test fail before the fix? If not, you wrote a tautology. |
+| "The CI link will land later" | If you can't paste evidence now, the claim isn't ready. |
+| "It worked locally" | Reproduction evidence (command + output) or it didn't happen. |
+
 ## Hard rules
 
 - Never mark a task done if `CLAIM_UNVERIFIED.md` exists and the user has

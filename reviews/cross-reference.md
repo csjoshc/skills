@@ -13,7 +13,7 @@ sibling codes from the same row.
 
 - **AP-1..AP-16** — [`antiplan/references/anti-patterns.md`](../antiplan/references/anti-patterns.md) (design altitude)
 - **ARCH-\*-\*** — [`reviews/arch-violations/`](arch-violations/README.md) (diff / both altitudes)
-- **M1..M12** + **P5-1..P5-12** — [`cleanup/quality-rubric.md`](../cleanup/quality-rubric.md) (mechanical / subjective)
+- **M1..M12** + **P5-1..P5-12** — [`~/.skills/shared/QUALITY_RUBRIC.md`](../shared/QUALITY_RUBRIC.md) (mechanical / subjective)
 
 ## Contents
 
@@ -217,7 +217,7 @@ table; they shape its next revision.
   of infrastructure") added to `antiplan/references/anti-patterns.md`.
   `P5-13` ("eager construction at init") and `P5-14` ("mutable domain
   entity / in-place mutation") added to
-  `cleanup/quality-rubric.md` Part 5. Demeter left without an M-code
+  `~/.skills/shared/QUALITY_RUBRIC.md` Part 5. Demeter left without an M-code
   (documented above).
 - **Per-smell good-finding / good-dismissal few-shots (resolved).**
   `ARCH-DEP-IO-IN-PURE`, `ARCH-BND-DEMETER`, `ARCH-BND-EAGER-INIT`,

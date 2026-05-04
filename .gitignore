@@ -8,3 +8,5 @@ acme*/**
 .DS_Store
 sync.log
 hooks/hook.log
+__pycache__/
+*.pyc

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<!--
+  preview-ui template. Substitute every {{TOKEN}} marker with values from §2/§3/§5/§6 of DESIGN.md.
+  For preview-dark.html, replace `<html lang="en">` with `<html lang="en" class="dark">` and substitute dark hex values.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>{{PROJECT_NAME}} — Design Preview</title>
+<style>
+  :root {
+    --bg-page: {{BG_PAGE_LIGHT}};
+    --bg-surface: {{BG_SURFACE_LIGHT}};
+    --bg-accent: {{BG_ACCENT_LIGHT}};
+    --bg-success: {{BG_SUCCESS_LIGHT}};
+    --bg-warning: {{BG_WARNING_LIGHT}};
+    --bg-danger: {{BG_DANGER_LIGHT}};
+    --text-primary: {{TEXT_PRIMARY_LIGHT}};
+    --text-secondary: {{TEXT_SECONDARY_LIGHT}};
+    --text-on-accent: {{TEXT_ON_ACCENT_LIGHT}};
+    --border-weak: {{BORDER_WEAK_LIGHT}};
+    --border-strong: {{BORDER_STRONG_LIGHT}};
+    --shadow-card: {{SHADOW_CARD_LIGHT}};
+    --shadow-menu: {{SHADOW_MENU_LIGHT}};
+    --radius-sm: {{RADIUS_SM}};
+    --radius-md: {{RADIUS_MD}};
+    --space-04: {{SPACE_04}};
+    --font-heading: {{FONT_HEADING}};
+    --font-body: {{FONT_BODY}};
+    --font-mono: {{FONT_MONO}};
+  }
+  .dark {
+    --bg-page: {{BG_PAGE_DARK}};
+    --bg-surface: {{BG_SURFACE_DARK}};
+    --bg-accent: {{BG_ACCENT_DARK}};
+    --bg-success: {{BG_SUCCESS_DARK}};
+    --bg-warning: {{BG_WARNING_DARK}};
+    --bg-danger: {{BG_DANGER_DARK}};
+    --text-primary: {{TEXT_PRIMARY_DARK}};
+    --text-secondary: {{TEXT_SECONDARY_DARK}};
+    --border-weak: {{BORDER_WEAK_DARK}};
+    --border-strong: {{BORDER_STRONG_DARK}};
+    --shadow-card: {{SHADOW_CARD_DARK}};
+    --shadow-menu: {{SHADOW_MENU_DARK}};
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-body), system-ui, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    padding: 32px;
+  }
+  h1, h2, h3 { font-family: var(--font-heading), system-ui, sans-serif; margin: 0 0 12px; }
+  h1 { font-size: 24px; font-weight: 600; }
+  h2 { font-size: 16px; font-weight: 600; margin-top: 32px; padding-bottom: 8px; border-bottom: 1px solid var(--border-weak); }
+  code { font-family: var(--font-mono), ui-monospace, monospace; font-size: 13px; }
+
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .swatch {
+    border: 1px solid var(--border-weak);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg-surface);
+  }
+  .swatch .chip { height: 80px; }
+  .swatch .meta { padding: 8px 12px; font-size: 12px; }
+  .swatch .meta strong { display: block; font-size: 13px; }
+  .swatch .meta code { color: var(--text-secondary); }
+
+  .type-row { padding: 8px 0; border-bottom: 1px dashed var(--border-weak); }
+  .type-row:last-child { border-bottom: none; }
+  .type-display { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+  .type-page-title { font-size: 24px; font-weight: 600; line-height: 1.2; }
+  .type-section-title { font-size: 16px; font-weight: 600; }
+  .type-body { font-size: 14px; }
+  .type-helper { font-size: 12px; color: var(--text-secondary); }
+  .type-code { font-family: var(--font-mono), monospace; font-size: 13px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 8px 16px; border-radius: var(--radius-sm); font-size: 14px;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: var(--bg-accent); color: var(--text-on-accent); }
+  .btn-secondary { background: var(--bg-page); color: var(--text-primary); border: 1px solid var(--border-weak); }
+  .btn-danger { background: var(--bg-danger); color: #fff; }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-weak);
+    border-radius: var(--radius-md);
+    padding: var(--space-04);
+    box-shadow: var(--shadow-card);
+  }
+  .input {
+    border: 1px solid var(--border-weak);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px; font: inherit; width: 100%;
+  }
+  .empty-state { text-align: center; padding: 48px; }
+  .empty-state .icon { font-size: 32px; opacity: 0.4; margin-bottom: 8px; }
+  .skeleton { background: var(--bg-surface); border-radius: var(--radius-sm); height: 12px; margin: 8px 0; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+
+  .spacing-bar { height: 24px; background: var(--bg-accent); margin: 4px 0; }
+  .shadow-card-demo, .shadow-menu-demo, .shadow-modal-demo {
+    background: var(--bg-page); border: 1px solid var(--border-weak);
+    padding: 16px; border-radius: var(--radius-md); margin-right: 16px; display: inline-block;
+  }
+  .shadow-card-demo { box-shadow: var(--shadow-card); }
+  .shadow-menu-demo { box-shadow: var(--shadow-menu); }
+</style>
+</head>
+<body>
+
+<h1>{{PROJECT_NAME}} — Design Preview</h1>
+<p class="type-helper">Generated from DESIGN.md. If a swatch looks wrong, fix the token in DESIGN.md and regenerate.</p>
+
+<h2>Colors — Semantic</h2>
+<div class="grid">
+  <div class="swatch"><div class="chip" style="background: var(--bg-page);"></div><div class="meta"><strong>bg-page</strong><code>{{BG_PAGE_LIGHT}}</code></div></div>
+  <div class="swatch"><div class="chip" style="background: var(--bg-surface);"></div><div class="meta"><strong>bg-surface</strong><code>{{BG_SURFACE_LIGHT}}</code></div></div>
+  <div class="swatch"><div class="chip" style="background: var(--bg-accent);"></div><div class="meta"><strong>bg-accent</strong><code>{{BG_ACCENT_LIGHT}}</code></div></div>
+  <div class="swatch"><div class="chip" style="background: var(--bg-success);"></div><div class="meta"><strong>bg-success</strong><code>{{BG_SUCCESS_LIGHT}}</code></div></div>
+  <div class="swatch"><div class="chip" style="background: var(--bg-warning);"></div><div class="meta"><strong>bg-warning</strong><code>{{BG_WARNING_LIGHT}}</code></div></div>
+  <div class="swatch"><div class="chip" style="background: var(--bg-danger);"></div><div class="meta"><strong>bg-danger</strong><code>{{BG_DANGER_LIGHT}}</code></div></div>
+</div>
+
+<h2>Typography</h2>
+<div class="type-row"><div class="type-display">Display 48</div></div>
+<div class="type-row"><div class="type-page-title">Page title 24</div></div>
+<div class="type-row"><div class="type-section-title">Section title 16</div></div>
+<div class="type-row"><div class="type-body">Body 14 — The quick brown fox jumps over the lazy dog.</div></div>
+<div class="type-row"><div class="type-helper">Helper 12 — auxiliary metadata</div></div>
+<div class="type-row"><div class="type-code">const code = "13px mono";</div></div>
+
+<h2>Buttons</h2>
+<div>
+  <button class="btn btn-primary">Primary</button>
+  <button class="btn btn-secondary">Secondary</button>
+  <button class="btn btn-danger">Danger</button>
+  <button class="btn btn-primary" disabled>Disabled</button>
+</div>
+
+<h2>Inputs</h2>
+<div style="max-width: 360px;"><input class="input" placeholder="email@example.com" /></div>
+
+<h2>Cards</h2>
+<div class="grid">
+  <div class="card">
+    <h3 class="type-section-title">Default Card</h3>
+    <p class="type-body">Resting card with shadow-card and radius-md.</p>
+  </div>
+  <div class="card">
+    <div class="skeleton" style="width: 60%;"></div>
+    <div class="skeleton" style="width: 90%;"></div>
+    <div class="skeleton" style="width: 75%;"></div>
+  </div>
+  <div class="card empty-state">
+    <div class="icon">∅</div>
+    <div class="type-section-title">Nothing yet</div>
+    <div class="type-helper">Empty-state pattern</div>
+  </div>
+</div>
+
+<h2>Spacing Scale</h2>
+<div>
+  <div class="spacing-bar" style="width: 4px;"></div>
+  <div class="spacing-bar" style="width: 8px;"></div>
+  <div class="spacing-bar" style="width: 12px;"></div>
+  <div class="spacing-bar" style="width: 16px;"></div>
+  <div class="spacing-bar" style="width: 24px;"></div>
+  <div class="spacing-bar" style="width: 32px;"></div>
+  <div class="spacing-bar" style="width: 48px;"></div>
+  <div class="spacing-bar" style="width: 64px;"></div>
+</div>
+
+<h2>Shadows</h2>
+<div>
+  <div class="shadow-card-demo">shadow-card</div>
+  <div class="shadow-menu-demo">shadow-menu</div>
+</div>
+
+</body>
+</html>

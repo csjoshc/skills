@@ -92,6 +92,62 @@ Fixed phase sequence is documented in
 
 ---
 
+## Review Lenses (supplemental)
+
+<!-- merged from addyosmani/agent-skills code-review-and-quality -->
+
+Use alongside the specialist lenses in `reference/review-lenses.md`. Apply only when relevant to the diff.
+
+### Five-Axis rubric
+
+| Axis | Check |
+|---|---|
+| Correctness | Matches spec; edges (null/empty/boundary); error paths; tests assert behavior; no off-by-one or race conditions. |
+| Design / Readability | Names descriptive; control flow flat; no clever tricks; abstractions earn their complexity; no dead code/no-op vars. |
+| Tests | Cover behavior not implementation; edge cases present; would catch a regression. |
+| Security | Inputs validated at boundaries; no secrets in code/logs; parameterized queries; output encoding; external data treated as untrusted. |
+| Maintainability / Architecture | Follows existing patterns; clean module boundaries; no circular deps; no unjustified duplication. |
+
+### Multi-model review pattern
+
+Use a different model for the review than the one that wrote the code. Different models have different blind spots.
+
+```
+Model A writes → Model B reviews (correctness, security, conventions) → Model A addresses → Human decides
+```
+
+Reviewer prompt template: cite spec, expected behavior, and require findings labeled Critical / Important / Suggestion.
+
+<!-- pattern: common-rationalizations -->
+### Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "The diff is small, low risk" | Small diffs hide load-bearing assumptions. Read what surrounds the change. |
+| "Author said it was tested" | Verify the test exists and exercises the new path. Trust but check. |
+| "Style is fine, ship it" | Convention drift compounds. Flag it now or refactor later. |
+| "Performance is premature optimization" | If the diff adds an N+1 or sync I/O on a hot path, flag it. |
+
+<!-- pattern: trusted-untrusted-boundary -->
+### Trusted vs untrusted boundaries (security lens)
+
+When reviewing diffs that handle external input (HTTP body, query strings, file uploads, third-party API responses, log lines), check that the code marks the trust boundary explicitly. Suspect any code that:
+
+- Concatenates untrusted strings into SQL, shell, or path operations
+- Logs untrusted data without escaping (log injection)
+- Reflects untrusted data into HTML/templates without contextual escaping
+- Trusts a field's "type" without runtime validation
+
+Flag the boundary in the review with a fence marker:
+
+```
+┌─ UNTRUSTED INPUT — sanitize before use ─┐
+req.body.user_id  →  used in `WHERE id = ${user_id}`
+└─────────────────────────────────────────┘
+```
+
+---
+
 ## Mandatory Companions
 
 | File                                                       | Role                                                                    | Load when        |
@@ -103,6 +159,8 @@ Fixed phase sequence is documented in
 | [`../reviews/runbook.md`](../reviews/runbook.md)                   | Fixed phase sequence shared with cleanup                                | Every invocation |
 | [`../reviews/validate.py`](../reviews/validate.py)                 | Pre-post validator (stdlib-only)                                        | Before posting   |
 | [`../reviews/arch-violations/`](../reviews/arch-violations/)       | Architectural-violation catalog (11 files; index in README.md)          | Lens 6 runs      |
+| [`~/.skills/shared/QUALITY_RUBRIC.md`](../shared/QUALITY_RUBRIC.md) | Supplementary rubric (M1–M12, Tiers A–I, anti-patterns)                 | Supplementary    |
+| [`~/.skills/shared/TEST_ANTIPATTERNS.md`](../shared/TEST_ANTIPATTERNS.md) | Supplementary test anti-pattern catalog                            | Supplementary    |
 
 ---
 

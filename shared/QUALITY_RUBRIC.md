@@ -97,6 +97,11 @@ subprocess only under `executors/`."
 **Contracts:** Meaningful types at boundaries (TypedDict, Pydantic, domain types);
 specific errors or result types; docs match behavior.
 
+**Subclass contracts:** Overridden methods must not narrow preconditions
+(accept stricter inputs) or weaken postconditions relative to the base
+class contract. A redefined method that changes semantics (not just
+performance) is a Liskov violation — cite under `contract_coherence`.
+
 **Type safety:** Parse JSON/env/files once into models; minimal `Any` on public APIs.
 
 ### Tier C — Design Coherence (10)
@@ -203,6 +208,15 @@ collisions affect correctness.
 
 Direct tests for critical modules; entry importable; README documents run command.
 
+### M13 — Law of Demeter / Train Wreck Chains
+
+Chained getter calls that navigate through intermediate objects:
+`obj.getA().getB().doSomething()`. The intermediate objects expose
+foreign internals and break if any link in the chain changes.
+Fix: add a delegation method on the near object so the caller doesn't
+traverse foreign state.
+Detection: `grep -n '\.\w*()\.\w*()\.\w*()' src/`
+
 ---
 
 ## Part 5 — AI Anti-Patterns
@@ -285,7 +299,7 @@ table wins (more specialized scope).
 | Lens | Rubric codes owned | arch-violations owned |
 | --- | --- | --- |
 | Layer & Dependency | M-pattern layer violations; Tier A (architectural) | 01, 02 |
-| Redundancy & Modularity | Tier A (modularity, cohesion); AI anti-patterns (Part 5) | 08, 11 |
+| Redundancy & Modularity | Tier A (modularity, cohesion); AI anti-patterns (Part 5); M13 | 08, 11 |
 | Error Handling & State | M1 (logging/exceptions), M2 (subprocess timeout), M5 (non-atomic writes), M7 (swallowed errors); Tier G (error consistency) | 03, 04 |
 | Data & Security | M3 (subprocess/URL audit), M4 (sys.exit boundary); Tier B (contracts/type safety) | 05, 06 |
 

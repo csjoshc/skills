@@ -17,14 +17,22 @@ Main Agent
   ├─→ [1] Launch Planner subagent → produces DAG v1
   │
   ├─→ [2] Launch Challenger subagent → produces challenge report
+  │       (writes .plan/challenger-report.md — option 3 evidence)
   │
   ├─→ [3] Launch Planner subagent (resumed or new) → reconciles → DAG v2
   │
   ├─→ [4] Main agent reviews reconciliation
-  │       ├─ All challenges accepted/rejected with justification → present DAG
+  │       ├─ All challenges accepted/rejected with justification → continue
   │       └─ Escalated items remain → present to user for decision
   │
-  └─→ [5] Final DAG presented to user
+  ├─→ [5] Launch Coverage Auditor subagent (Standard/Heavy only) →
+  │       writes .plan/coverage-audit.md — option 4 transcript-vs-PRD diff.
+  │       See references/coverage-auditor.md for the prompt.
+  │
+  ├─→ [6] Main agent runs validate.py with --challenger-report and
+  │       --coverage-report. ANY failure blocks sign-off.
+  │
+  └─→ [7] Final DAG presented to user
 ```
 
 Steps 2-3 may repeat if the challenger finds new issues in the reconciled DAG,
@@ -173,7 +181,12 @@ You will receive:
    assumption that was not explicitly accepted by the user.
 5. The **Artifact Ingestion Log** (if any) — verify adopted items are justified
    and rejected items haven't crept back in.
-6. An anti-pattern checklist (AP-1 through AP-13)
+6. **The path** to `~/.skills/antiplan/rubric.yaml` — the machine-readable AP
+   source of truth. You MUST read it before scanning the DAG. Every `id` in
+   the rubric becomes a required row in your audit table. The file lists the
+   detection signals you scan for. The validate.py coverage check rejects
+   any audit table that omits a rubric ID or fails to provide verbatim
+   evidence on a non-PASS row.
 
 ## Your Task
 
@@ -201,8 +214,9 @@ Review EVERY ticket and EVERY integration gate against:
 
 ### Anti-Pattern Checklist
 
-You MUST emit a **per-AP audit table** covering all 14 anti-patterns
-(AP-1 through AP-14). No AP may be omitted. For each AP, mark one of:
+You MUST emit a **per-AP audit table** covering every anti-pattern listed in
+rubric.yaml (currently AP-1 through AP-16; the rubric is the source of
+truth — count rows there, not here). No AP may be omitted. For each AP, mark one of:
 
 - **BLOCK** — at least one ticket hits a detection signal; DAG cannot proceed
 - **WARN** — signal is weak or ambiguous; planner may justify

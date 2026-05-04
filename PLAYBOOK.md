@@ -87,6 +87,10 @@ circular tests).
 - Do not invoke all skills "just in case." Each one has a trigger;
   miss-triggering trains you and the agent to ignore them.
 
+## Context hygiene
+
+For rules-file authoring, context-packing strategies, and confusion-management patterns across any session, see `~/.skills/shared/CONTEXT_HYGIENE.md`.
+
 ## Discovering skills (and avoiding fabrication)
 
 Every skill has a `description:` field in its frontmatter. Claude Code

@@ -14,7 +14,7 @@ See [TESTS.md](~/.skills/tdd/TESTS.md) for concrete examples.
 
 **Bad tests** are coupled to implementation. They mock internal collaborators, test private methods, or verify through external means (like querying a database directly instead of using the interface). The warning sign: your test breaks when you refactor, but behavior hasn't changed. If you rename an internal function and tests fail, those tests were testing implementation, not behavior.
 
-See [TEST_ANTIPATTERNS.md](~/.skills/tdd/TEST_ANTIPATTERNS.md) for specific antipatterns.
+See [TEST_ANTIPATTERNS.md](~/.skills/shared/TEST_ANTIPATTERNS.md) for specific antipatterns.
 
 ## Anti-Pattern: Horizontal Slices
 

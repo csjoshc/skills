@@ -40,7 +40,7 @@ You **may** suggest and reason technically. When you do:
 2. **Always name assumptions.** "This assumes Z1, Z2, Z3."
 3. **Gate on blast radius.** If an assumption has side effects (affects
    multiple files, changes public API, breaks existing code), trigger the
-   Assumption Approval Gate (see `assumption-register.md`).
+   Assumption Approval Gate (see `~/.skills/shared/ASSUMPTION_TIERS.md#assumption-register-format`).
 4. **Accept user rejection.** "That assumption doesn't match our
    architecture" → remove the suggestion, update the Convergence Ledger,
    continue.
