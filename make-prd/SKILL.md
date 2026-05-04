@@ -1,6 +1,12 @@
 ---
 name: make-prd
-description: Runs an interactive PRD expansion and ticket drafting workflow with explicit in-session fan-out, human checkpoints, and final synthesis. Use when users want a collaborative back-and-forth to turn rough ideas into a PRD and implementation-ready tickets.
+description: >-
+  Interactive PRD drafting via fan-out dialogue with human checkpoints. Use when
+  the idea is fuzzy and needs collaborative exploration. Not for adversarial
+  pushback (use antiplan) or defined features (use spec-writer).
+  In: rough idea.
+  Process: fan-out questions, human checkpoints, synthesize.
+  Out: .plan/PRD.md + .plan/task-sequence.md.
 metadata:
   short-description: Interactive PRD + ticket orchestrator
 ---
@@ -49,7 +55,7 @@ Load companion files only when needed:
 - `references/workflow-map.md`: stage map and gate rules
 - `references/fanout-subagents.md`: role definitions and subagent prompts
 - `references/ambiguity-and-acceptance.md`: ambiguity resolution and acceptance criteria rubric
-- `references/output-templates.md`: PRD and ticket output format
+- `~/.skills/shared/PRD_TEMPLATES.md`: PRD and ticket output format (see "make-prd-specific templates" section)
 
 ## Operating Rules
 
@@ -74,6 +80,24 @@ Load companion files only when needed:
 5. Ticket drafting pass (clear AC, dependencies, unknowns)
 6. Final review with the user (targeted edits)
 
+## Divergent thinking lenses
+
+<!-- merged from addyosmani/agent-skills idea-refine -->
+
+Apply during fan-out / ambiguity triage to expand the option space before converging. Pick lenses that fit the idea — don't run all mechanically. Generate 5-8 variations, not 20.
+
+| Lens | Prompt |
+|---|---|
+| Inversion | What if we did the opposite? |
+| Constraint removal | What if budget / time / tech weren't factors? |
+| Audience shift | What if this were for a different user? |
+| Combination | What if we merged this with an adjacent feature? |
+| Simplification | What's the version that's 10x simpler? |
+| 10x version | What does this look like at massive scale? |
+| Expert lens | What would domain experts find obvious that outsiders miss? |
+
+After expansion, cluster into 2-3 distinct directions and stress-test against user value, feasibility, and differentiation before the synthesis pass.
+
 ## HITL Policy
 
 Escalate to user only at these gates:
@@ -90,11 +114,18 @@ For each gate, present:
 
 ## Expected Deliverables
 
-1. PRD draft with explicit assumptions and unresolved questions.
-2. PRD output conforms to orchestra's docs/PRD_CONTRACT.md (version 1).
-3. Ticket pack with acceptance criteria and dependency notes.
-4. Follow-up question pack only for unresolved blockers.
-5. All prose (PRD narrative and ticket descriptions) must pass `/stop-slop` before delivery to remove AI writing patterns and filler.
+Two durable artifacts written to disk:
+
+1. **`.plan/PRD.md`** — PRD draft with explicit assumptions and unresolved
+   questions. Conforms to orchestra's `docs/PRD_CONTRACT.md` (v1).
+2. **`.plan/task-sequence.md`** — ordered task placeholders (title +
+   one-line intent + dependencies + 2–3 invariant ACs). **Placeholders, not
+   tickets.** `spec-writer` consumes these and expands each into
+   `.tickets/NN-<slug>.md`.
+
+Plus session-only outputs:
+- Follow-up question pack for unresolved blockers
+- All prose passes `/stop-slop` before delivery
 
 ## First Response Contract (When Skill Is Invoked)
 

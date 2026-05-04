@@ -55,6 +55,23 @@ For each path:
 2. If a path is a physical directory instead of a symlink, alert the user that the platform is "Out of Sync"
 3. Propose a migration: Move physical files to `~/.skills` and replace with a symlink: `ln -sf ~/.skills [target_path]`
 
+**Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.) directly into that path. Do NOT replace it with a single symlink to `~/.skills` — that would shadow Codex-only content. Instead, on each sync run:
+
+```bash
+# Add per-skill symlinks for any master skill missing from codex
+cd /Users/joshc/.skills && for d in */; do
+  name="${d%/}"
+  if [ -f "$d/SKILL.md" ] && [ ! -e "$HOME/.codex/skills/$name" ]; then
+    ln -s "$HOME/.skills/$name" "$HOME/.codex/skills/$name"
+  fi
+done
+
+# Detect broken symlinks (master skill renamed/deleted)
+find ~/.codex/skills -maxdepth 1 -type l ! -exec test -e {} \; -print
+```
+
+This pattern is forward-compatible: new master skills get linked automatically; codex-only skills stay untouched.
+
 ### Step 4: Project-Level Symlink Setup
 
 Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:

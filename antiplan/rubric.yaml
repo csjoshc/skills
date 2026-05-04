@@ -1,0 +1,168 @@
+# Antiplan Anti-Pattern Rubric (machine-readable source of truth)
+#
+# Stable IDs and detection signals for the Challenger subagent and the
+# validate.py coverage checker. Prose definitions, historical examples, and
+# challenge questions live in references/anti-patterns.md — DO NOT duplicate
+# them here. This file is parsed; that file is read.
+#
+# Contract:
+# - Every AP that exists in references/anti-patterns.md MUST appear here with
+#   the same ID. validate.py rejects mismatch.
+# - The Challenger MUST emit one audit-table row per rule ID below. Missing
+#   row = malformed response, validator FAIL.
+# - For BLOCK/WARN verdicts the row's `evidence` field must be a verbatim
+#   quote (>= 10 chars) from the DAG/PRD. For PASS the evidence must be the
+#   literal string "no signal found".
+#
+# When you add an AP to anti-patterns.md, add it here in the same commit.
+
+version: 1
+
+rules:
+  - id: AP-1
+    name: Speculative Architecture
+    phase: design
+    detection_signals:
+      - Component exists but maps to no Phase 1 feature
+      - Justification uses future tense (will need / might want / could support)
+      - Component name contains base / abstract / generic / extensible
+      - Architecture diagram shows a component with no data flowing through it
+
+  - id: AP-2
+    name: Post-Hoc Rationalization Documents
+    phase: design
+    detection_signals:
+      - Plan describes the system as-is rather than as-intended
+      - Document was created AFTER implementation started
+      - Multiple plan versions with increasing scope
+      - Plan references code that already exists rather than code to be written
+
+  - id: AP-3
+    name: Ticket-Closure Loop
+    phase: design
+    detection_signals:
+      - Tickets validated by unit tests with mocks, not integration tests
+      - ACs reference internal implementation details, not user-visible behavior
+      - Boundary-crossing ticket lacks a negative-path AC
+      - Error handling described only as "return error response"
+      - Single AC uses "wire X into Y" / "integrate X with Y" without naming
+        specific calls or events at the boundary
+
+  - id: AP-4
+    name: God Function
+    phase: design
+    detection_signals:
+      - Component "orchestrates" or "manages" multiple unrelated concerns
+      - Function signature with >5 params or >3 type-union params
+      - Component name is vague (handler / manager / processor / engine)
+      - Test for the component requires >3 mocked dependencies
+
+  - id: AP-5
+    name: Mock-Validated Integration
+    phase: design
+    detection_signals:
+      - Integration test imports a mock/stub/fake of the dependency
+      - No test in the suite makes a real HTTP/DB/queue call
+      - '"Integration" test runs in <100ms'
+
+  - id: AP-6
+    name: Untestable Abstraction
+    phase: design
+    detection_signals:
+      - ACs reference behavior of components not yet built
+      - Testing requires "set up the entire system first"
+      - Component test would equal the end-to-end test of the whole system
+      - No one can write a given/when/then for the component alone
+
+  - id: AP-7
+    name: Premature Horizontal Expansion
+    phase: design
+    detection_signals:
+      - Tickets grouped by layer rather than by feature
+      - Phase 1 features built in parallel across all layers
+      - No single user flow works end-to-end until late in the sequence
+      - The word "scaffold" appears in ticket titles
+
+  - id: AP-8
+    name: Ceremony as Rigor Substitute
+    phase: design
+    detection_signals:
+      - Many tickets / detailed ACs but the system doesn't work
+      - Review gates passed by the same agent that did the work
+      - Tests written after implementation
+      - Quality metrics green but user-visible bugs exist
+
+  - id: AP-9
+    name: Greenfield Hallucination
+    phase: design
+    detection_signals:
+      - Ticket says "create package X" when overlapping package exists
+      - New directory structure breaks project naming convention
+      - New files duplicate existing functions/types/classes
+      - Plan references no existing file paths — only abstract names
+      - Scope lines use vague component names instead of file paths
+
+  - id: AP-10
+    name: Silent Failure Suppression
+    phase: implementation
+    detection_signals:
+      - ACs say "handle errors gracefully" without specifying user-visible result
+      - Try/catch blocks log and continue without returning error state
+      - Default/fallback values mask missing data
+      - Test asserts "no exception thrown" without checking output correctness
+
+  - id: AP-11
+    name: Completion Drive
+    phase: implementation
+    detection_signals:
+      - Test modified in same commit as implementation to make it pass
+      - Assertion thresholds relaxed without justification
+      - '"All tests pass" but tests are trivial (only assert no-throw)'
+      - Ticket marked complete but no integration gate has run
+
+  - id: AP-12
+    name: Context Rot
+    phase: implementation
+    detection_signals:
+      - Late-session tickets drift from early-session conventions
+      - Agent creates a file duplicating one it modified earlier in the session
+      - Constitution / AGENTS.md rules violated only in late-session tickets
+      - Import paths or package names wrong in ways suggesting forgotten structure
+
+  - id: AP-13
+    name: Exemplar Blindness
+    phase: implementation
+    detection_signals:
+      - Ticket says "follow project conventions" without naming an existing file
+      - '"Add tests" without pointing to an existing test file as exemplar'
+      - Component description uses abstract language instead of referencing a similar service
+      - Brownfield ticket has no Exemplar files entry
+
+  - id: AP-14
+    name: Orchestrator Observability Blindspot
+    phase: implementation
+    detection_signals:
+      - Console output shows fewer event types than raw subprocess log
+      - Parsed event objects have empty fields the raw JSON populated
+      - Depends-On edges absent from scheduler DB without warning
+      - Operator cannot distinguish a working agent from a stuck one
+
+  - id: AP-15
+    name: I/O in the Pure Layer
+    phase: design
+    detection_signals:
+      - Pure-module function signature contains URL strings / filenames / sockets / client handles
+      - Module's dependency list is empty but it performs network/disk/subprocess/clock reads
+      - Test plan proposes mocking stdlib primitives (requests, open, time.time, subprocess)
+      - Plan says "we'll add a port later" / "for now the function just calls the API"
+      - Ports named in diagram but the domain function's params don't include them
+
+  - id: AP-16
+    name: Eager Construction of Infrastructure
+    phase: design
+    detection_signals:
+      - Class constructor takes db=None / client=None and falls back to real constructor
+      - Module-level statement initializes a connection pool / singleton at import
+      - Plan says "we'll add a DI framework later"
+      - Test plan says "monkey-patch the class attribute" / "patch module.DB_CLIENT"
+      - Architecture diagram has no composition root / bootstrap module

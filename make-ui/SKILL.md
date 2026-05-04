@@ -1,45 +1,50 @@
 ---
 name: make-ui
-description: Designs and implements high-variance frontend interfaces with either direct execution or consultation mode. Use when building or redesigning UI, choosing design direction, or when users request "make ui vibe", "make ui consult", "UI polish", or design-system help.
+description: Builds, applies, or audits frontend UI against a design spec. Three modes — Vibe (build now from a quick aesthetic pick), Apply (conform a repo to an existing DESIGN.md), Audit (diff a repo against DESIGN.md and emit a drift report). Use when implementing UI, restyling components, polishing visuals, or checking conformance. For authoring a DESIGN.md, redirect to /make-design-md.
 ---
 
-# Make UI — High-Variance Frontend Architect
+# Make UI — Apply, Audit, or Vibe-Build a Frontend
 
-**Anti-AI Slop.** If it looks like a bootstrapped template, it failed. Every project must feel uniquely crafted.
+**Anti-AI Slop.** If the result reads like a bootstrapped template, it failed. Every project must feel deliberate.
 
-## Two Modes
+## Mode Dispatcher
 
-### A. Vibe Mode
+Decide the mode before doing anything else.
 
-**Trigger:** "make ui vibe", immediate coding task, or end-to-end without consultation.
+```
+1. User wants to *create* a DESIGN.md          → redirect to /make-design-md
+2. DESIGN.md exists at repo root + build/restyle → APPLY MODE
+3. DESIGN.md exists + check conformance         → AUDIT MODE
+4. No DESIGN.md + user wants to build now       → VIBE MODE
+```
 
-1. **Pre-flight:** Read `AGENTS.md`/`README`, scan `package.json` + CSS/config. Existing stack takes precedence — extend, don't replace.
-2. **Pick aesthetic:** Match vertical to direction via `decision-matrix.md`. Existing component hierarchy and usage patterns drive theming.
-3. **Execute** with production-grade code. Defaults in `technical-standards.md`.
+Detection rule for #2/#3: check `<repo-root>/DESIGN.md`. If present, default to Apply or Audit. If absent and the user explicitly asks for a spec, redirect to `/make-design-md`. If absent and the user wants speed, Vibe Mode.
 
-### B. Consultation Mode
+## Modes
 
-**Trigger:** "make ui consult", "help me design", or aesthetic decisions on existing codebase.
+### Apply Mode → [apply-mode.md](references/apply-mode.md)
 
-<HARD-GATE>
-No code until user approves the final design summary.
-</HARD-GATE>
+Read a DESIGN.md, install token infrastructure, build the layout shell, restyle components, migrate anti-patterns. Phased like `/c3-ui`. Use this when a spec exists and the codebase needs to conform.
 
-Structured decision funnel. One question per message. Multiple choice preferred. Full process: `consultation-checklist.md`. Summary:
+### Audit Mode → [audit-mode.md](references/audit-mode.md)
 
-1. **Audit** current state — stack, component patterns, design system, consistency issues
-2. **Offer** Chrome DevTools companion for live inspection
-3. **Assess** against quality bar — gap analysis on typography, color, motion, depth, composition
-4. **Anchor** with product references — name 2-3 real products per direction
-5. **Narrow** aesthetic direction — "keep current, just polish" is always valid
-6. **Scope** — foundational? +motion? full pass? full migration?
-7. **Propose** 2-3 approaches with trade-offs
-8. **Present** design section by section with approval gates (tokens, typography, primitives, depth, motion, cleanup)
-9. **Final summary** — recap, get explicit approval
-10. **Output** — spec-writer task files or implementation plan
+Diff the codebase against DESIGN.md. Emit `ui-audit.md` with per-section findings categorized ✅ conforms / ⚠️ drift / ❌ violation, with file:line citations and suggested fixes. Use before merging UI changes or before an Apply pass to scope the work.
+
+### Vibe Mode → [vibe-mode.md](references/vibe-mode.md)
+
+No DESIGN.md, no time. Quick-pick aesthetic from [vibe-quick-pick.md](references/vibe-quick-pick.md), build directly with production-grade code. Use for prototypes, single-component additions, or one-off polish.
 
 ## Companion Files
 
-- `decision-matrix.md` — Vertical-to-aesthetic mapping with reference products, prohibited patterns
-- `technical-standards.md` — Colors, typography, motion, layout, accessibility, responsive defaults
-- `consultation-checklist.md` — Full step-by-step guide, reference tables, section presentation requirements
+- [apply-mode.md](references/apply-mode.md) — phased application workflow
+- [audit-mode.md](references/audit-mode.md) — drift-report workflow
+- [vibe-mode.md](references/vibe-mode.md) — speed path
+- [vibe-quick-pick.md](references/vibe-quick-pick.md) — slim aesthetic matrix
+- [technical-standards.md](references/technical-standards.md) — implementer defaults (CSS, motion, a11y, responsive)
+
+## Hard Constraints
+
+- Existing project patterns take precedence over any default. Extend, don't replace.
+- Apply Mode and Audit Mode read DESIGN.md as source of truth — do not propose token changes inside these modes; redirect to `/make-design-md` if the spec needs revision.
+- Vibe Mode never produces a DESIGN.md. If the user wants a portable spec from the result, redirect to `/make-design-md` after the build.
+- For C3-aligned React + Tailwind v4 projects, `/c3-ui` is the C3-specific instance of Apply Mode — use it directly when the target spec is `c3-design-system.md`.

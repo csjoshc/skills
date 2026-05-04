@@ -23,7 +23,7 @@ are generated until all are signed.
 ## Sign-off Output Contract
 
 Emit a fenced `SIGNOFF-APPROVALS:` block listing each artifact and its
-approval state. See `output-templates.md` → Phase-Block Contracts for the
+approval state. See `~/.skills/shared/PRD_TEMPLATES.md` → Phase-Block Contracts for the
 exact shape.
 
 ---
@@ -43,3 +43,20 @@ Before entering Phase 3, emit:
 ```
 PHASE-GATE: Sign-off → Phase 3. Criteria: [all 5 (or 6) artifacts /approve: <met|not met — list missing>]. Proceeding: <yes|no>.
 ```
+
+---
+
+## Context Hygiene After Sign-Off
+
+Once all artifacts are signed and the Phase-Gate audit line emits `Proceeding: yes`,
+instruct the user to start a **fresh conversation** before Phase 3.
+
+Carry forward ONLY these blocks (paste them into the new context):
+- `BROWNFIELD-CONTEXT` / `GREENFIELD-CONTEXT` (Phase 0 output)
+- `PROBLEM-STATEMENT` (Phase 1 output)
+- `ARCHITECTURE-DECISIONS` (Phase 2 output)
+- `SIGNOFF-APPROVALS` (this gate's output)
+
+The interrogation Q&A lives in the session log (retrievable by session ID) —
+it does not need to be re-loaded. Carrying the full transcript into Phase 3
+re-introduces resolved debates and degrades DAG synthesis quality.

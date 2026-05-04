@@ -1,12 +1,14 @@
 ---
 name: caveman
 description: >-
-  Token-compression wrapper for long agent outputs. Applies "lithic"
-  compression to prose while leaving code, paths, commands, filenames,
-  and identifiers untouched. Cuts output tokens by ~65-75% with no loss
-  of technical fidelity. Use when compressing long review summaries, reframe output,
-  multi-agent reports, or any response over ~1,000 words. Skip for
-  specs, ACs, tickets, and user-facing prose.
+  Token-compression skill with two modes. Inline: apply "lithic"
+  compression to long agent prose responses. File: `/caveman compress
+  <path>` shrinks AI-facing markdown at rest with `.original.md` backup.
+  Compression performed by the resident agent (no API roundtrip). Code,
+  paths, commands, identifiers preserved byte-for-byte. Use when compressing
+  review summaries, multi-agent reports >1,000 words, or permanently
+  shrinking heavy SKILL.md / reference docs. Skip for specs, ACs, tickets,
+  user-facing prose.
 ---
 
 # caveman
@@ -22,6 +24,88 @@ fidelity stays; budget shrinks.
 CLI command output before it enters the agent's context; caveman
 compresses the agent's prose before it leaves. See
 `shared/TOKEN_BUDGET.md` for the joint strategy and measurement data.
+
+## Contents
+
+- Activation / Deactivation
+- Subcommands
+- Intensity Levels
+- When to use / When NOT to use
+- Lithic rules (summary)
+- Workflow
+- Auto-activation via hook
+- Upstream Sync
+- Hard rules
+- Output contract
+
+## Activation / Deactivation
+
+**Trigger phrases** (any of these activate caveman mode):
+"caveman mode", "talk like caveman", "use caveman", "less tokens",
+"be brief", `/caveman`
+
+**Persistence:** Once activated, applies to all subsequent responses
+until explicitly deactivated.
+
+**Deactivation:** "stop caveman" or "normal mode"
+
+**Auto-suspend** (full prose for that response only, mode stays active):
+- Security warnings or destructive operation confirmations
+- Complex multi-step sequences where abbreviation risks misunderstanding
+
+## Subcommands
+
+Beyond mode toggling, the skill exposes one-shot subcommands.
+
+### `/caveman compress <path>`
+
+Compress a markdown file in place. Targets AI-facing docs loaded as
+context repeatedly — heavy SKILL.md files, long reference docs, plans.
+Compressing once pays back continuously across sessions.
+
+**Workflow** (the agent follows this when invoked):
+
+1. `python3 ~/.skills/caveman/scripts/detect.py <path>` — confirm
+   natural-language file (exits 0 if compressible, 1 if not)
+2. `python3 ~/.skills/caveman/scripts/safety.py <path>` — size limit
+   (<500KB) and sensitive-content scan (credentials, secrets, tokens,
+   private keys). Exits 0 if safe.
+3. Read the file
+4. Apply lithic rules per the Workflow section below (Segment →
+   Transform → Validate → Emit). The agent — not an external API —
+   performs the transform.
+5. Write compressed content back to `<path>`. Save original as
+   `<path stem>.original.md`.
+6. `python3 ~/.skills/caveman/scripts/validate.py <original> <compressed>` —
+   deterministic preservation check (headings, code blocks, URLs, paths)
+7. If validate exits non-zero: read errors, fix inline, re-validate.
+   Max 2 retries.
+8. Emit metadata line: `[caveman: in=N tokens → out=K tokens (X% compression)]`
+
+**Do not run on:** specs, ACs, tickets, READMEs, customer-facing prose,
+files containing secrets.
+
+### `/caveman uncompress <path>`
+
+Restore from `.original.md` backup. Backup overwrites the compressed
+file; backup is then removed.
+
+```bash
+mv <path>.original.md <path>
+```
+
+If no backup exists, abort with an error.
+
+## Intensity Levels
+
+| Level | Style |
+|---|---|
+| **lite** | Removes filler/hedging; preserves articles and full sentences |
+| **full** (default) | Drops articles, uses fragments and short synonyms |
+| **ultra** | Abbreviates terms (DB, auth, config); uses symbolic reasoning (X → Y) |
+
+Activate a specific level: "caveman lite", "caveman ultra".
+Default when no level is specified: **full**.
 
 ## When to use
 
@@ -48,39 +132,22 @@ Keep full prose for:
 
 ## Lithic rules (summary)
 
-Caveman's transforms, in order of priority:
-
-1. Code, paths, shell, URLs, identifiers: **no change**.
-2. Remove articles (a, an, the) and mild hedges (perhaps, likely, may).
-3. Collapse polite framing ("I'd recommend" → "recommend").
-4. Drop transitional filler ("In addition", "That said", "To be clear").
-5. Use lists and tables over prose for enumerations.
-6. Keep numbers, proper nouns, negatives, modal verbs (must/should/never).
-7. Preserve sequence markers (first, then, finally) only when order is load-bearing.
-
-Target ratio: 0.3-0.4 output tokens per input token of prose. Code is
-counted separately and does not contribute to the ratio.
+Respond in telegraphic style. Cut all filler, keep technical substance.
+- Drop articles (a, an, the), filler (just, really, basically, actually).
+- Drop pleasantries (sure, certainly, happy to).
+- No hedging. Fragments fine. Short synonyms.
+- Technical terms stay exact. Code blocks unchanged.
+- Pattern: [thing] [action] [reason]. [next step].
 
 ## Workflow
 
-### Phase 1: Segment
+### Segment classification (used by `/caveman compress`)
 
-Split the intended output into segments:
-
-| Segment | Classification | Treatment |
-|---|---|---|
-| Fenced code (``` or indented) | keep | byte-for-byte |
-| Inline code (backticks) | keep | byte-for-byte |
-| Paths, URLs, identifiers | keep | byte-for-byte |
-| Prose | transform | lithic rules |
-| Headings | transform-light | drop articles only |
-| Table cells with prose | transform | lithic |
-| Table cells with code | keep | byte-for-byte |
-
-### Phase 2: Transform prose
-
-Apply the lithic rules. Retain negations, modal verbs, quantifiers.
-Output must remain grammatical enough for a technical reader.
+| Segment | Treatment |
+|---|---|
+| Fenced code, inline code | byte-for-byte |
+| Paths, URLs, identifiers | byte-for-byte |
+| Prose, headings, table cells | apply lithic rules |
 
 ### Phase 3: Validate
 
@@ -122,21 +189,10 @@ Hook file at `~/.hooks/caveman-compression.json`:
 }
 ```
 
-## Upstream sync
+## Upstream Sync
 
-Caveman is maintained upstream. To refresh:
-
-```bash
-# Assuming the upstream repo is cloned into ~/src/caveman
-cd ~/src/caveman && git pull
-
-# Copy the upstream SKILL-equivalent files into this bundle,
-# preserving our wrapper SKILL.md above it.
-cp -r ~/src/caveman/prompts ./prompts
-cp ~/src/caveman/README.md ./UPSTREAM_README.md
-```
-
-Then run `skill-sync` so every platform picks up the refresh.
+See [`UPSTREAM.md`](UPSTREAM.md) for the full upgrade guide: file map,
+local patches, what not to overwrite, and step-by-step instructions.
 
 ## Hard rules
 

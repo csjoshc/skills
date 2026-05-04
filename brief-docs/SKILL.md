@@ -43,6 +43,51 @@ Apply this skill when producing or editing **short, scannable** technical docs�
 - Internal links use **stable paths** relative to the doc tree or repo root as per project convention.
 - Prose output passes `/stop-slop` to remove AI writing patterns and filler.
 
+## ADR template
+
+<!-- merged from addyosmani/agent-skills documentation-and-adrs -->
+
+Use for decisions costly to reverse (framework, schema, auth, API style, infra). Store in `docs/decisions/NNN-slug.md`. Don't delete superseded ADRs — write a new one that supersedes.
+
+```markdown
+# ADR-NNN: <decision title>
+
+## Status
+Proposed | Accepted | Superseded by ADR-XXX | Deprecated
+
+## Date
+YYYY-MM-DD
+
+## Context
+Constraints, requirements, forces in tension.
+
+## Decision
+The choice, stated plainly.
+
+## Alternatives Considered
+- **Option A** — pros / cons / why rejected
+- **Option B** — pros / cons / why rejected
+
+## Consequences
+Positive, negative, and follow-on work the decision creates.
+```
+
+## Changelog maintenance
+
+Keep `CHANGELOG.md` at the repo root, newest first. Group entries under `Added` / `Changed` / `Fixed` / `Removed` / `Deprecated` / `Security`. Reference issue or PR numbers.
+
+```markdown
+## [1.2.0] - 2025-01-20
+### Added
+- Task sharing across teams (#123)
+
+### Fixed
+- Duplicate task on rapid create clicks (#125)
+
+### Changed
+- List page size 20 -> 50 (#126)
+```
+
 ## Validation
 
 After edits, run the skillsmith audit on the skills directory (if installed):

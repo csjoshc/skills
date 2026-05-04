@@ -324,6 +324,23 @@ module boundary defers the design question into implementation.
 **Hard rule:** Tool definitions with unverified field names are flagged as
 Inferred in the Assumption Register and cannot enter the DAG until verified.
 
+### Evolutionary Coupling Check
+
+For every pair of components that share mutable state (shared DB table,
+shared config file, shared queue, shared in-memory object):
+
+- "If component B changes the schema/format, does A break silently?"
+- "Who owns this shared state? One owner — or do both change it independently?"
+- "Is there a contract between them, or do they rely on undocumented conventions?"
+
+Shared state without a contract is evolutionary coupling. Flag it:
+"This looks like evolutionary coupling — A and B change together with
+no stable interface between them. Either assign one owner with an
+explicit interface, or make the dependency structural so the compiler
+catches breakage."
+
+---
+
 ### Trace and Log Data Safety
 
 For any data model that appears in logs, traces, audit events, or debug output:
@@ -421,6 +438,15 @@ All of the following must be true:
 Ask 3-5 questions per response, grouped by theme. State what you understand,
 what's ambiguous, and what you need.
 
+### Recommended Answers
+Alongside each question, state your best guess at the answer. Users correct
+a proposed answer faster than they construct one from scratch:
+
+> "Given your schema, I'd expect X. Is that right, or does your use case differ?"
+
+When the decision is genuinely open (no clearly better option), present
+2–3 concrete options with tradeoffs instead of a single recommendation.
+
 ### Forced Choices
 When the answer space is bounded (e.g., "REST vs gRPC", "SSR vs SPA",
 "Postgres vs SQLite"), offer the choices explicitly:
@@ -432,6 +458,25 @@ When the answer space is bounded (e.g., "REST vs gRPC", "SSR vs SPA",
 ### Acknowledging Good Answers
 When the user gives a concrete, testable, justified answer — acknowledge it and
 move on. Don't re-interrogate resolved decisions. Update the Convergence Ledger.
+
+### Investigation Mode (Explore Without Committing)
+
+When probing brownfield code, thinking through architecture options, or evaluating
+tradeoffs WITHOUT yet deciding — prefix the exchange:
+
+> "Exploring — not logging to ledger."
+
+Rules in Investigation Mode:
+- Do NOT add items to the Convergence Ledger
+- Do NOT update the YAML ledger phase or confidence fields
+- Do NOT emit PHASE-GATE lines
+- State findings as observations: "I see X" not "We'll use X"
+
+Exit by declaring: "Decision reached — logging to ledger." Then record the
+resolved item with its source tag (Observed / User-stated / Inferred / Deferred).
+
+This prevents speculative items from entering the ledger and the AI from
+defending an exploratory position as a committed decision.
 
 ### Handling Frustration
 If the user pushes back on the interrogation:

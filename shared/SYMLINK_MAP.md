@@ -9,7 +9,7 @@ All paths symlink to the master store at `~/.skills`.
 | Tool / Platform | Global Path | Target |
 | :--- | :--- | :--- |
 | **Master Store** | `~/.skills` | (Authoritative) |
-| **Codex** | `~/.codex/skills` | `~/.skills` |
+| **Codex** | `~/.codex/skills/<name>` | `~/.skills/<name>` (per-skill, see note) |
 | **Cursor (Skills)** | `~/.cursor/skills` | `~/.skills` |
 | **Cursor (Rules)** | `~/.cursor/rules/master` | `~/.skills` |
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
@@ -20,6 +20,32 @@ All paths symlink to the master store at `~/.skills`.
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
+
+### Codex exception: per-skill symlinks
+
+Codex installs system-managed skills (`imagegen`, `openai-docs`, `plugin-creator`, `skill-creator`, `skill-installer`, `slides`, `spreadsheets`) directly into `~/.codex/skills/`, marked by `~/.codex/skills/.system/.codex-system-skills.marker`. These are not portable to other agents.
+
+To preserve codex-only content while still syncing master skills, `~/.codex/skills/` is a real directory containing **per-skill symlinks** to `~/.skills/<name>/`. Codex-managed skills coexist as plain directories.
+
+**Sync workflow for codex:**
+
+```bash
+# Detect master skills missing from codex
+cd /Users/joshc/.skills && for d in */; do
+  name="${d%/}"
+  [ -f "$d/SKILL.md" ] && [ ! -e "$HOME/.codex/skills/$name" ] && echo "$name"
+done
+
+# Add missing per-skill symlinks
+cd ~/.codex/skills && for s in <missing-skills>; do
+  ln -s "$HOME/.skills/$s" "$s"
+done
+
+# Detect stale codex symlinks (master skill deleted)
+find ~/.codex/skills -maxdepth 1 -type l ! -exec test -e {} \; -print
+```
+
+This is forward-compatible: as new master skills are added, run the discovery loop to add symlinks. Codex-only skills are untouched.
 
 ## Global Hook Paths
 

@@ -49,6 +49,48 @@ Checklist:
 These gates are cheap relative to opening and re-opening a PR. Skipping
 them costs far more in review cycles than it saves now.
 
+<!-- pattern: evidence-gate -->
+### Evidence gate (Phase 0 mandatory)
+
+Before opening a PR, paste evidence inline in the description. No PR ships without:
+
+- [ ] Test output (command + last 20 lines, exit 0)
+- [ ] Screenshot or recording (UI changes only)
+- [ ] curl response (API changes only)
+- [ ] Reproduction test (bug fixes only — must fail on `main`, pass on branch)
+
+A claim of "fixed" without one of the above is a /verify-claim block. See `~/.skills/verify-claim/SKILL.md`.
+
+### Pre-launch checklist (production-bound PRs)
+
+<!-- merged from addyosmani/agent-skills shipping-and-launch -->
+
+Use when the PR ships to production directly or behind a flag. Skip for purely internal changes.
+
+| Category | Must be true |
+|---|---|
+| Code quality | Tests, build, lint, types pass; no `console.log`; error paths handled |
+| Security | No secrets in tree; `npm audit` clean (high/critical); auth/authz checks on new routes; CORS not wildcard |
+| Performance | No N+1; bundle within budget; indexes on new queries; CWV in "Good" |
+| Accessibility | Keyboard reachable; AA contrast; focus management on new modals; no axe warnings |
+| Infrastructure | Env vars set; migrations ready; health check live; logging + error reporting wired |
+| Documentation | README / API docs / ADR / CHANGELOG updated as applicable |
+
+### Rollback plan
+
+Every production-bound PR carries a rollback plan in the description.
+
+```markdown
+## Rollback Plan
+**Trigger:** error rate > 2x baseline, p95 latency > Xms, or user reports of <issue>.
+**Steps:**
+1. Disable feature flag <name>  — OR  `git revert <sha> && git push`
+2. Verify health check + error monitoring return to baseline
+3. Notify <channel>
+**Database:** migration <name> reversible via <command>; new-feature data preserved / cleaned per <plan>.
+**Time-to-rollback:** flag <1m / redeploy <5m / DB rollback <15m
+```
+
 ---
 
 ## Phase 1: Git Preparation
@@ -332,6 +374,17 @@ gh pr create --title "<type>(<scope>): <summary>" --body "$(cat <<'EOF'
 EOF
 )"
 ```
+
+<!-- pattern: not-doing-callout -->
+### "Not Doing" callout in PR body
+
+Include a `## Not Doing` section in every non-trivial PR. Lists what was deliberately left out:
+
+- Adjacent refactors that were tempting but out of scope
+- Edge cases handled by upstream/middleware
+- Follow-up tickets created instead of inlined fixes
+
+Reviewers stop asking "why didn't you also..." when they can see what was deferred and why.
 
 ### Editing PR body after creation (for attaching evidence)
 

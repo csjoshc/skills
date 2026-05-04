@@ -3,7 +3,9 @@ name: orchestrate
 description: >-
   Guide for agents and operators working outside the Orchestra repo itself.
   Explains how to prepare ticket files and project structure so Orchestra can
-  ingest them correctly via the runtime CLI such as `orch run`.
+  ingest them correctly via the runtime CLI such as `orch run`. Use when
+  preparing tickets for `orch run`, structuring a project for Orchestra
+  ingestion, or troubleshooting Orchestra ticket-format errors.
 ---
 
 # Orchestra Runtime Intake Guide

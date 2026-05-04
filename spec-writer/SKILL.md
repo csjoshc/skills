@@ -1,6 +1,13 @@
 ---
 name: spec-writer
-description: Converts vague feature requests into structured specs, technical plans, and implementation-ready task breakdowns for coding agents. Aligns with PDCA-T (Plan-Do-Check-Act-Test) and can follow exchanet METHOD.md patterns (FR/NFR/RISK, ADR, micro-tasks, test-first) for strict planning mode. Use when preparing feature work and reducing ambiguity before implementation.
+description: >-
+  Defined feature -> spec, ADR, micro-tasks (PDCA-T, FR/NFR/RISK). Use when
+  requirements are clear and an engineering breakdown is needed for a coding
+  agent. Not for fuzzy ideas (use make-prd) or contested requirements
+  (use antiplan).
+  In: .plan/PRD.md + .plan/task-sequence.md, or a single defined feature request.
+  Process: expand each placeholder via FR/NFR/RISK + ADR.
+  Out: .tickets/NN-<slug>.md files.
 ---
 
 # spec-writer
@@ -18,6 +25,8 @@ Without a written spec, agents invent UX, edge cases, and scope — then the hum
 
 **Atomic micro-instructions (Section 3)**
 Tasks are numbered, directly executable steps: **one discrete action per task** (or per sub-bullet if you split inside a task). No vague roll-ups like "wire up the feature." Each step should be doable and verifiable on its own.
+
+**Source-driven framework patterns:** see `references/docs-first.md` for fetch-and-cite discipline when filling PLAN with framework-specific guidance.
 
 **Project-specific rules and skills**
 Honor repo rules, `AGENTS.md`, Cursor rules, and linked skills: **strict context, zero ambiguity** for stack, conventions, and boundaries. When the user names a project standard, the spec and tasks must reference it explicitly instead of assuming a generic stack.
@@ -64,6 +73,16 @@ Use this mapping when the user asks for **PDCA-T**, **METHOD.md**, or **strict**
 | **7 — Refinement** | Loop until agreed targets (e.g. coverage, failing tests) — specify targets in PLAN when user requires METHOD-grade gates. |
 | **8 — Delivery** | Out of scope for spec-writer output unless the user asks: then add a short **Delivery evidence** stub (what to attach: test run, coverage, decisions, debt list). |
 
+<!-- pattern: not-doing-scope -->
+### Not Doing (scope discipline)
+
+Every spec ends with a `## Not Doing` section listing things that were intentionally skipped, with one-line reason each. Cheap to write, prevents scope creep mid-implementation.
+
+Example:
+- Mobile responsive tweaks — out of scope for v1, separate ticket
+- Email templating engine — using existing hardcoded HTML
+- Audit log — covered by global middleware, no local code needed
+
 **Optional formats** (use when complexity or user request warrants):
 
 ```
@@ -107,6 +126,14 @@ Examples:
 - `/spec-writer Let users export their data as CSV`
 
 If the user pastes a ticket, a PRD fragment, or a rough description — treat it as the feature request and proceed.
+
+**Preferred input (from upstream `antiplan` or `make-prd`):**
+- `.plan/PRD.md` — narrative, scope, decisions
+- `.plan/task-sequence.md` — ordered placeholders to expand
+
+When both files exist, read them first and expand each placeholder in `task-sequence.md` into a fully-fleshed `.tickets/NN-<slug>.md`. Do not re-debate decisions already settled in the PRD. If only a free-text feature request is provided, generate without the upstream contract.
+
+**Refactor mode:** If the request is a refactor ("refactor X", "clean up Y", "restructure Z", "RFC"), load [`REFACTOR_MODE.md`](REFACTOR_MODE.md) and follow its interview process instead of the three-section output below.
 
 ---
 
@@ -154,6 +181,20 @@ What can go wrong or behave unexpectedly. For each: describe the situation and t
 
 **Acceptance criteria**
 Use Given/When/Then format. One criterion per scenario. Cover the happy path first, then edge cases.
+
+#### Reframe instructions as success criteria
+
+<!-- merged from addyosmani/agent-skills spec-driven-development -->
+
+Vague verbs ("faster", "better", "more responsive") are not testable. Translate every directive into a measurable target before writing ACs. Loop the human on the target, not the wording.
+
+| Vague instruction | Reframed success criterion |
+|---|---|
+| Make the dashboard faster | LCP < 2.5s on 4G; initial data < 500ms; CLS < 0.1 |
+| Improve search | p95 query < 200ms; relevance > baseline by X on the eval set |
+| Better error handling | All boundaries return structured errors; no swallowed exceptions; user sees actionable message |
+
+If you can't measure it, don't ship it as an AC.
 
 ```
 Given [starting condition]
@@ -245,6 +286,30 @@ Format each task as:
 ```
 
 After the task list, add a **Review checkpoint** — one sentence telling the developer what to verify manually before handing the full task list to an agent.
+
+#### Dependency graph + task sizing
+
+<!-- merged from addyosmani/agent-skills planning-and-task-breakdown -->
+
+Order tasks by the dependency graph (foundations first), then slice **vertically** so each slice ships working end-to-end functionality.
+
+```
+schema -> models/types -> endpoints -> client -> UI
+```
+
+Bad: build all DB, then all API, then all UI. Good: registration slice (schema + API + UI) -> login slice -> next slice. Each leaves the system working.
+
+**Sizing**
+
+| Size | Files | Use |
+|---|---|---|
+| XS | 1 | Single function or config tweak |
+| S | 1-2 | One endpoint or component |
+| M | 3-5 | One vertical slice |
+| L | 5-8 | Multi-component — prefer to split |
+| XL | 8+ | Too large; break it down |
+
+Split when: >2h of agent work, can't write 3 ACs, touches 2+ unrelated subsystems, or the title contains "and". Insert a **Checkpoint** every 2-3 tasks (tests pass, build clean, end-to-end flow works).
 
 ---
 

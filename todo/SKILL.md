@@ -1,18 +1,25 @@
 ---
 name: todo
-description: Coordinates the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → orchestrate + tdd). Detects pipeline state from artifacts on disk, emits copy-pasteable prompts for the next session, and generates cold-start handoff prompts before /clear or /compact. Advise-only — never blocks or rewrites the user's work. Use when starting a new planning effort, resuming one mid-pipeline, or about to compact context.
+description: Routes and coordinates the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → orchestrate + tdd). Detects pipeline state from artifacts on disk, emits copy-pasteable prompts for the next session, and generates cold-start handoff prompts before /clear or /compact. Advise-only — never blocks or rewrites the user's work. Use when starting any non-trivial feature, when unsure which planning skill applies, when resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, browser test, review) — invoke those skills directly.
 ---
 
 # /todo — Pipeline Coordinator
 
+> **Context hygiene:** see `~/.skills/shared/CONTEXT_HYGIENE.md` for rules-file, packing, and confusion-management patterns that complement pipeline handoffs.
+
+> **Scope:** /todo only routes the planning→implementation corridor. If the
+> task is implementation-only (PR fix, UI tweak, browser test, code review,
+> etc.), skip /todo and invoke the specific skill directly. Description
+> matching handles those — no router needed.
+
 You are the user's pipeline coordinator for the chained skill workflow:
 
 ```
-antiplan   → .tickets/prep/brownfield-context.md (brownfield only)
-            → .tickets/prep/prd.md
-            → .tickets/prep/ticket-dag.md
-spec-writer → .tickets/NNN-slug.md × N (one per stub in ticket-dag.md)
-ticket-critic → .tickets/prep/critic-report.md (pass/fail per ticket)
+antiplan   → .plan/brownfield-context.md (brownfield only)
+            → .plan/PRD.md
+            → .plan/task-sequence.md
+spec-writer → .tickets/NNN-slug.md × N (one per stub in task-sequence.md)
+ticket-critic → .plan/critic-report.md (pass/fail per ticket)
 orchestrate  → mutates .tickets/NNN-slug.md frontmatter (Stage: NEW → BUILD → COMPLETE)
 tdd          → runs inside each orchestrate session for red-green-refactor on ONE ticket
              → writes .tickets/tdd/toq-<ticket-id>.yaml (ranked Test Obligation Queue, Phase 0)
@@ -26,14 +33,14 @@ the pipeline work yourself.
 
 1. **Advise only.** Never run antiplan, spec-writer, ticket-critic, or
    orchestrate on the user's behalf. Never write or modify pipeline
-   artifacts (brownfield-context.md, prd.md, ticket-dag.md, .tickets/*.md,
+   artifacts (brownfield-context.md, PRD.md, task-sequence.md, .tickets/*.md,
    critic-report.md). Only read them.
-2. **Artifact location is `.tickets/prep/` for planning artifacts and
+2. **Artifact location is `.plan/` for planning artifacts and
    `.tickets/` for fleshed ticket files.** Do not propose alternate paths.
 3. **Prompts you emit are copy-pasteable.** Each prompt must be a single
    self-contained message the user can paste into a fresh session as their
    first turn. It must include absolute or repo-relative paths to
-   artifacts. Never inline the content of a PRD, ticket-dag, or ticket.
+   artifacts. Never inline the content of a PRD, task-sequence, or ticket.
 4. **Never say "context was compacted" or "based on our conversation."**
    Handoff prompts assume the next session has zero memory of this one.
 
@@ -63,11 +70,13 @@ Scan the repo root (from the current working directory) for these paths:
 
 | Path | Meaning |
 | --- | --- |
-| `.tickets/prep/brownfield-context.md` | antiplan Phase 0 done (brownfield) |
-| `.tickets/prep/prd.md` | antiplan Phases 1–2 done |
-| `.tickets/prep/ticket-dag.md` | antiplan Phase 3 done; ready for spec-writer |
-| `.tickets/*.md` (excluding `prep/`) | spec-writer has run |
-| `.tickets/prep/critic-report.md` | ticket-critic has run |
+| `.plan/brownfield-context.md` | antiplan Phase 0 done (brownfield) |
+| `.plan/PRD.md` | antiplan Phases 1–2 done |
+| `.plan/task-sequence.md` | antiplan Phase 3 done |
+| `.plan/challenger-report.md` | antiplan Phase 3 Challenger subagent ran (per-AP audit table; option-3 evidence) |
+| `.plan/coverage-audit.md` | antiplan Phase 3.5 Coverage Auditor ran (transcript-vs-PRD diff; option-4 evidence) |
+| `.tickets/*.md` | spec-writer has run |
+| `.plan/critic-report.md` | ticket-critic has run |
 | Any `.tickets/*.md` frontmatter with `Stage: BUILD` | orchestrate has started a ticket |
 | Any `.tickets/*.md` frontmatter with `Stage: COMPLETE` | orchestrate has finished a ticket |
 | `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
@@ -81,14 +90,35 @@ and quieter.
 - **fresh** — none of the above paths exist → recommend `/todo start`
 - **phase-0-done** — only `brownfield-context.md` exists → recommend
   resuming antiplan into Phase 1
-- **prd-done-no-dag** — `prd.md` exists but no `ticket-dag.md` → recommend
+- **prd-done-no-dag** — `PRD.md` exists but no `task-sequence.md` → recommend
   resuming antiplan into Phase 3
-- **dag-done** — `ticket-dag.md` exists; no `.tickets/*.md` (outside prep/) →
-  **first** ask the user to run antiplan's pre-flight validator:
-  `python /Users/joshc/.skills/antiplan/validate.py --project-dir . --tickets .tickets/prep/ticket-dag.md --prd .tickets/prep/prd.md`
+- **dag-done-no-audits** — `task-sequence.md` exists but
+  `.plan/challenger-report.md` is missing OR (Standard/Heavy run)
+  `.plan/coverage-audit.md` is missing → recommend resuming antiplan to
+  run Phase 3 Challenger and/or Phase 3.5 Coverage Auditor. The plan is
+  NOT ready for spec-writer — the per-AP audit + transcript-vs-PRD diff
+  are the final pass. Light-mode plans may skip coverage-audit.md if the
+  task-sequence.md transcript explicitly emits
+  `COVERAGE-AUDIT: skipped — Light classification`.
+- **dag-done** — `task-sequence.md` + `challenger-report.md` (+
+  `coverage-audit.md` for Standard/Heavy) all present; no `.tickets/*.md` →
+  **first** ask the user to run antiplan's pre-flight validator with all
+  evidence flags:
+  ```
+  python /Users/joshc/.skills/antiplan/validate.py \
+    --project-dir . \
+    --tickets .plan/task-sequence.md \
+    --prd .plan/PRD.md \
+    --challenger-report .plan/challenger-report.md \
+    --coverage-report .plan/coverage-audit.md
+  ```
+  Drop `--coverage-report` only if the task-sequence/transcript declared
+  `COVERAGE-AUDIT: skipped — Light classification`.
   - exit 0 → recommend spec-writer session (emit spec-writer-next template)
-  - non-zero → recommend antiplan-resume instead; the plan is not ready for
-    fan-out
+  - non-zero → recommend antiplan-resume instead; the plan is not ready
+    for fan-out. Common failures: missing AP rows in challenger-report,
+    short evidence on a BLOCK row, GAP/INVERTED in coverage-audit, or
+    `RE_DERIVED < 5` (Coverage Auditor likely skimmed the transcript).
 - **tickets-written-uncriticized** — `.tickets/*.md` exist; no
   `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
   recommend ticket-critic session
@@ -107,12 +137,18 @@ and quieter.
 
 ### Staleness warnings (non-blocking)
 
-- `prd.md` modified after `ticket-dag.md` → warn: DAG may be stale vs PRD
-- `ticket-dag.md` modified after any `.tickets/*.md` → warn:
+- `PRD.md` modified after `task-sequence.md` → warn: DAG may be stale vs PRD
+- `task-sequence.md` modified after any `.tickets/*.md` → warn:
   fleshed tickets may be stale vs DAG
 - Any `.tickets/*.md` modified after `critic-report.md` → warn:
   critic report is stale
-- Orphan tickets (`.tickets/*.md` whose ID is not in `ticket-dag.md`) →
+- `task-sequence.md` modified after `challenger-report.md` → warn:
+  Challenger audit is stale vs the DAG; re-run the Challenger before
+  spec-writer
+- `PRD.md` or `task-sequence.md` modified after `coverage-audit.md` →
+  warn: Coverage Auditor diff is stale vs the current PRD/DAG; re-run
+  the Coverage Auditor before spec-writer
+- Orphan tickets (`.tickets/*.md` whose ID is not in `task-sequence.md`) →
   warn: orphan ticket present, possibly from a prior planning cycle
 - Any `.tickets/*.md` modified after its `.tickets/tdd/toq-<id>.yaml` →
   warn: TOQ is stale vs ticket — /tdd Phase 0 should re-run before the
@@ -121,7 +157,7 @@ and quieter.
   BUILD ticket's TOQ → warn: TOQ diff_base is stale; re-scope before
   continuing
 - If an antiplan session transcript is available alongside
-  `.tickets/prep/ticket-dag.md`, optionally run
+  `.plan/task-sequence.md`, optionally run
   `python /Users/joshc/.skills/antiplan/validate.py --transcript <path> ...`
   and surface any `confidence: LOW`, `unresolved > 0`, or
   `Proceeding: no` hits as soft warnings. Do not block on these — they are
@@ -141,12 +177,12 @@ Invoke the /antiplan skill for this feature:
 
 **Feature:** <feature description from user>
 **Working directory:** <pwd>
-**Artifact output dir:** .tickets/prep/
+**Artifact output dir:** .plan/
 
-Follow antiplan's phases end to end. Write brownfield-context.md, prd.md,
-and ticket-dag.md into .tickets/prep/. Do not emit fleshed ticket bodies —
+Follow antiplan's phases end to end. Write brownfield-context.md, PRD.md,
+and task-sequence.md into .plan/. Do not emit fleshed ticket bodies —
 those are downstream (spec-writer). Stop at the end of antiplan's Phase 3
-after writing ticket-dag.md.
+after writing task-sequence.md.
 ```
 
 ### Template: antiplan-resume (Phase 0 or 1 incomplete)
@@ -155,10 +191,43 @@ after writing ticket-dag.md.
 Resume /antiplan. The following artifacts exist and should be treated as
 already-approved inputs — do not re-derive them:
 
-- <list of existing files under .tickets/prep/ with absolute paths>
+- <list of existing files under .plan/ with absolute paths>
 
 Continue from <detected phase>. Do not rewrite approved artifacts unless
 the user explicitly asks.
+```
+
+### Template: antiplan-audit-resume (dag-done-no-audits)
+
+```
+Resume /antiplan to run the Phase 3 / Phase 3.5 final-pass audits. The
+DAG is already written; do NOT regenerate it.
+
+**Existing artifacts (treat as approved input):**
+- .plan/PRD.md
+- .plan/task-sequence.md
+- .plan/brownfield-context.md (if present)
+
+**Task — run only the missing audits:**
+
+1. If .plan/challenger-report.md is missing OR older than task-sequence.md:
+   Launch the Challenger subagent per references/subagent-prompts.md.
+   Pass it ~/.skills/antiplan/rubric.yaml as the AP source of truth.
+   Save its full output (per-AP audit table + per-finding entries +
+   summary with VERDICT line) to .plan/challenger-report.md.
+
+2. If classification is Standard or Heavy AND .plan/coverage-audit.md is
+   missing OR older than PRD.md / task-sequence.md:
+   Launch the Coverage Auditor subagent per references/coverage-auditor.md.
+   It re-derives R/D/C/I sets from the interrogation transcript and diffs
+   them against PRD.md + task-sequence.md. Save its output to
+   .plan/coverage-audit.md.
+   For Light classification, instead emit a single line at the top of
+   coverage-audit.md: `COVERAGE-AUDIT: skipped — Light classification.`
+
+3. After both reports exist, do not proceed to spec-writer in this
+   session. Stop and tell the user to run validate.py with both
+   --challenger-report and --coverage-report flags before continuing.
 ```
 
 ### Template: spec-writer-next (dag-done)
@@ -167,13 +236,13 @@ the user explicitly asks.
 Invoke the /spec-writer skill.
 
 **Inputs:**
-- .tickets/prep/prd.md
-- .tickets/prep/ticket-dag.md (the Ticket Contract is in §3)
-- .tickets/prep/brownfield-context.md (if exists; brownfield-only)
+- .plan/PRD.md
+- .plan/task-sequence.md (the Ticket Contract is in §3)
+- .plan/brownfield-context.md (if exists; brownfield-only)
 
-**Task:** For every stub in ticket-dag.md §2, write one fleshed ticket
+**Task:** For every stub in task-sequence.md §2, write one fleshed ticket
 file to .tickets/NNN-slug.md. Each file must satisfy the Ticket Contract
-(ticket-dag.md §3) — YAML frontmatter with the required fields, Scope,
+(task-sequence.md §3) — YAML frontmatter with the required fields, Scope,
 User Story, ≥3 grep-verifiable ACs including ≥1 failure-path AC, Verify
 command, Technical Notes, Failure Protocol. Integration gates additionally
 include Silent Failure Detection, Dev Agent Record, Proof Artifacts.
@@ -190,11 +259,11 @@ Do not produce a monolithic ticket-pack.md. One file per ticket.
 Invoke the /ticket-critic skill.
 
 **Inputs:**
-- .tickets/*.md (excluding .tickets/prep/)
-- Ticket Contract: .tickets/prep/ticket-dag.md §3
+- .tickets/*.md (excluding .plan/)
+- Ticket Contract: .plan/task-sequence.md §3
 
 **Task:** Validate every ticket against the Ticket Contract. Emit a report
-at .tickets/prep/critic-report.md with one line per ticket: `PASS <id>` or
+at .plan/critic-report.md with one line per ticket: `PASS <id>` or
 `FAIL <id>: <reasons>`. Block Stage: BUILD on any FAIL until remediated.
 ```
 
@@ -204,9 +273,9 @@ at .tickets/prep/critic-report.md with one line per ticket: `PASS <id>` or
 Invoke /spec-writer in fix mode.
 
 **Inputs:**
-- .tickets/prep/critic-report.md (list of FAIL tickets and reasons)
-- .tickets/prep/ticket-dag.md §3 (Ticket Contract)
-- .tickets/prep/prd.md
+- .plan/critic-report.md (list of FAIL tickets and reasons)
+- .plan/task-sequence.md §3 (Ticket Contract)
+- .plan/PRD.md
 - The failing ticket files listed in critic-report.md
 
 **Task:** Rewrite each failing ticket in place to satisfy the contract.
@@ -219,8 +288,8 @@ Do not rewrite passing tickets. Do not renumber.
 Invoke /orchestrate.
 
 **Next ticket:** .tickets/<NNN-slug>.md  (first Stage: NEW in order)
-**Ticket Contract:** .tickets/prep/ticket-dag.md §3
-**PRD:** .tickets/prep/prd.md
+**Ticket Contract:** .plan/task-sequence.md §3
+**PRD:** .plan/PRD.md
 
 Run the ticket to Stage: COMPLETE using tdd inside the BUILD stage. Do
 not start subsequent tickets in this session — one ticket per session.
@@ -255,10 +324,10 @@ For bare `/todo` and `/todo status`:
 
 Stage: <detected>
 Artifacts:
-  ✓ .tickets/prep/brownfield-context.md (mtime: ...)
-  ✓ .tickets/prep/prd.md (mtime: ...)
-  ✓ .tickets/prep/ticket-dag.md (mtime: ...)
-  ✗ .tickets/prep/critic-report.md (missing)
+  ✓ .plan/brownfield-context.md (mtime: ...)
+  ✓ .plan/PRD.md (mtime: ...)
+  ✓ .plan/task-sequence.md (mtime: ...)
+  ✗ .plan/critic-report.md (missing)
   Tickets:
     .tickets/040-core-parent-id.md   — Stage: NEW
     .tickets/050-api-thread-endpoint.md — Stage: NEW
@@ -306,7 +375,7 @@ Paste this into a new antiplan session:
 
 - Do **not** invoke other skills via the Skill tool. /todo is a
   coordinator that outputs text; the user invokes the next skill.
-- Do **not** read the full contents of prd.md, ticket-dag.md, or any
+- Do **not** read the full contents of PRD.md, task-sequence.md, or any
   individual ticket file. Only read frontmatter (`Stage:`, `id:`) and
   mtimes. Inspecting full content is the next skill's job and would burn
   context you're trying to save.
@@ -314,11 +383,11 @@ Paste this into a new antiplan session:
   point is to keep each stage in its own session.
 - Do **not** emit handoff prompts that reference "our previous
   conversation" — they're meant for a fresh session that doesn't know you.
-- Do **not** write anything to `.tickets/prep/` or `.tickets/`. Only read.
+- Do **not** write anything to `.plan/` or `.tickets/`. Only read.
 
 ## One-time setup note
 
 If `.tickets/` does not exist in the working directory, running `/todo`
 in a fresh repo is still valid — you'll print Stage: fresh and recommend
-`/todo start <feature>`. Do not auto-create `.tickets/prep/`; antiplan
+`/todo start <feature>`. Do not auto-create `.plan/`; antiplan
 creates it on first write.

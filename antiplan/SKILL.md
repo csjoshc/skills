@@ -1,13 +1,13 @@
 ---
 name: antiplan
 description: >-
-  Conducts rigorous adversarial interrogation of product requirements before any
-  tickets or code are created. Maintains alignment discipline (blocks unjustified
-  choices, names anti-patterns) while reasoning technically and suggesting
-  approaches with explicit assumption tracking. All suggestions with side effects
-  trigger an approval gate. Produces convergence-verified PRDs with mandatory
-  integration-test gates between tickets. Use when planning multi-ticket features,
-  starting new projects, or after experiencing plan-rebuild-discard loops.
+  Adversarial PRD interrogation. Blocks unjustified choices, forces assumption
+  tracking before tickets exist. Use when stakes are high or after
+  plan-rebuild loops. Not for fuzzy ideas (use make-prd) or defined features
+  (use spec-writer).
+  In: rough requirements + stated approach.
+  Process: challenge choices, name anti-patterns, gate side effects.
+  Out: .plan/PRD.md + .plan/task-sequence.md.
 ---
 
 # Antiplan
@@ -41,7 +41,7 @@ Then emit the YAML ledger (see Output Contracts below), then the
 ## Output Contracts (structural, not prose)
 
 Every antiplan response is malformed-on-sight if these are missing.
-Full schemas in `references/output-templates.md` and
+Full schemas in `~/.skills/shared/PRD_TEMPLATES.md` and
 `references/convergence-engine.md`.
 
 | Artifact | When | Block name |
@@ -115,14 +115,19 @@ Light mode instead.
 | 2 — Architecture Interrogation | Justify every component | `references/interrogation-protocol.md` |
 | Sign-off | User approves 5 (or 6) artifacts | `references/sign-off.md` |
 | 3 — Convergence Synthesis | Build + challenge DAG | `references/convergence-engine.md`, `references/subagent-prompts.md` |
+| 3.5 — Coverage Audit | Re-derive requirements from transcript, diff against PRD (Standard/Heavy only) | `references/coverage-auditor.md` |
 
 **Progressive loading:** Load a phase's companion file(s) only when entering
 that phase. Anti-patterns, persona rules, and assumption register are loaded
 as needed across phases:
-- `references/anti-patterns.md` — any phase, when a pattern is suspected
+- `references/anti-patterns.md` — any phase, when a pattern is suspected (prose)
+- `rubric.yaml` — machine-readable AP source of truth; passed to the
+  Challenger subagent and to `validate.py --challenger-report`
 - `references/persona-rules.md` — alignment/reasoning gating
-- `references/assumption-register.md` — every assumption, every phase
+- `~/.skills/shared/ASSUMPTION_TIERS.md` — every assumption, every phase (see `#assumption-register-format`)
 - `references/artifact-ingestion.md` — when user provides reference material
+- `references/domain-model.md` — Phase 2, when domain terminology, CONTEXT.md glossary, or ADR decisions arise
+- `references/coverage-auditor.md` — Phase 3.5, second-pass requirement-coverage check
 
 ---
 
@@ -152,12 +157,13 @@ Antiplan's output boundary:
 
 1. **Interrogation transcript** — resolved decisions with justification
 2. **Brownfield research artifact** (brownfield only) — reviewed by user
-3. **PRD** — §1 through §17 including §8b Implementation Topology and
-   §8c Risk Surface. Template: `references/output-templates.md`.
-4. **Ticket DAG** — ordered graph + per-ticket stubs (YAML frontmatter +
-   1-paragraph scope + 2–3 invariant ACs) + **Ticket Contract** that
-   spec-writer honors and ticket-critic enforces. See
-   `references/example/ticket-dag.md` §3.
+3. **PRD** — written to `.plan/PRD.md`. §1 through §17 including §8b
+   Implementation Topology and §8c Risk Surface. Template:
+   `~/.skills/shared/PRD_TEMPLATES.md`.
+4. **Task sequence** — written to `.plan/task-sequence.md`. Ordered graph +
+   per-task placeholder (YAML frontmatter + 1-paragraph scope + 2–3 invariant
+   ACs). Placeholders, not tickets — `spec-writer` expands them into
+   `.tickets/NN-<slug>.md`. See `references/example/ticket-dag.md` §3.
 5. **Requirements Coverage Report** — feature/AC cross-check, non-goals leak
 6. **Implementation Readiness Checklist** (PRD §17) — final gate before handoff
 
@@ -188,12 +194,37 @@ After antiplan completes:
 ─── HANDOFF CHECK (user runs this, not the agent) ───
 python /Users/joshc/.skills/antiplan/validate.py \
   --project-dir <repo> \
-  --tickets .tickets/prep/ticket-dag.md \
-  --prd .tickets/prep/prd.md
+  --tickets .plan/task-sequence.md \
+  --prd .plan/PRD.md \
+  --challenger-report .plan/challenger-report.md \
+  --coverage-report .plan/coverage-audit.md
 If exit code ≠ 0, the plan is NOT ready. Do not proceed to spec-writer.
 ```
 
+The `--challenger-report` flag verifies that every AP in `rubric.yaml`
+has an audit row with verbatim evidence (option 3 — disk-backed rubric
++ subagent + mechanical coverage check). The `--coverage-report` flag
+verifies the second-pass transcript-vs-PRD diff (option 4). Light-mode
+runs may omit `--coverage-report`; Standard and Heavy must include it.
+
 Do not trust the agent's claim that the plan is ready. Run the script.
+
+### Context Seed Loader
+
+After validate.py exits 0, start a fresh conversation and load only the
+three durable artifacts:
+
+```
+Please read:
+- .plan/brownfield-context.md   (or the GREENFIELD-CONTEXT block)
+- .plan/PRD.md
+- .plan/task-sequence.md
+
+Use these as the complete basis for spec expansion.
+```
+
+These three files are the complete durable output of antiplan. Everything else
+is session context — recoverable via session ID if needed.
 
 ### Downstream
 

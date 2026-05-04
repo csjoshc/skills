@@ -80,7 +80,7 @@ Light projects, compress the remaining phases per the classification rules.
 
 The Phase 0 exit response must contain a fenced `BROWNFIELD-CONTEXT:` block
 (or `GREENFIELD-CONTEXT:` for greenfield work). See
-`output-templates.md` → Phase-Block Contracts for the exact shape.
+`~/.skills/shared/PRD_TEMPLATES.md` → Phase-Block Contracts for the exact shape.
 
 ---
 

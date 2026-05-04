@@ -211,6 +211,136 @@ def check_transcript(transcript_text: str) -> list[str]:
     return errors
 
 
+# ── Rubric / Challenger / Coverage checks ────────────────────────────────────
+
+_RUBRIC_PATH_DEFAULT = Path(__file__).parent / "rubric.yaml"
+
+
+def load_rubric_ids(rubric_path: Path) -> list[str]:
+    """Return ordered list of AP IDs from rubric.yaml. Raises on parse error."""
+    raw = yaml.safe_load(rubric_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict) or "rules" not in raw:
+        raise ValueError(f"{rubric_path}: missing top-level 'rules' key")
+    ids = []
+    for rule in raw["rules"]:
+        if not isinstance(rule, dict) or "id" not in rule:
+            raise ValueError(f"{rubric_path}: rule missing 'id'")
+        ids.append(str(rule["id"]))
+    return ids
+
+
+def parse_challenger_table(report_text: str) -> list[dict[str, str]]:
+    """Extract rows from the Challenger per-AP audit markdown table.
+
+    Expects a 4-column table with headers AP | Verdict | Tickets | Quoted signal.
+    Returns one dict per data row. Header / separator rows are skipped.
+    """
+    rows = []
+    in_table = False
+    for line in report_text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            in_table = False
+            continue
+        cells = [c.strip() for c in stripped.split("|")[1:-1]]
+        if len(cells) < 4:
+            continue
+        header = [c.lower() for c in cells]
+        if "ap" in header[0] and "verdict" in header[1]:
+            in_table = True
+            continue
+        if in_table and set(cells[0]) <= {"-", ":"}:
+            continue
+        if in_table and cells[0].upper().startswith("AP-"):
+            rows.append({
+                "ap": cells[0].upper(),
+                "verdict": cells[1].upper(),
+                "tickets": cells[2],
+                "evidence": cells[3].strip('"').strip(),
+            })
+    return rows
+
+
+def check_challenger_report(report_text: str, rubric_ids: list[str]) -> list[str]:
+    """Validate the Challenger audit table for completeness + evidence."""
+    errors = []
+    rows = parse_challenger_table(report_text)
+    found_ids = {r["ap"] for r in rows}
+    expected = set(rubric_ids)
+
+    missing = expected - found_ids
+    extra = found_ids - expected
+    if missing:
+        errors.append(f"audit table missing rows: {sorted(missing)}")
+    if extra:
+        errors.append(f"audit table has unknown AP IDs: {sorted(extra)}")
+
+    valid_verdicts = {"BLOCK", "WARN", "PASS"}
+    for r in rows:
+        if r["verdict"] not in valid_verdicts:
+            errors.append(f"{r['ap']}: invalid verdict '{r['verdict']}'")
+            continue
+        ev = r["evidence"]
+        if r["verdict"] == "PASS":
+            if ev.lower() != "no signal found":
+                errors.append(
+                    f"{r['ap']}: PASS row must have evidence "
+                    f"'no signal found', got: {ev!r}"
+                )
+        else:
+            if len(ev) < 10 or ev.lower() == "no signal found":
+                errors.append(
+                    f"{r['ap']} ({r['verdict']}): evidence must be a "
+                    f"verbatim quote >=10 chars, got: {ev!r}"
+                )
+
+    verdict_match = re.search(r"VERDICT:\s*(PASS|FAIL)",
+                              report_text, flags=re.IGNORECASE)
+    if not verdict_match:
+        errors.append("Challenger report missing VERDICT: line")
+    elif verdict_match.group(1).upper() == "FAIL":
+        errors.append("Challenger VERDICT: FAIL — DAG not ready")
+
+    return errors
+
+
+def check_coverage_report(report_text: str) -> list[str]:
+    """Validate the Coverage Auditor report (option 4 second pass)."""
+    errors = []
+
+    if not re.search(r"\|\s*ID\s*\|\s*Set\s*\|", report_text):
+        errors.append("Coverage report missing re-derivation table "
+                      "(headers: ID | Set | Statement | Transcript quote)")
+    if not re.search(r"\|\s*ID\s*\|\s*Verdict\s*\|", report_text):
+        errors.append("Coverage report missing coverage table "
+                      "(headers: ID | Verdict | Where covered | Notes)")
+
+    missing_quote = re.search(r"<MISSING>", report_text)
+    if missing_quote:
+        errors.append("Coverage report has <MISSING> quote — auditor failed")
+
+    for field in ("RE_DERIVED", "MATCH", "GAP", "INVERTED", "WEAK"):
+        if not re.search(rf"^{field}:\s*\d+", report_text, flags=re.MULTILINE):
+            errors.append(f"Coverage summary missing {field}: <count>")
+
+    re_derived_match = re.search(r"^RE_DERIVED:\s*(\d+)",
+                                 report_text, flags=re.MULTILINE)
+    if re_derived_match and int(re_derived_match.group(1)) < 5:
+        errors.append(
+            f"Coverage RE_DERIVED count too low ({re_derived_match.group(1)}) "
+            "— auditor likely skimmed the transcript"
+        )
+
+    verdict_match = re.search(r"VERDICT:\s*(PASS|FAIL)",
+                              report_text, flags=re.IGNORECASE)
+    if not verdict_match:
+        errors.append("Coverage report missing VERDICT: line")
+    elif verdict_match.group(1).upper() == "FAIL":
+        errors.append("Coverage VERDICT: FAIL — requirements drift detected")
+
+    return errors
+
+
 # ── Runner ───────────────────────────────────────────────────────────────────
 
 def run(data: PlanData) -> int:
@@ -252,6 +382,18 @@ def main() -> int:
                         help="Optional antiplan session transcript to validate for "
                              "required output-shape contracts (YAML ledger, phase "
                              "blocks, PHASE-GATE lines)")
+    parser.add_argument("--challenger-report", default=None,
+                        help="Path to Challenger subagent report. Validates the "
+                             "per-AP audit table against rubric.yaml — every AP "
+                             "must appear with verbatim evidence or 'no signal "
+                             "found' for PASS rows.")
+    parser.add_argument("--coverage-report", default=None,
+                        help="Path to Coverage Auditor report. Validates the "
+                             "transcript-vs-PRD second-pass diff (RE_DERIVED >=5, "
+                             "no GAP/INVERTED, VERDICT: PASS).")
+    parser.add_argument("--rubric", default=str(_RUBRIC_PATH_DEFAULT),
+                        help="Path to anti-pattern rubric (default: bundled "
+                             "antiplan/rubric.yaml)")
     args = parser.parse_args()
 
     project_dir = Path(args.project_dir).resolve()
@@ -285,6 +427,33 @@ def main() -> int:
             exit_code = 1
         else:
             print("[PASS] transcript_contracts")
+
+    if args.challenger_report:
+        print("\nchallenger report validation")
+        print("=" * 40)
+        rubric_ids = load_rubric_ids(Path(args.rubric))
+        report_text = Path(args.challenger_report).read_text(encoding="utf-8")
+        ch_errors = check_challenger_report(report_text, rubric_ids)
+        if ch_errors:
+            print(f"[FAIL] challenger_report ({len(rubric_ids)} APs in rubric)")
+            for e in ch_errors:
+                print(f"  {e}")
+            exit_code = 1
+        else:
+            print(f"[PASS] challenger_report ({len(rubric_ids)} APs covered)")
+
+    if args.coverage_report:
+        print("\ncoverage report validation")
+        print("=" * 40)
+        cov_text = Path(args.coverage_report).read_text(encoding="utf-8")
+        cov_errors = check_coverage_report(cov_text)
+        if cov_errors:
+            print("[FAIL] coverage_report")
+            for e in cov_errors:
+                print(f"  {e}")
+            exit_code = 1
+        else:
+            print("[PASS] coverage_report")
 
     return exit_code
 
