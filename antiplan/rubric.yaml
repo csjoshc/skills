@@ -166,3 +166,82 @@ rules:
       - Plan says "we'll add a DI framework later"
       - Test plan says "monkey-patch the class attribute" / "patch module.DB_CLIENT"
       - Architecture diagram has no composition root / bootstrap module
+
+  - id: AP-17
+    name: Cross-Package Consumer Integration Untested
+    phase: design
+    detection_signals:
+      - Ticket produces a dist/ / build/ / lib/ artifact but no AC asserts a sibling consumer can import from it
+      - Package has tsconfig path aliases (@/, ~/, #/) but the build pipeline does not run tsc-alias / vite-tsconfig-paths / rollup-alias to rewrite them
+      - package.json#exports promises paths the build script does not emit
+      - Slice gate runs the producer's own tests but does not boot a consumer that imports the producer's built artifact
+      - Brownfield context lists a package as "out of scope" but a Phase 1 ticket adds it as a workspace dependency of an in-scope package
+      - No dependency on `tsc-alias`, `vite-tsconfig-paths`, `tsconfig-paths-webpack-plugin`, or equivalent in any package that ships dist/ with source path aliases
+
+  - id: AP-18
+    name: Gate-Closure Without Green Proof
+    phase: implementation
+    detection_signals:
+      - Gate ticket Stage is COMPLETE but its proof artifact contains BLOCKED / FAIL / ERROR
+      - Gate ticket lists artifact path under Proof Artifacts but the file does not exist on disk
+      - Auto-commit / orchestrator marks gate COMPLETE on agent silence (no real implementation commit)
+      - Gate's Failure Protocol allows passing with "explicit cataloging" without surfacing the catalog as a BLOCKER
+      - Gate ticket scope explicitly forbids the code changes its ACs require, creating a deadlock the gate "passes" by skipping
+      - Same proof artifact referenced by multiple gates without a per-gate evidence diff
+
+  - id: AP-19
+    name: Slice-Local Gate Blindness (Cumulative Gate Missing)
+    phase: design
+    detection_signals:
+      - Each slice gate validates only its own slice; no gate re-runs prior gates' smoke
+      - First gate in the DAG is narrower than the existing-system smoke baseline
+      - Gate artifact list does not include "all prior gates green at this commit"
+      - Brownfield migration plan with no baseline-boot ticket before the first mutation
+      - Stack with multiple consumer/producer boundaries but only one gate boots the user-facing surface
+
+  - id: AP-20
+    name: Runtime Service Dependency Untested
+    phase: design
+    detection_signals:
+      - In-scope package config (env vars, proxy paths, OAuth redirect URIs, hardcoded URLs) references another package's service, but no AC boots both packages together and exercises one round-trip
+      - vite.config / next.config / nginx.conf has a `proxy:` or `rewrite` block pointing at a sibling package's port, with no AC asserting that sibling is up
+      - Env var like `BACKEND_ORIGIN`, `API_URL`, `OAUTH_ISSUER`, `KEYCLOAK_URL` resolves to a port owned by an out-of-scope package, and no AC tests the integration
+      - docker-compose service has `depends_on:` chains where only one service is in scope; the plan never boots the full chain
+      - Plan moves auth / classification / audit responsibility to a sibling service but the gate's user-journey AC only "renders" the SPA without completing the auth flow
+      - First-five-minutes walkthrough requires booting services the plan doesn't enumerate
+      - Two entry points / packages claim the same default port and no ticket reconciles the collision
+
+  - id: AP-21
+    name: Requirement Drift / Apologetic Workaround
+    phase: design
+    detection_signals:
+      - Override / overlay file contains prose like "to restore the X path", "this is no longer used", "we kept it because", or "the bind-mount below was used in an earlier attempt but is no longer needed"
+      - Idle service - a container/process boots on the default profile but serves no traffic in the canonical operator flow (healthcheck passes; round-trips do not flow through it)
+      - depends_on / requires edge in the base file is silently removed or rerouted by an override file
+      - Doc paragraph explaining "why we keep X" is longer than the cost of removing X
+      - Config default (model name, URL, endpoint, port) references a value the canonical operator path does not use, with the operator path documented in an override / .local / gitignored file
+      - '"Production-ish" path documented alongside the actual dev path with no named operator persona today (e.g. "Linux operators or CI runners" without citing a CI job by file or a teammate)'
+      - Gitignored file exists in the working tree and documents how the system actually works
+      - Base file and override file describe two different topologies and operators only ever run the override topology
+
+  - id: AP-22
+    name: Hardened-but-Untested Pod Security Combo
+    phase: design
+    detection_signals:
+      - Manifest combines readOnlyRootFilesystem true + runAsUser non-zero + capabilities.drop ALL + allowPrivilegeEscalation false, AND containerPort <1024, AND a custom entrypoint script (start-*.sh / entrypoint.sh / docker-entrypoint.sh) that does file I/O at startup
+      - Per-ticket ACs for a hardened-pod chart are all static (helm lint / helm template / grep for securityContext keys) with no AC that kubectl apply's the manifest to a real kind/k3d/minikube cluster and waits for pod Ready
+      - Failure-path AC for the securityContext is deferred to the terminal gate ("caught at IG-N by make local-up wait") — the terminal gate is the first deploy
+      - Image base + non-root UID + entrypoint combination is novel for the cycle and the PRD names no prior cycle / image / chart that has booted this exact combination green
+      - Chart inherits a security baseline from a sibling chart but the new image runs a different entrypoint (nginx vs uvicorn, node vs python) — the baseline was validated against the sibling's entrypoint, not the new one
+      - Cycle budget assumes one make local-up succeeds first try; no buffer for image-rebuild iteration (rc1 → rc2 → ... → rcN) when the hardened pod fails to start
+
+  - id: AP-23
+    name: Publish Not Equals Deploy
+    phase: design
+    detection_signals:
+      - CI workflow runs docker build + docker push (or docker/build-push-action / kaniko / buildah) but has no subsequent step that runs the published image — no docker run --rm <image> --version, no docker run --health-cmd, no crane validate
+      - PRD success criteria measure "image is pullable" or "tag exists in registry" but not "image starts and responds on its declared port"
+      - Per-ticket AC for the publish workflow lists "gh run view --log shows docker push exit 0" as the strongest postcondition; no AC pulls the image and runs it from a CI job
+      - Multi-image matrix publish where each image's runtime is exercised only by a manual follow-up ("on a clean mac, the operator runs docker run") or by the terminal gate — not by a CI job in the publish workflow
+      - Dockerfile changes a runtime layer (base image, entrypoint, user, workdir) but no AC in the publish ticket exercises the runtime — only the build
+      - Workflow's permissions include packages write (push capable) but no companion job uses docker pull + docker run to validate the artifact it just pushed

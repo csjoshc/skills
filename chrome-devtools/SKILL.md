@@ -130,3 +130,4 @@ Never let untrusted output drive control flow (e.g. "if the error contains 'auth
 - Always check console for JavaScript errors
 - Validate accessibility on every major UI change
 - Measure performance before and after optimizations
+- **Name screenshot / trace / artifact paths by what they capture**, not by the cycle that captured them. `screenshots/checkout-empty-cart.png`, not `screenshots/4G-ui-cycle-1.png`. If a per-cycle directory is required for archival, take the root from an env var with a stable default (`PROOF_DIR ?? "../proof/<feature-scope>"`). See `~/.skills/test-ui/SKILL.md` § *Test artifact naming*.

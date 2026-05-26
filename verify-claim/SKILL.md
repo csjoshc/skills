@@ -42,6 +42,9 @@ Determine the change type by reading the diff. Apply the matching requirement.
 | API change | Curl/httpie against running server | Request + full response, incl. status |
 | Infra / config | Command output proving the change works | Shell output |
 | Perf improvement | Before/after measurement | Two numbered runs, units, environment |
+| Docstring / inline-doc addition | Content explains *why*, not just labels an artifact (ADR/ticket ID alone fails) | Excerpt of the new docstring + a one-line "what a cold reader learns" summary |
+| Package / module deletion | Cross-reference scrub ran clean (or remaining hits explicitly resolved) | `git grep` output showing zero residual mentions across docs, diagrams, CI, helm, manifests |
+| Rename (file / config / endpoint) | All referrers updated | `git grep -l <old-name>` output empty, OR each remaining mention is explicitly justified |
 
 ## Workflow
 

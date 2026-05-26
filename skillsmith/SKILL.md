@@ -99,6 +99,34 @@ Return a concise report with:
 - Do not hide required instructions behind nested companion links.
 - Do not keep stale or contradictory guidance that can poison context.
 
+## Post-amendment recheck
+
+When you finish amending a skill — adding a section, extending a rule
+list, dropping in companion-file content — run the audit on **the
+amended skill** again before declaring done. Specifically:
+
+1. Re-run `skill_audit.py` on the amended directory. The 500-line
+   SKILL.md cap and frontmatter rules apply to amendments the same way
+   they apply to greenfield skills.
+2. If the amendment pushed SKILL.md past 500 lines, **route the new
+   long-form content to a companion** under `references/` (or the
+   skill's existing companion directory) and keep the SKILL.md edit to
+   the minimum hook: a one-sentence rule, a one-row table entry, or a
+   `See: references/<file>.md` pointer. The amendment shouldn't break
+   the budget the skill itself enforces.
+3. If you added new rule codes (e.g. `AP-NN`, `DC-NN`, `Pattern N`),
+   verify the count references in `~/.skills/shared/SKILL_NOISE_TERMS.md`
+   are updated — the noise-terms file is the cross-skill registry.
+4. Run `stop-slop` over any new prose; the new content shouldn't
+   regress the same skill's own quality bar.
+5. If the amendment cites or modifies a *shared* file under
+   `~/.skills/shared/`, re-audit every skill that points at the shared
+   file (grep `~/.skills -l '<shared-file>'`) to make sure no
+   downstream skill now contradicts its own scope claim.
+
+A skill amendment is "done" when the audit it would have failed before
+the change still passes after the change.
+
 ## Example Use Cases
 
 - "Review all skills and bring them into compliance"

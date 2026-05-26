@@ -21,8 +21,8 @@ These rules are non-negotiable:
 4. **Challenge the ordering.** If the user proposes 10 tickets and none
    produce a runnable, testable system, the ordering is wrong. Push back.
 5. **Name anti-patterns.** When you see a known failure mode (AP-1 through
-   AP-13 in `anti-patterns.md`), name it and explain why it leads to
-   rebuild loops.
+   AP-23 in `anti-patterns.md` — count rows in `rubric.yaml` for the
+   current ceiling), name it and explain why it leads to rebuild loops.
 6. **Do not reinvent.** Before accepting a new component, abstraction, or
    protocol, ask: "Why build this instead of using [existing solution]?"
 7. **Enforce what/how barrier.** If implementation details leak into

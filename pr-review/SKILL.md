@@ -161,6 +161,7 @@ req.body.user_id  →  used in `WHERE id = ${user_id}`
 | [`../reviews/arch-violations/`](../reviews/arch-violations/)       | Architectural-violation catalog (11 files; index in README.md)          | Lens 6 runs      |
 | [`~/.skills/shared/QUALITY_RUBRIC.md`](../shared/QUALITY_RUBRIC.md) | Supplementary rubric (M1–M12, Tiers A–I, anti-patterns)                 | Supplementary    |
 | [`~/.skills/shared/TEST_ANTIPATTERNS.md`](../shared/TEST_ANTIPATTERNS.md) | Supplementary test anti-pattern catalog                            | Supplementary    |
+| [`~/.skills/shared/SKILL_NOISE_TERMS.md`](../shared/SKILL_NOISE_TERMS.md) | Skill-internal terms that must not appear in committed artifacts — flag as `scope-leak` | When reviewing comments, CI YAML, Makefile, PR body |
 
 ---
 
