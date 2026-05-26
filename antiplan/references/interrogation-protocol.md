@@ -252,6 +252,30 @@ abstraction boundary is in the wrong place. Challenge the boundary.
 Vague names are a signal of vague responsibility. Push until the name is
 specific or the component is merged into something with a clear name.
 
+For every named entity (service, config file, route, env var, file
+directory, constant, public function, error code), also apply the
+**coupling sub-test**:
+
+- "Does the name reference a specific *vendor*, *runtime*, *cycle*,
+  *ticket*, or *gate*? If the implementation swaps that vendor/runtime
+  next quarter, does the name still make sense?"
+- "Is this name the *abstraction* or today's *instantiation*? Show me
+  one alternate instantiation that would also fit this name."
+- "If this thing's directory lives under `proof/`, `evidence/`, or any
+  artifact root: is the directory name describing the *test scope* or
+  the *cycle that birthed the test*? Cycle-named directories (e.g.
+  `proof/4G-ui-cycle/`) rot the moment the gate is renamed."
+
+Names that fail the coupling sub-test trigger AP-24 (Cycle-Path
+Coupling) or AP-25 (Vendor Coupling in Agnostic Identifier).
+
+Reject `agent.local-dmr.yaml` if the spec says the runtime is
+configurable. Reject `DockerModelRunnerClient` if the design says the
+provider is OpenAI-compatible. Reject `proof/4G-ui-cycle/` if the test
+exercises the chat-stack smoke (not the cycle). The fix is almost always
+a runtime-agnostic noun: `agent.local.yaml`, `OpenAICompatibleClient`,
+`proof/chat-stack-smoke/`.
+
 #### Reinvention Test
 - "Does an existing library, framework feature, or known pattern already do
   this? Show me you searched."
@@ -399,8 +423,10 @@ that selected it may need revisiting.
 
 ### Anti-Pattern Detection
 
-During Phase 2, actively scan for anti-patterns AP-1 through AP-13 from
-[anti-patterns.md](anti-patterns.md). When you detect one:
+During Phase 2, actively scan for anti-patterns AP-1 through AP-23 (see
+the full catalog in [anti-patterns.md](anti-patterns.md) and the
+machine-readable row list in [rubric.yaml](../rubric.yaml) — count rows
+there for the current ceiling). When you detect one:
 
 1. Name it explicitly: "This looks like AP-4: God Function."
 2. Quote the detection signal that triggered it
@@ -418,7 +444,8 @@ All of the following must be true:
 - [ ] Every inter-component boundary has a defined API contract
 - [ ] Tool/API field names are verified against upstream source (not guessed)
 - [ ] Mock dependencies have been identified with real-integration-test plans
-- [ ] No unresolved anti-patterns remain (AP-1 through AP-13)
+- [ ] No unresolved anti-patterns remain (AP-1 through AP-23 — see
+  `rubric.yaml` for the current ceiling)
 - [ ] If brownfield: Implementation Topology (§8b) maps every ticket to
   MODIFY/CREATE + file paths; zero unjustified CREATE actions
 - [ ] If brownfield: every pre-existing component's assumed capabilities are

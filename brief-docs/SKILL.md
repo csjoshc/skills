@@ -26,6 +26,48 @@ Apply this skill when producing or editing **short, scannable** technical docs�
 2. **Delete** duplicated port/env/API tables; replace with one link to the canonical doc.
 3. **Collapse** multiple Mermaid diagrams to **one per page**; split pages if two diagrams serve different audiences.
 4. Remove **stale behavior** (deprecated flags, removed services) using the drift checklist.
+5. **Retire stale satellite pages.** When a spoke becomes obsolete (API changed, feature collapsed, package deleted), delete it and grep the hub for dangling cross-references. Hub-and-spoke only works if spokes stay current or are pruned — a parallel page that contradicts the hub is worse than no satellite.
+
+## Structural rules
+
+These are blocking — apply before shipping any new or edited doc.
+
+### No inline script / Makefile bodies
+
+Scripts, `make` targets, multi-line `docker`/`kubectl` invocations, and CI-step bodies belong in the canonical file (Makefile, `scripts/*.sh`, workflow YAML). Docs **reference** them via `make <target>` or a single-line shell example, never by pasting the body. Inline bodies rot the moment the underlying command changes; the canonical target is the single source of truth.
+
+If the canonical target doesn't exist yet, create the target first, then reference it.
+
+### Comparison table when the feature has more than one run mode
+
+When a feature ships in more than one run mode (process / Docker Compose / kind+Helm / cloud), the doc includes a side-by-side comparison table whose rows are at minimum: startup command, base URL, ports exposed on host, key env vars, LLM / external-dep URL plumbing, teardown.
+
+Without the table, every reader has to grep across mode-specific subsections to reconstruct the comparison. Mode-specific *details* still live in their own subsections; the table is the navigation hub.
+
+### Internal labels are doc-filename identifiers, not source-comment identifiers
+
+`docs/ADR-XXX.md` is a fine filename. Copying `ADR-XXX` (or `T-NNN`, `Constitution P\d+`, `Slice \d+`, `IG-\d+G\d+`, `RISK-NN`, `Pattern \d+`, `AP-\d+`) into source-code docstrings, code comments, or other doc-page bodies is not. The label tells the reader nothing they didn't already know from filename or context; the *why* of the decision is what they actually need.
+
+When a runtime docstring or a doc body needs to reference an ADR, pair the rationale prose with the stable path:
+
+Bad: `"""ADR-CHAT-1: single SSE endpoint."""`
+
+Good:
+
+```
+Single SSE chat endpoint. POST /v1/chat emits the locked event-name
+set {text, tool_start, tool_end, done}. The prior JSON + stream pair
+was collapsed here so the SPA has a single stable target.
+Background: docs/ADR-CHAT-1.md.
+```
+
+Bare label drops fail this skill's quality bar.
+
+### Name the abstraction, not today's vendor
+
+If the doc claims to describe a runtime-agnostic or vendor-agnostic feature, the prose, table headers, and Mermaid node labels must reflect the abstraction (`Model runtime`, `OpenAI-compatible endpoint`) — not a current default (`Docker Model Runner`, `Ollama`). Runtime-specific notes go in a side table or per-runtime subsection.
+
+A doc title "Local dev with DMR" for a runtime-agnostic stack is the canonical version of this failure — the title picks a winner the architecture deliberately doesn't pick.
 
 ## Companion references
 

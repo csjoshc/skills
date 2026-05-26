@@ -11,7 +11,7 @@ Ticket Critic is a specialized pre-build reviewer. It does not write code. It bl
 
 1. Validate the `Stage:` header first.
 2. Run deterministic ticket sanity checks.
-3. Audit all 10 blocker patterns.
+3. Audit all 14 blocker patterns.
 4. Auto-resolve only when standards already answer the question.
 5. Return clear `PASS`, `AUTO-RESOLVED`, or `BLOCKED` verdict with evidence.
 
@@ -91,6 +91,7 @@ is to enforce that the mirror is honest, not to re-derive tiers.
 - **Risk Tier missing** on any row → **BLOCKED** (spec-writer Test Obligation Profile is incomplete — send back to spec-writer, do not patch in the critic)
 - **T1 AC with no concrete target** (Test file / Command is vague or points at a non-existent file the ticket does not create) → **BLOCKED** (T1 ACs must be load-bearing; /tdd Phase 0 cannot score what it cannot locate)
 - **Ralph-binding mismatch** between this table and the spec-writer Test Obligation Profile → **BLOCKED** (drift between upstream and local table)
+- `Test file / Command` cell contains `tests/tickets/` → **BLOCKED** (deprecated gitignored staging area; specify the permanent destination — `tests/infra/`, `tests/docs/`, or `packages/<pkg>/tests/` — so the implementing agent writes the file to the right place on first creation)
 
 ### Why this works
 
@@ -99,7 +100,7 @@ intent**. A test written after the implementation describes **what the
 code happens to do**. Locking the name and assertion shape at ticket
 time forces the intent-first orientation.
 
-## 10-Pattern Audit Workflow
+## 14-Pattern Audit Workflow
 
 Use [PATTERNS.md](PATTERNS.md) as the canonical checklist.
 
@@ -110,6 +111,14 @@ For each pattern:
 3. Provide required remediation for blockers.
 
 Do not skip any pattern.
+
+Patterns 11–14 cover container-image and Kubernetes deployment failure
+modes that are invisible at unit/template-render time and only surface
+when the image runs in a real pod (busybox/coreutils drift, missing
+write-path mounts under ROFS, NetworkPolicy label-selector silent
+mismatch, privileged-port bind under drop-ALL). Always check these for
+tickets that touch a `Dockerfile`, a `helm/` chart, or a
+`securityContext` block.
 
 ## Auto-Resolution Policy
 
@@ -134,7 +143,8 @@ Return findings using this structure:
 - Pattern 1: PASS | AUTO-RESOLVED | BLOCKER
 - Pattern 2: ...
 - ...
-- Pattern 10: ...
+- Pattern 14: ...
+- Pattern 15: ...
 
 ## Evidence
 - [file/line/section and verification]

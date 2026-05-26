@@ -60,6 +60,21 @@ Dispatch based on the user's argument:
   current stage in a fresh session.
 - `/todo status` → **Detailed state dump.** Every artifact path, modified
   time, per-ticket `Stage:` value, staleness warnings.
+- `/todo build` → **Emit per-ticket manual-execution prompt** for the next
+  `Stage: NEW` ticket (DAG-respecting). Uses `/tdd` + `/verify-claim`
+  inline; does NOT spawn implementer subagents per ticket. For users
+  running outside Orchestra.
+- `/todo build <ticket-id>` → Same but for a specific ticket file. Skips
+  the DAG-readiness check (assumes user knows what they're doing).
+- `/todo gate <slice-id>` → **Emit slice-gate review prompt** with a
+  subagent-validated review of all tickets in the slice plus the gate
+  artifact. Use when every non-gate ticket in a slice is `Stage: COMPLETE`
+  and the gate ticket is `Stage: NEW`.
+- `/todo resume` → **Emit mid-build resume prompt.** For continuing a
+  ticket whose `Stage: BUILD` was set in a prior session that ended.
+  Detects the in-flight ticket, lists what's already done (via git diff
+  vs. ticket ACs), and emits a prompt that picks up where the prior
+  session left off.
 
 If the user passes an unrecognized argument, default to the bare `/todo`
 behavior and note that the argument was ignored.
@@ -125,7 +140,19 @@ and quieter.
 - **critic-failed** — critic-report.md contains the literal string `FAIL` →
   recommend fix-cycle: return to spec-writer for failing tickets
 - **ready-for-build** — critic-report.md passes; some tickets still
-  `Stage: NEW` → recommend orchestrate for the next `NEW` ticket
+  `Stage: NEW` → recommend orchestrate (Orchestra users) OR `/todo build`
+  (manual-execution users) for the next `NEW` ticket. Bare `/todo` may
+  ask which mode the user prefers if it's the first build session.
+- **slice-gate-pending** — within a slice, every non-gate ticket is
+  `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
+  ticket with `gate: true` in frontmatter) is `Stage: NEW` → recommend
+  `/todo gate <slice-id>` (subagent-validated review) before flipping
+  the gate to BUILD/COMPLETE. Users running Orchestra may still use
+  `orchestrate` here; the subagent review is an optional layer on top.
+- **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
+  active session is running it (heuristic: invoked from a fresh /todo
+  call with no in-conversation evidence of the build). Recommend
+  `/todo resume` to pick up where the prior session left off.
 - **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → recommend
   continuing orchestrate for remaining `NEW` tickets
 - **build-unscoped** — a ticket is `Stage: BUILD` but no matching
@@ -294,6 +321,33 @@ Invoke /orchestrate.
 Run the ticket to Stage: COMPLETE using tdd inside the BUILD stage. Do
 not start subsequent tickets in this session — one ticket per session.
 ```
+
+### Template: build-ticket-manual (ready-for-build, no Orchestra)
+
+Per-ticket flow without Orchestra. Single session per ticket using
+`/tdd` for red-green-refactor and `/verify-claim` as the evidence gate
+before commit. Subagents are reserved for slice gates, not per-ticket.
+
+Full template body: see `references/execution-templates.md` §
+build-ticket-manual. When emitting the prompt to the user, inline the
+full body from that file with the slot fields filled in.
+
+### Template: build-ticket-resume (mid-build-resume)
+
+Resumes a ticket whose `Stage: BUILD` was set in a prior session that
+ended without reaching COMPLETE.
+
+Full template body: see `references/execution-templates.md` §
+build-ticket-resume.
+
+### Template: slice-gate-review (slice-gate-pending)
+
+Closes a slice when every non-gate ticket is COMPLETE and the gate
+ticket is NEW. Three-pass flow: artifact collection → independent
+subagent review → disposition.
+
+Full template body: see `references/execution-templates.md` §
+slice-gate-review.
 
 ### Template: handoff (generic cold-start prompt for current stage)
 

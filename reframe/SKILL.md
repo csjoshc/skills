@@ -101,6 +101,69 @@ including persona details, anti-patterns, and slide count targets.
 Restructure the fact inventory into the chosen narrative. Change emphasis,
 wording, and structure — not just length.
 
+#### Runtime-agnostic naming pass
+
+When the source material covers multiple runtime modes or vendor
+choices (e.g. process / Docker Compose / kind+helm; DMR / Ollama /
+cloud OpenAI), apply this pass before structure selection:
+
+1. **Identify the abstraction name** — the role-based noun the
+   feature plays: "model runtime", "chat stack", "inference
+   endpoint", "OpenAI-compatible provider". Use it in the
+   primary narrative.
+2. **Demote vendor / runtime tokens** — `Docker Model Runner`,
+   `Ollama`, `host.docker.internal:11434` go in a feature table
+   row labeled by mode, never in the prose backbone.
+3. **Mermaid node labels follow the same rule.** A node labeled
+   "Docker Model Runner" in an architecture diagram for a
+   runtime-agnostic stack is a self-contradiction; relabel to the
+   role ("LLM runtime — OpenAI-compatible endpoint") with the
+   binding env var as the secondary label.
+4. **Mode-specific subsections are explicit.** When you genuinely
+   need runtime-specific content, put it under a subsection whose
+   heading names the mode ("Mode: Docker Model Runner",
+   "Runtime: Ollama"). The reader can scope-read; the abstract
+   narrative stays clean.
+
+The reframe output that ships with a vendor token in the title or a
+runtime-specific Mermaid node in the primary diagram fails this skill.
+
+#### Multi-mode comparison tables
+
+If the source covers more than one run mode but does not include a
+side-by-side comparison table, generate one during Phase 2. The
+table rows are at minimum:
+
+| Aspect | Mode A | Mode B | Mode C |
+|---|---|---|---|
+| Startup command | … | … | … |
+| Base URL the consumer sees | … | … | … |
+| Ports exposed on host | … | … | … |
+| Key env vars | … | … | … |
+| External-dep plumbing (LLM, MCP, DB) | … | … | … |
+| Teardown / cleanup | … | … | … |
+
+If a cell is unknown, mark it `[TO BE DOCUMENTED]` — surface the
+gap rather than guessing. The comparison table is what makes
+multi-mode docs scannable; without it, the reader has to
+reconstruct the comparison from mode-specific subsections.
+
+#### Doc fan-out audit
+
+Before finalizing, check whether the source directory has more
+than one standalone page covering the same feature (e.g.
+`local-dev.md` *and* `docker-compose.md` *and* `runtime-modes.md`
+all describing the same chat stack). If so, the reframe output
+either:
+
+- Picks the canonical hub and folds the rest into mode-specific
+  subsections of that hub, or
+- Explicitly labels the others as satellites with prominent
+  links back to the hub.
+
+A reframe that adds a fourth parallel page increases the doc-rot
+surface; it doesn't help the audience.
+
 ### Phase 3: Structure
 
 Select the content structure for the chosen audience.

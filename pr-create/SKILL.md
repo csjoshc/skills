@@ -74,7 +74,7 @@ Use when the PR ships to production directly or behind a flag. Skip for purely i
 | Performance | No N+1; bundle within budget; indexes on new queries; CWV in "Good" |
 | Accessibility | Keyboard reachable; AA contrast; focus management on new modals; no axe warnings |
 | Infrastructure | Env vars set; migrations ready; health check live; logging + error reporting wired |
-| Documentation | README / API docs / ADR / CHANGELOG updated as applicable |
+| Documentation | README / API docs / ADR / CHANGELOG updated as applicable; **removed packages/modules also removed from docs, diagrams, CI path filters, helm values, and any manifest descriptions** (see Phase 3C) |
 
 ### Rollback plan
 
@@ -325,6 +325,44 @@ npx vitest --coverage 2>&1 | tail -30 > /tmp/coverage.txt
 2. Failed test names if any failures (REQUIRED if applicable)
 3. Coverage report (REQUIRED if available)
 4. Error messages from failures (REQUIRED if applicable)
+
+### 3C: Documentation cross-references (deletion or rename)
+
+**Goal:** Catch orphaned references when a package, module, public function, or endpoint is removed. The diff shows the deletion; what it doesn't show is every doc/diagram/CI filter that still points at the deleted thing.
+
+**Trigger:** the PR deletes any of:
+- A directory under `packages/`, `src/`, `lib/`, `apps/`
+- A top-level public function, class, or exported symbol
+- An HTTP endpoint (route handler) or its docstring
+- A config file (whose name appears in `.env.example`, docs, or scripts)
+
+**Required checks** before opening the PR:
+
+```bash
+# Substitute <removed-name> with the deleted package/symbol/route
+NAME=<removed-name>
+
+# Docs + diagrams + READMEs
+git grep -nE "\\b${NAME}\\b" -- '*.md' '*.mmd' '*.rst' || true
+
+# CI path filters + workflow refs
+git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' || true
+
+# Helm values + manifests + Compose
+git grep -nE "\\b${NAME}\\b" -- 'helm/' 'k8s/' 'manifests/' '*.yaml' '*.yml' 'docker-compose*' || true
+
+# Package manifests (project-specific names: c3pkg.json, pyproject.toml, package.json, Cargo.toml)
+git grep -nE "\\b${NAME}\\b" -- '*.toml' '*.json' || true
+```
+
+Every hit must be:
+- **Removed** if it was the only thing the doc/filter described.
+- **Updated** if it referenced the replacement (link / name).
+- **Escalated** to the user if ambiguous (e.g., a diagram that includes the old + new side-by-side).
+
+Add a final check to the PR description: `Cross-reference scrub: ran for <NAME>; N hits, all resolved.`
+
+This is the rule that catches "the package was deleted but README/architecture-diagram/CI-filter still mentions it" — the same pattern that produced 5 stale docs + 1 workflow filter + 1 manifest description in a recent cycle.
 
 ---
 

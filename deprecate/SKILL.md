@@ -84,6 +84,52 @@ One consumer at a time:
 
 **Churn Rule.** If you own infrastructure being deprecated, you migrate users — or provide backward-compat updates that need no migration.
 
+### Step 3b — Repo-wide scrub (before Step 4)
+
+Before you delete the thing, audit *every* place its name appears in
+the long-lived tree. Code-only grep is not enough; deletions
+classically leave doc/diagram/CI/manifest debris behind. Run the
+substitution `NAME=<thing-being-removed>` and then:
+
+```bash
+# Markdown, RST, plain text
+git grep -nE "\\b${NAME}\\b" -- '*.md' '*.rst' '*.txt'
+
+# Diagrams (Mermaid + PlantUML + dot)
+git grep -nE "\\b${NAME}\\b" -- '*.mmd' '*.puml' '*.dot' '*.drawio'
+
+# CI / CD path filters and workflow refs
+git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' '.gitlab-ci.yml' '.circleci/' 'azure-pipelines.yml'
+
+# Container / orchestration
+git grep -nE "\\b${NAME}\\b" -- 'helm/' 'k8s/' 'manifests/' 'kustomize/' 'docker-compose*' 'Dockerfile*'
+
+# Package / project manifests (substitute per stack)
+git grep -nE "\\b${NAME}\\b" -- '*.toml' 'package.json' '*.csproj' 'Cargo.toml' 'go.mod' '*.c3pkg.json'
+
+# .env examples + generated config
+git grep -nE "\\b${NAME}\\b" -- '.env*' 'config/'
+
+# Tests that test the deleted thing's existence (these become positive tests)
+git grep -nE "\\b${NAME}\\b" -- 'tests/' 'test/' '__tests__/'
+```
+
+Every hit must be:
+
+- **Removed** if the doc/filter/test described only the deleted thing.
+- **Updated** if it referenced the replacement (link, name, path).
+- **Inverted into a regression test** if it asserted the deleted thing's *absence* (e.g. a test that imports the deleted module and asserts `ImportError`).
+- **Escalated to the user** if ambiguous — most often happens with architecture diagrams that show old + new side-by-side during a transition.
+
+Manual diagram audit: SVG / PNG architecture diagrams won't be caught
+by `git grep`. If your `docs/` tree contains image-format diagrams,
+open each and look for the deleted entity. Re-render with the new
+shape before Step 4.
+
+The Step 3b scrub is what catches "the package was deleted but the
+README/architecture-diagram/CI-filter still mentions it" — the same
+pattern that leaves a deletion looking half-done in PR review.
+
 ### Step 4 — Remove
 
 Only after zero active usage (verified by metrics/logs):

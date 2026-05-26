@@ -15,6 +15,20 @@ description: Test-driven development with red-green-refactor loop. Use when user
 
 See [TESTS.md](./TESTS.md) for examples and [MOCKING.md](./MOCKING.md) for mocking guidelines.
 
+**Test file location — write to the permanent path immediately.** Never use `tests/tickets/`
+(deprecated gitignored staging area). The path is known before BUILD starts — the ticket's
+AC→Test Traceability table names it. Write the file there from the first keystroke.
+
+| Test type | Permanent committed path |
+|---|---|
+| Dockerfile / Helm / nginx / CI workflow regression | `tests/infra/test_<artifact>.py` |
+| Documentation consistency | `tests/docs/test_<topic>.py` |
+| Package unit/integration | `packages/<pkg>/tests/test_<module>.py` |
+| E2E | `tests/template_agent_e2e/` |
+
+Include a `test_coverage_anchor` function with `import agent_guardrails` so the orch
+coverage gate passes for YAML/Dockerfile-only diffs (no `conftest.py` shim needed).
+
 Companion files to load at specific phases:
 - [SCOPING.md](./SCOPING.md) — **required Phase 0**. Produces the ranked Test Obligation Queue (`.tickets/tdd/toq-<ticket-id>.yaml`) from diff, dependency graph, risk registry, and churn. Every downstream phase reads from this queue; nothing is invented from prose.
 - [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) — required when the red-step test introduces a boundary mock (HTTP, DB, FS, time, SDK). Enforces that every mock references a real contract artifact and rejects conditional-branch mocks.

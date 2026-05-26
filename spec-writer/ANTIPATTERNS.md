@@ -148,6 +148,22 @@ api/dto/
 
 ---
 
+## Deploy-time Antipatterns (container / helm / k8s tickets)
+
+### Source-only Verification on a Running-Container Artifact
+**Definition:** Ticket ACs verify only source files (`grep`, `helm lint`, `helm template --validate`) for an artifact whose runtime is a container or pod. Deploy-time bugs (CrashLoopBackOff, port-bind denied under non-root, NetworkPolicy zero-match) ship to the cluster because `helm lint` PASS was treated as deploy proof.
+
+**Examples (from `ui-ghcr-publish`):**
+- `helm lint` PASS but pod CrashLoops on `cp` over an existing base-image file
+- `helm template` renders a NetworkPolicy that matches zero pods because `namespaceSelector` keys on an unset label
+- `readOnlyRootFilesystem: true` + script writing outside emptyDir mounts
+
+**Impact:** Deploy-time outages caught after merge; cycle gate stopwatches overflow; rollback required.
+
+**Fix pattern:** Apply the three Deploy-time AC conventions in `SKILL.md` — `helm install --wait` deploy-smoke AC, base-image Read-First on entrypoint write paths, NetworkPolicy cross-pod reachability + namespace-label setup. Cross-referenced with `ticket-critic` patterns 11/12/13.
+
+---
+
 ## General Anti-patterns
 
 ### Circular Dependencies

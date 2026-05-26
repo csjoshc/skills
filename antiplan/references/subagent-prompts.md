@@ -215,7 +215,7 @@ Review EVERY ticket and EVERY integration gate against:
 ### Anti-Pattern Checklist
 
 You MUST emit a **per-AP audit table** covering every anti-pattern listed in
-rubric.yaml (currently AP-1 through AP-16; the rubric is the source of
+rubric.yaml (currently AP-1 through AP-23; the rubric is the source of
 truth — count rows there, not here). No AP may be omitted. For each AP, mark one of:
 
 - **BLOCK** — at least one ticket hits a detection signal; DAG cannot proceed
@@ -236,7 +236,7 @@ Required table format (emit before the per-finding list):
 | AP-1 | BLOCK   | T-3,T-7  | "base orchestration layer…"        |
 | AP-2 | PASS    | —        | no signal found                    |
 | …    | …       | …        | …                                  |
-| AP-14| PASS    | —        | no signal found                    |
+| AP-23| PASS    | —        | no signal found                    |
 ```
 
 Then, for each BLOCK/WARN row, scan EVERY ticket against the AP's
@@ -291,6 +291,20 @@ event parsing, dependency resolution, or console filtering without a
 contract test against real runtime output? Are there suppressed event
 types without a visible counter?
 
+AP-22 (Hardened-but-Untested Pod Security Combo): Does any chart/manifest
+ticket stack readOnlyRootFilesystem + non-root UID + drop-ALL caps +
+allowPrivilegeEscalation:false on a pod with a custom entrypoint script
+and/or a privileged containerPort, with no per-ticket AC that
+`kubectl apply`s the manifest to a real cluster and waits for Ready?
+Is the failure-path AC deferred to the terminal gate ("caught at IG-N")?
+
+AP-23 (Publish Not Equals Deploy): Does any publish workflow run
+`docker push` to a registry without a downstream CI job that
+`docker pull`s + `docker run`s the published image? Does the PRD
+distinguish "build" success criteria from "run" success criteria? For
+multi-image matrix publishes, is each image's runtime contract
+exercised per-row?
+
 ### Coverage Check
 - Every Phase 1 feature has at least one ticket
 - Every Phase 1 acceptance criterion appears in at least one ticket's AC
@@ -308,8 +322,9 @@ types without a visible counter?
 
 Output in this order:
 
-1. **Per-AP audit table** (AP-1 … AP-14, all 14 rows required — see
-   Anti-Pattern Checklist above). Missing rows = malformed response.
+1. **Per-AP audit table** (every AP id in rubric.yaml — currently AP-1
+   through AP-23, all rows required — see Anti-Pattern Checklist above).
+   Missing rows = malformed response.
 2. **Per-finding entries** — one block per BLOCK/WARN row in the table:
 
 ```
@@ -326,14 +341,15 @@ WARN means the planner may accept with stated justification.
 ```
 BLOCKS: [count]
 WARNINGS: [count]
-APS_PASSED: [count, max 14]
+APS_PASSED: [count, max == row count of rubric.yaml (currently 23)]
 COVERAGE GAPS: [list of Phase 1 features without ticket coverage]
 STRUCTURAL VIOLATIONS: [list]
 VERDICT: PASS | FAIL
 ```
 
-VERDICT is FAIL if the audit table is incomplete (fewer than 14 rows),
-any BLOCK finding exists, or any coverage gap exists.
+VERDICT is FAIL if the audit table is incomplete (fewer rows than
+rubric.yaml has rule ids), any BLOCK finding exists, or any coverage
+gap exists.
 
 VERDICT is FAIL if any BLOCK finding exists or any coverage gap exists.
 

@@ -67,6 +67,7 @@ Load companion files only when needed:
 - decided
 - assumed
 - open (needs human)
+- **named** — every public-facing name the PRD introduces, with its coupling profile (`vendor` / `runtime` / `cycle` / `ticket` / `scope`) and the rename cost if the coupled token changes (see *Naming audit* in Session Flow)
 6. If the user asked for fan-out or delegated analysis, run explicit subagent tasks for non-blocking facets.
 7. Do not block the main thread on every subagent result; continue local synthesis while they run.
 8. Reconcile conflicts explicitly before finalizing outputs.
@@ -76,9 +77,65 @@ Load companion files only when needed:
 1. Intake and framing
 2. Ambiguity triage (what must be answered now vs later)
 3. Fan-out facet analysis (product, codebase, alternatives/risk, optional QA/release)
+3.5. **Naming audit** — before synthesis, scan the PRD draft for names that bake in cycle / ticket / gate / vendor / runtime tokens. (See *Naming audit* below.) Loop a HITL question for each ambiguous case before the names solidify in tickets.
 4. Synthesis pass (single narrative PRD)
 5. Ticket drafting pass (clear AC, dependencies, unknowns)
 6. Final review with the user (targeted edits)
+
+### Naming audit (step 3.5)
+
+The cheapest place to fix a name is in the PRD; the most expensive
+is after the rename hits 11 referrers across `Makefile`, `Dockerfile`,
+scripts, docs, tests, and helm values. Run this audit *before* the
+synthesis pass freezes the vocabulary.
+
+For every named entity the PRD introduces — config file, env var,
+HTTP path, public function, error code, artifact directory,
+deployable artifact name, doc title — apply two questions:
+
+1. **Coupling check.** Does the name encode a *cycle*, *ticket*,
+   *gate*, *slice*, *vendor*, or *runtime* token? If yes, is the
+   thing being named *intrinsically* tied to that token (a vendor
+   adapter, a per-runtime catalog row), or is it the abstraction
+   the PRD claims is generic?
+
+2. **Rename-cost check.** If next quarter the operator swaps the
+   coupled token (cycle closes, ticket renumbers, vendor changes,
+   runtime swaps), how many files / paths / docs change? If the
+   answer is more than zero on a name the PRD says is abstract,
+   the name is wrong now.
+
+Record each decision in the PRD's Decision Ledger:
+
+```yaml
+- name: agent.local.yaml
+  coupling: [runtime]  # would be coupled if named agent.local-dmr.yaml
+  decision: runtime-agnostic; runtime selected via LLM_RUNTIME env
+  justification: |
+    PRD §5 commits to supporting DMR + Ollama + cloud OpenAI. The
+    config filename must outlive any one of those choices.
+
+- name: proof/chat-stack-smoke/
+  coupling: [test-scope]  # NOT cycle-coupled — describes the test
+  decision: feature-scoped; env-overridable via PROOF_DIR
+  justification: |
+    Per-cycle artifact directories rot; this name describes the
+    test, and CI / orch can set PROOF_DIR for per-cycle archival.
+
+- name: scripts/verify-llm-config.sh
+  coupling: [scope]  # NOT ticket-coupled
+  decision: keep — verifies LLM config invariant, not a ticket gate
+```
+
+Names that fail the audit and can't be justified surface as a
+HITL question (see *HITL Policy* gate 1 — scope boundary
+decisions): "PRD §X names this `agent.local-dmr.yaml` but §Y says
+the runtime is configurable. Which is wrong — the name or the
+commitment?" The user picks; the answer goes in the ledger.
+
+This audit is the upstream analog of `antiplan`'s Naming-Test
+coupling sub-test and `ticket-critic` Pattern 15. Catching the
+issue at PRD time means the ticket-critic check is a no-op.
 
 ## Divergent thinking lenses
 

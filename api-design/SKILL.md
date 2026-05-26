@@ -85,6 +85,45 @@ interface APIError {
 | Booleans | is/has/can prefix | `isComplete`, `hasAttachments` |
 | Enums | UPPER_SNAKE | `"IN_PROGRESS"` |
 
+### No vendor / runtime / cycle tokens in identifiers
+
+API paths, query-param names, response fields, enum values, error
+codes, and config filenames must not bake in a specific vendor,
+runtime, or cycle slug when the design supports more than one. The
+name asserts a coupling the architecture denies, and every future
+contributor who tries to swap the vendor / runtime / cycle either
+edits the name everywhere or learns to live with a lie.
+
+| Bad | Good | Why |
+|---|---|---|
+| `GET /api/agents/docker-model-runner/status` | `GET /api/agents/runtime/status` | Runtime is configurable; the path should name the role |
+| `enum Provider { DMR, OLLAMA_LOCAL, AWS_BEDROCK }` | `enum Provider { LOCAL, CLOUD }` if granularity allows; otherwise keep vendor names but lock them behind a `runtime_id` field, not a path segment | Enum values land in DBs and logs; rename cost is N× higher than a path |
+| `{ "ollamaModel": "..." }` | `{ "model": "..." }` | Response field names should reflect the abstraction; runtime-specific metadata goes in a `runtime: { id, ... }` sub-object |
+| `error: "DMR_UNREACHABLE"` | `error: "RUNTIME_UNREACHABLE"` with `details.runtime: "dmr"` | Error *codes* are the stable contract; details carry the specifics |
+| Config file `agent.local-dmr.yaml` | `agent.local.yaml` (runtime picked by `LLM_RUNTIME` env) | Filename is a public API too |
+
+Allowed exceptions: code paths, modules, or sub-routes that exist
+*to implement that vendor* (`packages/c3-flight-mcp/dmr-adapter.ts`,
+`POST /api/internal/dmr/probe`) earn the vendor token because they
+literally implement that vendor's protocol. Anything that *consumes*
+the abstraction must use the abstract name.
+
+### Configuration naming
+
+The same rule extends to config files, env var names, and YAML keys
+your service reads — these are part of the API surface even though
+they don't ship over HTTP.
+
+| Bad | Good |
+|---|---|
+| `OLLAMA_BASE_URL`, `DMR_MODEL` | `LLM_BASE_URL`, `LLM_MODEL` (project-prefixed, vendor-agnostic) |
+| `agent.dmr.yaml`, `provider-ollama.json` | `agent.yaml` + a `runtime:` field selecting `dmr` / `ollama` |
+| `dmr_pull_tag = "hf.co/unsloth/..."` | catalog file keyed by alias × runtime; consumers reference the alias |
+
+Vendor-specific values stay confined to the *catalog data file* or
+the *vendor adapter module*. The surfaces the rest of the system
+reads stay agnostic.
+
 ## REST Patterns
 
 ```

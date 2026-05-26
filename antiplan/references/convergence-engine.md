@@ -145,6 +145,217 @@ the source tag says. The validation is aspirational until it is scheduled.
 validation method, grep the DAG for a ticket AC that matches. If not found,
 the challenger flags it as unscheduled validation.
 
+### Rule 9: Baseline-First for Brownfield (Non-Skippable)
+
+For every brownfield project (any plan whose Phase 0 produced a
+brownfield-context document), the FIRST ticket in the DAG asserts that
+the *current* system passes its existing smoke tests / dev-server boot.
+Not "we trust git history" — actually run it.
+
+**Required baseline ticket ACs:**
+- Existing test suites (unit, integration, e2e) green at HEAD before
+  any in-scope mutation
+- `pnpm install`, `uv sync`, or equivalent install/lock-resolution
+  step runs clean — no peer-dep warnings escalated to errors
+- Existing dev-server boots without unhandled errors (no Vite import-
+  analysis fails, no FastAPI startup exceptions)
+- Existing demo flows (whichever the brownfield-context lists)
+  run end-to-end against pre-mutation code
+
+If any baseline AC fails, the failure is recorded as a precondition
+(NOT absorbed into Slice 0). The graph cannot proceed until the
+precondition is fixed in its own ticket and the baseline ticket re-
+runs green.
+
+**Detection:** No `Stage: NEW` ticket may have `depends_on: []` other
+than the baseline ticket itself. Multiple "depends-on-nothing" roots
+in a brownfield DAG → challenger BLOCK.
+
+### Rule 10: Gate-Chain Invariant (Cumulative Smoke)
+
+Every integration gate's `Verify` section must include the smoke
+commands of every prior gate at the current commit, not only the new
+slice's checks. Gates accumulate; they do not replace.
+
+**Required gate Verify shape:**
+```
+# Slice N local checks
+<new commands>
+
+# Cumulative smoke — all prior gates green at this HEAD
+<prior gate G(N-1) commands>
+<prior gate G(N-2) commands>
+...
+<prior gate G0 commands>
+```
+
+The first gate (G0) cumulative section is the baseline ticket's smoke.
+
+**Detection:** For each gate ticket, the Verify section's command
+count must be ≥ sum of (prior gate Verify counts). If it is less,
+the gate is slice-local and the challenger flags it.
+
+### Rule 11: First Gate Boots the User Surface
+
+For brownfield migration plans, the first integration gate (G0) must
+boot the user-facing surface — the browser SPA, the API consumer, the
+CLI — even if running against pre-mutation code. The gate's job is to
+establish a green stack-wide baseline before subsequent slices can
+diff against it.
+
+A G0 that runs only one package's tests + `/health` is insufficient
+for any plan that touches more than one component. If the plan's
+component map shows multiple consumer/producer boundaries, G0 must
+exercise at least one full path from user surface to deepest data
+layer.
+
+**Detection:** If brownfield-context lists ≥ 2 components AND G0's
+Verify does not include a command that hits the user-facing surface,
+challenger flags it.
+
+### Rule 12: Transitive Consumer/Dependency Graph Must Be Enumerated
+
+Brownfield-context Phase 0 must enumerate, for every in-scope package,
+the packages that consume it (`workspace:*` references) AND the
+packages it consumes. Out-of-scope packages that appear as transitive
+dependencies of in-scope packages get a "smoke status" field —
+green / red / unknown. Unknown becomes a baseline-ticket AC.
+
+**Required brownfield-context section:**
+```
+## Transitive consumer/dependency graph
+| Package | In scope? | Workspace consumers | Workspace deps | Smoke status |
+| ...     | ...       | ...                 | ...            | ...          |
+```
+
+A migration plan whose Phase 1 ticket adds a `workspace:*` dep to an
+in-scope package must include the new dependency in this graph and
+its smoke status must be green. If unknown, baseline ticket runs the
+smoke before any in-scope ticket starts.
+
+**Detection:** Any `workspace:*` dependency in Phase 1+ tickets that
+does not appear in the brownfield-context graph → challenger BLOCK.
+
+### Rule 13: Operator Entry Point Inventory
+
+Rule 12 enumerates workspace and import dependencies. It does not
+enumerate **runtime service dependencies** — the env vars, proxy
+paths, OAuth redirect URIs, and docker-compose chains that wire
+services together at run time. Brownfield-context Phase 0 must
+additionally enumerate every operator entry point and its claimed
+runtime topology.
+
+**Required brownfield-context section:**
+```
+## Operator Entry Points
+| Entry point                            | Boots                | Ports claimed | Env vars required        | User journey enabled         |
+| ./scripts/start-local-stack.sh         | Vite SPA             | 8000          | none                     | "SPA renders"                |
+| apps/psp7-gateway/docker-compose.yml   | Keycloak + Postgres  | 8080, 5432    | KC_DB_*                  | "Keycloak admin reachable"   |
+| apps/psp7-gateway/backend uvicorn      | FastAPI auth         | 8000 (CLASH!) | DEBUG, OAUTH_*           | "Login → token issuance"     |
+| pnpm --filter @cdao/c3-chat dev        | Chat BFF + SSE       | 7000          | OPENAI_API_KEY, etc.     | "Chat turn streams tokens"   |
+```
+
+An entry point is any operator-runnable command that boots part of
+the system: start scripts, docker-compose files, README quickstart
+blocks, Makefile targets, `pnpm dev` / `uv run` invocations the
+team uses to bring the system up.
+
+**Required ACs derivable from this table:**
+- For each env var in the "Env vars required" column that resolves
+  to another package's service, an AC in some Phase 1+ ticket
+  POSTs through the dependency chain and asserts the contract.
+- For each port collision (two entry points claim the same port),
+  the plan includes a reconciliation ticket OR documents the
+  expected exclusive-boot pattern.
+- For each user journey enabled, at least one gate exercises it
+  end-to-end through the entry point (not through a hand-crafted
+  boot sequence the ticket authored).
+
+**Detection:**
+- Brownfield-context lacks `## Operator Entry Points` → challenger
+  BLOCK
+- Two rows claim the same port without a reconciliation entry →
+  challenger BLOCK
+- Any in-scope ticket's demo flow references an entry point not in
+  the table → challenger BLOCK
+- An out-of-scope package whose entry point provides a user-journey
+  step (auth, classification, audit) the in-scope user journey
+  requires → that package must be re-classified as in-scope OR a
+  precondition ticket boots it as part of the plan's setup
+
+### Rule 14: First Gate Boots a Journey, Not a Render
+
+Rule 11 says the first gate boots the user-facing surface. That is
+necessary but insufficient. Strengthen: the first gate **boots the
+operator's actual start command** (from the Operator Entry Points
+table, not a hand-crafted boot sequence) **and completes at least
+one canonical user journey end-to-end.**
+
+"Booting cleanly" / "returns 200 on /" / "console has no errors"
+are insufficient. A SPA's shell rendering ≠ "user can complete the
+demo." For an auth-gated SPA, the journey is `login → see authed
+page`. For a chat app, `login → send turn → receive streamed
+response with tool events`. For a CLI, `binary --help` plus one
+happy-path command. For an API, one canonical request with one
+authoritative response.
+
+The journey to test is named by the **Demo Regression Policy** in
+the PRD. If the PRD's Demo Regression Policy says only "screenshot
+matches," the policy itself is insufficient — the policy must name
+a closeable loop with verifiable response content.
+
+**Required PRD section:**
+```
+## Demo Regression Policy — Canonical User Journey
+
+From `git clone` to "I can use the app":
+1. <command 1 with env vars + cwd>
+2. <command 2 ...>
+3. ...
+N. <user action — e.g. "click Sign In", "log in as admin/admin">
+N+1. <observable outcome — e.g. "see chat page with prompt input">
+N+2. <user action — e.g. "type 'hello' and submit">
+N+3. <observable outcome — e.g. "see streamed tokens + tool_start/tool_end + done">
+```
+
+Every commit to main must keep this walkthrough passing. The first
+integration gate replays it verbatim.
+
+**Detection:**
+- PRD has no Demo Regression Policy with a numbered command-and-
+  outcome walkthrough → challenger BLOCK
+- First gate's `Verify` block does not invoke the start command
+  named in step 1 of the walkthrough → challenger BLOCK
+- First gate's user-surface AC asserts only HTTP 200 on `/` or
+  "shell renders" without completing one journey loop → challenger
+  BLOCK (this strengthens Rule 11; both apply)
+
+### Rule 15: First-Five-Minutes Walkthrough
+
+Brownfield-context Phase 0 interrogation must produce a literal
+walkthrough: imagine a developer with a fresh clone. Write out,
+command-by-command, exactly what they type to see the demo work.
+Every command. Every env var they need to set. Every service they
+need running. Every URL they visit. Every click.
+
+The walkthrough is the load-bearing contract a plan must preserve.
+Any rebase that breaks any line of the walkthrough is a regression.
+The first gate replays the walkthrough verbatim against the
+mutated code.
+
+If the team cannot produce the walkthrough during Phase 0, that is
+itself a finding: the demo does not have a single canonical
+reproduction, and writing one is the actual first ticket of the
+plan.
+
+**Detection:**
+- Brownfield-context has no first-five-minutes section → challenger
+  BLOCK
+- Walkthrough names commands / services / env vars not appearing in
+  Operator Entry Points (Rule 13) → consistency BLOCK
+- Plan's Phase 1 tickets break any walkthrough line without a
+  matching remediation step → BLOCK
+
 ---
 
 ## Integration Gate Ticket Template

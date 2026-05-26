@@ -109,6 +109,10 @@ dismiss it.
 | **Dead code / redundancy** | delegate to `redundancy-watcher.md`    | same                                        |
 | Dead branches              | `# pragma: no cover` without reason    | `istanbul ignore` without reason            |
 | Commented-out blocks       | `grep -En '^\s*(#\|//)[^!]'`           | same                                        |
+| **Scope-leak vocabulary**  | `git grep -nE '(ADR-[A-Z0-9-]+\|T-[0-9]{3,}\|FR-[0-9]+\|NFR-[0-9]+\|RISK-[0-9]+\|IG-[0-9]+G[0-9]*\|[0-9]+G[0-9]+\|Slice [0-9]+\|Constitution P[0-9]+\|AP-[0-9]+)' -- '*.py'` (extend to docstrings) | `git grep -nE '<same>' -- '*.ts' '*.tsx' '*.js' '*.mjs' '*.sh'` |
+| **Cycle-coupled paths**    | `git grep -nE '"[^"]*(proof\|evidence)/[^"]*[0-9]G[0-9]+' -- '*.py'` | `git grep -nE '"[^"]*(proof\|evidence)/[^"]*[0-9]G[0-9]+' -- '*.ts' '*.tsx' '*.sh'` |
+| **Runtime-coupled names**  | filename grep: `find . -name '*-dmr.*' -o -name '*-ollama.*' -o -name '*-openai.*'` (exclude `tests/` and explicit runtime-tagged fixtures) | same |
+| **Inline lookup tables**   | `grep -cE '^\s*(case\|match)\b\|=> *["'\'']' <file> | awk '$1>3{...}'` — branches > 3 should externalize per `DA-003` | same |
 
 Emit Phase 0 output in the `REVIEW-PHASE-0` block (schema:
 [`~/.skills/reviews/schemas.md`](../reviews/schemas.md)):
@@ -247,6 +251,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 | [`redundancy-watcher.md`](redundancy-watcher.md)       | Blocks duplicate implementations at write time           | Before any new file or export |
 | [`layer-boundary-critic.md`](layer-boundary-critic.md) | Enforces downward-only imports from AGENTS.md layer cake | Phase 0 when imports change   |
 | [`ARCHITECTURE_DEPTH.md`](ARCHITECTURE_DEPTH.md)       | Architectural depth lens (module/seam/depth/deletion test) | Phase 1 when scope includes multi-module design |
+| [`~/.skills/shared/SKILL_NOISE_TERMS.md`](~/.skills/shared/SKILL_NOISE_TERMS.md) | Skill-internal terms that must not appear in committed artifacts — flag as `scope-leak` | Every Phase 0 (mechanical pass) — scope covers comments, docstrings, path literals, identifiers, config filenames, CI YAML, Makefile, docs |
 
 ---
 

@@ -142,6 +142,16 @@ verbatim. Reviewer suggestions are pre-approved fixes.
 If the comment is ambiguous, implement the smallest reasonable
 interpretation. The user can always ask for more.
 
+**Docstrings and comments must explain *why*, not just label.** When a
+review comment asks for "add a docstring" or "comment this", do not
+ship a bare label drop like `"""ADR-CHAT-1: ..."""` or `# Per
+Constitution P5`. The docstring must say what the code does
+differently and why; an ADR pointer is allowed as a trailing reference
+("Background: docs/ADR-CHAT-1.md"), not as a substitute for the
+explanation. If the comment is "add a docstring" and you cannot
+articulate the why in two sentences, ask the user — adding a label
+without rationale is no better than the missing docstring.
+
 #### 3c. Verify (includes test-staleness check)
 
 Run the project's verification commands after each fix. Detect the
@@ -354,3 +364,19 @@ missed with `tsc --noEmit` or `grep`.
 ### "This could crash / null check"
 Add the null/undefined guard. Do not refactor the surrounding logic.
 Match the existing defensive coding style in the file.
+
+### "Add a docstring" / "Comment this"
+Write prose that explains *why*. The reader can see *what* from the
+signature. If the original code is load-bearing because of a design
+decision recorded in `docs/ADR-*.md`, include the rationale inline
+and add `Background: docs/ADR-XXX.md` as a trailing reference.
+Never ship `"""ADR-XXX: ..."""` alone — the bare label is the
+canonical failure mode `pr-review`'s DC-004 fires on.
+
+### "Rename / strip cycle slug" / "Path coupled to gate"
+The reviewer is asking you to remove a planning-system token (gate
+slug, ticket ID, cycle name) from a long-lived path or identifier.
+Rename to a feature- or scope-based name. For test-artifact roots,
+make the path env-overridable (`PROOF_DIR` env with a stable default).
+Update every referrer in the same commit; `git grep -nE` is your
+friend.

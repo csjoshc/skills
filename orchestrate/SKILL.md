@@ -35,6 +35,36 @@ commit hygiene, SPEC_SPLIT), see the Orchestra repo's own docs:
 `.tickets/` is where Orchestra discovers work items. `AGENTS.md` and
 `STANDARDS.md` supply constraints and conventions for Orchestra's agents.
 
+## Gitignored Orch Directories
+
+These directories are orch-internal and must **never** appear as added files in upstream PRs.
+Ensure `.gitignore` covers all of them:
+
+```
+tests/tickets/   # DEPRECATED staging area — write tests to permanent paths directly
+evidence/        # docker logs, gate artifacts
+proof/           # screenshots, replay transcripts
+.plan/           # PRD + task-sequence from make-prd/antiplan
+.tickets*        # ticket markdown files
+.orchestra*      # orch internal state
+```
+
+**Test authoring rule — write directly to the permanent path:**  
+Never use `tests/tickets/` as a staging area. The ticket's AC→Test Traceability table names
+the destination before BUILD starts; write the file there from the first keystroke.
+
+| Test type | Permanent committed path |
+|---|---|
+| Dockerfile / Helm / nginx / CI workflow regression | `tests/infra/test_<artifact>.py` |
+| Documentation consistency | `tests/docs/test_<topic>.py` |
+| Package unit/integration | `packages/<pkg>/tests/test_<module>.py` |
+| E2E | `tests/template_agent_e2e/` |
+
+The per-file `test_coverage_anchor` + `import agent_guardrails` function handles the orch
+coverage gate for YAML/Dockerfile-only diffs — no `conftest.py` shim needed.
+
+PRs that include `tests/tickets/`, `evidence/`, or `proof/` as **added** files must be blocked at review.
+
 ## Ticket File Format
 
 Every ticket lives under `<project-root>/.tickets/` and starts with YAML
@@ -60,6 +90,12 @@ Describe the user-visible outcome.
 - Given ...
 - When ...
 - Then ...
+
+## Docs to Update
+
+- [ ] `path/to/doc.md` — what to change there
+- [ ] `path/to/diagram.mmd` — what to update
+<!-- Or "- [ ] None — internal change" when truly nothing user-visible -->
 ```
 
 Frontmatter fields:
@@ -87,7 +123,28 @@ Before calling `orch run`, verify:
 - Ticket frontmatter is valid YAML
 - Every `Depends-On:` entry refers to an existing ticket slug
 - Body includes concrete, observable acceptance criteria
+- Body includes a `## Docs to Update` section (or an explicit "None — internal change")
 - `AGENTS.md` and `STANDARDS.md` are present if the project relies on them
+
+### Source-prose hygiene scan (before BUILD)
+
+Before any BUILD ticket starts, scan the working tree for skill-internal
+scaffolding vocabulary that would leak into committed code if the ticket
+mandates touching those files. This is the same patterns set as
+[`~/.skills/shared/SKILL_NOISE_TERMS.md`](../shared/SKILL_NOISE_TERMS.md):
+
+```bash
+# Run from the project root. Excludes planning artifacts (.tickets, .plan, .handoff, .orchestra)
+# and historical proof/.
+git grep -nE '(ADR-[A-Z0-9-]+|T-[0-9]{3,}|FR-[0-9]+|NFR-[0-9]+|RISK-[0-9]+|IG-[0-9]+G[0-9]*|[0-9]+G[0-9]+|Slice [0-9]+|Constitution P[0-9]+|AP-[0-9]+)' \
+  -- '*.py' '*.ts' '*.tsx' '*.js' '*.mjs' '*.sh' '*.md' '*.mmd' '*.yaml' '*.yml' \
+  ':!.tickets' ':!.plan' ':!.handoff' ':!.orchestra' ':!docs/ADR-*' ':!proof/' \
+  | head -40
+```
+
+Pre-existing hits are not a hard block, but the ticket author should
+record them in the ticket's `## Notes` so the BUILD phase doesn't
+inadvertently propagate the pattern to new files.
 
 ## Common Intake Mistakes
 
@@ -95,6 +152,8 @@ Before calling `orch run`, verify:
 - Writing vague tickets with no observable acceptance criteria
 - Referencing dependencies that do not exist yet
 - Putting tickets outside `.tickets/`
+- Naming proof / verify / fixture files after the ticket itself (`scripts/verify-T-732.sh`, `proof/4G-ui-cycle/`) — these names rot once the ticket closes; use feature- or test-scoped names and make per-cycle directories env-overridable
+- Pasting review-time finding codes (`F-001`, `RISK-NN`, `AP-NN`, `Pattern 12`) into source code or doc bodies that the ticket mandates — those labels belong in commit messages and PR threads
 - Manually writing handoff files — Orchestra manages `.orchestra/` artifacts itself
 
 ## CLI Invocation

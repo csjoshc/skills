@@ -121,6 +121,20 @@ The exact commands depend on what the repo already uses; do not guess package ma
 
 ---
 
+## 0d. Identifier + doc-staleness audit (forks / inherited projects)
+
+Run two grep scans before declaring onboarding done: (1) **identifier
+scope scan** for ADR labels, ticket IDs, Constitution principles, and
+gate/slice/cycle slugs that leaked into committed source / docstrings
+/ config filenames / test artifact paths; (2) **doc-stale-ness scan**
+for `docs/` and README pages referencing deleted or renamed entities.
+Both become handoff debt items, not blockers. Add a `STANDARDS.md` /
+`AGENTS.md` note stating planning-system IDs belong in commit messages
+and PR threads, never in committed prose. Full grep commands +
+classification + template: [`IDENTIFIER_AND_DOC_STALENESS.md`](IDENTIFIER_AND_DOC_STALENESS.md).
+
+---
+
 ## 1. `AGENTS.md` — canonical agent instructions
 
 This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `CLAUDE.md`, `GEMINI.md`) are thin shims that reference it.

@@ -12,6 +12,7 @@ domain, explicit checklist threshold, and evidence requirements.
 - Lens 4 — Test analyzer
 - Lens 5 — Spec-traceability auditor
 - Lens 6 — Architectural-drift auditor
+- Lens 7 — Dead-weight & workaround apology
 - Validation pass
 - Deduplication rules
 - Issue output format
@@ -269,6 +270,100 @@ or similar) or contain `no-plan-available` verbatim.
 
 ---
 
+## Lens 7 — Dead-weight & Workaround Apology
+
+**Role:** Operational hygiene reviewer — compose-and-config archaeologist
+
+**Focus:** Diff-time evidence that the system has drifted from its
+canonical operator flow. Idle services kept "for completeness", config
+defaults the operator path never uses, override files that apologize
+for diverging from the base, and `depends_on` edges that no longer
+gate anything. This lens is the PR-time counterpart of antiplan
+**AP-21 (Requirement Drift / Apologetic Workaround)**: AP-21 is the
+design-time gate, Lens 7 is the after-the-fact evidence detector.
+
+This lens fires on PRs that touch `docker-compose*.{yml,yaml}`,
+`Dockerfile`, Helm charts, env files (`.env*`, `*.env.example`),
+service definitions, `vite.config.*`, `next.config.*`, `nginx.conf`,
+or any "stack-up" / "local-stack" script. It also fires on PRs whose
+description claims to "improve the dev loop" or "fix the demo"
+without removing the cruft that caused the original drift.
+
+**Check for:**
+
+- Service / container / process declared in the default boot path
+  (no profile gate, no env flag) but never targeted by the canonical
+  operator flow (no env var resolves to it, no client URL points at
+  it, no curl in the README references it)
+- Override / overlay file (`docker-compose.override.yaml`, `*.local.*`,
+  `*.example` next to a committed `*.real`) whose comments explain
+  how to "restore", "fall back to", or "re-enable" the base design
+- `depends_on` / `requires` / `blocks` edge in the base config that
+  an override silently removes, reroutes, or breaks — and the PR does
+  not fold the override into the base
+- Config default whose value the canonical operator path doesn't use
+  (base file says `OLLAMA_BASE_URL=http://ollama:11434`; every actual
+  run uses `host.docker.internal:11434` via override)
+- Gitignored file in the working tree that documents how the system
+  actually works — the divergence is load-bearing but unversioned
+- Comment block ≥5 lines explaining "why we keep X", "this is no
+  longer used but…", "for an earlier attempt", or "harmless to leave
+  in case"
+- Healthcheck whose success doesn't imply participation (e.g.
+  `ollama list >/dev/null` passes even when no model is loaded and
+  no client is connected)
+- Constants, classes, or imports kept "for compat" with no named
+  consumer in the diff or in `git log`
+
+**Do not flag:**
+
+- Optional features behind explicit `--profile <X>`, env opts, or
+  feature flags the operator must enable
+- Migration-window code with a dated removal note
+  (`// remove after 2026-Q3 cutover` or a linked deprecation ticket)
+- Test fixtures, fakes, or mocks intentionally kept for tests
+- Logging / instrumentation that observes a flow without joining it
+- Standby / failover services that the README documents as
+  intentionally idle with a named trigger (e.g. "promoted on primary
+  health failure")
+- Code paths whose only consumer is a CI job named in the PR
+
+**Checklist — report only if 4 of 5 are YES:**
+
+| #   | Criterion                                                                                                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | The dead-weight artifact is in the PR diff, OR the PR claims to improve this code path while leaving the artifact untouched                                                              |
+| 2   | The canonical operator flow (per README, PR description, or stack-up script) does not traverse the flagged artifact                                                                      |
+| 3   | No env var / profile selection / config flag ties the artifact to a named operator persona today (the diff or README cites a CI job by file, a teammate by handle, or a deployment env)  |
+| 4   | The artifact's comment block, healthcheck, boot order, or `depends_on` edge misleads a future reader about its participation                                                             |
+| 5   | `suggested_fix` removes the artifact, profile-gates it, or folds the override back into the base — it does not paper over with a longer comment, a stricter healthcheck, or a TODO note  |
+
+Criterion #5 closes the *apology-deepens-the-debt* pathology: a
+reviewer flags the dead container; the author responds by adding three
+more lines of comment explaining why it's kept. That's AP-21 squared.
+Acceptable fixes: delete the service, gate it behind its own profile
+with a named operator persona for the profile, or roll the override
+into the base so the topology is honest.
+
+**Severity labels:**
+
+- CRITICAL: 5/5 YES — the artifact runs, passes healthcheck, and
+  misleads operators (the canonical AP-21 case)
+- HIGH: 4/5 YES
+- MEDIUM: below threshold, do not report
+
+**Finding shape:** `category: Operational Hygiene` with
+`decidable_at: design` (the design-time gate is antiplan AP-21).
+`proof:` must cite the specific override/base/comment pair as a
+quoted excerpt plus a one-line reproducer (e.g. "with `--profile chat
+up` and override applied, `docker inspect --format
+'{{.NetworkSettings.Networks}}' ollama-1` shows the service running;
+`docker exec c3-chat env | grep OLLAMA_BASE_URL` shows
+`host.docker.internal`, so the network the container joins serves no
+client").
+
+---
+
 ## Validation Pass
 
 Every issue that passed a lens threshold gets a second validation pass.
@@ -291,9 +386,16 @@ When in doubt, validate rather than dismiss.
    - Bug
    - Error Handling
    - Architectural Drift
+   - Operational Hygiene
    - Standards
    - Test Gap
    - Scope/Traceability
+
+   When Lens 7 (Operational Hygiene) and Lens 6 (Architectural Drift)
+   flag the same artifact, prefer Drift if a plan link is present and
+   the plan made a topology decision; prefer Operational Hygiene if
+   the divergence is between the base config and an override file
+   with no plan involvement.
 
 ---
 

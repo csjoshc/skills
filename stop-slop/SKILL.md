@@ -18,7 +18,7 @@ Eliminate predictable AI writing patterns from prose.
 
 3. **Use active voice.** Every sentence needs a human subject doing something. No passive constructions. No inanimate objects performing human actions ("the complaint becomes a fix").
 
-4. **Be specific.** No vague declaratives ("The reasons are structural"). Name the specific thing. No lazy extremes ("every," "always," "never") doing vague work.
+4. **Be specific.** No vague declaratives ("The reasons are structural"). Name the specific thing. No lazy extremes ("every," "always," "never") doing vague work. No architectural metaphors ("seam," "layer," "pipeline," "single source of truth," "first-class," "load-bearing," "non-trivial") that substitute for a concrete name — name the class, function, file, or interface. If a doc claims to be runtime- or vendor-agnostic, scan it for product names ("Docker Model Runner," "Ollama") that contradict the claim.
 
 5. **Put the reader in the room.** No narrator-from-a-distance voice. "You" beats "People." Specifics beat abstractions.
 

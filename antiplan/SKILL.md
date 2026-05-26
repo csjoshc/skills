@@ -24,7 +24,7 @@ On invocation, your first response MUST begin with this numbered checklist,
 each item marked ✓ or ✗ with reason. Missing items = malformed response.
 
 ```
-1. [✓/✗] Persona adopted (alignment-mode rules active)
+1. [✓/✗] Requirement-drift gate active (AP-21: any override / overlay file in scope triggers re-interrogation of the base file; idle components / apologetic comments will be named)
 2. [✓/✗] Brownfield scan run (✗ reason: greenfield | no codebase detected)
 3. [✓/✗] Research artifact written to file (BROWNFIELD-CONTEXT block present)
 4. [✓/✗] Constitution requested (3–5 principles)
@@ -97,8 +97,9 @@ Answer against the proposed change:
 > 4. What **signal** will tell us whether to keep, rollback, or revise it?
 
 **Output:** each sub-question ≤3 sentences; name any anti-pattern hit
-(AP-1 through AP-13) inline; end with `→ spec-writer` or `→ tdd`. If any
-answer triggers the Assumption Approval Gate, stop and surface the gate.
+(AP-1 through AP-23 — see `references/anti-patterns.md` for the full
+catalog) inline; end with `→ spec-writer` or `→ tdd`. If any answer
+triggers the Assumption Approval Gate, stop and surface the gate.
 
 **Do not** produce a PRD, ticket DAG, or research artifact in Fast Mode.
 If the four answers reveal unresolved architectural questions, escalate to
@@ -188,26 +189,51 @@ Better than a speculative DAG that causes a rebuild-discard loop.
 
 After antiplan completes:
 
-### Pre-handoff validation (USER RUNS THIS)
+### Pre-handoff validation (AGENT RUNS THIS, shows raw output)
 
+Before declaring the cycle ready for spec-writer, the agent MUST run
+`validate.py` itself and surface the unedited stdout/stderr in chat.
+The agent does not paraphrase or summarize the result — the user
+reads the actual exit code and any failures from the tool transcript.
+
+```bash
+python3 /Users/joshc/.skills/antiplan/validate.py \
+  --project-dir <absolute repo path> \
+  --tickets .plan/<task-sequence-file>.md \
+  --prd .plan/<PRD-file>.md \
+  --challenger-report .plan/<challenger-report-file>.md \
+  --coverage-report .plan/<coverage-audit-file>.md
 ```
-─── HANDOFF CHECK (user runs this, not the agent) ───
-python /Users/joshc/.skills/antiplan/validate.py \
-  --project-dir <repo> \
-  --tickets .plan/task-sequence.md \
-  --prd .plan/PRD.md \
-  --challenger-report .plan/challenger-report.md \
-  --coverage-report .plan/coverage-audit.md
-If exit code ≠ 0, the plan is NOT ready. Do not proceed to spec-writer.
+
+**Interpreter portability:** use `python3`, NOT `python`. macOS does
+not ship `python` on PATH by default; many users run inside a project
+`.venv`, where `python` resolves but `python3` is universal. If
+`python3` lacks `pyyaml` (`ModuleNotFoundError: No module named 'yaml'`),
+fall back to the project venv interpreter explicitly:
+
+```bash
+<project>/.venv/bin/python /Users/joshc/.skills/antiplan/validate.py ...
 ```
+
+**Recovery loop:** if exit ≠ 0, the agent MUST NOT proceed to
+spec-writer. Diagnose the failure category and fix the underlying
+artifact OR the rubric, then re-run. Common failures:
+
+- `paths_resolve` — a Files: path in the task sequence does not exist on disk; fix the path or mark the ticket CREATE
+- `challenger_report missing rows` — Challenger subagent did not emit a row for every AP in `rubric.yaml`; rewrite the report
+- `Challenger ... evidence must be a verbatim quote >=10 chars` — BLOCK/WARN row has truncated evidence; widen the quote
+- `Coverage report missing re-derivation table` — Coverage subagent used wrong header shape; the validator regex requires `| ID | Set | ... |` and `| ID | Verdict | ... |` (case-sensitive on `ID`, `Set`, `Verdict`)
+- `Coverage RE_DERIVED count too low (<5)` — auditor skimmed the transcript; re-derive more requirements
+- `rubric.yaml` YAML parse error — fix the rubric (rare; usually a quoted scalar issue at bullet start)
+
+The user can interrupt at any point to take over — but the default is
+the agent drives validation to green before declaring handoff.
 
 The `--challenger-report` flag verifies that every AP in `rubric.yaml`
 has an audit row with verbatim evidence (option 3 — disk-backed rubric
 + subagent + mechanical coverage check). The `--coverage-report` flag
 verifies the second-pass transcript-vs-PRD diff (option 4). Light-mode
 runs may omit `--coverage-report`; Standard and Heavy must include it.
-
-Do not trust the agent's claim that the plan is ready. Run the script.
 
 ### Context Seed Loader
 
