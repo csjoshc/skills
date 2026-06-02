@@ -1,4 +1,5 @@
 .backup/
+/c3*/
 .system/
 .qwen/
 .orchestra.db
