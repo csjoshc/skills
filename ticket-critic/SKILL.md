@@ -100,7 +100,7 @@ intent**. A test written after the implementation describes **what the
 code happens to do**. Locking the name and assertion shape at ticket
 time forces the intent-first orientation.
 
-## 14-Pattern Audit Workflow
+## 18-Pattern Audit Workflow
 
 Use [PATTERNS.md](PATTERNS.md) as the canonical checklist.
 
@@ -112,13 +112,61 @@ For each pattern:
 
 Do not skip any pattern.
 
-Patterns 11–14 cover container-image and Kubernetes deployment failure
-modes that are invisible at unit/template-render time and only surface
-when the image runs in a real pod (busybox/coreutils drift, missing
-write-path mounts under ROFS, NetworkPolicy label-selector silent
-mismatch, privileged-port bind under drop-ALL). Always check these for
-tickets that touch a `Dockerfile`, a `helm/` chart, or a
-`securityContext` block.
+**Pattern coverage:**
+- Patterns 1–10: foundational ticket hygiene (scope, dependencies,
+  architecture, success criteria, tests)
+- Patterns 11–14: container-image and Kubernetes deployment failure
+  modes that are invisible at unit/template-render time and only
+  surface when the image runs in a real pod. Always check these for
+  tickets that touch a `Dockerfile`, a `helm/` chart, or a
+  `securityContext` block.
+- Pattern 15: source-prose hygiene (naming, identifiers, leaked
+  planning labels)
+- Pattern 16: AC shell commands must be runnable in the target
+  environment (binary availability, path math, version flags)
+- Pattern 17: operator entry-point smoke gate (AP-26 gatekeeper)
+- Pattern 18: subagent claims need adversarial evidence review
+  (delegates to `/evidence-reviewer` skill)
+
+### Scale: delegate per-ticket audits to subagents when N > 5
+
+A single-context audit of 18 patterns × N tickets has context-rot
+cost above ~5 tickets. For ticket sets larger than 5, **delegate**:
+
+```
+For each ticket (in parallel where possible):
+  Spawn an `Agent(subagent_type="general-purpose", ...)` whose
+  prompt contains:
+    - The ticket file (absolute path)
+    - The relevant PATTERNS.md subset (patterns whose detection
+      signals match the ticket's surface — see "Pattern
+      relevance" below)
+    - PRD.md and brownfield-context.md for cross-reference
+    - Return contract: one structured verdict block per pattern,
+      with PASS / AUTO-RESOLVED / BLOCKER + ≤2-line evidence.
+
+Parent ticket-critic aggregates verdicts into a single
+`.plan/critic-report.md`. Subagents that return BLOCKER halt the
+parent until the user resolves.
+```
+
+**Pattern relevance** — not every ticket needs every pattern. The
+parent ticket-critic picks the relevant subset per ticket based on
+declared `Files:`:
+
+| Ticket surface | Always-relevant patterns | Conditionally relevant |
+|---|---|---|
+| Code-only | 1–10, 15, 16, 18 | — |
+| Dockerfile / image | 1–10, 11, 12, 14, 15, 16, 18 | 13 if NetworkPolicy |
+| helm / k8s | 1–10, 11–14, 15, 16, 18 | — |
+| Makefile / wrapper script | 1–10, 15, 16, 17, 18 | 11, 12 if image touched |
+| Compose | 1–10, 15, 16, 17, 18 | — |
+| CI workflow | 1–10, 15, 16, 18 | 11, 23 if publishes images |
+| Docs only | 1–7, 15 | — |
+| Integration gate | 1–10, 15, 16, 17, 18 | full container set if Docker invoked |
+
+The parent ticket-critic includes the relevance table in the
+subagent's brief so each subagent has tight scope.
 
 ## Auto-Resolution Policy
 
