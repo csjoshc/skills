@@ -1379,3 +1379,195 @@ direct AP-25 self-contradiction.
   alias × runtime. The code path that consumes the catalog stays
   vendor-agnostic; the catalog itself names vendors because that's
   its job.
+
+
+## AP-26: Operator Entry Point Not Smoke-Tested
+
+**Definition:** A ticket introduces a user-facing command — a Makefile
+target, wrapper script, docker compose invocation, or CLI entry point
+that the operator is supposed to type to bring a system up — but no
+acceptance criterion in any ticket runs the *literal* command from a
+fresh-clone state and asserts it exits 0. Every individual piece may
+have been verified (the docker build succeeds, the ASGI route returns
+200, the unit tests pass), but the wrapper invocation that ties them
+together has never been exercised end-to-end. The wrapper ships
+broken in a way that's invisible to every gate.
+
+AP-26 is the wrapper-and-compose cousin of AP-23 (Publish ≠ Deploy).
+AP-23 catches "image pushed but never started." AP-26 catches "wrapper
+written but never invoked." Both come from gating on the constituent
+artifact (image, target body) rather than the operator action that
+consumes it.
+
+**Detection signals:**
+- DAG introduces a user-facing command but no AC in any ticket runs
+  the literal command from a fresh-clone state and asserts exit 0
+- Per-ticket ACs verify infrastructure pieces (docker build, ASGI
+  request, unit tests) but no AC executes the wrapper invocation an
+  operator would actually type (`make compose-up`, `./deploy.sh`,
+  `make demo`)
+- Compose / Makefile / wrapper-script ticket references "profiles",
+  "services", or "env_file" but no AC asserts that the operator
+  invocation produces *only* the intended services / env / state
+  (positive AND negative — intended up, unintended NOT up)
+- Subagent verification path for an operator-target ticket uses an
+  explicit-service or sidestep invocation (`docker compose up svc1
+  svc2`) instead of the wrapper target the operator will type (`make
+  compose-patent`) — the sidestep masks bugs in the wrapper
+- Compose stack adds new profile-tagged services to a root compose
+  that has default-profile services; no AC scopes the `up` invocation
+  to the new profile's services explicitly AND no AC verifies the
+  default services do NOT get auto-up'd by `--profile X`
+- Ticket DAG defers operator validation to a downstream integration
+  gate that is itself skip-prone (Docker not running, DB unreachable,
+  Ollama unavailable) — when the gate skips, the operator command is
+  never end-to-end-validated
+
+**Challenge questions:**
+- "Type out, character-for-character, the first command an operator
+  runs to bring this up from a fresh clone. Now find the AC that
+  executes that exact string. If you can't, AP-26 is live."
+- "Did the build subagent for this ticket run the wrapper target, or
+  did it run an explicit invocation that sidesteps the wrapper? If
+  sidestep, the wrapper is unverified."
+- "When the downstream integration gate skips because Docker / DB /
+  Ollama isn't available, what code path verifies the wrapper? If
+  the answer is 'the operator', AP-26 is live."
+- "If a maintainer adds a new default-profile service to the root
+  compose tomorrow, does this wrapper still work? If your AC scopes
+  with `--profile X` only and not an explicit service list, the
+  answer is no."
+
+**Historical example:** A local-LLM migration consolidated the
+patent-search app's docker-compose into a root compose under
+`profiles: ["patent"]`. The new `make compose-patent` Makefile target
+ran `docker compose --profile patent up -d --build` without an
+explicit service list. The integration-gate tickets (T09, T12) used
+explicit-service invocations during their own verification. The
+operator's first invocation of `make compose-patent` failed
+immediately because the root compose also had services without
+profiles (a pre-existing toolkit reference stack) whose Dockerfile
+had a separate pnpm install failure. The wrapper was unverified by
+every AC in the DAG; the operator was the first to type the literal
+string, and the bug surfaced on contact.
+
+**Prevention:**
+- **Every wrapper ticket has a wrapper-invocation AC.** If the ticket
+  introduces `make X`, an AC must read: "Given a fresh-clone state
+  (no caches assumed), when `make X` is run from the project root,
+  then exit 0 AND only the intended state is produced."
+- **Negative ACs for profile-scoped wrappers.** When the wrapper
+  selects services by profile, the AC must verify that
+  non-profile-tagged or other-profile services are *not* started.
+  `docker compose --profile X ps` should show only the intended set.
+- **Subagent briefs name the wrapper, not the sidestep.** When the
+  build subagent verifies its own work, the verification command
+  must be the operator's wrapper, not the explicit form. If a
+  sidestep is necessary for the subagent's environment, that's a
+  signal the wrapper itself can't be verified here — escalate to a
+  named gate that *can* verify it.
+- **Skip-prone gates have wrapper-invocation fallbacks.** If the
+  integration gate that exercises the wrapper depends on optional
+  infrastructure, the skip path must be loud (logged at WARNING)
+  AND a hermetic alternative must exercise as much of the wrapper as
+  possible (e.g., the wrapper's first phase that doesn't require the
+  optional dep).
+
+
+## AP-27: Brownfield Surface Lacks Runtime Contracts
+
+**Definition:** The brownfield context document enumerates files at
+their paths — surface table columns are "path", "role", "transitive
+dependencies" — but doesn't capture the *runtime invariants* for each
+surface: Pydantic schema constraints (min_length, max_length, regex),
+enum value lists, base-image package availability, env-var
+requirements, profile membership, default-vs-config behavior. The
+document is a paths map; the spec-writer and downstream subagents
+inherit the paths but have no contract for what those paths actually
+*do* at runtime. Bugs surface mid-build when the subagent collides
+with a contract the brownfield doc never captured.
+
+AP-27 is the upstream cousin of every "subagent caught a deviation
+mid-build" report. The deviation isn't an agent failure — it's a
+brownfield failure. If the contract had been captured at Phase 0,
+the spec would have prescribed the right approach the first time.
+
+**Detection signals:**
+- brownfield-context.md enumerates files at paths but doesn't capture
+  the runtime invariants for each — Pydantic schema constraints,
+  enum value lists, base-image package availability, env-var
+  requirements, profile membership
+- Brownfield doc lists a path like `app/X/Y.py` — verifier (Read or
+  ls) was not run to confirm the path exists on disk; spec-writer
+  inherits an incorrect path and downstream subagents must correct
+  mid-build
+- Brownfield doc references model / enum / Literal types by name but
+  doesn't enumerate the actual values or field count — downstream
+  tickets reason about "the 6 fields" when the schema has 9, or
+  assume enum values that aren't there
+- Brownfield doc captures a fact like "no profile" or "no Dockerfile"
+  or "uses pnpm 8" as a path attribute but doesn't draw the
+  implication — services without profile auto-up under any
+  `--profile X`; absent Dockerfile = wrapper command will fail; pnpm
+  version mismatch = lockfile install will fail
+- Brownfield doc lists base images without inventorying which CLI
+  binaries are present (curl, wget, jq, python, nc) — downstream
+  healthcheck or startup commands prescribed in tickets reference
+  binaries not in the image
+- Brownfield doc was authored from prose / memory / a different
+  repo's mental model rather than from `grep` + `Read` against the
+  actual target repo; paths and types drift
+
+**Challenge questions:**
+- "For every path in the brownfield surface table, did you Read /
+  ls / grep against the actual repo? If any were authored from
+  memory or assumption, AP-27 is live."
+- "For every model / schema / enum named in the brownfield doc, do
+  you have the actual field count, value list, or constraint set
+  enumerated? If the doc says 'PatentEnrichment', does it list the
+  9 fields?"
+- "For every fact like 'no profile' / 'no Dockerfile' / 'uses
+  pnpm@8', does the doc draw the implication? 'No profile' means
+  auto-up; 'no Dockerfile' means wrapper-target gap; 'pnpm@8' means
+  lockfile compatibility risk."
+- "For every base image you'll inherit (`python:3.13-slim`,
+  `nginx:alpine`, `node:20-alpine`), do you know which CLI binaries
+  are present? If a ticket prescribes `curl http://X/health`, is
+  curl in the image?"
+
+**Historical example:** A brownfield-context.md for a local-LLM
+migration listed `app/ingestion/silver_storage.py` as the location
+of the `get_pending_gold` query. The actual file was at
+`app/storage/silver_storage.py`. The spec-writer copied the wrong
+path forward into T04. The build subagent discovered the correct
+path at build time and patched silently in its final report. The
+same brownfield doc named `PatentEnrichment` as the Gold schema
+but didn't enumerate its 9 fields; the ticket prose said "all 6
+fields" and the build subagent had to fill in 9. The doc captured
+the root compose's "no profile" toolkit services as a fact but
+didn't draw the implication ("operator wrapper must scope services
+explicitly") — the operator hit the gotcha on first invocation.
+
+**Prevention:**
+- **Brownfield Phase 0 = grep + Read, not prose.** Every path in the
+  brownfield surface table must be backed by an actual file-read or
+  glob during Phase 0. The authoring agent's transcript must show
+  the verifier ran.
+- **Runtime invariants are columns in the surface table.** For every
+  surface, capture: schema constraints (`min_length=4`), enum values
+  (`{pending, complete, failed}`), profile membership (`no profile`
+  + implication: "auto-up gotcha"), base-image binaries available
+  (`nginx:alpine has wget, no curl`), env-var requirements
+  (`requires DATABASE_URL or fails fast at lifespan`).
+- **Implications, not facts.** For every captured fact, the doc must
+  also state the consequence. "No profile" alone is not enough;
+  "No profile — services auto-up under `--profile X`; operator
+  wrapper must use explicit service list" is the right capture.
+- **Schema enumeration is mandatory for any type a ticket will
+  construct.** If T04 will build a `PatentEnrichment` fallback
+  instance, the brownfield doc must list the 9 fields and their
+  types, not just name the schema.
+- **Path verification gate.** Before brownfield-context.md is
+  accepted, a verifier (script or subagent) must `ls` every path in
+  the surface table and report mismatches. validate.py can be
+  extended to check this.

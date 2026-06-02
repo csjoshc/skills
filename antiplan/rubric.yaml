@@ -245,3 +245,47 @@ rules:
       - Multi-image matrix publish where each image's runtime is exercised only by a manual follow-up ("on a clean mac, the operator runs docker run") or by the terminal gate — not by a CI job in the publish workflow
       - Dockerfile changes a runtime layer (base image, entrypoint, user, workdir) but no AC in the publish ticket exercises the runtime — only the build
       - Workflow's permissions include packages write (push capable) but no companion job uses docker pull + docker run to validate the artifact it just pushed
+
+  - id: AP-24
+    name: Cycle-Path Coupling
+    phase: design
+    detection_signals:
+      - Committed paths matching `proof/<N>G<n>-*`, `proof/[Ss]lice-<n>/`, `evidence/<cycle-slug>/`, or any artifact root whose top-level directory contains a gate ID, slice number, or ticket-ish slug
+      - Scripts named `scripts/verify-<ticket-id>.sh`, `scripts/test-<gate-slug>.sh`, `tools/<cycle>-smoke.sh`
+      - Test files like `tests/tickets/test_T732_*.py`, `tests/<cycle>/test_*.py` (a `tests/tickets/` directory is itself an AP-24 marker — tests should live by their type, not their ticket)
+      - Doc filenames `docs/PRD-<cycle>.md`, `docs/<gate>-cutover.md` kept in the long-lived `docs/` tree instead of `.plan/` or `.tickets/`
+      - e2e configs that hardcode `PROOF_DIR = "../proof/<gate-slug>/..."` in playwright/jest/cypress configs instead of taking the path from env
+      - Diff stats that show a new top-level directory whose name encodes the ticket lifecycle (e.g. `4G-ui-cycle/`, `IG-7G4/`) rather than the feature
+
+  - id: AP-25
+    name: Vendor Coupling in Agnostic Identifier
+    phase: design
+    detection_signals:
+      - Config files named `*-<vendor>.<ext>` (`agent.local-dmr.yaml`, `provider-ollama.json`) when the spec says provider/runtime is selected by env var or CLI flag
+      - Class / function / module names containing a vendor token when the same code paths handle multiple vendors (`OllamaClient` in a module that also handles vLLM, ChatGPT, and Bedrock)
+      - Env vars / config keys with vendor prefixes (`OLLAMA_BASE_URL`, `DMR_MODEL`) when the spec defines a runtime-agnostic surface — the project's own naming convention should be `LLM_BASE_URL` / `LLM_MODEL`
+      - Doc page titles "Local dev with Docker Model Runner" when the doc actually describes a runtime-agnostic startup flow whose only DMR-specific content is the default `base_url`
+      - Mermaid diagram nodes labeled `Docker Model Runner` / `host.docker.internal:11434` in an architecture doc that's supposed to read at the abstraction level
+      - Test data tags hardpinning the vendor's source ref (`EMBEDDING_PULL_TAG = "hf.co/unsloth/..."`) in a doc-test that's supposed to assert the alias is documented
+
+  - id: AP-26
+    name: Operator Entry Point Not Smoke-Tested
+    phase: design
+    detection_signals:
+      - DAG introduces a user-facing command (make target, wrapper script, docker compose target) but no AC in any ticket runs the literal command from a fresh-clone state and asserts exit 0
+      - Per-ticket ACs verify infrastructure pieces (docker build, ASGI request, unit tests) but no AC executes the wrapper invocation an operator would actually type ("make compose-up", "./deploy.sh", "make demo")
+      - Compose / Makefile / wrapper-script ticket references "profiles", "services", or "env_file" but no AC asserts the operator invocation produces only the intended services / env / state (positive AND negative — intended up, unintended NOT up)
+      - Subagent verification path for an operator-target ticket uses an explicit-service or sidestep invocation (docker compose up svc1 svc2) instead of the wrapper target the operator will type (make compose-patent) — the sidestep masks bugs in the wrapper
+      - Compose stack adds new profile-tagged services to a root compose that has default-profile services; no AC scopes the up invocation to the new profile's services explicitly and no AC verifies the default services do NOT get auto-up'd by --profile X
+      - Ticket DAG defers operator validation to a downstream integration gate that is itself skip-prone (Docker not running, DB unreachable, Ollama unavailable) — when the gate skips, the operator command is never end-to-end-validated
+
+  - id: AP-27
+    name: Brownfield Surface Lacks Runtime Contracts
+    phase: research
+    detection_signals:
+      - brownfield-context.md enumerates files at paths but doesn't capture the runtime invariants for each — Pydantic schema constraints (min_length, max_length, regex), enum value lists, base-image package availability, env-var requirements, profile membership
+      - Brownfield doc lists a path like app/X/Y.py — verifier (Read or ls) was not run to confirm the path exists on disk; spec-writer inherits an incorrect path and downstream subagents must correct mid-build
+      - Brownfield doc references model / enum / Literal types by name but doesn't enumerate the actual values or field count — downstream tickets reason about "the 6 fields" when the schema has 9, or assume enum values that aren't there
+      - Brownfield doc captures a fact like "no profile" or "no Dockerfile" or "uses pnpm 8" as a path attribute but doesn't draw the implication — services without profile auto-up under any --profile X; absent Dockerfile = wrapper command will fail; pnpm version mismatch = lockfile install will fail
+      - Brownfield doc lists base images without inventorying which CLI binaries are present (curl, wget, jq, python, nc) — downstream healthcheck or startup commands prescribed in tickets reference binaries not in the image
+      - Brownfield doc was authored from prose / memory / a different repo's mental model rather than from grep + Read against the actual target repo; paths and types drift

@@ -594,3 +594,264 @@ Evidence: <path/filename> at [file:line]; SPEC asserts <agnosticism>
 at [file:line]; no `## Docs to Update` section.
 ````
 
+
+
+## Pattern 16: AC shell commands must be runnable in the target environment
+
+**Why this matters.** ACs that prescribe shell commands as their
+verifier are only valid if the command itself can execute. If the
+chosen base image lacks the binary, the path math (`../../`) is off
+by one level, the env-var is unset, or the CLI flag requires a newer
+version than the runner has, the AC will silently never execute and
+the ticket will pass review while shipping a broken verification
+path. This is the single most common reason that "all ACs PASS" reports
+don't predict working operator behavior.
+
+**Detection signals:**
+
+- AC verifier references a CLI binary (`curl`, `wget`, `jq`, `nc`,
+  `actionlint`, `make`) but the ticket doesn't verify the binary
+  is present in the runtime environment (container base image,
+  CI runner default packages, dev host expectations)
+- Shell scripts include path math (`$SCRIPT_DIR/../../`,
+  `cd ../..`) — the number of `../` doesn't match the actual
+  depth of the script from the implied target directory
+- AC verifier invokes a Makefile target — the ticket doesn't
+  show or reference the target body to confirm it works (the
+  target itself may be broken in ways that aren't visible in
+  the AC line)
+- CLI tool used with a `--flag` whose support depends on version
+  (`docker compose ps --format json` requires Compose v2.4+;
+  `find -path` is GNU; `sed -i.bak` is BSD-vs-GNU divergent)
+- Command references `localhost` (vs `127.0.0.1`) in a context
+  where IPv4/IPv6 resolution may differ across base images
+  (`nginx:alpine` resolves `localhost` to `::1` first; nginx
+  listens only on IPv4 → "connection refused" from healthcheck)
+- AC verifier depends on env-vars (`$GOOGLE_API_KEY`,
+  `$DATABASE_URL`) but the ticket doesn't enumerate which env
+  the verifier expects to be set
+
+**BLOCK conditions:**
+
+- Container ticket prescribes `curl` healthcheck on an image
+  whose base is known to lack it (`python:slim`, `alpine`-based
+  without explicit `apk add curl`) → **BLOCKED**
+- Bash script uses `$SCRIPT_DIR/../../../..` without an explicit
+  comment showing the absolute path that resolves to →
+  **BLOCKED** (require the comment OR an `assert`-style
+  check)
+- AC verifier expects an env-var that isn't named in the ticket's
+  Verify-commands preamble → **BLOCKED**
+
+**WARN conditions:**
+
+- Command uses a tool that *probably* exists (`make`, `python3`)
+  but isn't explicitly verified — issue **WARN** with a
+  one-line suggestion to add a sanity-check step.
+- `localhost` is used where `127.0.0.1` is safer → **WARN**.
+
+**Block template:**
+
+````markdown
+❌ BLOCKED: Pattern 16 — AC shell command not verified runnable
+
+Issue: AC <N> at [file:line] prescribes <command>. The runtime
+environment (<container base image | CI runner | dev host>) is
+not verified to contain <binary | flag-support | env-var>.
+
+Required before Task 1:
+- [ ] Add a verifier step ahead of the AC command that confirms
+      the binary is present (`command -v <bin>`) or replace with
+      a stdlib alternative (e.g., `python -c "import
+      urllib.request; …"` instead of `curl`).
+- [ ] If path math is involved, add a comment showing the
+      absolute path the `../../` resolves to AND an assertion
+      (`[ "$(basename $(pwd))" = "expected-dir" ] || exit 1`)
+      that fails fast on mis-rooting.
+- [ ] Name every env-var the verifier reads in the ticket's
+      Verify-commands preamble.
+
+Evidence: <command at file:line>; base image <name>; ticket does
+not list <binary>.
+````
+
+
+## Pattern 17: Operator entry point requires end-to-end smoke gate
+
+**Why this matters.** When a ticket introduces a user-facing command
+(make target, wrapper script, docker compose target), every prior
+AC may pass while the command still fails because nothing exercised
+the literal operator invocation. Bugs that survive in this gap are
+usually compose semantics (services without profile auto-up under
+`--profile X`), env-file paths, env-var injection, binary
+availability in the chosen base image, or shell-script path math.
+
+This is the ticket-critic gatekeeper for AP-26 (Operator Entry
+Point Not Smoke-Tested).
+
+**Detection signals:**
+
+- Ticket creates or modifies a Makefile target, wrapper script, or
+  docker compose wrapper intended for operator use
+- No AC in the ticket OR in any named integration gate invokes the
+  operator command literally from a fresh-clone state and asserts
+  exit 0
+- Per-ticket ACs use explicit-service docker compose forms
+  (`docker compose up svc1 svc2`) but the operator target uses
+  `up` without a service list — the explicit form sidesteps the
+  ticket's actual bug surface
+- The downstream integration gate that should exercise this is
+  itself skip-prone (gated on Docker / Ollama / DB availability)
+  — if it skips, the operator command is never end-to-end
+  validated
+- The ticket's own subagent verification used an explicit /
+  sidestep invocation; the wrapper target was not re-tested after
+  the build
+- For profile-scoped wrappers, no AC asserts that
+  non-profile-tagged or other-profile services are *not* started
+
+**BLOCK action:** require an explicit AC in either this ticket or a
+named gate that:
+
+1. Starts from a clean state (no caches assumed;
+   `make down && rm -rf <state-dir>` first)
+2. Runs the literal operator command (`make compose-patent`, etc.)
+3. Asserts exit 0 AND that only the intended side-effects occurred
+   (intended services up, no unintended services started)
+4. Captures stdout/stderr as an artifact under
+   `tests/integration/artifacts/`
+
+For profile-scoped wrappers, require a negative AC pair: positive
+AC = "intended services healthy", negative AC = "other-profile
+or no-profile services NOT running after the wrapper completes".
+
+**WARN action:** if a gate exists but is skip-prone, require the
+skip path to be loud (logged at WARNING level, mentioned in final
+report) AND a hermetic alternative that exercises as much of the
+wrapper as the test environment allows.
+
+**Block template:**
+
+````markdown
+❌ BLOCKED: Pattern 17 — operator entry point not smoke-tested
+
+Issue: Ticket introduces <wrapper-command> but no AC executes the
+literal invocation from a fresh-clone state. Subagent verification
+used <sidestep-command>, which masks bugs in the wrapper.
+
+Required before Task 1:
+- [ ] Add an AC: "Given a fresh-clone state, when `<wrapper-command>`
+      runs from the project root, then exit 0 AND only the intended
+      services / files / env-vars exist."
+- [ ] For profile-scoped wrappers, add a negative AC: "Services
+      outside the targeted profile do NOT run after the wrapper
+      completes."
+- [ ] If the AC is deferred to a downstream gate, link the gate
+      ticket explicitly and verify the gate's own ACs are NOT
+      skip-prone for the wrapper exercise.
+
+Evidence: <wrapper-command at file:line>; <sidestep-command at
+file:line>; no AC ties them together.
+````
+
+
+## Pattern 18: Subagent claims require adversarial evidence review
+
+**Why this matters.** A BUILD subagent's "AC passed" report describes
+what the agent *intended* to do, not necessarily what's true on disk.
+The agent saw its own tool outputs, decided ACs were satisfied,
+flipped Stage to COMPLETE, and the next ticket starts — without anyone
+independently verifying the files exist, the tests actually ran (not
+just `--collect-only`), or the commands actually exited 0.
+
+Observed failure modes in subagent reports:
+- ACs that depend on env (DB, Ollama, network) get marked
+  PASS-via-skip without external verification of the skip path
+- Subagents use sidestep invocations during their own verification
+  (explicit service list when the ticket's actual invocation is
+  broader) — Pattern 17 lives here too
+- Subagents patch files outside the ticket's declared Files: list;
+  the deviation is noted in the final report but not flagged for
+  human review before the next ticket starts
+- Subagent reports cite artifact files at expected paths but the
+  files don't exist on disk OR have suspiciously small size (0
+  bytes, < expected)
+- "All N tests pass" is reported when the test invocation was
+  `pytest --collect-only` (collection succeeded; nothing executed)
+
+**Detection signals:**
+
+- Subagent final report contains words like "SKIPPED" / "marked as"
+  / "documented as" without explicit external evidence that the
+  skipped path is genuinely the right choice
+- Stage flipped to COMPLETE but `git diff` against the prior
+  checkpoint shows files outside the ticket's declared Files: list
+- AC commands the agent claimed to run aren't reproducible from
+  the operator's environment (path differs, binary missing, env
+  unset)
+- Subagent report cites artifact files but they don't exist on
+  disk or have suspiciously small size
+- Cross-ticket dependencies: the ticket's "downstream gate will
+  cover this" claim is unverified — the downstream gate hasn't
+  run yet, or has its own skip-prone path
+
+**BLOCK action (gate before next ticket starts):** spawn an
+adversarial reviewer subagent with read-only access to:
+
+- `git diff` against the prior checkpoint commit
+- the just-completed subagent's final report
+- the artifact files under `tests/integration/artifacts/` (or
+  equivalent)
+- the ticket's ACs (the source of truth — not the subagent's
+  interpretation of them)
+- relevant `docker logs`, `pytest -v` output, server logs if the
+  ticket touched runtime surfaces
+
+The reviewer must produce one of:
+
+- **VERIFIED** — every AC has disk-evidence backing it (file
+  exists, test output shows execution, command exit 0 captured)
+- **DRIFT-DETECTED** — files were patched outside the declared
+  scope, an AC was skipped without justification, or the
+  subagent's claim doesn't match what's on disk
+- **EVIDENCE-INSUFFICIENT** — the artifacts the AC requires don't
+  exist; re-run the AC verification before proceeding
+
+Only **VERIFIED** unblocks the next ticket. Drift and insufficient
+evidence return to the BUILD subagent (or the operator) for
+remediation.
+
+**WARN action:** if running the full reviewer for every ticket is
+too heavy, sample-audit one in three subagent completions; require
+full review on:
+- integration-gate tickets
+- tickets touching infrastructure (compose, Dockerfile, CI workflows)
+- tickets whose subagent report contains the word "deviation",
+  "adapted", "alternative", or "skipped"
+
+**Reviewer protocol:** see
+[`~/.skills/evidence-reviewer/SKILL.md`](~/.skills/evidence-reviewer/SKILL.md)
+for the full evidence-reviewer skill, which is the canonical
+implementation of this pattern.
+
+**Block template:**
+
+````markdown
+❌ BLOCKED: Pattern 18 — subagent claim requires adversarial evidence review
+
+Issue: Ticket <ID> flipped to Stage: COMPLETE by its build subagent,
+but the claim has not been independently verified. The subagent's
+final report contains <signal: "SKIPPED N ACs" | "deviated from
+spec at X" | "files modified outside scope" | etc.>.
+
+Required before next ticket starts:
+- [ ] Invoke `/evidence-reviewer` on ticket <ID>, providing:
+      git diff vs prior checkpoint, the subagent's final report,
+      artifact file paths, ticket ACs.
+- [ ] Reviewer must return VERIFIED. If DRIFT-DETECTED or
+      EVIDENCE-INSUFFICIENT, the build subagent (or operator)
+      remediates and the next ticket waits.
+
+Evidence: <subagent report snippet quoting the deviation>; <git diff
+showing out-of-scope files>; <missing artifact path>.
+````

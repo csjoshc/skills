@@ -62,6 +62,46 @@ listing), not a conceptual or abbreviated name. Use the template:
 The research artifact is not ready for user review if any path is inferred
 rather than observed from the filesystem.
 
+**Hard rule — runtime contracts per surface (AP-27 mitigation):** Every
+surface in the brownfield table must record the runtime invariants
+that downstream tickets will need to honor. A path-only entry is
+incomplete. For each surface, capture as a "Runtime contract" column
+(or as a per-row sub-bullet):
+
+- **Schemas / Pydantic models / Literals:** field count, field
+  names + types, validator constraints (`min_length`, `max_length`,
+  `regex`, `ge`, `le`, custom validators). Don't say "`PatentEnrichment`";
+  say "`PatentEnrichment` — 9 fields: `summary: str`,
+  `commercial_use_cases: list[str]`, …".
+- **Enums / Literal value-sets:** the actual values. Don't say
+  "`enrichment_status` enum"; say "`enrichment_status: Literal['pending',
+  'complete', 'failed']` (will add `'enriched_placeholder'`)".
+- **Compose services:** profile membership AND its implication. Don't
+  say "`mcp-data-server`, no profile"; say "`mcp-data-server` — no
+  profile → auto-up under any `--profile X up`; downstream wrappers
+  must use explicit service list".
+- **Container base images:** which CLI binaries the image ships with
+  by default. Don't say "`nginx:alpine`"; say "`nginx:alpine` — has
+  `wget`, no `curl`; healthcheck commands prescribed downstream must
+  not assume curl".
+- **Settings / env-var surfaces:** which variables are
+  required-vs-optional at startup, and what happens if absent.
+  Don't say "`Settings` class"; say "`Settings.GOOGLE_API_KEY:
+  str | None = None` (optional; absence is fine post-T04 patch)".
+- **Workspace / monorepo manifests:** which build-context root the
+  Dockerfile expects, which workspace selector pnpm/uv/cargo
+  filters require, what the package's actual `name` is in its
+  manifest.
+
+For every captured fact, ALSO record the *implication* — what
+downstream tickets must do (or avoid) because of it. A fact without
+an implication is half a contract.
+
+If you don't know the contract, run the verifier (`grep`, `Read`,
+`docker run --rm <image> which <bin>`) before writing the entry.
+The brownfield doc is not ready for review if any surface row is
+prose-only ("seems to be…", "probably…") rather than verified.
+
 ### 4. Implementation Topology Mapping (brownfield only)
 
 For each feature area the user mentions, identify the existing file(s) that
@@ -93,13 +133,19 @@ The Phase 0 exit response must contain a fenced `BROWNFIELD-CONTEXT:` block
   are tagged `User-stated` in the Assumption Register
 - The `BROWNFIELD-CONTEXT:` / `GREENFIELD-CONTEXT:` block is present in the
   Phase 0 exit response
+- **Runtime contracts captured (AP-27):** every surface in the
+  brownfield table has the runtime-invariants column populated from
+  *verifier output* (grep, Read, ls, docker run), not from prose.
+  Any surface that will be constructed, patched, or invoked by a
+  downstream ticket must have its schema / enum / profile /
+  base-image-binaries enumerated.
 
 ## Phase-Gate Audit Line
 
 Before advancing to Phase 1, emit:
 
 ```
-PHASE-GATE: Phase 0 → 1. Criteria: [constitution declared: <met|not met>; research artifact written: <met|not met|n/a greenfield>; ls-verified paths: <met|not met>]. Proceeding: <yes|no>.
+PHASE-GATE: Phase 0 → 1. Criteria: [constitution declared: <met|not met>; research artifact written: <met|not met|n/a greenfield>; ls-verified paths: <met|not met>; runtime contracts captured: <met|not met>]. Proceeding: <yes|no>.
 ```
 
 If `Proceeding: no`, surface the specific blocker and stay in Phase 0.

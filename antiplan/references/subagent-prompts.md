@@ -215,7 +215,7 @@ Review EVERY ticket and EVERY integration gate against:
 ### Anti-Pattern Checklist
 
 You MUST emit a **per-AP audit table** covering every anti-pattern listed in
-rubric.yaml (currently AP-1 through AP-23; the rubric is the source of
+rubric.yaml (currently AP-1 through AP-27; the rubric is the source of
 truth — count rows there, not here). No AP may be omitted. For each AP, mark one of:
 
 - **BLOCK** — at least one ticket hits a detection signal; DAG cannot proceed
@@ -236,7 +236,7 @@ Required table format (emit before the per-finding list):
 | AP-1 | BLOCK   | T-3,T-7  | "base orchestration layer…"        |
 | AP-2 | PASS    | —        | no signal found                    |
 | …    | …       | …        | …                                  |
-| AP-23| PASS    | —        | no signal found                    |
+| AP-27| PASS    | —        | no signal found                    |
 ```
 
 Then, for each BLOCK/WARN row, scan EVERY ticket against the AP's
@@ -323,7 +323,7 @@ exercised per-row?
 Output in this order:
 
 1. **Per-AP audit table** (every AP id in rubric.yaml — currently AP-1
-   through AP-23, all rows required — see Anti-Pattern Checklist above).
+   through AP-27, all rows required — see Anti-Pattern Checklist above).
    Missing rows = malformed response.
 2. **Per-finding entries** — one block per BLOCK/WARN row in the table:
 
