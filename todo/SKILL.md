@@ -252,10 +252,154 @@ DAG is already written; do NOT regenerate it.
    For Light classification, instead emit a single line at the top of
    coverage-audit.md: `COVERAGE-AUDIT: skipped — Light classification.`
 
-3. After both reports exist, do not proceed to spec-writer in this
-   session. Stop and tell the user to run validate.py with both
-   --challenger-report and --coverage-report flags before continuing.
+3. Run validate.py against both reports and confirm exit 0 before halt:
+   ```
+   python /Users/joshc/.skills/antiplan/validate.py \
+     --project-dir . \
+     --tickets .plan/task-sequence.md \
+     --prd .plan/PRD.md \
+     --challenger-report .plan/challenger-report.md \
+     --coverage-report .plan/coverage-audit.md
+   ```
+
+4. After both reports exist AND validate.py exits 0, do not proceed to
+   spec-writer in this session. Stop and confirm exit status to user.
+   If validate.py exits non-zero, surface the specific failure and halt
+   without proceeding to spec-writer — the user must direct resolution
+   (which becomes a `audit-fix-resume` invocation).
 ```
+
+### Template: audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
+
+```
+Resume /antiplan to address Phase 3 / Phase 3.5 audit failures. The DAG
+is the starting point — modify it only to resolve the findings below.
+
+**Existing artifacts (approved input — do not rewrite unless resolving
+a finding):**
+- .plan/PRD.md
+- .plan/task-sequence.md
+- .plan/brownfield-context.md
+- .plan/challenger-report.md
+- .plan/coverage-audit.md
+
+**Findings to resolve** (each section quotes the upstream report
+verbatim — do NOT re-derive; the receiving agent must address the named
+finding, not its own re-interpretation):
+
+<!-- For each BLOCK in challenger-report.md, the parent /todo run
+auto-driver pastes a section here using this template: -->
+
+### Challenger BLOCK <AP-ID> (<ticket-IDs>): <one-line summary>
+
+**Quoted finding** (verbatim from challenger-report.md):
+> <quoted finding text — at least the rubric's detection-signal line
+> and the per-finding entry block>
+
+**Quoted upstream context** (PRD / task-sequence excerpts the receiving
+agent needs to read; inline so no re-fetch is required):
+- PRD §<N>: > <quoted text>
+- task-sequence T<N>: > <quoted text>
+
+**Required resolution — pick exactly one and apply it. Weak options
+intentionally absent:**
+- (a) <Behavioral fix that changes runtime evidence — preferred>
+- (b) <Alternative behavioral fix>
+
+**NOT acceptable as a fix:**
+- Adding a comment / note / docstring that asserts the invariant
+  without changing runtime behavior (the orchestrator reads exit
+  codes, not prose)
+- Justifying that an existing gate is "sufficient" if the Challenger
+  already flagged it as skip-prone — that loops the AP-N signal back
+  in
+- Deferring the fix to a downstream gate that is itself skip-prone
+
+**For AP-26 specifically (Operator Entry Point Not Smoke-Tested),
+every resolution must include at least one mandatory-not-skippable
+live call in the gate.** A skip-guarded chat assertion + SQL + health
+is NOT sufficient if exit 0 is reachable when the live call skips.
+
+---
+
+<!-- For each Coverage finding (INVERTED / GAP), the parent pastes
+a section using this template: -->
+
+### Coverage <VERDICT>-<N> (<requirement-id>): <one-line summary>
+
+**Quoted finding** (verbatim from coverage-audit.md):
+> <quoted finding text including the re-derived requirement, the
+> PRD's claim, and the verdict line>
+
+**Quoted upstream context** (constitution / PRD section quoted so
+receiving agent doesn't re-fetch):
+- Constitution §<N>: > <quoted text>
+- PRD §<N>: > <quoted text>
+- transcript: > <quoted decision text>
+
+**Required resolution:**
+- For INVERTED: PRD section <N> must <add | remove | rephrase> the
+  named requirement to match transcript intent. The receiving agent
+  commits to ONE side (in scope OR not in scope) — opposite options
+  are not offered because the live DAG already chose a side.
+- For GAP: add an AC to T<N> requiring <observable behavioral
+  assertion>. **The AC must be machine-verifiable** — no "looks
+  yellow", no "visually inspect", no "screenshot shows X". Examples
+  of acceptable AC shapes:
+  - `grep -q '<expected-string>' <output-file>`
+  - `curl -fsS http://localhost:<port>/<route> | jq -e '<predicate>'`
+  - HTML DOM contains role + text: `grep -oE 'role="status"[^>]*>[^<]*Local:[^<]*' index.html`
+  - `pytest tests/test_<name>.py::test_<func>` exits 0 with N >= 1 test
+    actually executed (not collected)
+
+---
+
+**After applying all resolutions:**
+
+1. Re-run the Challenger subagent against the updated DAG; overwrite
+   .plan/challenger-report.md with the new output.
+2. Re-run the Coverage Auditor subagent against the updated PRD +
+   task-sequence; overwrite .plan/coverage-audit.md.
+3. Run staleness re-check: if PRD.md mtime > task-sequence.md mtime,
+   the task-sequence may need a revision pass. Surface this; do NOT
+   silently proceed.
+4. Run validate.py against the new reports:
+   ```
+   python /Users/joshc/.skills/antiplan/validate.py \
+     --project-dir . \
+     --tickets .plan/task-sequence.md \
+     --prd .plan/PRD.md \
+     --challenger-report .plan/challenger-report.md \
+     --coverage-report .plan/coverage-audit.md
+   ```
+5. **Halt condition (mandatory all-of):**
+   - validate.py exit 0
+   - challenger-report VERDICT: PASS (or all BLOCKs that remain are
+     explicitly justified WARNs)
+   - coverage-audit verdict shows 0 GAP, 0 INVERTED
+   - staleness re-check clean (or surfaced and the user has accepted)
+
+   Only when all four conditions hold may the receiving agent stop
+   with "audit-fix complete." If any condition fails, halt with a
+   structured report naming exactly which condition failed and what
+   the receiving agent attempted. Do not proceed to spec-writer in
+   this session.
+```
+
+**Template usage notes (for `/todo run` driver):**
+- The auto-driver pastes one `### Challenger BLOCK …` section per BLOCK
+  found in challenger-report.md, and one `### Coverage <V>-<N> …`
+  section per INVERTED/GAP in coverage-audit.md.
+- The driver inlines the verbatim quotes from the report — never
+  paraphrases. If a quote is missing, the driver halts and asks the
+  user to provide the source text rather than make it up.
+- The driver computes "Required resolution" options from the
+  rubric.yaml detection signals + the AP's anti-patterns.md prose
+  prevention section — not from imagination.
+- Weak options ("accept and justify", "note in the spec", "defer to
+  downstream gate") are filtered out before paste. If only weak
+  options exist, the driver halts and asks the user whether to accept
+  partial resolution.
 
 ### Template: spec-writer-next (dag-done)
 
@@ -486,8 +630,9 @@ On each tick, the auto-driver runs the same state detection as bare
 | `phase-0-done` | Invoke antiplan-resume via Skill tool; antiplan continues Phase 1 |
 | `prd-done-no-dag` | Invoke antiplan-resume; antiplan continues to Phase 3 |
 | `dag-done-no-audits` | Invoke antiplan-audit-resume; Challenger + Coverage subagents run within antiplan |
-| `dag-done` (and `validate.py` exit 0) | Invoke spec-writer via Skill tool |
-| `dag-done` (and `validate.py` exit non-zero) | **HALT** — surface validator failures, return to user for direction |
+| `dag-done` (and `validate.py` exit 0; reports show 0 BLOCKs / 0 INVERTED / 0 GAP) | Invoke spec-writer via Skill tool |
+| `audit-blockers-present` (`validate.py` exit 0 but challenger-report contains BLOCKs OR coverage-audit shows INVERTED/GAP) | Invoke `audit-fix-resume` template — auto-driver pastes one section per finding, inlining verbatim quotes from the reports. Halts when validate.py + verdicts all clean + staleness clean. |
+| `dag-done` (and `validate.py` exit non-zero) | **HALT** — surface validator failures (schema-level malformations: missing AP rows, evidence too short, etc.). Distinct from BLOCKs above; validator failures are structural, not architectural. Return to user for direction. |
 | `tickets-written-uncriticized` | Invoke ticket-critic (per-ticket subagent delegation if N > 5, per ticket-critic SKILL.md) |
 | `critic-failed` | Invoke spec-writer in fix mode for failing tickets only |
 | `ready-for-build` | Enter the **build loop** (see below) |
