@@ -19,6 +19,14 @@ Don't mock:
 - Internal collaborators
 - Anything you control
 
+### Component-owned canonical mocks
+
+When a module is a dependency of others, **that module owns** the official mock/stub/factory consumers should import. Downstream tests should not invent ad-hoc doubles that drift from the real interface.
+
+- Keep mocks next to the producer (`mocks.ts`, `conftest` fixture module, etc.).
+- Factories produce full, typed domain objects; overrides may set `null`/`undefined` for failure-path tests.
+- Update the canonical mock in the same cycle as the interface change (see [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) for external-boundary contracts).
+
 ---
 
 ## Designing for Mockability

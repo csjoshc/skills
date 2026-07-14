@@ -24,9 +24,14 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 | Phase trigger (user or agent intent) | Required skill(s) | Gate |
 |---|---|---|
-| "Create ticket / spec / plan for X" | `spec-writer`, `ticket-critic` | AC→test table present |
-| "Implement / write / add X" | `redundancy-watcher` (pre-write), `layer-boundary-critic` (on import add) | No BLOCK unresolved |
+| "Create ticket / spec / plan for X" | `spec-writer`, `ticket-critic` | AC→test table present; tasks name primary source file + support set |
+| "Implement / write / add X" | `redundancy-watcher` (pre-write), `layer-boundary-critic` (on import add); follow `shared/CONTEXT_HYGIENE.md` turn loop + `tdd/WORKFLOW.md` | No BLOCK unresolved; discovery halt if second source file needed |
+| "Design interface / contract for X" | `tdd` → `INTERFACE_DESIGN.md` (interaction spec) | Contract + interaction expectations stated before impl |
+| "Write guards / type guards for X" | `tdd` (with interface companion) | Guard tests cover valid/invalid contract cases |
+| "Add mocks / factories for X" | `tdd` → `MOCKING.md` / `mock-contract` | Canonical producer-owned doubles; boundary mocks contract-linked |
 | "Write tests for X" | `tdd`, `mock-contract` (if boundary mock) | Tests fail red then green |
+| "Integrate / wire producer→consumer" | `tdd` (integration step of cycle) | Real chain within boundary; mocks only at external edge |
+| "Review / EO&D / compliance check" | `evidence-reviewer` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
 | "I'm done / complete / fixed X" | `verify-claim` | `CLAIM_UNVERIFIED.md` absent |
 | "Open / create PR" | `pr-review` self-pass, `create-pr` | No BLOCK from 5 agents |
 | "Fix review comments" | `pr-fix` | Staleness check green |

@@ -154,6 +154,26 @@ def tracer_bullets_scheduled(data: PlanData) -> list[str]:
     return errors
 
 
+# ── AP-25 Challenger coverage check ──────────────────────────────────────────
+# AP-25 (Vendor Coupling in Agnostic Identifier) is a semantic self-consistency
+# check: does the plan declare a concept as multi-valued then name an identifier
+# after a single member of that set? This judgment requires reading the plan —
+# it cannot be reliably reduced to keyword patterns. validate.py therefore does
+# not attempt to detect AP-25 directly. Instead it checks that the Challenger
+# subagent showed evidence of reviewing PRD §7 architecture decisions, which is
+# where AP-25 coupling most commonly originates. If the Challenger report
+# contains no reference to §7 or architecture decisions, the structural review
+# was incomplete regardless of the AP-25 verdict in the table.
+
+def _challenger_reviewed_prd_arch_decisions(report_text: str) -> bool:
+    """Return True if the Challenger report shows evidence of having reviewed
+    PRD §7 architecture decisions (not just ticket-level scope)."""
+    return bool(re.search(
+        r"(§\s*7|architecture\s+decision|AD-\d+|PRD\s+§)",
+        report_text, flags=re.IGNORECASE,
+    ))
+
+
 # ── Transcript checks (optional, --transcript flag) ──────────────────────────
 
 _REQUIRED_YAML_LEDGER_KEYS = {"phase", "resolved", "contested", "unresolved",
@@ -300,6 +320,14 @@ def check_challenger_report(report_text: str, rubric_ids: list[str]) -> list[str
         errors.append("Challenger report missing VERDICT: line")
     elif verdict_match.group(1).upper() == "FAIL":
         errors.append("Challenger VERDICT: FAIL — DAG not ready")
+
+    if not _challenger_reviewed_prd_arch_decisions(report_text):
+        errors.append(
+            "Challenger report shows no evidence of reviewing PRD §7 "
+            "architecture decisions (no '§7', 'AD-N', or 'Architecture "
+            "Decision' references found). AP-25 self-consistency checks "
+            "require reading §7 — ticket-scope review alone is insufficient."
+        )
 
     return errors
 

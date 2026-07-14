@@ -16,6 +16,37 @@ Ask: "What should the public interface look like? Which behaviors are most impor
 
 **You can't test everything.** Confirm with the user exactly which behaviors matter most. Focus testing effort on critical paths and complex logic, not every possible edge case.
 
+### One source file per cycle (support set included)
+
+Treat each TDD cycle as **one source file** plus its support set — not a second unrelated source file "for a small tweak."
+
+Dependency order inside the cycle (skip steps the node does not need):
+
+1. Contract / types (interface)
+2. Type-guard tests → guards (when used)
+3. Interaction expectations (see [INTERFACE_DESIGN.md](./INTERFACE_DESIGN.md) — interaction spec)
+4. Canonical mocks / factories for this unit
+5. RED behavioral tests
+6. Implementation
+7. Public surface (`provides` / exports) if the module uses an explicit barrel
+8. Integration test only when a producer → subject → consumer boundary is reached
+
+Rules:
+
+- Types/interfaces/guards are **not** their own cycles — attach them to the first source file that consumes the change.
+- Do not orphan an interface edit in a separate task from its consumer.
+- Build producers before consumers; keep the tree buildable after each cycle.
+- Prefer relational identifiers (path + symbol) over numbered steps that break on insert/reorder.
+
+### Discovery halt (multi-file scope)
+
+If completing the current cycle requires editing a **second source file** (or an undeclared support file outside this cycle):
+
+1. Stop editing.
+2. Report discovery: dependent files, why, minimal next cycles.
+3. Propose the added cycles (one source file each).
+4. Wait for explicit approval — do not improvise the multi-file change.
+
 ## 2. Tracer Bullet
 
 Write ONE test that confirms ONE thing about the system:

@@ -31,8 +31,11 @@ coverage gate passes for YAML/Dockerfile-only diffs (no `conftest.py` shim neede
 
 Companion files to load at specific phases:
 - [SCOPING.md](./SCOPING.md) — **required Phase 0**. Produces the ranked Test Obligation Queue (`.tickets/tdd/toq-<ticket-id>.yaml`) from diff, dependency graph, risk registry, and churn. Every downstream phase reads from this queue; nothing is invented from prose.
-- [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) — required when the red-step test introduces a boundary mock (HTTP, DB, FS, time, SDK). Enforces that every mock references a real contract artifact and rejects conditional-branch mocks.
+- [WORKFLOW.md](./WORKFLOW.md) — one-source-file cycles, dependency-ordered support set, discovery halt when scope expands to another source file.
+- [INTERFACE_DESIGN.md](./INTERFACE_DESIGN.md) — testable surfaces, interaction specs, optional Deps/Params/Payload shape, fractal companions.
+- [MOCKING.md](./MOCKING.md) / [MOCK_CONTRACT.md](./MOCK_CONTRACT.md) — boundary mocks + component-owned canonical doubles; MOCK_CONTRACT required when the red-step test introduces an external boundary mock.
 - [MUTATION.md](./MUTATION.md) — auto-fires at green-step completion for any TOQ entry with `mutation_candidate: true` (T1 + score > 60). Optional otherwise.
+- [COMMIT_DISCIPLINE.md](./COMMIT_DISCIPLINE.md) — commit at proven call-stack boundaries, only when the user asks.
 
 ---
 

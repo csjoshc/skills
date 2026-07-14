@@ -397,10 +397,27 @@ tickets correctly:
 - AP-13 → require exemplar file references in every brownfield ticket
 
 ### Phase 3 (Challenger Subagent)
-Systematically review the planner's DAG against ALL anti-patterns listed in
-`rubric.yaml` (the machine-readable source of truth — count rows there).
-For each ticket and each gate, check if any detection signal applies. Report
-findings as a structured list:
+Systematically review the planner's DAG **and PRD §7 Architecture Decisions**
+against ALL anti-patterns listed in `rubric.yaml` (the machine-readable source
+of truth — count rows there). For each ticket, each gate, **and each
+architecture decision in PRD §7**, check if any detection signal applies.
+
+**Internal self-consistency check (mandatory, PRD §7 scope):** For every
+architecture decision in PRD §7, apply the AP-25 coupling sub-test not just
+to ticket identifiers but to the AD itself. The test is: *does the plan
+declare a concept as multi-valued (a set, enum, list of equivalents, or
+configurable abstraction) and then name an identifier after a single member
+of that set in a shared-role position?* If yes, that is AP-25 regardless of
+what the identifier looks like. The signal is the **self-contradiction within
+the plan's own text** — not a specific keyword pattern. Example: the plan
+defines `CLOUD_NATIVE_PROVIDERS = {A, B, C}` (multi-valued) then names a
+credential variable after member A only; the name fails the substitution
+test ("if I swap A for B, does this name still make sense?"). The fix is
+always a name that describes the role, not the instantiation. This check
+fires on PRD §7 — not just on tickets — because coupling introduced in an AD
+propagates into every downstream ticket, test, and doc.
+
+Report findings as a structured list:
 
 ```
 AP-[N] detected in T-[X]:

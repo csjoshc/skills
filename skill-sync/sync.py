@@ -283,6 +283,47 @@ def audit_symlink(
         logger.warn(f"{config.name}: Skills symlink missing")
         return result
 
+    # Codex exception: real directory of per-skill symlinks (see SYMLINK_MAP.md)
+    if platform_key == "codex":
+        if is_symlink(symlink_path):
+            result.symlink_status = Status.WRONG_TARGET
+            result.symlink_details = (
+                "Codex skills must be a real directory of per-skill symlinks, "
+                "not a single symlink to ~/.skills"
+            )
+            logger.warn(f"{config.name}: Skills path is a full symlink (unsafe)")
+            return result
+
+        if not symlink_path.is_dir():
+            result.symlink_status = Status.BROKEN
+            result.symlink_details = "Codex skills path is not a directory"
+            logger.warn(f"{config.name}: Skills path is not a directory")
+            return result
+
+        missing = []
+        for skill_dir in SKILLS_DIR.iterdir():
+            if not skill_dir.is_dir() or skill_dir.name.startswith("."):
+                continue
+            if not (skill_dir / "SKILL.md").is_file():
+                continue
+            link = symlink_path / skill_dir.name
+            if not link.exists() and not link.is_symlink():
+                missing.append(skill_dir.name)
+
+        if missing:
+            result.symlink_status = Status.BROKEN
+            result.symlink_details = (
+                f"Missing per-skill links: {', '.join(sorted(missing)[:8])}"
+                + ("…" if len(missing) > 8 else "")
+            )
+            logger.warn(f"{config.name}: {len(missing)} master skill(s) not linked")
+            return result
+
+        result.symlink_status = Status.SYNCED
+        result.symlink_details = "per-skill symlinks → ~/.skills/<name>"
+        logger.info(f"{config.name}: Per-skill symlinks OK")
+        return result
+
     if not is_symlink(symlink_path):
         result.symlink_status = Status.BROKEN
         result.symlink_details = "Exists as real directory, not symlink"
@@ -304,6 +345,12 @@ def audit_symlink(
 
 def repair_symlink(config: PlatformConfig, logger: Logger) -> bool:
     """Repair a broken skills symlink."""
+    # Codex keeps system-managed skills under ~/.codex/skills/.system and
+    # must remain a real directory of per-skill symlinks — never a single
+    # symlink to ~/.skills (that shadows .system and risks rmtree of it).
+    if config.platform_key == "codex":
+        return sync_codex_per_skill_links(logger)
+
     logger.info(f"Repairing {config.name} skills symlink...")
     success = create_symlink(config.skills_symlink, SKILLS_DIR)
     if success:
@@ -311,6 +358,78 @@ def repair_symlink(config: PlatformConfig, logger: Logger) -> bool:
     else:
         logger.error(f"  Failed to create symlink for {config.name}")
     return success
+
+
+def sync_codex_per_skill_links(logger: Logger) -> bool:
+    """Ensure ~/.codex/skills is a real dir with per-skill symlinks to master.
+
+    Preserves Codex-only entries (e.g. `.system/`, plain dirs) and only
+    adds/repairs symlinks for master skills that have SKILL.md.
+    """
+    codex_skills = HOME / ".codex" / "skills"
+    logger.info("Syncing Codex per-skill symlinks (preserving .system)...")
+
+    if codex_skills.is_symlink():
+        logger.warn(
+            "Codex skills path is a symlink to the master store; "
+            "converting to a real directory with per-skill links."
+        )
+        codex_skills.unlink()
+
+    codex_skills.mkdir(parents=True, exist_ok=True)
+
+    added = 0
+    repaired = 0
+    for skill_dir in sorted(SKILLS_DIR.iterdir()):
+        if not skill_dir.is_dir() or skill_dir.name.startswith("."):
+            continue
+        if not (skill_dir / "SKILL.md").is_file():
+            continue
+
+        link_path = codex_skills / skill_dir.name
+        expected = skill_dir.resolve()
+
+        if link_path.is_symlink():
+            try:
+                current = link_path.resolve()
+            except OSError:
+                current = None
+            if current != expected:
+                link_path.unlink()
+                os.symlink(expected, link_path)
+                repaired += 1
+                logger.info(f"  Repaired: {link_path.name}")
+            continue
+
+        if link_path.exists():
+            # Real dir/file (Codex-managed or local) — leave untouched
+            logger.debug(f"  Skipping non-symlink entry: {link_path.name}")
+            continue
+
+        os.symlink(expected, link_path)
+        added += 1
+        logger.info(f"  Linked: {link_path.name}")
+
+    # Drop broken symlinks that no longer exist in master
+    stale = []
+    for entry in codex_skills.iterdir():
+        if entry.is_symlink() and not entry.exists():
+            stale.append(entry)
+    for entry in stale:
+        entry.unlink()
+        logger.info(f"  Removed broken: {entry.name}")
+
+    if (codex_skills / ".system").is_dir():
+        logger.info("  .system/ present (Codex-managed; preserved)")
+    else:
+        logger.warn(
+            "  .system/ missing — Codex will recreate it on next Desktop/CLI start"
+        )
+
+    logger.info(
+        f"  Codex sync done (added={added}, repaired={repaired}, stale_removed={len(stale)})"
+    )
+    return True
 
 
 # ─── Permission Config Audit ────────────────────────────────────────────────

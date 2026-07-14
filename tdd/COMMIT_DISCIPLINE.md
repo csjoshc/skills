@@ -1,5 +1,7 @@
 # TDD Commit Discipline
 
+Commit when a **working call stack** is proven — typically after a producer → subject → consumer integration check can run — not after every intermediate support-file edit. Prefer one commit per completed vertical slice / workplan node set. Never commit a broken build, failing tests, or half-wired feature unless the user explicitly directs a WIP commit.
+
 After each feature (or small set of tasks):
 
 1. **Run the relevant tests** from your test suite
@@ -7,6 +9,7 @@ After each feature (or small set of tasks):
 3. **Stage all related files**, including new files (`git add ...`)
 4. **Verify `git status` is clean** before commit
 5. **Create a small, descriptive git commit** so rollback is clean
+6. **Only when the user asks** — agents do not commit unprompted (see user git rules)
 
 ```bash
 # Example commit workflow

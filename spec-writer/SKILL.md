@@ -133,6 +133,8 @@ If the user pastes a ticket, a PRD fragment, or a rough description — treat it
 
 When both files exist, read them first and expand each placeholder in `task-sequence.md` into a fully-fleshed `.tickets/NN-<slug>.md`. Do not re-debate decisions already settled in the PRD. If only a free-text feature request is provided, generate without the upstream contract.
 
+**Naming hygiene exception (AP-25):** Naming hygiene is not a requirements debate. Before fleshing any stub, apply the AP-25 substitution test to every identifier the stub introduces or names: *if the plan declares a concept as multi-valued (a set, enum, list of equivalents, or configurable abstraction), does this identifier still make sense if a different member of that set is substituted?* If the answer is no — the name only makes sense for one specific member — it fails the test. Annotate the ticket draft with `[NAMING: AP-25 — '<ident>' couples to a single instantiation of '<abstraction>'; the name should describe the role, not the member]`. This annotation is not a hard block but must not be silently omitted. Do not copy a self-contradicting name from the PRD into a ticket AC without surfacing it here.
+
 **Refactor mode:** If the request is a refactor ("refactor X", "clean up Y", "restructure Z", "RFC"), load [`REFACTOR_MODE.md`](REFACTOR_MODE.md) and follow its interview process instead of the three-section output below.
 
 ---
@@ -281,6 +283,11 @@ Each task must:
 - Have its own mini acceptance criteria
 - Stay **one action per task** where possible; if a task must bundle steps, use numbered sub-steps, each still verifiable (**Do** + **Check** + **Test** at micro scale)
 - When aligning with [METHOD.md](https://github.com/exchanet/method_pdca-t_coding/blob/main/METHOD.md) Phase 4: aim for **≤ ~50 lines** of production change per task (excluding tests/docstrings); split otherwise
+- Prefer **one primary source file per task** (plus that file's support set: types, guards, mocks, tests). Do not cram a second unrelated source file into the same task "for a small tweak."
+- Attach interface/type/guard edits to the **first consuming source-file task** — never orphan them as standalone type-only tasks.
+- Order tasks producers-before-consumers; keep the tree buildable after each task.
+- Author the verification steps yourself (grep/check/validate in the task text). Do not push "determine whether X exists" onto the implementer.
+- Prefer path/symbol identifiers over brittle renumbering when tasks may be inserted mid-list.
 
 Format each task as:
 
@@ -288,7 +295,9 @@ Format each task as:
 ## Task N: [Title]
 
 **What to build:** [specific description]
-**Files likely affected:** [list]
+**Primary source file:** [exactly one implementation file, or "n/a" for pure docs/config]
+**Support files:** [types/guards/mocks/tests belonging to that source file]
+**Files likely affected:** [list — should match primary + support]
 **Acceptance criteria:** [1-3 specific, verifiable outcomes]
 **Dependencies:** [Task N if blocked, or "none"]
 **Docs to update:** [bullet list of every doc/diagram/runbook that mentions the surface being changed, with relative paths — or "None — internal change" if truly none]

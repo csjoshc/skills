@@ -62,6 +62,23 @@ react-app/src/
 └── types/      # TypeScript types
 ```
 
+### Fractal module layout (optional, library-style units)
+
+When a unit is meant to be independently testable (or extractable), co-locate its support set rather than scattering types/mocks across shared buckets:
+
+```
+component/
+├── interface.*     # owned types + contracts
+├── guard.*         # runtime guards (+ guard tests)
+├── mocks.*         # canonical factories / doubles for consumers
+├── *.test.*        # unit behavior
+├── component.*     # implementation
+├── provides.*      # public exports (optional barrel)
+└── *.integration.* # producer→subject→consumer when at a boundary
+```
+
+Prefer this when DI and consumer mocks matter; keep the simpler tree above for thin app code. Details: `tdd/INTERFACE_DESIGN.md`, `tdd/MOCKING.md`.
+
 ## File Size Limits
 
 - **Soft limit:** 300 lines (proactively suggest refactoring)

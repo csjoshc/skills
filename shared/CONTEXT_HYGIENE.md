@@ -14,6 +14,7 @@ Curate what the agent sees. Too little → hallucination. Too much → loss of f
 - Packing Strategies
 - Authentication / Tasks / MCP Integrations (worked examples)
 - Confusion Management
+- Turn loop (edit discipline)
 - Anti-Patterns
 - Common Rationalizations
 - Red Flags
@@ -204,6 +205,26 @@ PLAN:
 ```
 
 A 30-second plan prevents 30-minute rework.
+
+## Turn loop (edit discipline)
+
+Default cycle for implementation turns:
+
+**Read → Analyze → Explain → Propose → (Edit one file → Lint) → Halt**
+
+| Step | Rule |
+|---|---|
+| Read | Re-read the target file (and implied types/helpers) from disk immediately before editing |
+| Analyze | Name gaps vs the ticket/cycle; if >1 source file is required, stop (discovery halt — see `tdd/WORKFLOW.md`) |
+| Explain | State the delta in bullets |
+| Propose | Exact edit plan; commit to implementing that plan only |
+| Edit | Prefer **one source file per turn** unless the user explicitly authorized a multi-file batch |
+| Lint | Fix in-file issues; report out-of-file lint and wait |
+| Halt | Do not chain into the next file without user/test signal |
+
+Fidelity: implement the described solution — no silent shortcuts, renames, or whole-file rewrites to dodge a hard edit. If you deviate, stop and report.
+
+Instruction priority when they conflict: **user's explicit instruction for this turn** → project instruction files → active ticket/workplan.
 
 ## Anti-Patterns
 

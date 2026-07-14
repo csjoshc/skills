@@ -89,7 +89,9 @@ circular tests).
 
 ## Context hygiene
 
-For rules-file authoring, context-packing strategies, and confusion-management patterns across any session, see `~/.skills/shared/CONTEXT_HYGIENE.md`.
+For rules-file authoring, context-packing strategies, and confusion-management patterns across any session, see `~/.skills/shared/CONTEXT_HYGIENE.md` (includes the Read→Analyze→Explain→Propose→Edit→Halt turn loop).
+
+During BUILD: one primary source file per task/cycle (`tdd/WORKFLOW.md`); halt and propose if scope expands. Reviewer passes use EO&D via `evidence-reviewer`, not checkbox trust.
 
 ## Discovering skills (and avoiding fabrication)
 
@@ -99,8 +101,9 @@ if the description doesn't clearly match what you're doing, don't
 invoke it.
 
 Companion files (`MOCKING.md`, `MOCK_CONTRACT.md`, `MUTATION.md`,
-`LAYER_ENFORCEMENT.md`, `WRITE_TIME_GUARD.md`, `WORKFLOW_GATES.md`,
-`HOOK_PRINCIPLES.md`, `TOKEN_BUDGET.md`) are loaded by their parent
+`WORKFLOW.md`, `INTERFACE_DESIGN.md`, `LAYER_ENFORCEMENT.md`,
+`WRITE_TIME_GUARD.md`, `WORKFLOW_GATES.md`, `HOOK_PRINCIPLES.md`,
+`TOKEN_BUDGET.md`, `CONTEXT_HYGIENE.md`) are loaded by their parent
 skill at the appropriate phase — you don't invoke them directly.
 
 ## One-liners for Claude Code

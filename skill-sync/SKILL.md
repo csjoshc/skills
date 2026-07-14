@@ -55,7 +55,9 @@ For each path:
 2. If a path is a physical directory instead of a symlink, alert the user that the platform is "Out of Sync"
 3. Propose a migration: Move physical files to `~/.skills` and replace with a symlink: `ln -sf ~/.skills [target_path]`
 
-**Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.) directly into that path. Do NOT replace it with a single symlink to `~/.skills` — that would shadow Codex-only content. Instead, on each sync run:
+**Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills under `.system/` (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.). Do NOT replace it with a single symlink to `~/.skills` — that shadows `.system` and `sync.py` must never `rmtree` it.
+
+`skill-sync/sync.py` handles Codex specially: audit expects a real directory; repair calls `sync_codex_per_skill_links()` (add/fix per-skill links, remove broken links, preserve `.system/`). Manual equivalent:
 
 ```bash
 # Add per-skill symlinks for any master skill missing from codex
@@ -70,7 +72,7 @@ done
 find ~/.codex/skills -maxdepth 1 -type l ! -exec test -e {} \; -print
 ```
 
-This pattern is forward-compatible: new master skills get linked automatically; codex-only skills stay untouched.
+If `.system/` is missing, open Codex Desktop or run the Codex CLI once — it reinstalls embedded system skills automatically.
 
 ### Step 4: Project-Level Symlink Setup
 
