@@ -1,5 +1,11 @@
 # Phrases to Remove
 
+## Banned Words
+
+Cut on sight (unless quoted as an example):
+
+delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutting-edge, paradigm shift, game changer, this is huge, this changes everything, tapestry, realm, beacon, multifaceted, meticulous, intricate, paramount, transformative, elevate, embark, supercharge, harness, ever-evolving.
+
 ## Throat-Clearing Openers
 
 Remove these announcement phrases. State the content directly.
@@ -97,6 +103,48 @@ Remove self-referential asides. The essay should move, not announce its own stru
 - "In this section, we'll..."
 - "As we'll see..."
 - "I want to explore..."
+
+## Faux-Insight Setups
+
+These flatter the writer as the lone expert. Cut the setup; make the claim stand alone.
+
+- "This is the part most people skip"
+- "What most people get wrong"
+- "Here's what nobody tells you"
+- "The part everyone misses"
+
+"The part everyone misses: distribution is the real moat" becomes "Distribution is the moat."
+
+## Importance Puffery
+
+State the fact. Let the reader judge whether it matters.
+
+| Avoid | Instead |
+|-------|---------|
+| "stands as a testament" | State the fact it supposedly testifies to |
+| "marks a pivotal moment" | "The launch is the company's first paid product" |
+| "plays a vital role" | Name what it does |
+| "solidifies its position" | Name the position, cite the evidence |
+| "underscores its significance" | Cut |
+
+## Weasel Attribution
+
+Name the source or cut the claim. If there is no source, ask instead of inventing one.
+
+- "Experts agree"
+- "Industry reports suggest"
+- "Many argue"
+- "Widely regarded as"
+- "Studies show"
+
+## Fake-Strong Verbs
+
+Prefer "is" and "has" when clearer. "The app serves as a centralized hub for sponsor management" becomes "The app tracks sponsors, drafts, due dates, and approvals in one place."
+
+- "serves as"
+- "acts as"
+- "functions as"
+- "represents" (when "is" works)
 
 ## Performative Emphasis
 
