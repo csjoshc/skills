@@ -56,6 +56,37 @@ These announce insight rather than deliver it.
 
 **Instead:** Make the point. Let readers draw conclusions.
 
+## Colon Reveals
+
+A noun phrase, a colon, then a dramatic reveal: "The detail that makes it work: a separate agent grades it." Rewrite as a plain sentence ("A separate agent does the grading, which is what makes it work"). Colons are for lists, labels, and quotes, not fake drama.
+
+## Superficial Analysis
+
+Trailing `-ing` clauses that pretend to explain meaning: "highlighting," "underscoring," "reflecting," "showcasing," "demonstrating."
+
+"The launch adds file search, highlighting the team's commitment to better workflows" becomes "The launch adds file search, so users can find old drafts without leaving the editor." Replace the gesture with the actual consequence.
+
+## Synonym Cycling
+
+If the clear word is right, repeat it. Don't rotate terms for style. "The agent reviews the draft. The assistant scores the piece. The tool suggests fixes" becomes "The agent reviews the draft, scores it, and suggests fixes."
+
+## Fake-Profound Kickers
+
+Cut the final "deep" line when it turns the point into a metaphor, aphorism, or mic-drop. Do not rewrite it into a better metaphor. Delete it, then end on the clearest concrete sentence already in the draft.
+
+## Summary-Recap Endings
+
+"In conclusion," "Ultimately," "Overall," or a final paragraph restating the piece. The reader was just there. End on the last concrete point, takeaway, or next action.
+
+## Formatting Slop
+
+- Emoji in headings
+- Bold sprinkled mid-sentence for emphasis
+- Bullet lists where two sentences of prose read better
+- Headers over two-sentence sections
+
+Format follows the content; it does not decorate it.
+
 ## Formulaic Constructions
 
 | Pattern | Problem |
