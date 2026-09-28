@@ -372,8 +372,8 @@ The implementing agent reads these BEFORE writing any code. This is the
 strongest available defense against AP-9 (Greenfield Hallucination) at the
 execution level.
 
-**Source:** ralph-wiggum-brownfield (`exemplars/` directory concept —
-canonical pattern files the agent must copy from rather than invent).
+**Source:** `exemplars/` directory concept — canonical pattern files the
+agent must copy from rather than invent.
 
 ---
 

@@ -1,6 +1,6 @@
 # Apply Mode — Conform a Codebase to DESIGN.md
 
-Generic version of `/brand-ui`. Runs phased application of any DESIGN.md spec.
+Runs phased application of any DESIGN.md spec.
 
 ## Pre-flight
 

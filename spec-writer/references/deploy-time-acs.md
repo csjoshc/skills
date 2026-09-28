@@ -87,7 +87,7 @@ grep -oE 'namespaceSelector:\s*$\s*matchLabels:\s*$\s*[a-zA-Z0-9_./-]+:' \
 # If any output: emit the labeling-AC automatically.
 ```
 
-## Concrete shape — pulled from T-732 (`.tickets/T-732-helm-brand-ui-subchart.md`)
+## Concrete shape — pulled from a Helm UI-subchart ticket
 
 T-732's AC list had `helm lint helm/chat-stack` (AC10) and the
 `helm template` render set (AC5–AC9). Under these conventions it would also
@@ -102,18 +102,18 @@ have carried:
         --wait --timeout=2m \
         --set data-mcp.image.tag=v0.0.0-rc1 \
         --set api.image.tag=v0.0.0-rc1 \
-        --set brand-ui.image.tag=v0.0.0-rc1
-      kubectl wait deployment/brand-ui --for=condition=Available --timeout=60s -n chat-stack
+        --set web-ui.image.tag=v0.0.0-rc1
+      kubectl wait deployment/web-ui --for=condition=Available --timeout=60s -n chat-stack
 ```
 
 **Added under Convention 3 — Trigger A:**
 
 ```
-14. Cross-pod reachability from api → brand-ui.
+14. Cross-pod reachability from api → web-ui.
     Verify:
       kubectl run np-probe --rm -i --restart=Never -n chat-stack \
         --image=busybox:1.36 -- \
-        wget --timeout=3 -qO- http://brand-ui.chat-stack.svc.cluster.local:80/
+        wget --timeout=3 -qO- http://web-ui.chat-stack.svc.cluster.local:80/
       # Exit 0; body contains '<!doctype html>'.
 ```
 

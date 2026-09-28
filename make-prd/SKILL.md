@@ -120,7 +120,7 @@ Record each decision in the PRD's Decision Ledger:
   decision: feature-scoped; env-overridable via PROOF_DIR
   justification: |
     Per-cycle artifact directories rot; this name describes the
-    test, and CI / orch can set PROOF_DIR for per-cycle archival.
+    test, and CI can set PROOF_DIR for per-cycle archival.
 
 - name: scripts/verify-llm-config.sh
   coupling: [scope]  # NOT ticket-coupled

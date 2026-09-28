@@ -38,7 +38,7 @@ that downstream skills (such as ppt-make for PPTX generation) can parse directly
 - `/reframe architect` (uses conversation context)
 - `/reframe auto ./specs/api-design.md --diagrams`
 
-For PPTX output, pipe reframe's markdown through the ppt-make skill:
+For PPTX output, pipe reframe's markdown through a PPTX skill such as ppt-make:
 ```
 /reframe exec ./docs/architecture.md
 /ppt-make ./docs/architecture-exec.md
@@ -64,7 +64,7 @@ For PPTX output, pipe reframe's markdown through the ppt-make skill:
 3. Output format?
    ├─ Always → structured markdown with YAML frontmatter (the output contract)
    ├─ --diagrams requested or default-on → generate .mmd files, reference in frontmatter
-   └─ For PPTX output → pipe reframe's markdown through the ppt-make skill
+   └─ For PPTX output → pipe reframe's markdown through a PPTX skill such as ppt-make
 ```
 
 ## Workflow
@@ -163,6 +163,66 @@ either:
 
 A reframe that adds a fourth parallel page increases the doc-rot
 surface; it doesn't help the audience.
+
+#### Hub-shedding audit (the inverse fan-out)
+
+The fan-out audit above catches too many pages. This one catches
+one page carrying too much. When a single hub has absorbed the job
+of its own children (one section runs past ~70% of the body, the
+page needs scrolling to reach the decision or the open questions),
+reframe pushes the heavy blocks down, not sideways:
+
+1. **Measure before cutting.** Count words per section. A block
+   that dominates the page and answers a question the reader came
+   to a *different* page for is the move candidate. Apply the test:
+   did the reader open the hub to learn *this*, or to find out
+   *where* to learn it? A 7-by-4 comparison matrix fails that test
+   on a hub and passes it on the comparison page.
+2. **Push into existing children first.** Fold the block into the
+   child that already owns that job (the source-only core into the
+   build-out page, the orchestrator matrix into the architectures
+   page). Create a new child only when no child owns the topic.
+3. **Reshape on arrival, don't dump.** Moving a wall of text to
+   another page relocates the overwhelm. Regroup the block to the
+   destination's structure (six flat bullets become three grouped
+   ones; a prose list of options becomes a table).
+4. **Leave a gist plus a link.** The hub keeps a two or three line
+   summary and a link to the child, so a hub reader still gets the
+   answer's shape without the full block.
+
+The target is a hub that reads as orientation: what this is, what
+is decided versus open, where to go for depth.
+
+#### Confluence comment-anchor preservation
+
+Restructuring a Confluence page orphans any inline comment anchored
+to text you move or delete. The anchor is a marker wrapped around a
+specific phrase in the storage XML, not a position, so rewording or
+relocating that phrase breaks it silently. Before editing a page
+that has inline comments:
+
+1. **Read the storage format first.** Fetch the page with
+   `convert_to_markdown=false` and find the
+   `ac:inline-comment-marker` elements. The phrase each one wraps is
+   the live anchor. Do not assume an anchor sits where the rendered
+   text suggests; a comment can be pinned to a heading or a mid-list
+   sentence that your edit is about to move.
+2. **Keep anchored phrases on the page verbatim** when the section
+   they live in survives. A section-scoped edit that rewrites the
+   anchored sentence orphans the comment even if the section stays.
+3. **Re-anchor deliberately when the text has to move.** Add a fresh
+   inline comment carrying the original question and author
+   attribution, anchored to surviving text (an Open-items entry that
+   states the same question works well), and note in the body that a
+   restructure moved the original anchor. This mirrors the
+   tombstone-comment pattern teams already use.
+4. **Verify after.** Re-fetch the comments and confirm the live copy
+   attaches to real page text; expect the orphaned originals to
+   remain as resolvable tombstones.
+
+Section-scoped update tools help here: they replace one section's
+body and leave other sections, macros, and their anchors intact,
+which a full-page download-edit-reupload round trip does not.
 
 ### Phase 3: Structure
 
@@ -335,6 +395,8 @@ Before delivering output:
 - [ ] Diagrams (if any) referenced in frontmatter `diagrams` array
 - [ ] Output file paths reported to user
 - [ ] Gaps in source material flagged explicitly (METRICS NEEDED, TIMELINE TBD)
+- [ ] Over-heavy hub: dominant blocks pushed into existing children with a gist + link left behind (hub-shedding audit)
+- [ ] Confluence inline-comment anchors checked in storage format and preserved or re-anchored before editing
 - [ ] Prose output passes `/stop-slop` to remove AI writing patterns
 
 ## Validation

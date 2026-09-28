@@ -28,7 +28,6 @@ DESIGN.md is what downstream agents read. `preview-ui/` is the human (and visual
 
 - Building UI code from a DESIGN.md → use `/make-ui` Apply Mode
 - Auditing existing code against a DESIGN.md → use `/make-ui` Audit Mode
-- Acme brand specifically → already captured in `/brand-ui`'s `brand-design-system.md`
 
 ## Three-Phase Workflow
 
@@ -78,7 +77,7 @@ After approval:
 3. Write `preview-ui/README.md` with verification instructions.
 4. Run `/stop-slop` on the prose sections of DESIGN.md (Overview, Do's/Don'ts rationale).
 
-**Token sourcing rule:** when a project already has separate light/dark token files (e.g. `tokens.light.css` + `tokens.dark.css`, or Acme's `brandSemanticTokensLight.css` + `brandSemanticTokensDark.css`), read **both** before emitting front matter. Never derive dark values from light values — read each side directly. The light-file values populate canonical `colors:`; the dark-file values populate the `colors-dark:` extension key. After emit, cross-check every key in `colors-dark:` has a counterpart in `colors:` and vice versa.
+**Token sourcing rule:** when a project already has separate light/dark token files (e.g. `tokens.light.css` + `tokens.dark.css`), read **both** before emitting front matter. Never derive dark values from light values — read each side directly. The light-file values populate canonical `colors:`; the dark-file values populate the `colors-dark:` extension key. After emit, cross-check every key in `colors-dark:` has a counterpart in `colors:` and vice versa.
 
 ## Companion Files
 
@@ -87,7 +86,6 @@ After approval:
 - [decision-matrix.md](references/decision-matrix.md) — vertical→aesthetic + hybrid combinations + density axis
 - [preview-template.html](references/preview-template.html) — preview-ui boilerplate
 - [brand-ingest.md](references/brand-ingest.md) — alternate path when a brand guide exists
-- [examples/brand-as-design-md.md](examples/brand-as-design-md.md) — worked example mapping `brand-design-system.md` to Stitch 9
 
 ## Hard Constraints
 

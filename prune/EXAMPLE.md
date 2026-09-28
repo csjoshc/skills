@@ -1,6 +1,6 @@
 # Worked Example — starter-derived monorepo
 
-A real audit of a `starter`-derived repo (uv + pnpm monorepo, one live app under
+A real audit of a starter-derived repo (uv + pnpm monorepo, one live app under
 `apps/patent-search/`). Shows the numbers a clean scan produced **and the
 corrections the naive "zero-import → strip" approach missed**.
 

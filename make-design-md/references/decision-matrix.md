@@ -14,7 +14,7 @@ For greenfield projects or when current code gives no clear signal. **Existing p
 | Education / Docs | Structured Clarity | Strong hierarchy, sidebar nav, code-friendly, reading-optimized | Stripe Docs, GitBook |
 | Gaming / Entertainment | Immersive Chrome | Dark backgrounds, vibrant accents, bold type, atmospheric gradients | Steam, Discord |
 | Internal Tool / Dashboard | Data-Dense Utility | Compact spacing, monospace data, status-light colors, panel-based | Grafana, Retool, Ableton |
-| Enterprise SaaS | Enterprise Neutral | Neutral grays, square buttons, semantic tokens, restrained color | Acme, IBM Carbon, Atlassian |
+| Enterprise SaaS | Enterprise Neutral | Neutral grays, square buttons, semantic tokens, restrained color | IBM Carbon, Atlassian |
 | Default / Unknown | Trust-Refined | Safe fallback with professional polish | Stripe |
 
 ## Hybrid Combinations

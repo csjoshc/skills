@@ -10,7 +10,7 @@ checks, standards gathering, traceability execution, and GitHub posting.
 - Plan-present pre-flight
 - Standards gathering
 - Deterministic checks
-- Acme platform context
+- Platform context
 - PR summary
 - Traceability execution
 - Pre-post validation
@@ -122,23 +122,14 @@ Do not invent commands the repo does not use. Prefer project-native commands.
 
 ---
 
-## Acme Platform Context
+## Platform Context
 
-If the PR touches Acme backend code, query Acme-specific context before review.
-
-Examples:
-
-- `.typ` or `.doc`
-- Acme server-side JavaScript
-- `fetch()` or `evalMetric()` calls
-- `PerLogger` setup
-- `Jasmine` / `TestApi` harness
-- Seed or canonicalize scripts
-- Acme package metadata
-
-Use Acme context to validate API semantics, filter syntax, type signatures, and
-platform-specific conventions. Do not rely on generic knowledge for proprietary
-Acme behavior.
+If the PR touches code on a proprietary platform (custom type systems,
+platform-specific server APIs, in-house test harnesses), load the matching
+platform-context skill or MCP server if one is installed (e.g. a
+`<platform>-pr-context` skill) before review. Use it to validate API
+semantics, type signatures, and platform conventions. Do not rely on generic
+knowledge for proprietary behavior.
 
 ---
 

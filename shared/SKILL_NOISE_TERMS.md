@@ -47,14 +47,12 @@ the long-lived tree.
 | `ADR-NN`, `DEBT-NN` | Decision record / tech-debt ticket codes |
 | `T-NNN` (e.g. `T-762`, `T-767`) | Internal ticket ID pattern |
 | `Stage: NEW\|SPEC\|PLAN\|BUILD\|REVIEW\|COMPLETE\|FAILED` | Runner stage enum |
-| `Loop:` / `Loop-Reason:` / `Loop-eligible` | Automated-review metadata fields |
 | `[FALLIBLE_IO]` | Spec annotation tag |
 | `ASSUMPTION:` | Spec assumption annotation |
 | `PDCA-T` | Skill methodology label |
 | `micro-task cycle` | Spec-writer process phrase |
 | `vertical slice` | Spec-writer decomposition term |
 | `Tier 1/2/3 assumptions`, `T1\|T2\|T3` | Risk tier codes |
-| `LOOP_DECISION_RULE` | Shared-file reference |
 
 ---
 
@@ -92,8 +90,7 @@ the long-lived tree.
 | `constitutional leakage` | Ticket-critic finding category |
 | `E2E validation gap` | Ticket-critic gap label |
 | `Stage gate` (as a noun phrase) | Ticket-critic gate reference |
-| `LOOP_DECISION_RULE.md`, `QUALITY_RUBRIC.md` | Shared-file names in prose |
-| `Loop-binding` | Ticket-critic binding-decision label |
+| `QUALITY_RUBRIC.md` | Shared-file name in prose |
 
 ---
 

@@ -87,8 +87,8 @@ Format inside the ticket file:
 
 ```markdown
 ## Docs to Update
-- [ ] `docs/architecture-overview.md` — replace `acme-agent` references with `agent_core`
-- [ ] `docs/acme/diagrams/c4-L2-container.mmd` — same
+- [ ] `docs/architecture-overview.md` — replace `legacy-agent` references with `agent_core`
+- [ ] `docs/diagrams/c4-L2-container.mmd` — same
 - [ ] `README.md` — endpoint list (drop `/v1/chat/stream`, document the single-SSE shape)
 - [ ] `packages/api/README.md` — runtime table; align with `config/llm-defaults.env`
 - [ ] `.env.example` — add LLM_MODEL_EMBED row

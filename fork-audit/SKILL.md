@@ -1,13 +1,28 @@
 ---
 name: fork-audit
-description: Audits and documents a forked or divergent codebase at layered depth (exec / architect / engineer) plus topic breakouts. Use when documenting a downloaded fork zip, understanding what changed vs upstream, decomposing squashed PRs into logical commits, identifying the novel architectural pattern, and producing reusable documentation under a gitignored .docs/ folder with Mermaid diagrams. Not for forward-looking design (use spec-writer/make-prd), not for PR-time review (use pr-review), not for general repo onboarding (use brief-docs).
+description: Audits and documents a forked or divergent codebase, fanning out intermediate layered docs (exec / architect / engineer), topic breakouts, and a code-grounded Q&A loop under a gitignored .docs/ folder, then synthesizing them into one final Confluence design page. Use when documenting a downloaded fork zip, understanding what changed vs upstream, decomposing squashed PRs into logical commits, identifying the novel architectural pattern, or publishing a fork's mental model to Confluence. Not for forward-looking design (use spec-writer/make-prd), not for PR-time review (use pr-review), not for general repo onboarding (use brief-docs).
 ---
 
 # fork-audit
 
-Apply this skill when the user says any of: "document this fork", "what changed vs main/upstream", "we downloaded a zip of repo X, audit it", "compare main…feature-branch and write it up", "understand and document this divergent branch".
+Apply this skill when the user says any of: "document this fork", "what changed vs main/upstream", "we downloaded a zip of repo X, audit it", "compare main…feature-branch and write it up", "understand and document this divergent branch", "publish the fork's design to Confluence".
 
-The output is a **layered docs set** under a gitignored folder (default `.docs/`), structured so exec / architect / engineer can each enter at their own depth without rewriting.
+The **final artifact is a single Confluence design page**. Everything else — the layered docs, topic breakouts, diagrams, and Q&A files under a gitignored folder (default `.docs/`) — is **intermediate fan-out material** that exists to drive the final page. The intermediates stay on disk as the audit trail and drill-down reference; the Confluence page is what the team reads.
+
+```
+Phase 1–2: diff forensics + inventory
+        │
+Phase 2.5: subagent fan-out over the diff
+        │
+Phase 5: fan out intermediates (.docs/)
+   ├── L0 exec summary        ─┐
+   ├── L1 architect overview   │
+   ├── L2 per-commit deep dive │──► Phase 7: synthesize ──► Confluence design page
+   ├── topics/<breakouts>      │        (the deliverable)
+   ├── diagrams/*.svg          │
+   └── Q&A loop (questions.md ─┘
+        → answers.md)
+```
 
 ## When to use vs not
 
@@ -15,9 +30,9 @@ The output is a **layered docs set** under a gitignored folder (default `.docs/`
 |---|---|
 | Documenting a downloaded fork zip | New design from scratch → `make-prd` or `spec-writer` |
 | Auditing a divergent branch (main…feature) | Per-PR review comments → `pr-review` |
-| Producing layered exec/architect/engineer docs | Short single-page onboarding → `brief-docs` |
+| Publishing a fork's design page to Confluence, backed by layered exec/architect/engineer intermediates | Short single-page onboarding → `brief-docs` |
 | Mermaid for system context, data flow, sequence | Just rendering one diagram → `make-mmd` |
-| Confluence embeds → call `confluence-diagrams` after |
+| | Confluence diagram embeds → call `confluence-diagrams` after |
 
 ## Decision tree
 
@@ -40,6 +55,12 @@ The output is a **layered docs set** under a gitignored folder (default `.docs/`
 4. Output folder?
    ├─ Default → .docs/ at repo root, gitignored
    └─ User-specified path
+
+5. Confluence target?
+   ├─ User gave a page URL/ID → publish the final page there (update in place)
+   ├─ User gave a space/parent → create a child page titled "Design" (or user's title)
+   └─ No Confluence access / user declines → the synthesis still happens; save it as
+      .docs/FINAL-design.md and tell the user it's ready to paste
 ```
 
 ## Workflow
@@ -181,9 +202,9 @@ git remote -v  # confirm empty
 
 The local repo will not show as a fork on any platform unless a remote is later added. The upstream repo on GitHub may still be platform-labelled as a fork — that's a property of the GitHub repo, not changeable from local.
 
-### Phase 5 — Output generation
+### Phase 5 — Fan out intermediates (`.docs/`)
 
-Create the layered output set. Default folder: `.docs/` at repo root, added to `.gitignore` first.
+Create the layered intermediate set. Default folder: `.docs/` at repo root, added to `.gitignore` first. These files are **not the deliverable** — they are the fan-out that grounds the final Confluence page. Each one earns its place by contributing a distinct slice to the synthesis.
 
 ```
 .docs/
@@ -191,6 +212,8 @@ Create the layered output set. Default folder: `.docs/` at repo root, added to `
 ├── L0-executive-summary.md         # ~1 page, exec/product — see templates/L0-executive-summary.md
 ├── L1-technical-overview.md        # ~5 pages, architect — VIA /reframe architect, see templates/L1-technical-overview.md
 ├── L2-deep-dive.md                 # file-by-file walkthrough, engineer — see templates/L2-deep-dive.md
+├── questions.md                    # Q&A loop input — see Phase 6
+├── answers.md                      # Q&A loop output — code-cited answers + design gaps
 ├── topics/
 │   ├── <novel-pattern>.md          # the structural innovation
 │   ├── <distinctive-feature>.md    # major feature deep-dive
@@ -209,24 +232,66 @@ Create the layered output set. Default folder: `.docs/` at repo root, added to `
 5. Write topic breakouts (one per `topics/`)
 6. Write README.md last (index with reading-by-audience table; one-screen diff summary; what was written; what was intentionally not written)
 
-### Phase 6 — Verify
+### Phase 6 — Q&A hardening loop
+
+The layered docs describe what the fork *is*; the Q&A loop surfaces what it *doesn't do*. This phase produced the strongest material in practice — the design-gaps section of the final page comes almost entirely from here.
+
+1. **Collect questions** into `questions.md`. Sources, in priority order:
+   - The user's own questions (they know their use case; capture them verbatim, typos and all)
+   - Questions the layered docs raised but didn't answer (scaling, ops posture, eval coverage, cost)
+   - Adversarial questions you generate: "what breaks at 10× scale?", "who reviews the AI output?", "what happens when the upstream API changes shape?"
+2. **Answer every question in `answers.md`, citing code.** Each answer names the file:line that backs it. Where the code doesn't address the question, the answer is **"design gap — not implemented"** and gets flagged explicitly. Never paper over a gap with plausible-sounding prose.
+3. **Promote cross-cutting gaps** into a numbered list at the end of `answers.md`. For each gap note whether it's *active* (biting today) or *latent* (fires on a trigger), and give the one-line check that would confirm its magnitude (a SQL query, a grep, a log inspection).
+4. **Iterate.** New questions that come up while answering go back into `questions.md` (or a `questions2.md`). Stop when a round produces no new gaps.
+
+This loop can run across sessions — the files persist, and later question rounds deepen earlier answers.
+
+### Phase 7 — Synthesize the final Confluence page
+
+This is the deliverable. One page, written fresh from the intermediates — **not** a concatenation of them.
+
+1. **Confirm the target.** Page ID/URL from the user, or create under the space/parent they name. Fetch the existing page first (`confluence_get_page`) to check whether you're filling an empty page or updating live content.
+2. **Draft from the fan-out.** Pull each section from its owning intermediate:
+
+   | Final-page section | Sourced from |
+   |---|---|
+   | Identity paragraph + one-sentence framing | L0 |
+   | "The fork in one screen" (PR table) | L0 / README diff table |
+   | Primary request flow, stated as numbered steps | L2 + request-flow topic/diagram |
+   | Novel-pattern section (pipeline, state machine, whatever it is) | `topics/<novel-pattern>.md` |
+   | Mechanics with surprises ("the index you'd expect isn't there") | `answers.md` deep-technical answers |
+   | Numbers-to-remember table (timings, costs, scale walls) | `answers.md` + topic operational notes |
+   | Known gaps, numbered, with the scale at which each becomes a blocker | `answers.md` cross-cutting gaps |
+   | "Where the deeper docs live" pointer table | README |
+
+3. **Write in the Q&A voice, then run `/stop-slop`.** Direct verdicts ("There is no re-ranking. The cosine score is used directly."), concrete values, gaps stated as gaps. Tables over prose where the content is tabular. No em dashes, no filler, no hedging.
+4. **Keep it one page.** Target the length of a 10-minute read. Anything that wants more depth gets a one-line pointer to the in-repo canonical doc (DEVGUIDE, design specs), not inlined. The `.docs/` intermediates are local-only and gitignored — reference them by name for the audit trail, but don't link them as if readers can click through.
+5. **Publish** via `confluence_update_page` (markdown format; `table_layout: wide` reads better for the numbers tables). Offer as follow-ups: uploading the diagram SVGs via `/confluence-diagrams`, and linking the PRs if the repo is shareable.
+
+Template: [templates/confluence-design-page.md](templates/confluence-design-page.md).
+
+### Phase 8 — Verify
 
 - `git status` — output folder is not tracked (it's gitignored)
 - `git check-ignore -v <output>/README.md` — confirms ignore rule fires
 - All .mmd files have corresponding .svg
 - README's reading table lists every file actually produced
+- The Confluence page exists at the expected URL, renders its tables, and its version comment names this audit
+- Every gap on the final page traces back to a flagged answer in `answers.md`
 
 ## Output contract
 
-Each file follows a defined shape. Templates in `templates/`:
+The Confluence page is the deliverable; each intermediate follows a defined shape. Templates in `templates/`:
 
 | File | Stub | Voice | Key elements |
 |---|---|---|---|
+| **Confluence design page** (final) | [templates/confluence-design-page.md](templates/confluence-design-page.md) | Q&A vernacular, `/stop-slop`ed | Identity + one-sentence framing; fork-in-one-screen table; request flow; novel pattern; mechanics with surprises; numbers table; numbered gaps; pointer table |
 | `README.md` | [templates/README.md](templates/README.md) | Neutral | Reading-by-audience table; one-screen diff summary; "What was written / not written" |
 | `L0-executive-summary.md` | [templates/L0-executive-summary.md](templates/L0-executive-summary.md) | Exec | Identity paragraph; Problem · Constraints · Solution table; "What changed vs upstream" 3-column table (PR / files / what it does); "Where to go from here" |
 | `L1-technical-overview.md` | [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Architect (via `/reframe`) | YAML frontmatter + `## Slide:` sections per reframe contract; thesis; core-tension table; component-boundaries diagram; reuse map; NFRs; migration considerations; parking lot |
 | `L2-deep-dive.md` | [templates/L2-deep-dive.md](templates/L2-deep-dive.md) | Engineer | Per-PR section with sub-section per logical commit; file table with additions/deletions; key code snippets where the design choice isn't obvious from the diff |
 | `topics/<name>.md` | [templates/topic.md](templates/topic.md) | Engineer | Single-purpose; lead with "where it lives" + "why it exists"; diagram link if applicable; "see also" tail |
+| `questions.md` / `answers.md` | none (freeform) | Interrogative / verdict | Questions verbatim; answers cite file:line; gaps flagged "design gap — not implemented"; cross-cutting gaps numbered with active/latent status + confirm check |
 
 ## Diagram conventions
 
@@ -259,11 +324,15 @@ Render each `.mmd` to `.svg` with `mmdc -i X.mmd -o X.svg -b transparent`.
 - **L1 goes through `/reframe`.** Don't write the architect-audience layer from scratch — that's what `/reframe architect` exists for. Hand it the assembled source material in one call.
 - **No silent information loss.** Anything cut from a doc for audience reasons goes in that doc's parking-lot (mirrors the `/reframe` contract).
 - **Don't trust `gh api compare` cross-fork.** It can return `status: identical` for branches that differ. Always verify with the head's own commit history.
+- **The Confluence page is a synthesis, not a concatenation.** Never paste an intermediate onto the page wholesale. Every section is rewritten for the one-page read, and every claim on it traces to an intermediate.
+- **Gaps come from the Q&A loop.** Don't write the known-gaps section from intuition; write it from the flagged "design gap — not implemented" answers in `answers.md`. If the loop hasn't run, run it first.
+- **Never link gitignored intermediates from the Confluence page as if they resolve.** Name them ("the local `.docs/answers.md` analysis") so readers know the audit trail exists, but only hyperlink things a reader can open: in-repo docs, other Confluence pages, PRs.
 
 ## Companion files
 
 | File | Use when |
 |---|---|
+| [templates/confluence-design-page.md](templates/confluence-design-page.md) | Synthesizing the final Confluence page (Phase 7) |
 | [templates/README.md](templates/README.md) | Writing the index page |
 | [templates/L0-executive-summary.md](templates/L0-executive-summary.md) | Writing the exec layer |
 | [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Feeding into `/reframe architect` |
@@ -283,7 +352,10 @@ Before reporting done:
 - [ ] README lists every file actually produced
 - [ ] Cross-references between L0/L1/L2/topics are real (clickable, resolve to existing files)
 - [ ] The "where to go from here" / reading-by-audience table is in README and L0
-- [ ] If `/stop-slop` is available, the prose has been run through it
+- [ ] `questions.md` + `answers.md` exist; every answer cites code or is flagged as a design gap
+- [ ] The Q&A loop ran until a round produced no new gaps
+- [ ] The Confluence page is published (or `.docs/FINAL-design.md` exists if no Confluence access), synthesized fresh, and every gap on it traces to `answers.md`
+- [ ] If `/stop-slop` is available, the final page and intermediates have been run through it
 
 ## Composition with other skills
 
@@ -291,6 +363,6 @@ Before reporting done:
 |---|---|
 | Architect-layer reframing | `/reframe architect <assembled-source>` (produces L1) |
 | Diagram authoring | `/make-mmd` for fresh diagrams; this skill embeds the conventions inline |
-| Confluence embed (post-hoc) | `/confluence-diagrams` |
-| Final prose polish | `/stop-slop` per-file |
-| Handoff to next session | `/handoff` — point the new agent at `.docs/README.md` |
+| Diagram embeds on the final page | `/confluence-diagrams` after publishing |
+| Final prose polish | `/stop-slop` — mandatory on the Confluence page, per-file on intermediates |
+| Handoff to next session | `/handoff` — point the new agent at `.docs/README.md` and the Confluence page URL |

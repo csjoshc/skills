@@ -26,7 +26,7 @@ AC→Test Traceability table names it. Write the file there from the first keyst
 | Package unit/integration | `packages/<pkg>/tests/test_<module>.py` |
 | E2E | `tests/template_agent_e2e/` |
 
-Include a `test_coverage_anchor` function with `import agent_checks` so the orch
+Include a `test_coverage_anchor` function with `import agent_checks` so the
 coverage gate passes for YAML/Dockerfile-only diffs (no `conftest.py` shim needed).
 
 Companion files to load at specific phases:

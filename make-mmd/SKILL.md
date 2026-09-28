@@ -5,7 +5,7 @@ description: "Authors and renders Mermaid diagrams to SVG with a consistent ligh
 
 # make-mmd — Mermaid Authoring + Rendering
 
-Produces `.mmd` sources and renders them to `.svg` with the shared Acme color
+Produces `.mmd` sources and renders them to `.svg` with the shared color
 convention. Decouples "how the diagram looks" (this skill) from "where it ends
 up" (consumer skills: `confluence-diagrams`, README embedding, etc.).
 

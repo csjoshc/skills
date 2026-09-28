@@ -35,13 +35,9 @@ Keep this role separate from implementation agents.
 
 Before pattern checks, verify metadata:
 
-- Required fields: `Stage:`, `Loop:`, `Loop-Reason:`
+- Required fields: `Stage:`
 - Allowed Stage enum: `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`
 - If implementation-ready, require exactly `Stage: BUILD`
-- If `Loop:` is present, validate it against [`~/.skills/shared/LOOP_DECISION_RULE.md`](~/.skills/shared/LOOP_DECISION_RULE.md)
-  - `Loop: true` requires all eligibility conditions met + no disqualifiers
-  - `Loop: false` requires disqualifier present (or explicit choice for small tickets)
-  - Block if `Loop-Reason:` is missing or vague
 
 If missing or invalid, stop and block immediately.
 
@@ -63,21 +59,19 @@ Only then run the 10-pattern review.
 
 Every acceptance criterion must name the test function or verification command that will verify it before the ticket can move to `Stage: BUILD`. The test does not have to exist yet — TDD's red phase is the correct place to create it — but the name, file, and behavior to be asserted must be chosen in advance. This is what prevents tautological tests: the assertion is committed before the implementation exists to copy from.
 
-**Specific requirement for Loop-eligible tickets:** Each AC must have a **machine-executable** verification command (grep, pytest -k, ruff check, etc.). If any AC has a manual or vague verification step, that AC violates Loop eligibility and blocks the `Loop: true` flag.
-
 ### Required section in every ticket
 
 ```markdown
 ## Acceptance Criteria → Tests
 
-| AC | Test file / Command | Test name | Assertion shape | Risk Tier | Loop-binding? |
-|---|---|---|---|---|---|
-| AC-1 Given a logged-in user, when they click "Save", then a toast appears | src/ui/__tests__/SaveButton.test.tsx | "shows toast on save" | `expect(screen.getByRole('alert'))` | T2 | no |
-| AC-2 Given a 5xx response, retry up to 3 times | src/api/__tests__/retry.test.ts | "retries 3× on 5xx then throws" | counter-based mock | T1 | yes |
-| AC-3 Export CSV contains header row | `pytest -k test_csv_header` | "emits header as first line" | string match | T3 | yes |
+| AC | Test file / Command | Test name | Assertion shape | Risk Tier |
+|---|---|---|---|---|
+| AC-1 Given a logged-in user, when they click "Save", then a toast appears | src/ui/__tests__/SaveButton.test.tsx | "shows toast on save" | `expect(screen.getByRole('alert'))` | T2 |
+| AC-2 Given a 5xx response, retry up to 3 times | src/api/__tests__/retry.test.ts | "retries 3× on 5xx then throws" | counter-based mock | T1 |
+| AC-3 Export CSV contains header row | `pytest -k test_csv_header` | "emits header as first line" | string match | T3 |
 ```
 
-Risk Tier and Loop-binding columns feed `/tdd` Phase 0 scoping. Values mirror
+The Risk Tier column feeds `/tdd` Phase 0 scoping. Values mirror
 the ticket's **Test Obligation Profile** (spec-writer output) — the critic's job
 is to enforce that the mirror is honest, not to re-derive tiers.
 
@@ -87,10 +81,8 @@ is to enforce that the mirror is honest, not to re-derive tiers.
 - Any test name matching `.*works.*`, `.*handles.*`, or `.*should.*` → **BLOCKED** (too vague; rename to describe the behavior)
 - Any "Assertion shape" that is just `toBe(true)` → **BLOCKED** (describe what's being checked)
 - Any test that exists but asserts only the return value of the function under test with no further condition → **WARN** (tautology risk; let mutation-critic decide on the implementation side)
-- **(Loop-specific)** Any AC with a manual verification step ("verify visually", "test manually") → **BLOCKED** if `Loop: true` (machine-checkable ACs are load-bearing)
 - **Risk Tier missing** on any row → **BLOCKED** (spec-writer Test Obligation Profile is incomplete — send back to spec-writer, do not patch in the critic)
 - **T1 AC with no concrete target** (Test file / Command is vague or points at a non-existent file the ticket does not create) → **BLOCKED** (T1 ACs must be load-bearing; /tdd Phase 0 cannot score what it cannot locate)
-- **Loop-binding mismatch** between this table and the spec-writer Test Obligation Profile → **BLOCKED** (drift between upstream and local table)
 - `Test file / Command` cell contains `tests/tickets/` → **BLOCKED** (deprecated gitignored staging area; specify the permanent destination — `tests/infra/`, `tests/docs/`, or `packages/<pkg>/tests/` — so the implementing agent writes the file to the right place on first creation)
 
 ### Why this works

@@ -81,7 +81,7 @@ Fill every row of every table. If a value is absent, write "none" — never leav
 ## After filling tables
 
 Summarize in one paragraph (3–4 sentences):
-- Current visual identity in one sentence ("looks like generic shadcn", "Acme-aligned", "drift-heavy custom")
+- Current visual identity in one sentence ("looks like generic shadcn", "brand-aligned", "drift-heavy custom")
 - Strongest pattern to preserve
 - Biggest gap to close
 - Whether brand-ingest path applies (Table 8 has values)

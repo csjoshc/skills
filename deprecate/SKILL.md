@@ -105,7 +105,7 @@ git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' '.gitlab-ci.yml' '.circleci
 git grep -nE "\\b${NAME}\\b" -- 'helm/' 'k8s/' 'manifests/' 'kustomize/' 'docker-compose*' 'Dockerfile*'
 
 # Package / project manifests (substitute per stack)
-git grep -nE "\\b${NAME}\\b" -- '*.toml' 'package.json' '*.csproj' 'Cargo.toml' 'go.mod' '*.pkg.json'
+git grep -nE "\\b${NAME}\\b" -- '*.toml' 'package.json' '*.csproj' 'Cargo.toml' 'go.mod'
 
 # .env examples + generated config
 git grep -nE "\\b${NAME}\\b" -- '.env*' 'config/'

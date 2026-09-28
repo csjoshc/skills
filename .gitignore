@@ -1,5 +1,5 @@
 .backup/
-/acme*/
+synced/
 .runner/*
 .runner.log
 .runner/

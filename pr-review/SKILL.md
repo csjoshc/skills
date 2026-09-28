@@ -156,7 +156,7 @@ req.body.user_id  →  used in `WHERE id = ${user_id}`
 | ---------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------- |
 | [`reference/review-lenses.md`](reference/review-lenses.md)         | Specialist agents, checklists, validation, output format                | Every invocation |
 | [`reference/review-standards.md`](reference/review-standards.md)   | Standards cited by the standards compliance lens                        | Every invocation |
-| [`reference/review-operations.md`](reference/review-operations.md) | Pre-flight, commands, posting flow, Acme handling, traceability execution | Every invocation |
+| [`reference/review-operations.md`](reference/review-operations.md) | Pre-flight, commands, posting flow, platform-context handling, traceability execution | Every invocation |
 | [`../reviews/schemas.md`](../reviews/schemas.md)                   | Fenced-block schemas + source-tag rules                                 | Every invocation |
 | [`../reviews/runbook.md`](../reviews/runbook.md)                   | Fixed phase sequence shared with cleanup                                | Every invocation |
 | [`../reviews/validate.py`](../reviews/validate.py)                 | Pre-post validator (stdlib-only)                                        | Before posting   |

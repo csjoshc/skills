@@ -42,6 +42,10 @@ Eliminate predictable AI writing patterns from prose.
 
 9. **Cut quotables.** If it sounds like a pull-quote or a mic-drop kicker, delete it and end on the clearest concrete sentence already in the draft.
 
+10. **Don't leak internal-only shorthand into committed artifacts — commit messages are the one exception.** Ticket/ADR IDs (`T-17`, `AC-3`, `F-C2`, `BL-4`), integration-gate names (`IG-6`), and emergent project nicknames that only mean something inside one team's own tracking (e.g. an internal codename for a feature that isn't the thing's real/canonical name) belong **only** in commit messages — never in code comments, YAML/config, docstrings, PR/issue titles or bodies, or any doc. Name what the thing actually does instead of the internal label for the effort that built it. A commit message is the sanctioned home for this traceability: git history is durable, tied to a point in time, and read by someone already looking at *why this diff exists*. Everything else is read by someone with no such context — including a fresh clone of the *same* repo that owns the ticket system, when (as is typical) the ticket files themselves are gitignored and never travel with the code. So the rule is not "don't leak across repos" — it is "the file/PR/doc in front of the reader must be self-contained regardless of which repo it lives in." Concretely: a workflow YAML comment saying "T-5 adds issues:write" must instead say what issues:write is *for*; a PR body must describe the change, not restate the ticket ID already visible in its own commit messages.
+
+11. **Code comments: mostly 1-2 lines, under 80-100 characters, sitting directly next to the complex or counterintuitive line they explain.** ([Atwood](https://blog.codinghorror.com/when-good-comments-go-bad/); [ideal comment length](https://www.quora.com/What-is-the-ideal-length-for-code-documentation-comments)) A comment describes one non-obvious thing about the code right below it — not a standalone essay above a whole file or function. A multi-paragraph header block is a sign the WHY belongs in a design doc or commit message, not scattered as a wall of prose the reader has to hold in their head while reading unrelated code beneath it. When a real explanation needs more than 2 lines, that is itself a signal: either the code needs restructuring (extract a well-named function instead of commenting the clever one), or the explanation belongs in the commit message / a linked doc, with at most a 1-line pointer left in the code ("see commit message" / "see docs/X.md"). This rule composes with rule 4 (Be specific) and rule 10 (no ticket IDs) — a short comment has no room for filler or a `T-17` reference anyway.
+
 ## Quick Checks
 
 Before delivering prose:
@@ -66,6 +70,9 @@ Before delivering prose:
 - Sentence portable to any company/product unchanged? Filler; cut or make it specific.
 - Narrator-from-a-distance ("Nobody designed this")? Put the reader in the scene.
 - Meta-joiners ("The rest of this essay...")? Delete. Let the essay move.
+- Internal ticket/gate ID or team-local nickname (`T-17`, `IG-6`, an emergent shorthand that isn't the thing's canonical name) anywhere but a commit message — a code/YAML comment, docstring, PR title or body, issue, doc? Cut it; describe what the thing does instead. This includes PRs/comments inside the very repo that owns the ticket system, not just other repos — the ticket files are almost always gitignored, so nobody reading the file has access to what the ID means.
+- A code comment longer than 2 lines, or a multi-paragraph header block above a function/file? Cut it to 1-2 lines next to the specific line it explains, or move the explanation to the commit message and leave a 1-line pointer.
+- A comment line over ~100 characters? Wrap or trim it — length alone signals it drifted from "one fact about this line" into prose.
 
 ## Scoring
 

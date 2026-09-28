@@ -247,7 +247,7 @@ development labels. Forbidden patterns (case-insensitive):
 - Ticket numbers: `ticket \d+`, `tickets \d+(-\d+)?`, "per ticket", "this
   ticket"
 - Acceptance criteria: `AC-\d+`, `AC \d+`, `AC\d+`
-- Gate / orch IDs: `\d+G\d*`, `\d+A\d*`, `\(\d+G\)`, "demo gate"
+- Gate IDs: `\d+G\d*`, `\d+A\d*`, `\(\d+G\)`, "demo gate"
 - Slice IDs: `Slice \d+`, `slice-\d+`, `slice_\d+`
 - Anti-pattern codes: `AP-\d+`
 - Ticket-file paths: `\.tickets/[^ )"]+`
@@ -359,9 +359,3 @@ unless another format is explicitly required.
 **TD-006** — Prefer lambdas over loop blocks; lambda params last  
 **TD-007** — Prefer member methods over static methods when the first arg is an instance
 
----
-
-## References
-
-- Acme Platform Coding Standards
-- Acme Coding Guidelines

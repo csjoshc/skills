@@ -14,7 +14,7 @@ Single-glance reference. For the full matrix with hybrids and density rules, see
 | Docs / education | Structured Clarity | Stripe Docs, GitBook |
 | Gaming | Immersive Chrome | Steam, Discord |
 | Internal / dashboard | Data-Dense Utility | Grafana, Retool |
-| Enterprise SaaS | Enterprise Neutral | Acme, IBM Carbon |
+| Enterprise SaaS | Enterprise Neutral | IBM Carbon, Atlassian |
 | Default | Trust-Refined | Stripe |
 
 ## Density

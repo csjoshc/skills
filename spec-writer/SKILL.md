@@ -152,15 +152,12 @@ When the output is a ticket file, include a YAML header and use the canonical st
 ```yaml
 ---
 Stage: BUILD
-Loop: true
-Loop-Reason: "12 additive ACs, each with independent grep/pytest, no bootstrap"
 ---
 ```
 
 Use `Stage:` (not `Status:`) for canonical routing.
 Allowed stage enum (single line): `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
 When a ticket is implementation-ready, set **exactly** `Stage: BUILD`.
-**NEW:** Set `Loop: true | false` by applying the decision rule in [`~/.skills/shared/LOOP_DECISION_RULE.md`](~/.skills/shared/LOOP_DECISION_RULE.md). Always populate `Loop-Reason:` (mandatory).
 
 ---
 
@@ -232,16 +229,15 @@ Replaces free-form "testing strategy". Consumed verbatim by `/tdd` Phase 0
 Obligation Queue. One row per AC.
 
 ```markdown
-| AC # | Requirement (1 line) | Risk Tier | Suggested Pattern | Mutation Candidate? | Loop-binding? |
-|------|----------------------|-----------|-------------------|---------------------|----------------|
-| AC-1 | ...                  | T1/T2/T3  | invariant / contract / state_transition / high_risk_path / characterization / impacted_regression / history_based | yes/no | yes/no |
+| AC # | Requirement (1 line) | Risk Tier | Suggested Pattern | Mutation Candidate? |
+|------|----------------------|-----------|-------------------|---------------------|
+| AC-1 | ...                  | T1/T2/T3  | invariant / contract / state_transition / high_risk_path / characterization / impacted_regression / history_based | yes/no |
 ```
 
 Rules:
 - **Risk Tier** — inherit from PRD §8c Risk Surface or repo `.risk-registry.yaml`. If the AC touches paths under multiple tiers, use the highest.
 - **Suggested Pattern** — pick from the catalog in [tdd/SCOPING.md](../tdd/SCOPING.md) pattern table. If unsure, default to `invariant` for pure logic, `contract` for boundaries, `state_transition` for flows.
 - **Mutation Candidate** — set `yes` when Risk Tier is T1. /tdd will auto-invoke MUTATION.md on these at green-step.
-- **Loop-binding** — set `yes` when the AC must pass in a Loop subprocess (see ticket-critic LOOP_DECISION_RULE.md). If all ACs are Loop-binding, the ticket is a Loop ticket.
 - If any AC lacks a concrete target (no file/function name in Technical Notes), ticket-critic blocks the ticket.
 
 **Test path convention:** The `Test file / Command` column must be the **permanent, committed path** — the file is created there directly during BUILD, never in `tests/tickets/` (deprecated gitignored staging area).
@@ -433,14 +429,6 @@ the brief is sent.")
 
 Always run the brief audit. Half the bugs that survive the pipeline
 to operator-contact are brief bugs.
-
----
-
-## Loop Eligibility Determination
-
-**See [`~/.skills/shared/LOOP_DECISION_RULE.md`](~/.skills/shared/LOOP_DECISION_RULE.md) — Canonical.**
-
-When authoring a ticket for implementation-ready stage (`Stage: BUILD`), determine Loop eligibility by applying the decision rule and set the `Loop:` and `Loop-Reason:` fields in YAML frontmatter. This gates whether BUILD will use a fresh-subprocess loop per AC (Loop mode) or one-shot BUILD. Default to `Loop: false` if unsure; the rule provides explicit conditions for `Loop: true`.
 
 ## Quality rules
 

@@ -33,24 +33,13 @@ Parse the comments into a work list. Each item needs:
 - Pure questions with no actionable request
 - Bot-generated status comments (CI, coverage, etc.)
 
-### Step 1b: Acme platform context (backend changes)
+### Step 1b: Platform context (proprietary platforms)
 
-If any comment targets Acme backend code — `.typ` files, Type definitions, `fetch()` / `evalMetric()` calls, server-side JavaScript actions, logger initialization (`PerLogger`), test setup (`Jasmine`, `TestApi`), or Acme platform patterns — query the **PLATFORM-MCP** server before attempting fixes.
-
-**What qualifies as Acme backend code:**
-- `.typ` / `.doc` type definition files
-- Server-side `.js` files using Acme APIs (`Type.fetch()`, `.merge()`, `.upsert()`, `Obj.make()`, `HttpRequest`, `ContentValue`, etc.)
-- Test files using Acme's `Jasmine` / `TestApi` harness
-- `PerLogger` or `Log` logging calls
-- `seed/` data files or `canonicalize` scripts
-- Acme package metadata (`package.json` with `acme` dependencies)
-
-**How to use PLATFORM-MCP:**
-- Query the MCP for documentation on any Acme API or Type referenced in the comment or surrounding code that you are unsure about
-- Use MCP-provided context to ensure your fix uses correct Acme syntax (e.g., `fetch()` filter expressions, `spec` parameter conventions, valid Type method signatures, proper `PerLogger` initialization)
-- For test-related comments, query the MCP for the project's Acme test harness patterns (`Jasmine` setup, `TestApi` usage, seed data conventions) before writing or modifying tests
-
-**Do NOT** guess at Acme APIs — it is a proprietary platform and general-purpose knowledge will not cover its Type system, runtime behavior, or API surface. Always query the MCP first.
+If any comment targets code on a proprietary platform (custom type
+systems, platform-specific server APIs, in-house test harnesses), load
+the matching platform-context skill or MCP server if one is installed
+(e.g. a `<platform>-pr-context` skill) before attempting fixes. Do not
+guess at proprietary APIs; general-purpose knowledge will not cover them.
 
 ## Step 2: Plan the work
 

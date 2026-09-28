@@ -2,19 +2,17 @@
 
 ---
 
-## Example A: Loop-eligible ticket (Runner codebase)
+## Example A: Additive ticket (Runner codebase)
 
 **Input:**
 `/spec-writer Add a JSONL self-assessment parser for the reflection-3 plugin output`
 
-**Output (abbreviated — shows Loop-eligible ticket shape):**
+**Output (abbreviated):**
 
 ```yaml
 ---
 Stage: BUILD
 Type: feature
-Loop: true
-Loop-Reason: "7 additive ACs: new parser module + wiring into BUILD event consumer + tests, each grep/pytest-checkable, no bootstrap or cross-cutting changes"
 ---
 ```
 
@@ -42,29 +40,11 @@ Parse the reflection-3 JSONL output emitted by opencode subprocesses into a stru
 | AC-6 | `grep -nE 'class SelfAssessmentEvent' runner/observability/gate_events.py` | exit 0 |
 | AC-7 | `ruff check runner/observability/self_assessment_parser.py runner/nodes/build.py` | exit 0 |
 
-**Loop note:** Each AC is independently verifiable. AC-1 through AC-4 can be checked before AC-5 is wired. No AC depends on a later AC running first. Failure Protocol does NOT mandate full revert — `self_assessment_parser.py` is additive and can be left in place on failure.
+**Note:** Each AC is independently verifiable. AC-1 through AC-4 can be checked before AC-5 is wired. No AC depends on a later AC running first. Failure Protocol does NOT mandate full revert — `self_assessment_parser.py` is additive and can be left in place on failure.
 
 ---
 
-## Example B: Loop-ineligible ticket (same codebase)
-
-**Input:**
-`/spec-writer Add --plugin flag to opencode wrapper cmd construction`
-
-```yaml
----
-Stage: BUILD
-Type: feature
-Loop: false
-Loop-Reason: "5 ACs below threshold; 2-file change (wrappers.py + test), one-shot BUILD faster"
----
-```
-
-**Loop note:** Small change, 5 ACs, single logical unit. One-shot BUILD is appropriate. No Loop overhead justified.
-
----
-
-## Example C: Generic ticket (non-Runner)
+## Example B: Generic ticket (non-Runner)
 
 **Input:**
 `/spec-writer Add a way for users to export their order history as CSV`

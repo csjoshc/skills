@@ -1,6 +1,6 @@
 ---
 name: project-onboarding
-description: Creates and reconciles project agent-instruction files across tools, including AGENTS.md, Cursor rules, and stack-specific ignore patterns. Use when onboarding a repository, standardizing agent behavior files, or syncing multi-tool project setup.
+description: Creates and reconciles project agent-instruction files across tools, including AGENTS.md, Cursor rules, stack-specific ignore patterns, and parallel git-worktree conventions. Use when onboarding a repository, standardizing agent behavior files, syncing multi-tool project setup, or establishing isolated branches for concurrent agent sessions.
 ---
 
 # Project Onboarding (Multi-Tool)
@@ -9,6 +9,8 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
+- Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
+- Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy. `gh stack` workflow (link-only mode for worktree-per-branch repos), cascading rebases, bottom-up merges, and the AGENTS.md block to merge on request. Follows https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/managing-stacked-pull-requests
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
 - Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — defines which skills fire at which phase (spec, implement, test, done, PR) and provides the SessionStart digest the agent emits on open. Load this when setting up the agent loop for a repo, not for file-level onboarding.
 - Token budget strategy: [shared/TOKEN_BUDGET.md](../shared/TOKEN_BUDGET.md) — install RTK (input-side CLI proxy) during onboarding; caveman (output-side) activates automatically above 50% context usage if hooks are installed.
@@ -63,7 +65,7 @@ Classify:
 
 ### Python without a manifest (backend / platform code)
 
-Some repos ship Python **application or platform code** (e.g. Acme types, server modules) **without** a `pyproject.toml` or `requirements.txt` at rest in the tree.
+Some repos ship Python **application or platform code** (e.g. platform type definitions, server modules) **without** a `pyproject.toml` or `requirements.txt` at rest in the tree.
 
 If **no** Python manifest row matches but you find **`.py` files that look like project source** (e.g. under `api/`, `backend/`, `server/`, `src/` of a named package, or `**/SomePackage/src/*.py`), treat **Python** as present:
 
@@ -135,6 +137,31 @@ classification + template: [`IDENTIFIER_AND_DOC_STALENESS.md`](IDENTIFIER_AND_DO
 
 ---
 
+## 0e. Parallel worktrees (required for multi-session / write-subagent safety)
+
+Concurrent agent sessions (or a parent plus **write** subagents) that share one working tree race on `HEAD`: any `git checkout` / `git switch` moves the branch for every session rooted there.
+
+**Onboarding actions (do these; do not create worktrees unless the user asks):**
+
+1. Ensure `.worktrees/` is in `.gitignore` (prefer that name; if `worktrees/` already exists and is ignored, keep it — do not invent a second location).
+2. Merge the **AGENTS.md block** from [`WORKTREES.md`](WORKTREES.md) (after Karpathy / before MCP tool lists is fine; dedupe if present).
+3. Operators use the full playbook in that companion (create/bind/subagents/cleanup).
+
+**Verify ignore before any later create:** `git check-ignore -q .worktrees || git check-ignore -q worktrees` — if that fails, add `.worktrees/` and commit before `git worktree add`.
+
+---
+
+## 0f. Git push discipline (required)
+
+Onboarding must guarantee every project's `AGENTS.md` states that agents never push directly to the protected/default branch, with no exception for trivial, corrective, or "quick fix" changes.
+
+**Onboarding actions (do these; this block is unconditional, not stack-dependent):**
+
+1. Merge the **Git workflow block** (see section 1) into `AGENTS.md`, inserted after the stack preamble and before the optional MCP block; dedupe if an equivalent rule already exists.
+2. The rule holds even when a direct push would technically succeed (branch protection may not be configured to block it) — that is not permission to use it.
+
+---
+
 ## 1. `AGENTS.md` — canonical agent instructions
 
 This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `CLAUDE.md`, `GEMINI.md`) are thin shims that reference it.
@@ -143,16 +170,20 @@ Tools that auto-read `AGENTS.md`: OpenCode, GitHub Copilot (`.github/copilot-ins
 
 Create **`AGENTS.md`** at the project root using the appropriate stack template below.
 
-If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the stack preamble and before broader behavior/style sections.
+The **Git workflow block** and **Code comments block** (below) are unconditional — always merge them into every project's `AGENTS.md`, regardless of stack.
+
+If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the Git workflow block and before broader behavior/style sections.
 If none of those signals are present, do **not** add the MCP block.
 
 Insertion order is mandatory:
 1. stack preamble
-2. optional MCP block (only when MCP is in use)
-3. Tokenify block
-4. Karpathy Guidelines block
+2. Git workflow block (always)
+3. Code comments block (always)
+4. optional MCP block (only when MCP is in use)
+5. Tokenify block
+6. Karpathy Guidelines block
 
-When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. If MCP is in use, ensure exactly one MCP block and place it immediately after the stack preamble.
+When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it. If MCP is in use, ensure exactly one MCP block, placed immediately after the Code comments block.
 
 ### Stack-specific preamble (pick one)
 
@@ -218,6 +249,27 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 - **Do not read** build output, dependency caches, lock files, or log files
   unless they are the direct subject of the task.
 - Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
+```
+
+### Git workflow block (always add — copy verbatim, stack-agnostic)
+
+Place immediately after the stack preamble in every project, regardless of stack:
+
+```markdown
+## Git workflow
+
+- Never push directly to a protected/default branch (`main`, `master`, `trunk`), even for trivial or corrective changes, even if the push would technically succeed (branch protection may not be configured to block it). Always create a branch and open a PR.
+- This applies to agents and subagents equally — a "quick fix" is not an exception.
+```
+
+### Code comments block (always add — copy verbatim, stack-agnostic)
+
+Place immediately after the Git workflow block in every project, regardless of stack:
+
+```markdown
+## Code comments
+
+Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why, not what. Only real footguns earn more.
 ```
 
 ### Codebase-Memory-MCP block (add when project uses it)
@@ -466,15 +518,17 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] Global STANDARDS.md checked (`~/.skills/STANDARDS.md`)
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> optional MCP block -> Tokenify -> Karpathy.
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> Tokenify -> Karpathy.
+- [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
-- [ ] If included, MCP block appears exactly once, immediately after the stack preamble, with mandatory discovery order, fallback boundaries, and completion self-check.
+- [ ] If included, MCP block appears exactly once, immediately after the Git workflow block, with mandatory discovery order, fallback boundaries, and completion self-check.
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
 - [ ] Cross-tool shims (`CLAUDE.md`, `GEMINI.md`) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a recursive copy of `~/.skills` for Claude Desktop (run `cp -r ~/.skills /path/to/project/.claude/skills`). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
+- [ ] `.worktrees/` (or existing `worktrees/`) is gitignored; `AGENTS.md` includes the Parallel work (git worktrees) block; [`WORKTREES.md`](WORKTREES.md) is the operator playbook.
 
 ---
 
@@ -495,3 +549,4 @@ Before completing onboarding, audit and establish symlinks according to these re
   - Extended with project-specific sections per project
   - Updated when agents block on questions humans have already decided
   - Reviewed every 3 months or when onboarding to significantly different project
+- **Parallel worktrees:** Onboarding installs ignore + `AGENTS.md` rules only. Creating/removing worktrees and binding session cwd is an operator/runtime step — see [`WORKTREES.md`](WORKTREES.md). Never nest a new worktree inside an already-linked worktree.

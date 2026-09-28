@@ -122,7 +122,7 @@ Branch name rules:
 - Lowercase, hyphens only (no spaces, underscores, or uppercase)
 - Max 50 chars
 - Derive from the actual diff content, not a generic name
-- Examples: `feat/acme-theme-migration`, `fix/date-picker-dark-mode`, `refactor/api-error-handling`
+- Examples: `feat/theme-migration`, `fix/date-picker-dark-mode`, `refactor/api-error-handling`
 
 ### Already on feature branch
 
@@ -312,7 +312,7 @@ python -m pytest --cov --cov-report=term-missing 2>&1 | tail -30 > /tmp/coverage
 npm test 2>&1 | tail -20 > /tmp/test-results.txt
 npx vitest --coverage 2>&1 | tail -30 > /tmp/coverage.txt
 
-# Acme platform (js-rhino)
+# Other platforms
 # Use the project's test runner as documented in AGENTS.md
 
 # IMPORTANT: Save logs to /tmp/ only. Paste contents into the PR body
@@ -351,7 +351,7 @@ git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' || true
 # Helm values + manifests + Compose
 git grep -nE "\\b${NAME}\\b" -- 'helm/' 'k8s/' 'manifests/' '*.yaml' '*.yml' 'docker-compose*' || true
 
-# Package manifests (project-specific names: pkg.json, pyproject.toml, package.json, Cargo.toml)
+# Package manifests (project-specific names: pyproject.toml, package.json, Cargo.toml)
 git grep -nE "\\b${NAME}\\b" -- '*.toml' '*.json' || true
 ```
 

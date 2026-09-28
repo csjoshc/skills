@@ -24,7 +24,7 @@ Detection rule for #2/#3: check `<repo-root>/DESIGN.md`. If present, default to 
 
 ### Apply Mode → [apply-mode.md](references/apply-mode.md)
 
-Read a DESIGN.md, install token infrastructure, build the layout shell, restyle components, migrate anti-patterns. Phased like `/brand-ui`. Use this when a spec exists and the codebase needs to conform.
+Read a DESIGN.md, install token infrastructure, build the layout shell, restyle components, migrate anti-patterns. Use this when a spec exists and the codebase needs to conform.
 
 ### Audit Mode → [audit-mode.md](references/audit-mode.md)
 
@@ -47,4 +47,4 @@ No DESIGN.md, no time. Quick-pick aesthetic from [vibe-quick-pick.md](references
 - Existing project patterns take precedence over any default. Extend, don't replace.
 - Apply Mode and Audit Mode read DESIGN.md as source of truth — do not propose token changes inside these modes; redirect to `/make-design-md` if the spec needs revision.
 - Vibe Mode never produces a DESIGN.md. If the user wants a portable spec from the result, redirect to `/make-design-md` after the build.
-- For Acme-aligned React + Tailwind v4 projects, `/brand-ui` is the Acme-specific instance of Apply Mode — use it directly when the target spec is `brand-design-system.md`.
+- If a brand-specific Apply Mode skill is installed for the target spec, use it directly.

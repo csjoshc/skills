@@ -63,8 +63,8 @@ When handing off, optionally include which skill cluster the recipient should dr
 
 | Task Type | Skills to consider |
 |----------|-------------------|
-| **Frontend UI** | `make-ui`, `brand-ui`, `test-ui`, `chrome-devtools` |
-| **Backend Tests** | `platform-tests`, `tdd` |
+| **Frontend UI** | `make-ui`, `test-ui`, `chrome-devtools` |
+| **Backend Tests** | `tdd` |
 | **Git/PR Work** | `create-pr`, `pr-review`, `pr-fix` |
 | **Infrastructure** | `skill-sync`, `mcp-sync`, `confluence-diagrams` |
 | **Planning/Specs** | `spec-writer`, `ticket-critic`, `tdd` |
@@ -78,7 +78,7 @@ Add an optional line under "Constraints" or "Context":
 ```markdown
 ## Recommended skills
 - Cluster: <task type from table above>
-- Specifically: make-ui, brand-ui (example)
+- Specifically: make-ui, test-ui (example)
 ```
 
 ---
