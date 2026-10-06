@@ -87,6 +87,13 @@ or `category: Layer` at `HIGH`/`CRITICAL`. The validator at
 [`~/.skills/reviews/validate.py`](../reviews/validate.py) blocks
 posting without it.
 
+Always emit these fenced blocks, never free-form prose, even if the validator
+or a companion is unavailable (say so in the gate line). Every finding carries
+`source` and `checklist_score: N/M`; rate CRITICAL only with a `proof:`, else
+HIGH. `line` is the new-file line number, not the position in the diff text.
+`category` is exactly one of Bug | Error Handling | Standards | Test Gap |
+Scope | Layer | Redundancy | Modularity | Architectural Drift.
+
 Fixed phase sequence is documented in
 [`~/.skills/reviews/runbook.md`](../reviews/runbook.md).
 
