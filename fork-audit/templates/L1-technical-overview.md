@@ -20,6 +20,23 @@ diagrams:
     slide: "Primary Request Flow"
 ---
 
+## Contents
+
+- Slide: Thesis
+- Slide: The Core Tension
+- Slide: Context
+- Slide: Component Boundaries
+- Slide: Tech Stack
+- Slide: Novel Pattern — <name>
+- Slide: Primary Request Flow
+- Slide: Base Template / Platform Reuse Map
+- Slide: CI/CD Posture
+- Slide: NFRs and Operational Notes
+- Slide: Architectural Risks
+- Slide: Migration Considerations
+- Slide: Parking Lot
+
+
 ## Slide: Thesis
 
 <One paragraph stating the architectural shape of the fork. Where does the fork add structurally? Where does it reuse upstream? What is the *one* novel pattern that justifies a topic breakout?>
@@ -116,6 +133,6 @@ Source: [./diagrams/l1-request-flow.mmd](./diagrams/l1-request-flow.mmd)
 
 ## Slide: Parking Lot
 
-- **<topic>** — covered in [L2 — Deep Dive](./L2-deep-dive.md) instead (engineer audience).
+- **<topic>** — covered in L2 — Deep Dive (`./L2-deep-dive.md`) instead (engineer audience).
 - **<topic>** — covered in [topics/<name>.md](./topics/<name>.md).
-- **<topic>** — exec-audience material; lives in [L0 — Executive Summary](./L0-executive-summary.md).
+- **<topic>** — exec-audience material; lives in L0 — Executive Summary (`./L0-executive-summary.md`).

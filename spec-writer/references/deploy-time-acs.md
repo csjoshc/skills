@@ -1,5 +1,13 @@
 # Deploy-time AC conventions (container / helm / k8s tickets)
 
+## Contents
+
+- Convention 1 — Helm subchart / chart tickets require a helm install --wait deploy-smoke AC
+- Convention 2 — Init / entrypoint scripts require a Read-First on the base image's existing files
+- Convention 3 — NetworkPolicy ACs: cross-pod connectivity + namespace-label setup
+- Concrete shape — from a Helm UI-subchart ticket
+
+
 Source-file ACs (`helm lint`, `helm template --validate`, `grep` for a key)
 are necessary but **not sufficient** for any ticket whose artifact is loaded
 into a running container or cluster. A past cycle shipped a

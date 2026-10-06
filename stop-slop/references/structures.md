@@ -1,5 +1,26 @@
 # Structures to Avoid
 
+## Contents
+
+- Binary Contrasts
+- Negative Listing
+- Dramatic Fragmentation
+- Rhetorical Setups
+- Colon Reveals
+- Superficial Analysis
+- Synonym Cycling
+- Fake-Profound Kickers
+- Summary-Recap Endings
+- Formatting Slop
+- Formulaic Constructions
+- False Agency
+- Narrator-from-a-Distance
+- Passive Voice
+- Sentence Starters to Avoid
+- Rhythm Patterns
+- Word Patterns
+
+
 ## Binary Contrasts
 
 These create false drama. State the point directly.

@@ -222,7 +222,7 @@ This is the deliverable. One page, written fresh from the intermediates — **no
 4. **Keep it one page.** Target the length of a 10-minute read. Anything that wants more depth gets a one-line pointer to the in-repo canonical doc (DEVGUIDE, design specs), not inlined. The `.docs/` intermediates are local-only and gitignored — reference them by name for the audit trail, but don't link them as if readers can click through.
 5. **Publish** via `confluence_update_page` (markdown format; `table_layout: wide` reads better for the numbers tables). Offer as follow-ups: uploading the diagram SVGs via `/confluence-diagrams`, and linking the PRs if the repo is shareable.
 
-Template: [templates/confluence-design-page.md](../templates/confluence-design-page.md).
+Template: templates/confluence-design-page.md (`../templates/confluence-design-page.md`).
 
 ## Phase 8 — Verify
 

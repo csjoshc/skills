@@ -1,5 +1,15 @@
 # Interrogation Protocol
 
+## Contents
+
+- Phase 1: Product Interrogation
+- Phase 2: Architecture Interrogation
+- Interrogation Style Guide
+- Focused Re-Interrogation
+- Advanced Elicitation Methods
+- Constitution Gate
+
+
 Loaded during Phase 1 and Phase 2. Provides the adversarial questioning
 framework. Every question is designed to surface ambiguity, unjustified
 decisions, and untestable requirements BEFORE any tickets are created.
@@ -424,7 +434,7 @@ that selected it may need revisiting.
 ### Anti-Pattern Detection
 
 During Phase 2, actively scan for anti-patterns AP-1 through AP-23 (see
-the full catalog in [anti-patterns.md](anti-patterns.md) and the
+the full catalog in `anti-patterns.md` and the
 machine-readable row list in [rubric.yaml](../rubric.yaml) — count rows
 there for the current ceiling). When you detect one:
 

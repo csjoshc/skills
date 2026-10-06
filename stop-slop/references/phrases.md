@@ -1,5 +1,24 @@
 # Phrases to Remove
 
+## Contents
+
+- Banned Words
+- Throat-Clearing Openers
+- Emphasis Crutches
+- Business Jargon
+- Adverbs
+- Meta-Commentary
+- Faux-Insight Setups
+- Importance Puffery
+- Weasel Attribution
+- Fake-Strong Verbs
+- Performative Emphasis
+- Telling Instead of Showing
+- Vague Declaratives
+- Architectural Metaphors (Lazy Abstractions)
+- Vendor Specificity in Agnostic Docs
+
+
 ## Banned Words
 
 Cut on sight (unless quoted as an example):

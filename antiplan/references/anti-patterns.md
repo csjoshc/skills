@@ -1,5 +1,37 @@
 # Anti-Patterns
 
+## Contents
+
+- AP-1: Speculative Architecture
+- AP-2: Post-Hoc Rationalization Documents
+- AP-3: Ticket-Closure Loop
+- AP-4: God Function
+- AP-5: Mock-Validated Integration
+- AP-6: Untestable Abstraction
+- AP-7: Premature Horizontal Expansion
+- AP-8: Ceremony as Rigor Substitute
+- AP-9: Greenfield Hallucination
+- AP-10: Silent Failure Suppression
+- AP-11: Completion Drive
+- AP-12: Context Rot
+- AP-13: Exemplar Blindness
+- Usage by Phase
+- AP-14: Orchestrator Observability Blindspot
+- AP-15: I/O in the Pure Layer
+- AP-16: Eager Construction of Infrastructure
+- AP-17: Cross-Package Consumer Integration Untested
+- AP-18: Gate-Closure Without Green Proof
+- AP-19: Slice-Local Gate Blindness (Cumulative Gate Missing)
+- AP-20: Runtime Service Dependency Untested
+- AP-21: Requirement Drift / Apologetic Workaround
+- AP-22: Hardened-but-Untested Pod Security Combo
+- AP-23: Publish ≠ Deploy
+- AP-24: Cycle-Path Coupling
+- AP-25: Vendor Coupling in Agnostic Identifier
+- AP-26: Operator Entry Point Not Smoke-Tested
+- AP-27: Brownfield Surface Lacks Runtime Contracts
+
+
 Detection checklist for the Challenger subagent (Phase 3) and for the main
 agent during any phase. When an anti-pattern is detected, name it explicitly,
 quote the detection signal, and demand resolution before proceeding.
@@ -13,7 +45,7 @@ Each anti-pattern includes:
 **Cross-reference.** AP codes are the design-time altitude of the
 pattern taxonomy. For the diff-time (ARCH-\*) and mechanical (M-code,
 P5) counterparts of each AP, see
-[`~/.skills/reviews/cross-reference.md`](../../reviews/cross-reference.md).
+`~/.skills/reviews/cross-reference.md` (`../../reviews/cross-reference.md`).
 When an AP is flagged at Phase 2, the cross-reference gives the
 downstream code smell the speculation is flirting with — cite it in
 the challenge to make the design-time consequence concrete.
@@ -495,7 +527,7 @@ the wall clock, random — instead of receiving the effect behind a port
 the surrounding code injects. The module is declared pure in intent but
 couples to infrastructure in shape, and every downstream problem
 (untestability, mock-chained tests, swallowed exceptions around
-`requests.get`, see also [ARCH-DEP-IO-IN-PURE](../../reviews/arch-violations/01-dependency-direction.md))
+`requests.get`, see also ARCH-DEP-IO-IN-PURE (`../../reviews/arch-violations/01-dependency-direction.md`))
 is pre-ordained at plan time.
 
 **Detection signals:**
@@ -544,7 +576,7 @@ pool — during construction or at import time, instead of receiving it
 from a composition root. The class "supports DI" nominally (often a
 defaulted constructor parameter) but reaches for the real dependency
 whenever the default path is taken, which is always in production. See
-also [ARCH-BND-EAGER-INIT](../../reviews/arch-violations/02-boundary-contracts.md).
+also ARCH-BND-EAGER-INIT (`../../reviews/arch-violations/02-boundary-contracts.md`).
 
 **Detection signals:**
 - Plan shows a class whose constructor takes `db=None` / `client=None`

@@ -1,5 +1,14 @@
 # Phase 0: Constitution & Context
 
+## Contents
+
+- Purpose
+- Phase 0 Steps
+- Phase 0 Output Contract
+- Phase 0 Hard Gates
+- Phase-Gate Audit Line
+
+
 Loaded when entering Phase 0. Establishes non-negotiable principles and the
 existing-code baseline before any feature discussion begins.
 

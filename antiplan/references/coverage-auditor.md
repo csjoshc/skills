@@ -1,5 +1,14 @@
 # Coverage Auditor Subagent
 
+## Contents
+
+- Why this exists
+- Inputs
+- Subagent Prompt
+- Validator handoff
+- When to skip
+
+
 A second-pass reviewer that runs AFTER the Planner/Challenger reconciliation
 and BEFORE the Phase 3 sign-off. It guards against the "long socratic session
 re-synthesis" failure mode: requirements raised mid-discussion that quietly

@@ -9,7 +9,7 @@ every future PR.
 ## Identifier scope scan (source + docs)
 
 The patterns from
-[`~/.skills/shared/SKILL_NOISE_TERMS.md`](../shared/SKILL_NOISE_TERMS.md)
+`~/.skills/shared/SKILL_NOISE_TERMS.md` (`../shared/SKILL_NOISE_TERMS.md`)
 — ADR labels, ticket IDs, Constitution principles, gate / slice /
 cycle slugs — belong in `.tickets/`, `.plan/`, and commit messages,
 **not** in committed source, docstrings, doc bodies, config

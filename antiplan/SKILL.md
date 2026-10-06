@@ -269,3 +269,10 @@ is session context — recoverable via session ID if needed.
 
 See `references/example/worked-example.md` for reference scenarios including
 brownfield scan correction and integration-gate failure recovery.
+
+## Companion files
+
+Read only when the situation matches:
+
+- [references/anti-patterns.md](references/anti-patterns.md): Phase 3 challenger checks and when naming an AP-n
+- [references/subagent-prompts.md](references/subagent-prompts.md): Phase 3 Planner and Challenger subagent prompts

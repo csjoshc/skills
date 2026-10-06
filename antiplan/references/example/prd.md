@@ -1,5 +1,31 @@
 # PRD: TaskBoard Threaded Comments with Reply Notifications
 
+## Contents
+
+- Status: APPROVED
+- Date: [project start date]
+- Author: [developer] + antiplan skill
+- Classification: Light → Standard (upgraded after notifier scope identified)
+- 1. Problem Statement
+- 2. Constitution
+- 3. Users
+- 4. Minimum Testable Product (MTP)
+- 5. Features
+- 6. Success Criteria
+- 7. Architecture Decisions
+- 8. Component Map
+- 8b. Implementation Topology
+- 9. API Contracts
+- 10. Explicitly Out of Scope
+- 11. Risks and Open Questions
+- 12. Ticket Dependency Graph
+- 13. Convergence Ledger (Final)
+- 14. Assumption Register
+- 15. Artifact Ingestion Log
+- 16. Complexity Justification Register
+- 17. Implementation Readiness Checklist
+
+
 ## Status: APPROVED
 ## Date: [project start date]
 ## Author: [developer] + antiplan skill

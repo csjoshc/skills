@@ -300,3 +300,9 @@ halt condition and the user can interrupt it at any time.
 
 Full spec (invocation, state machine, build loop, halt conditions, forbidden actions, tools):
 `references/auto-driver.md`. Read it before running `/todo run`.
+
+## Companion files
+
+Read only when the situation matches:
+
+- [references/execution-templates.md](references/execution-templates.md): emitting build-ticket-manual, build-ticket-resume or slice-gate-review prompts

@@ -458,3 +458,13 @@ These complement coverage metrics: a test suite can have 100% statement coverage
 | Unit | Single class / function | Yes (for dependencies) | Milliseconds | ~70% of suite |
 | Integration | Feature / service + real DB | No | Seconds | ~20% |
 | End-to-end | Full system, real UI/API | No | Minutes | ~10% |
+
+## Companion files
+
+Read only when the situation matches:
+
+- [PHILOSOPHY.md](PHILOSOPHY.md): deciding what makes a good test
+- [TEST_DESIGN.md](TEST_DESIGN.md): designing interfaces and tests for testability
+- [REFACTORING.md](REFACTORING.md): the refactor step after green
+- [CI_CD.md](CI_CD.md): running tests locally or in CI
+- [DRY_RUN.md](DRY_RUN.md): a test or run uses dry-run mode

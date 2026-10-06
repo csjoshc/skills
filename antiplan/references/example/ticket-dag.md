@@ -1,11 +1,19 @@
 # Ticket DAG: TaskBoard Threaded Comments with Reply Notifications
 
+## Contents
+
+- §1. DAG
+- §2. Per-Ticket Stubs
+- §3. Ticket Contract
+- §4. Handoff
+
+
 This file is **antiplan's Phase 3 output** — the ordered ticket DAG, per-ticket
 stubs, and the Ticket Contract that spec-writer must honor when fleshing each
-ticket. See [ticket-pack.md](ticket-pack.md) for the fleshed downstream output.
+ticket. See `ticket-pack.md` for the fleshed downstream output.
 
 Antiplan's output boundary stops here. Spec-writer consumes this file plus
-[prd.md](prd.md) and [brownfield-context.md](brownfield-context.md) to produce
+`prd.md` and `brownfield-context.md` to produce
 `ticket-pack.md`. ticket-critic validates `ticket-pack.md` against the Ticket
 Contract below before any ticket transitions to `Stage: BUILD`.
 

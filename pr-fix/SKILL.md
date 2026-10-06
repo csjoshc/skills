@@ -357,3 +357,10 @@ Rename to a feature- or scope-based name. For test-artifact roots,
 make the path env-overridable (`PROOF_DIR` env with a stable default).
 Update every referrer in the same commit; `git grep -nE` is your
 friend.
+
+## Companion files
+
+Read only when the situation matches:
+
+- [workflow.md](workflow.md): the full step-by-step fix loop
+- [comment-types.md](comment-types.md): a comment contains a suggestion block or another special type

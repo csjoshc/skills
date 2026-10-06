@@ -1,13 +1,82 @@
 # Ticket Pack: TaskBoard Threaded Comments with Reply Notifications
 
-**This file is spec-writer's output**, derived from [ticket-dag.md](ticket-dag.md)
-and [prd.md](prd.md). It demonstrates Ticket Contract (ticket-dag.md §3)
+## Contents
+
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Flows Under Test
+- Proof Artifacts (required)
+- Silent Failure Detection
+- Dev Agent Record
+- Failure Protocol
+- Verified by
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Flows Under Test
+- Proof Artifacts (required)
+- Silent Failure Detection
+- Dev Agent Record
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Scope
+- User Story
+- Acceptance Criteria
+- Verify
+- Technical Notes
+- Failure Protocol
+- Flows Under Test
+- Proof Artifacts (required)
+- Silent Failure Detection
+- Dev Agent Record
+- Failure Protocol
+- Verified by
+
+
+**This file is spec-writer's output**, derived from `ticket-dag.md`
+and `prd.md`. It demonstrates Ticket Contract (ticket-dag.md §3)
 compliance and serves as the quality bar for `ticket-critic` before any
 ticket transitions to `Stage: BUILD`.
 
 All tickets modify existing packages. See
-[brownfield-context.md](brownfield-context.md) for the pre-existing codebase
-state and [prd.md](prd.md) §8b for the implementation topology.
+`brownfield-context.md` for the pre-existing codebase
+state and `prd.md` §8b for the implementation topology.
 
 ---
 
@@ -188,7 +257,7 @@ the web client can render the hierarchy without making N requests.
   no DB row is created (grep: `pytest -k cross_task_parent`)
 - [ ] Given an existing thread with 3 reply levels, when I
   `GET /v1/tasks/42/comment-thread`, then response.body matches the
-  nested shape specified in [prd.md](prd.md) §9
+  nested shape specified in `prd.md` §9
   (`{nodes: [{id, body, author_id, created_at, depth, children: [...]}]}`)
 - [ ] Given `POST /v1/tasks/{id}/comments` without `parent_id` (legacy
   clients), then behavior matches pre-existing single-comment path

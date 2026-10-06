@@ -18,9 +18,9 @@ Start at the level of detail that matches your audience, then drop into a topic 
 
 | Read | Audience | Length | What you'll get |
 |---|---|---|---|
-| [L0 — Executive Summary](./L0-executive-summary.md) | Product, exec, programme owner | ~1 page | Identity, problem/constraint/solution, the divergent commits in plain prose, where to go next |
-| [L1 — Technical Overview](./L1-technical-overview.md) | Architect, staff+ engineer, platform lead | ~5 pages | Component boundaries, novel pattern, request flow, reuse map, CI/CD, architectural risks. Mermaid diagrams. |
-| [L2 — Deep Dive](./L2-deep-dive.md) | IC engineer doing implementation review | ~5–10 pages | File-by-file walkthrough of each divergent commit |
+| L0 — Executive Summary (`./L0-executive-summary.md`) | Product, exec, programme owner | ~1 page | Identity, problem/constraint/solution, the divergent commits in plain prose, where to go next |
+| L1 — Technical Overview (`./L1-technical-overview.md`) | Architect, staff+ engineer, platform lead | ~5 pages | Component boundaries, novel pattern, request flow, reuse map, CI/CD, architectural risks. Mermaid diagrams. |
+| L2 — Deep Dive (`./L2-deep-dive.md`) | IC engineer doing implementation review | ~5–10 pages | File-by-file walkthrough of each divergent commit |
 
 ### Topic breakouts
 

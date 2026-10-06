@@ -230,3 +230,10 @@ fix every finding in the ticket body. Do not delegate a ticket that fails it.
 ## Example
 
 Worked examples (additive Python ticket and generic CSV-export feature): read [`EXAMPLE.md`](./EXAMPLE.md) when you need a concrete output shape.
+
+## Companion files
+
+Read only when the situation matches:
+
+- [PDCA_T.md](PDCA_T.md): mapping a spec onto PDCA-T phases
+- [PARALLEL_TICKETS_BATCH.md](PARALLEL_TICKETS_BATCH.md): asked for parallel or batched tickets

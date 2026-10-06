@@ -1,5 +1,16 @@
 # Audit Finding Examples
 
+## Contents
+
+- Example 1: Unimplemented Dependency
+- Example 2: Auto-Resolved via Architecture Decisions
+- Example 3: Security Vulnerability
+- Example 11: Container image without "image actually starts" smoke AC
+- Example 12: ROFS without entrypoint write-path audit
+- Example 13: NetworkPolicy selector keyed on non-auto-applied label
+- Example 14: Non-root + drop ALL + privileged port
+
+
 ---
 
 ## Example 1: Unimplemented Dependency

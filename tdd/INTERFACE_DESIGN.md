@@ -93,4 +93,4 @@ When a package uses co-located support files, keep the support set with the sour
 | provides / index | Public export surface |
 | integration tests | Real chain at approved boundaries |
 
-Prefer **component-owned types** at the boundary you control; avoid drive-by shared type packages that couple unrelated modules. See [MOCKING.md](./MOCKING.md) for canonical mocks.
+Prefer **component-owned types** at the boundary you control; avoid drive-by shared type packages that couple unrelated modules. See `./MOCKING.md` for canonical mocks.

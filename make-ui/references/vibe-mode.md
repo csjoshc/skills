@@ -28,7 +28,7 @@ No DESIGN.md, no consultation, no approval gates. Quick aesthetic pick, then bui
 
 ### 2. Pick aesthetic (1 decision)
 
-Use [vibe-quick-pick.md](vibe-quick-pick.md) — vertical → aesthetic in one table. If existing components hint at a direction, follow them. Don't ask the user unless the project is truly ambiguous.
+Use `vibe-quick-pick.md` — vertical → aesthetic in one table. If existing components hint at a direction, follow them. Don't ask the user unless the project is truly ambiguous.
 
 ### 3. Pick density (1 decision)
 
@@ -36,7 +36,7 @@ Compact / Balanced / Airy. Default to Balanced unless the project signals otherw
 
 ### 4. Build
 
-Apply [technical-standards.md](technical-standards.md) defaults. Output:
+Apply `technical-standards.md` defaults. Output:
 
 - Component(s) requested, with all states (default / hover / focus / disabled / loading / error)
 - Any new shared primitives extracted (if you find yourself copy-pasting class strings)
@@ -51,7 +51,7 @@ Append a short note (3–5 lines) to your final response:
 
 ## Quality bar
 
-Apply [technical-standards.md](technical-standards.md) operational directives:
+Apply `technical-standards.md` operational directives:
 - Deep reasoning chain before code: `Audit → Gap analysis → Aesthetic → Approach → Design`
 - Production-grade: real imports, responsive classes, a11y attrs, semantic tokens
 - No placeholder styling; no AI-template tells
@@ -64,4 +64,4 @@ Apply [technical-standards.md](technical-standards.md) operational directives:
 | Inventing tokens scattered through the new component | Add to the project's tokens file once; reuse |
 | Skipping pre-flight | Half the work in vibe is reading what's already there |
 | Single-state buttons | Always all 5+ states |
-| Generic SaaS gradient bg | Use a deliberate page bg; see prohibited patterns in [vibe-quick-pick.md](vibe-quick-pick.md) |
+| Generic SaaS gradient bg | Use a deliberate page bg; see prohibited patterns in `vibe-quick-pick.md` |

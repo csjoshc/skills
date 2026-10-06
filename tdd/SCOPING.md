@@ -1,5 +1,16 @@
 # Phase 0: Scoping — Test Obligation Queue (TOQ)
 
+## Contents
+
+- Inputs contract
+- Signal collectors (deterministic, no LLM)
+- Scoring formula
+- Candidate pattern catalog
+- Bounding rules
+- Output schema
+- Phase 0 algorithm
+
+
 Runs **before** user-approval Planning. Turns "which tests?" into a deterministic
 ranking problem. Model ranks and shapes candidates; it does **not** invent scope
 from prose.

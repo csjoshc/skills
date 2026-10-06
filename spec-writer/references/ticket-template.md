@@ -72,7 +72,7 @@ Reference existing patterns in the codebase if mentioned. If not mentioned, flag
 **Test Obligation Profile** (required — structured, not prose)
 
 Replaces free-form "testing strategy". Consumed verbatim by `/tdd` Phase 0
-([SCOPING.md](../../tdd/SCOPING.md)) as the per-ticket signal feeding the Test
+(`../../tdd/SCOPING.md`) as the per-ticket signal feeding the Test
 Obligation Queue. One row per AC.
 
 ```markdown
@@ -83,7 +83,7 @@ Obligation Queue. One row per AC.
 
 Rules:
 - **Risk Tier** — inherit from PRD §8c Risk Surface or repo `.risk-registry.yaml`. If the AC touches paths under multiple tiers, use the highest.
-- **Suggested Pattern** — pick from the catalog in [tdd/SCOPING.md](../../tdd/SCOPING.md) pattern table. If unsure, default to `invariant` for pure logic, `contract` for boundaries, `state_transition` for flows.
+- **Suggested Pattern** — pick from the catalog in tdd/SCOPING.md (`../../tdd/SCOPING.md`) pattern table. If unsure, default to `invariant` for pure logic, `contract` for boundaries, `state_transition` for flows.
 - **Mutation Candidate** — set `yes` when Risk Tier is T1. /tdd will auto-invoke MUTATION.md on these at green-step.
 - If any AC lacks a concrete target (no file/function name in Technical Notes), ticket-critic blocks the ticket.
 

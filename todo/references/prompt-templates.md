@@ -3,6 +3,9 @@
 Full template bodies extracted from `SKILL.md` for the 500-line budget.
 Fill bracketed slots from detected state; each prompt is stand-alone.
 
+## Contents
+
+
 When emitting a prompt for the user to paste into the next session, use
 these templates. Fill in the bracketed slots from detected state. Each
 prompt is stand-alone — the next session loads it cold with no memory of

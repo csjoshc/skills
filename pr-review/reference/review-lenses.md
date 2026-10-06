@@ -224,9 +224,9 @@ the linked plan's `ARCHITECTURE-DECISIONS` block.
 
 - PR diff
 - Linked plan/PRD if `plan_present: true` (from the pre-flight)
-- [`~/.skills/reviews/arch-violations/README.md`](../../reviews/arch-violations/README.md)
+- `~/.skills/reviews/arch-violations/README.md` (`../../reviews/arch-violations/README.md`)
   and the specific catalog file relevant to the detected smell (e.g.,
-  [01-dependency-direction](../../reviews/arch-violations/01-dependency-direction.md))
+  01-dependency-direction (`../../reviews/arch-violations/01-dependency-direction.md`))
 
 **Check for:**
 
@@ -402,7 +402,7 @@ When in doubt, validate rather than dismiss.
 ## Issue Output Format
 
 Every validated finding is serialized into a `REVIEW-FINDINGS` fenced
-block (schema in [`~/.skills/reviews/schemas.md`](../../reviews/schemas.md)):
+block (schema in `~/.skills/reviews/schemas.md` (`../../reviews/schemas.md`)):
 
 ````markdown
 ```REVIEW-FINDINGS
