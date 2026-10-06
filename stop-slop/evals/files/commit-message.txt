@@ -1,0 +1,4 @@
+Retry cache fetches on timeout
+
+Wrap client.get in fetch_with_retry with exponential backoff, three attempts.
+Implements T-17 and satisfies IG-6 (flaky-upstream gate).

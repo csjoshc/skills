@@ -11,3 +11,6 @@ __pycache__/
 # Third-party bundles and bytecode
 codex-primary-runtime/
 .system/
+
+# Eval run outputs
+*/evals/runs/

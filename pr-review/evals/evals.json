@@ -1,0 +1,91 @@
+{
+  "skill": "pr-review",
+  "cases": [
+    {
+      "id": "block-order-local-diff",
+      "type": "behavior",
+      "prompt": "Use pr-review to review the change in change.diff as a local diff. There is no GitHub PR for it, so do not post anything to GitHub. Show me the full review output.",
+      "files": ["files/change.diff"],
+      "expected_behavior": [
+        "Emits at least one REVIEW-FINDINGS block before any REVIEW-GATE line",
+        "Emits a REVIEW-GATE line for phase-1 → report before the REVIEW-LEDGER block",
+        "Emits a REVIEW-LEDGER block with findings_total, validated, dismissed, deferred, critical, confidence and plan_present fields",
+        "Sets plan_present to false and confidence to LOW or MEDIUM, since the diff links no plan"
+      ],
+      "check": {
+        "cmd": "a=$(grep -n 'REVIEW-FINDINGS' output.txt | head -1 | cut -d: -f1); b=$(grep -n 'REVIEW-GATE: phase-1' output.txt | head -1 | cut -d: -f1); c=$(grep -n 'REVIEW-LEDGER' output.txt | head -1 | cut -d: -f1); [ -n \"$a\" ] && [ -n \"$b\" ] && [ -n \"$c\" ] && [ \"$a\" -lt \"$b\" ] && [ \"$b\" -lt \"$c\" ]",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "seeded-bug-with-location-evidence",
+      "type": "behavior",
+      "prompt": "Review change.diff with pr-review. It is a local diff only, nothing should go to GitHub. I mostly care about whether the refund logic is right.",
+      "files": ["files/change.diff"],
+      "expected_behavior": [
+        "Reports the >= comparison in shop/refunds.py (line 16 of the new file) as a finding in category Bug",
+        "Cites file and line in the finding, and quotes the `requested_cents >= remaining` code as evidence",
+        "Describes a concrete failing input, such as a request equal to the remaining balance being rejected",
+        "Does not claim the code is fine or give a bare LGTM"
+      ],
+      "check": {
+        "cmd": "grep -q 'refunds.py' output.txt && grep -q 'requested_cents >= remaining' output.txt && grep -Eq 'line: *(1[5-7])\\b|refunds.py:1[5-7]' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "proof-on-critical-findings",
+      "type": "behavior",
+      "prompt": "pr-review this local diff (change.diff). No PR exists and nothing should be posted. Treat any money-handling defect seriously and rate severity honestly.",
+      "files": ["files/change.diff"],
+      "expected_behavior": [
+        "Every finding with severity: CRITICAL has a proof: field holding a reproducible command, failing test name with path, or CI link",
+        "A finding that cannot be given proof is rated below CRITICAL rather than left without proof",
+        "Every finding states a source of lens-derived or tool-flagged and a checklist_score in N/M form"
+      ],
+      "check": {
+        "cmd": "python3 -c \"import re,sys; t=open('output.txt').read(); items=re.split(r'(?m)^\\s*- id:', t)[1:]; bad=[i for i in items if re.search(r'severity:\\s*CRITICAL', i) and not re.search(r'proof:\\s*\\S', i)]; sys.exit(1 if bad else 0)\"",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "untested-branch-and-no-posting",
+      "type": "behavior",
+      "prompt": "Review change.diff with pr-review as a local diff. Don't post anything anywhere; just give me the review.",
+      "files": ["files/change.diff"],
+      "expected_behavior": [
+        "Reports the gift_card branch of refund_amount as untested, category Test Gap, naming the missing test for the +GIFT_CARD_BONUS_CENTS path",
+        "Does not run gh api, gh pr comment, or any other command that posts to GitHub",
+        "States that nothing was posted, or that there is no PR target to post to"
+      ],
+      "check": {
+        "cmd": "grep -qi 'gift_card' output.txt && grep -q 'Test Gap' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "trigger-yes-review-pr",
+      "type": "trigger",
+      "prompt": "Can you review PR 482 on acme/storefront and leave inline comments on anything wrong before I merge it?",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-yes-prep-feedback",
+      "type": "trigger",
+      "prompt": "I opened a pull request for the new refund endpoint. Look over the diff for bugs and missing tests and draft the review feedback I'll post.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-fix-comments",
+      "type": "trigger",
+      "prompt": "My reviewer left five comments on PR 482. Work through them one at a time and fix each one, running tests between fixes.",
+      "should_trigger": false
+    },
+    {
+      "id": "trigger-no-code-audit",
+      "type": "trigger",
+      "prompt": "Audit the whole src/ directory for code health: dead code, oversized files, and layering problems. There's no PR involved.",
+      "should_trigger": false
+    }
+  ]
+}

@@ -69,6 +69,10 @@ Keep in skill-local companions when content is:
 - Workflow-specific
 - Not broadly reused across skills
 
+## Evals
+
+Each public skill carries `evals/evals.json` (3+ behavior cases, 2+ trigger cases). Format and runner: `skillsmith/reference/evals.md`. `skill_audit.py` warns when a skill has none.
+
 ## Maintenance
 
 - Review and prune skill instructions on a regular cadence.

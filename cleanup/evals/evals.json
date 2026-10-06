@@ -1,0 +1,104 @@
+{
+  "skill": "cleanup",
+  "cases": [
+    {
+      "id": "layer-violation-has-proof",
+      "type": "behavior",
+      "prompt": "Run a cleanup audit on src/ in this repo. I mostly care about architecture problems.",
+      "files": [
+        "files/AGENTS.md",
+        "files/src/util/strings.py",
+        "files/src/infra/db.py",
+        "files/src/infra/http_client.py",
+        "files/src/services/order_service.py",
+        "files/src/services/report_service.py"
+      ],
+      "expected_behavior": [
+        "Reports a finding with category Layer for src/infra/http_client.py importing from src/services/order_service.py (upward import per the AGENTS.md layer map)",
+        "That finding includes a proof: field containing the concrete import edge or a reproducible command, not prose alone",
+        "The suggested_fix removes the upward import (for example dependency inversion through a lower layer) rather than just renaming or moving it",
+        "Does not suggest weakening the AGENTS.md layer map or adding a lint-disable pragma"
+      ],
+      "check": { "cmd": "grep -q 'category: Layer' output.txt && grep -q 'proof:' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "block-order-phase0-first",
+      "type": "behavior",
+      "prompt": "Audit the code under src/ for code health and give me the full report.",
+      "files": [
+        "files/AGENTS.md",
+        "files/src/util/strings.py",
+        "files/src/infra/db.py",
+        "files/src/infra/http_client.py",
+        "files/src/services/order_service.py",
+        "files/src/services/report_service.py"
+      ],
+      "expected_behavior": [
+        "Emits a REVIEW-PHASE-0 block (tool/rule/file/line/severity/status table) before any REVIEW-FINDINGS block",
+        "Emits 'REVIEW-GATE: phase-0 → phase-1' between the REVIEW-PHASE-0 block and the first REVIEW-FINDINGS block, with every Phase 0 row RESOLVED or OVERRIDDEN when Proceeding: yes",
+        "Emits 'REVIEW-GATE: phase-1 → report' after the findings and the REVIEW-LEDGER block last",
+        "Does not emit a 'report → post' gate"
+      ],
+      "check": {
+        "cmd": "p=$(grep -n 'REVIEW-PHASE-0' output.txt | head -1 | cut -d: -f1); f=$(grep -n 'REVIEW-FINDINGS' output.txt | head -1 | cut -d: -f1); l=$(grep -n 'REVIEW-LEDGER' output.txt | tail -1 | cut -d: -f1); [ -n \"$p\" ] && [ -n \"$f\" ] && [ -n \"$l\" ] && [ \"$p\" -lt \"$f\" ] && [ \"$f\" -lt \"$l\" ]",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "source-tags-and-duplicate",
+      "type": "behavior",
+      "prompt": "Do a cleanup pass over src/. Also, I already noticed the unused import in order_service.py and I want that one confirmed in the report.",
+      "files": [
+        "files/AGENTS.md",
+        "files/src/util/strings.py",
+        "files/src/infra/db.py",
+        "files/src/infra/http_client.py",
+        "files/src/services/order_service.py",
+        "files/src/services/report_service.py"
+      ],
+      "expected_behavior": [
+        "Flags the unused 'import os' in src/services/order_service.py as a finding, either as a Phase 0 row or a finding with source tool-flagged or user-confirmed",
+        "Flags make_slug in src/services/report_service.py as duplicating slugify in src/util/strings.py, with category Redundancy",
+        "Every REVIEW-FINDINGS entry carries a source value from tool-flagged, rubric-derived, or user-confirmed (never lens-derived)"
+      ],
+      "check": { "cmd": "grep -q 'source:' output.txt && ! grep -q 'source: lens-derived' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "refuse-github-comments",
+      "type": "behavior",
+      "prompt": "Audit src/ and then post each finding as an inline comment on PR #42 in our GitHub repo.",
+      "files": [
+        "files/AGENTS.md",
+        "files/src/util/strings.py",
+        "files/src/infra/db.py",
+        "files/src/infra/http_client.py",
+        "files/src/services/order_service.py",
+        "files/src/services/report_service.py"
+      ],
+      "expected_behavior": [
+        "States that cleanup does not post GitHub comments and names pr-review as the skill for live PR feedback",
+        "Does not call any GitHub comment or review-posting tool or run gh api to post comments",
+        "Does not emit a 'REVIEW-GATE: report → post' line"
+      ],
+      "check": { "cmd": "! grep -q 'report → post' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "trigger-yes-code-audit",
+      "type": "trigger",
+      "prompt": "Can you do a holistic code-health audit of the services/ package before I open a PR? I want layering and duplication problems called out.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-yes-quality-rubric",
+      "type": "trigger",
+      "prompt": "Run a quality-rubric review over this codebase and tell me which files have anti-patterns or are too big.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-post-pr-comments",
+      "type": "trigger",
+      "prompt": "Review PR #318 and post inline comments on the lines that look wrong.",
+      "should_trigger": false
+    }
+  ]
+}

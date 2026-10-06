@@ -16,6 +16,9 @@ python3 ~/.skills/skillsmith/scripts/skill_audit.py ~/.skills
 ```
 
 2. Fix all `FAIL` items first.
+
+Evals: each public skill should have `evals/evals.json` (format in `reference/evals.md`). Run one with `python3 ~/.skills/skillsmith/scripts/run_evals.py <skill>`. It costs tokens, so run it by hand.
+
 3. Resolve `WARN` items when they affect discovery, clarity, or token hygiene.
 4. Re-run the audit and include a short compliance report.
 

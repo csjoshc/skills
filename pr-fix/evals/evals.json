@@ -1,0 +1,89 @@
+{
+  "skill": "pr-fix",
+  "cases": [
+    {
+      "id": "fix-loop-verify-between",
+      "type": "behavior",
+      "prompt": "Use pr-fix on the review feedback in review-comments.md for cart.py. Work from these local files instead of GitHub (no gh, no network). Do not commit or push.",
+      "files": ["files/cart.py", "files/review-comments.md"],
+      "expected_behavior": [
+        "Shows a numbered fix plan listing the comments before editing cart.py",
+        "Applies each fix separately and runs a verification command (e.g. python -m py_compile cart.py) after each one before starting the next",
+        "Changes only what each comment asks for; cart_total and unrelated lines are not refactored or renamed"
+      ],
+      "check": {
+        "cmd": "python3 -m py_compile cart.py && python3 -c \"import cart; assert cart.apply_discount(100, 10) == 90\"",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "summary-format",
+      "type": "behavior",
+      "prompt": "Use pr-fix to handle the comments in review-comments.md against cart.py. Work only from these local files, not GitHub. Don't commit or push. Finish with your usual report.",
+      "files": ["files/cart.py", "files/review-comments.md"],
+      "expected_behavior": [
+        "Final report starts a section with the heading '## PR Fix Summary'",
+        "Contains a '**Fixed**: N of M comments' line with M equal to 3, and a '**Skipped**' line with a count",
+        "Contains a 'Changes made' table (# | File | Comment | Status) and a 'Skipped' table (# | File | Comment | Reason)",
+        "Ends with a '### Verification' list reporting the type check or compile result and the tests result"
+      ],
+      "check": {
+        "cmd": "grep -q '## PR Fix Summary' output.txt && grep -qi 'Fixed.*of 3' output.txt && grep -q '### Verification' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "skip-mistaken-comment",
+      "type": "behavior",
+      "prompt": "Go through review-comments.md and fix cart.py accordingly with pr-fix. Use only these local files, not GitHub. Don't commit or push.",
+      "files": ["files/cart.py", "files/review-comments.md"],
+      "expected_behavior": [
+        "Does not remove the round(...) call from cart_total",
+        "Lists comment 2 (id 9002) as skipped or pushed back on, with a stated reason that round(x, 2) works on floats",
+        "Still fixes the valid comments (percent divided by 100, and the ValueError range check)"
+      ],
+      "check": {
+        "cmd": "grep -q 'round(' cart.py && python3 -c \"import cart; assert cart.apply_discount(200, 50) == 100\"",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "no-commit-no-push",
+      "type": "behavior",
+      "prompt": "Apply the valid review comments in review-comments.md to cart.py using pr-fix. Local files only, no GitHub. Then tell me what to do next.",
+      "files": ["files/cart.py", "files/review-comments.md"],
+      "expected_behavior": [
+        "Leaves the changes uncommitted and does not run git commit or git push",
+        "Tells the user the changes are left for them to review and commit"
+      ],
+      "check": {
+        "cmd": "[ -z \"$(git log --oneline 2>/dev/null)\" ] && ! grep -qiE '(i|we) (have )?(committed|pushed)' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "trigger-yes-address-feedback",
+      "type": "trigger",
+      "prompt": "The reviewers left a bunch of comments on PR 212 in acme/shop-demo. Can you address the review feedback one by one?",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-yes-fix-comments",
+      "type": "trigger",
+      "prompt": "fix the PR comments on my branch, there are 4 unresolved threads from Dana about error handling and a missing test",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-review-pr",
+      "type": "trigger",
+      "prompt": "Review PR 88 in acme/shop-demo and post your findings as inline comments on GitHub.",
+      "should_trigger": false
+    },
+    {
+      "id": "trigger-no-open-pr",
+      "type": "trigger",
+      "prompt": "I've finished the cart discount change locally. Open a PR for it with a good description.",
+      "should_trigger": false
+    }
+  ]
+}

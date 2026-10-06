@@ -187,6 +187,17 @@ def audit_skill(skill_path: Path) -> list[Issue]:
             )
         )
 
+    # Evals — warn only, so coverage can grow gradually
+    if not (skill_path.parent / "evals" / "evals.json").exists():
+        issues.append(
+            Issue(
+                "WARN",
+                skill_path,
+                "evals-missing",
+                "No evals/evals.json; see skillsmith/reference/evals.md.",
+            )
+        )
+
     # Broken local .md references — prevents dead traversal paths
     for link in LINK_RE.findall(text):
         if not is_local_md_link(link):
