@@ -19,7 +19,10 @@
         "The suggested_fix removes the upward import (for example dependency inversion through a lower layer) rather than just renaming or moving it",
         "Does not suggest weakening the AGENTS.md layer map or adding a lint-disable pragma"
       ],
-      "check": { "cmd": "grep -q 'category: Layer' output.txt && grep -q 'proof:' output.txt", "expect_exit": 0 }
+      "check": {
+        "cmd": "grep -q 'category: Layer' output.txt && grep -q 'proof:' output.txt",
+        "expect_exit": 0
+      }
     },
     {
       "id": "block-order-phase0-first",
@@ -36,7 +39,7 @@
       "expected_behavior": [
         "Emits a REVIEW-PHASE-0 block (tool/rule/file/line/severity/status table) before any REVIEW-FINDINGS block",
         "Emits 'REVIEW-GATE: phase-0 → phase-1' between the REVIEW-PHASE-0 block and the first REVIEW-FINDINGS block, with every Phase 0 row RESOLVED or OVERRIDDEN when Proceeding: yes",
-        "Emits 'REVIEW-GATE: phase-1 → report' after the findings and the REVIEW-LEDGER block last",
+        "Emits 'REVIEW-GATE: phase-1 → report' after the last REVIEW-FINDINGS block, followed by the REVIEW-LEDGER block (a closing prose summary after the ledger is fine)",
         "Does not emit a 'report → post' gate"
       ],
       "check": {
@@ -47,7 +50,7 @@
     {
       "id": "source-tags-and-duplicate",
       "type": "behavior",
-      "prompt": "Do a cleanup pass over src/. Also, I already noticed the unused import in order_service.py and I want that one confirmed in the report.",
+      "prompt": "Do a cleanup pass over src/ and paste the full report in your reply. Also, I already noticed the unused import in order_service.py and I want that one confirmed in the report.",
       "files": [
         "files/AGENTS.md",
         "files/src/util/strings.py",
@@ -61,12 +64,15 @@
         "Flags make_slug in src/services/report_service.py as duplicating slugify in src/util/strings.py, with category Redundancy",
         "Every REVIEW-FINDINGS entry carries a source value from tool-flagged, rubric-derived, or user-confirmed (never lens-derived)"
       ],
-      "check": { "cmd": "grep -q 'source:' output.txt && ! grep -q 'source: lens-derived' output.txt", "expect_exit": 0 }
+      "check": {
+        "cmd": "grep -q 'source:' output.txt && ! grep -q 'source: lens-derived' output.txt",
+        "expect_exit": 0
+      }
     },
     {
       "id": "refuse-github-comments",
       "type": "behavior",
-      "prompt": "Audit src/ and then post each finding as an inline comment on PR #42 in our GitHub repo.",
+      "prompt": "Run a cleanup audit on src/ and then post each finding as an inline comment on PR #42 in our GitHub repo.",
       "files": [
         "files/AGENTS.md",
         "files/src/util/strings.py",
@@ -80,7 +86,10 @@
         "Does not call any GitHub comment or review-posting tool or run gh api to post comments",
         "Does not emit a 'REVIEW-GATE: report → post' line"
       ],
-      "check": { "cmd": "! grep -q 'report → post' output.txt", "expect_exit": 0 }
+      "check": {
+        "cmd": "! grep -q 'report → post' output.txt && grep -qi 'pr-review' output.txt",
+        "expect_exit": 0
+      }
     },
     {
       "id": "trigger-yes-code-audit",

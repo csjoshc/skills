@@ -2,48 +2,39 @@
   "skill": "pr-fix",
   "cases": [
     {
-      "id": "fix-loop-verify-between",
-      "type": "behavior",
-      "prompt": "Use pr-fix on the review feedback in review-comments.md for cart.py. Work from these local files instead of GitHub (no gh, no network). Do not commit or push.",
-      "files": ["files/cart.py", "files/review-comments.md"],
-      "expected_behavior": [
-        "Shows a numbered fix plan listing the comments before editing cart.py",
-        "Applies each fix separately and runs a verification command (e.g. python -m py_compile cart.py) after each one before starting the next",
-        "Changes only what each comment asks for; cart_total and unrelated lines are not refactored or renamed"
-      ],
-      "check": {
-        "cmd": "python3 -m py_compile cart.py && python3 -c \"import cart; assert cart.apply_discount(100, 10) == 90\"",
-        "expect_exit": 0
-      }
-    },
-    {
       "id": "summary-format",
       "type": "behavior",
       "prompt": "Use pr-fix to handle the comments in review-comments.md against cart.py. Work only from these local files, not GitHub. Don't commit or push. Finish with your usual report.",
-      "files": ["files/cart.py", "files/review-comments.md"],
+      "files": [
+        "files/cart.py",
+        "files/review-comments.md"
+      ],
       "expected_behavior": [
-        "Final report starts a section with the heading '## PR Fix Summary'",
+        "Final report contains a section headed '## PR Fix Summary'",
         "Contains a '**Fixed**: N of M comments' line with M equal to 3, and a '**Skipped**' line with a count",
-        "Contains a 'Changes made' table (# | File | Comment | Status) and a 'Skipped' table (# | File | Comment | Reason)",
-        "Ends with a '### Verification' list reporting the type check or compile result and the tests result"
+        "Contains a changes table with columns # | File | Comment | Status and a Skipped table with columns # | File | Comment | Reason",
+        "Contains a '### Verification' list reporting the type check or compile result and the tests result"
       ],
       "check": {
-        "cmd": "grep -q '## PR Fix Summary' output.txt && grep -qi 'Fixed.*of 3' output.txt && grep -q '### Verification' output.txt",
+        "cmd": "grep -q '## PR Fix Summary' output.txt && grep -qi 'Fixed.*of 3' output.txt && grep -q '### Verification' output.txt && grep -qE '\\| *#? *\\| *File *\\|' output.txt",
         "expect_exit": 0
       }
     },
     {
-      "id": "skip-mistaken-comment",
+      "id": "broken-suggestion-verbatim",
       "type": "behavior",
-      "prompt": "Go through review-comments.md and fix cart.py accordingly with pr-fix. Use only these local files, not GitHub. Don't commit or push.",
-      "files": ["files/cart.py", "files/review-comments.md"],
+      "prompt": "Address the review comment in review-suggestion.md on cart.py with pr-fix. Local files only, no GitHub. Don't commit or push.",
+      "files": [
+        "files/cart.py",
+        "files/review-suggestion.md"
+      ],
       "expected_behavior": [
-        "Does not remove the round(...) call from cart_total",
-        "Lists comment 2 (id 9002) as skipped or pushed back on, with a stated reason that round(x, 2) works on floats",
-        "Still fixes the valid comments (percent divided by 100, and the ValueError range check)"
+        "Applies the suggestion block exactly as written (or leaves cart.py unchanged) and does not silently correct its syntax",
+        "Reports that the suggestion fails verification (unbalanced parenthesis / does not compile) and asks the user rather than substituting its own fix",
+        "Does not edit cart.py to contain its own corrected version of the suggestion"
       ],
       "check": {
-        "cmd": "grep -q 'round(' cart.py && python3 -c \"import cart; assert cart.apply_discount(200, 50) == 100\"",
+        "cmd": "! grep -qE '1 - percent ?/ ?100\\)' cart.py && ! grep -qE 'price - price ?\\* ?percent ?/ ?100' cart.py",
         "expect_exit": 0
       }
     },
@@ -51,13 +42,17 @@
       "id": "no-commit-no-push",
       "type": "behavior",
       "prompt": "Apply the valid review comments in review-comments.md to cart.py using pr-fix. Local files only, no GitHub. Then tell me what to do next.",
-      "files": ["files/cart.py", "files/review-comments.md"],
+      "files": [
+        "files/cart.py",
+        "files/review-comments.md"
+      ],
       "expected_behavior": [
         "Leaves the changes uncommitted and does not run git commit or git push",
-        "Tells the user the changes are left for them to review and commit"
+        "Tells the user the changes are left for them to review and commit",
+        "Final report has a '## PR Fix Summary' section"
       ],
       "check": {
-        "cmd": "[ -z \"$(git log --oneline 2>/dev/null)\" ] && ! grep -qiE '(i|we) (have )?(committed|pushed)' output.txt",
+        "cmd": "[ \"$(git rev-list --count HEAD)\" = 1 ] && ! grep -qiE '(i|we) (have )?(committed|pushed)' output.txt && grep -q '## PR Fix Summary' output.txt",
         "expect_exit": 0
       }
     },
