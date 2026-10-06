@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Routes and coordinates the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Detects pipeline state from artifacts on disk, emits copy-pasteable prompts for the next session, and generates cold-start handoff prompts before /clear or /compact. Advise-only — never blocks or rewrites the user's work. Use when starting any non-trivial feature, when unsure which planning skill applies, when resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, browser test, review) — invoke those skills directly.
+description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before /clear or /compact. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
 ---
 
 # /todo — Pipeline Coordinator

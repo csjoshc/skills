@@ -182,8 +182,8 @@ Insertion order is mandatory:
 2. Git workflow block (always)
 3. Code comments block (always)
 4. optional MCP block (only when MCP is in use)
-5. Tokenify block
-6. Karpathy Guidelines block
+5. Tokenify block (optional; only on request)
+6. Karpathy Guidelines block (optional; only on request)
 
 When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it. If MCP is in use, ensure exactly one MCP block, placed immediately after the Code comments block.
 
@@ -317,8 +317,8 @@ Use grep/glob/file search only for:
 
 ### Optional verbatim blocks (Tokenify, Karpathy Guidelines, graphify, MCP Tools)
 
-Append the matching blocks from `AGENTS_BLOCKS.md` in that order: Tokenify (always, after the
-optional MCP block), Karpathy Guidelines (always, after Tokenify), graphify (if present),
+Append the matching blocks from `AGENTS_BLOCKS.md` in that order: Tokenify (optional, after the
+optional MCP block), Karpathy Guidelines (optional, after Tokenify), graphify (if present),
 MCP Tools (optional). Copy them verbatim.
 
 ## 2. Core agent behavior rule (Cursor-specific)
@@ -425,7 +425,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
 - [ ] `AGENTS.md` stays at or under 200 lines, with no README duplicates or uncited claims.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> Tokenify -> Karpathy.
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> (optional) Tokenify -> (optional) Karpathy.
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
 - [ ] If included, MCP block appears exactly once, immediately after the Git workflow block, with mandatory discovery order, fallback boundaries, and completion self-check.

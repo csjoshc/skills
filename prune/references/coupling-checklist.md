@@ -164,8 +164,13 @@ git grep -nE "\b${NAME}\b" -- 'conftest.py' '**/conftest.py' 'tests/' 'test/' '_
 
 ## 10. Non-code / docs / diagram coupling
 
-Deletions classically leave doc/diagram debris. (The `deprecate` skill's Step 3b
-scrub covers this in full — reuse it.)
+Deletions classically leave doc/diagram debris. Sweep every file type for the removed name (`NAME=<removed>`):
+
+```bash
+git grep -nE "\\b${NAME}\\b" -- '*.md' '*.rst' '*.mmd' '*.puml' '*.dot'   # docs, diagrams
+git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' 'helm/' 'k8s/' 'docker-compose*' 'Dockerfile*'
+git grep -nE "\\b${NAME}\\b" -- '*.toml' 'package.json' 'go.mod' '.env*' 'config/'
+```
 
 ```bash
 git grep -nE "\b${NAME}\b" -- '*.md' '*.rst' '*.txt' '*.mmd' '*.puml' '.env*' 'config/'

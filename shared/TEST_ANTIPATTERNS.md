@@ -11,7 +11,7 @@
 - Quick Reference
 
 
-A catalog of common testing antipatterns to avoid. See also: [SKILL.md](./SKILL.md), [TESTS.md](./TESTS.md).
+A catalog of common testing antipatterns to avoid.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: fork-audit
-description: Audits and documents a forked or divergent codebase, fanning out intermediate layered docs (exec / architect / engineer), topic breakouts, and a code-grounded Q&A loop under a gitignored .docs/ folder, then synthesizing them into one final Confluence design page. Use when documenting a downloaded fork zip, understanding what changed vs upstream, decomposing squashed PRs into logical commits, identifying the novel architectural pattern, or publishing a fork's mental model to Confluence. Not for forward-looking design (use spec-writer/make-prd), not for PR-time review (use pr-review), not for general repo onboarding (use brief-docs).
+description: Audits and documents a forked or divergent codebase: layered docs (exec / architect / engineer), topic breakouts, and a code-grounded Q&A loop under a gitignored .docs/ folder, synthesized into one Confluence design page. Use when documenting a fork, understanding what changed vs upstream, decomposing squashed PRs, or publishing a fork's mental model. Not for forward-looking design (use spec-writer/make-prd), PR review (use pr-review), or repo onboarding (use brief-docs).
 ---
 
 # fork-audit
