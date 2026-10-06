@@ -124,12 +124,12 @@ Do not invent commands the repo does not use. Prefer project-native commands.
 
 ## Platform Context
 
-If the PR touches code on a proprietary platform (custom type systems,
+If the PR touches platform-specific code (custom type systems,
 platform-specific server APIs, in-house test harnesses), load the matching
 platform-context skill or MCP server if one is installed (e.g. a
 `<platform>-pr-context` skill) before review. Use it to validate API
 semantics, type signatures, and platform conventions. Do not rely on generic
-knowledge for proprietary behavior.
+knowledge for platform behavior.
 
 ---
 

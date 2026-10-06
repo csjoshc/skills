@@ -19,7 +19,7 @@ filenames, or test artifact paths. Run:
 # Exclude planning artifacts and historical proof; keep the noise.
 git grep -nE '(ADR-[A-Z0-9-]+|T-[0-9]{3,}|FR-[0-9]+|NFR-[0-9]+|RISK-[0-9]+|IG-[0-9]+G[0-9]*|[0-9]+G[0-9]+|Slice [0-9]+|Constitution P[0-9]+|AP-[0-9]+|Pattern [0-9]+)' \
   -- '*.py' '*.ts' '*.tsx' '*.js' '*.mjs' '*.sh' '*.md' '*.mmd' '*.yaml' '*.yml' '*.json' '*.toml' \
-  ':!.tickets' ':!.plan' ':!.handoff' ':!.runner' ':!proof/' ':!docs/ADR-*'
+  ':!.tickets' ':!.plan' ':!.handoff' ':!proof/' ':!docs/ADR-*'
 ```
 
 For every hit, classify:
@@ -36,7 +36,7 @@ For every hit, classify:
   `scripts/verify-6g1.sh`) → rename to feature/scope-based names per
   AP-24; make per-cycle artifact directories env-overridable.
 - **Vendor / runtime tokens in supposedly-agnostic identifiers**
-  (`agent.local-vendor-a.yaml`, `OLLAMA_BASE_URL` when the project surface
+  (`agent.local-vendor.yaml`, `OLLAMA_BASE_URL` when the project surface
   is meant to be `LLM_BASE_URL`) → rename per AP-25.
 
 Record findings in the onboarding handoff so they become followup
@@ -47,7 +47,7 @@ tickets, not silent debt:
 
 | Path | Pattern | Suggested rename | Coupled to |
 |---|---|---|---|
-| `packages/api/config/agent.local-vendor-a.yaml` | vendor token in agnostic filename | `agent.local.yaml` | runtime |
+| `packages/api/config/agent.local-vendor.yaml` | vendor token in agnostic filename | `agent.local.yaml` | runtime |
 | `proof/4G-ui-cycle/` | cycle slug in artifact path | `proof/chat-stack-smoke/` (env-overridable) | cycle |
 | `react/src/.../client.ts:42` (`ADR-CHAT-1`) | label-only docstring | prose explaining single-SSE rationale | — |
 ```

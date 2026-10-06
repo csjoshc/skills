@@ -1,11 +1,11 @@
-# Parallel / batched markdown tickets (Runner & similar runners)
+# Parallel / batched markdown tickets (for ticket runners)
 
 ## Contents
 
 - When `-j` / `--concurrency` > 1 is appropriate
 - When to keep default concurrency 1
 - Authoring checklist (batch mode)
-- Runner-specific conventions
+- Ticket format conventions
 - Creating Parallelizable Tickets
 - Canonical copy of this file
 
@@ -30,14 +30,9 @@ Companion to **spec-writer** (`SKILL.md` in this directory). Load when the user 
 3. **Blast radius:** prefer tickets that name **disjoint** paths so parallel workers collide less often if the graph is imperfect.
 4. **Parent/epic:** if you use `Parent:` (or equivalent), keep it consistent; children should depend on the **narrowest** real prerequisite, not only the epic.
 
-## Runner-specific conventions
+## Ticket format conventions
 
-When the target is **Runner** (this repo or another project using the same ticket format), align YAML front matter and graph rules with the project skill:
-
-- Path (runner repo): `.cursor/skills/runner-decomposed-tickets/SKILL.md`  
-  (If that skill is not in the workspace, use the same content from the Runner repo you are driving.)
-
-That skill covers **`Depends-On:`**, **`Parent:`**, decomposition, and blast radius for `.tickets/` markdown — without duplicating runner internals here.
+Align YAML front matter and graph rules (**`Depends-On:`**, **`Parent:`**, decomposition, blast radius) with whatever ticket format your runner expects. If the project ships its own decomposed-tickets skill, load it alongside this one.
 
 ---
 
@@ -153,7 +148,7 @@ Global-Constraints:
 ### Batch Size Guidelines
 
 - **Optimal:** 3-4 parallel workers (research shows saturation at 4 agents)
-- **Maximum:** 4 workers (hard cap in Runner's concurrent runner)
+- **Maximum:** 4 workers (typical cap for concurrent runners)
 - **Beyond 4:** Coordination overhead exceeds benefits — split into sequential batches
 
 ---

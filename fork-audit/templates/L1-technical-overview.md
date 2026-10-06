@@ -81,7 +81,7 @@ Source: [./diagrams/l1-request-flow.mmd](./diagrams/l1-request-flow.mmd)
 
 <Numbered walkthrough of one canonical end-to-end request — what crosses each boundary and why.>
 
-## Slide: Toolkit / Platform Reuse Map
+## Slide: Base Template / Platform Reuse Map
 
 | Upstream primitive | Used by fork | How |
 |---|---|---|

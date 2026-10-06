@@ -176,7 +176,7 @@ Answer these questions before writing — every output doc should be traceable t
 | What are the **divergent commits** and how do they decompose? | Logical units for L2 | L2 per-PR sections |
 | For each commit: which changes are **app-specific** vs **platform rode-along**? | A squash often carries both — readers need that split | L2 sub-sections per commit |
 | What is the **novel architectural pattern**? (Not just config delta — what's structurally new) | The thing worth a topic breakout | One `topics/` page |
-| What's **reused as-is** vs **replaced** vs **added** at the package level? | Maps the dependency surface | L1 Toolkit Reuse Map |
+| What's **reused as-is** vs **replaced** vs **added** at the package level? | Maps the dependency surface | L1 Base Template Reuse Map |
 | What are the **trust / operational boundaries**? (rate limits, secrets, audit, classification) | NFR posture | L1 NFR slide |
 | What are the **future-merge conflict surfaces**? | Migration risk | L1 Migration slide |
 | What does the user / consumer of head actually do that base doesn't? | UX delta | L0 + topics |

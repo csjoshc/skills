@@ -22,7 +22,7 @@ verbs; listed below in order of the flow.
 | Address review comments on your PR | `pr-fix` | One comment at a time, 3-attempt retry cap, staleness check via `tdd/MUTATION.md` after each fix. |
 | Audit existing code (not a PR) | `cleanup` — Phase 0 mechanical pass first, then subjective rubric | Prevents the LLM from rationalizing away mechanical issues. |
 | Present findings to execs / engineers | `reframe exec` or `reframe architect` or `reframe engineer` | Audience-appropriate restructuring, no fabrication. |
-| Produce a deck from the reframe | pipe into `ppt-make` | Consumes the YAML frontmatter + `## Slide:` contract. |
+| Produce a deck from the reframe | pipe into a slide-building skill | Consumes the YAML frontmatter + `## Slide:` contract. |
 | Sync skills across tools | `skill-sync` | Propagates `~/.skills` → Claude Code, Cursor, Codex, Gemini, etc. |
 | Sync MCPs | `mcp-sync` | `~/.secrets/mcp.json` → target-specific settings files. |
 | Sync hooks | `hook-sync` | `~/.hooks/*.json` → Claude Code settings.json + Cursor + Codex + Gemini. |

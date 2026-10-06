@@ -199,23 +199,23 @@ Proof directories, screenshot folders, and console-log dumps for
 playwright/cypress/jest e2e tests are committed-tree paths the moment
 a config or spec hardcodes them. Pick names by these rules:
 
-- **Name the test scope, not the gate.** `proof/chat-stack-smoke/`
-  not `proof/4G-ui-cycle/`. The directory tells a future reader
+- **Name the test scope, not the gate.** `proof/stack-smoke/`
+  not `proof/gate-7-cycle/`. The directory tells a future reader
   *what the test does*; gate slugs rot the moment the gate is
   renamed.
 - **Make the root env-overridable.** The default is the
   scope-based name; CI / orchestration sets `PROOF_DIR=...` to
   land per-cycle archival paths without re-editing source.
   ```ts
-  const PROOF_DIR = process.env.PROOF_DIR ?? "../proof/chat-stack-smoke";
+  const PROOF_DIR = process.env.PROOF_DIR ?? "../proof/stack-smoke";
   ```
 - **Mirror this in the smoke script.** If a shell harness drives
   the e2e, it reads `${PROOF_ROOT:-…}` with the same scope-based
   default and exports `PROOF_DIR="${PROOF_ROOT}"` for the
   child playwright run.
 - **Filenames inside the dir describe the artifact**, not the
-  cycle. `chat-turn.png`, `playwright.json`, `console.txt` — not
-  `4G-ui-cycle-chat-turn.png`.
+  cycle. `login-flow.png`, `playwright.json`, `console.txt` — not
+  `gate-7-cycle-login-flow.png`.
 
 A playwright config with a hardcoded gate-slug `PROOF_DIR` is the
 canonical AP-24 failure (see `~/.skills/antiplan/references/anti-patterns.md`).

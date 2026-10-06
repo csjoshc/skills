@@ -1,8 +1,5 @@
 .backup/
 synced/
-.runner/*
-.runner.log
-.runner/
 .reports/
 .system/
 .DS_Store
@@ -10,3 +7,7 @@ sync.log
 hooks/hook.log
 __pycache__/
 *.pyc
+
+# Third-party bundles and bytecode
+codex-primary-runtime/
+.system/

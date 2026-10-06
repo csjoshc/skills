@@ -18,13 +18,13 @@ the most common naming failures the review process catches at PR time
 A spec must never instruct the author to commit any of:
 
 - `scripts/verify-T-732.sh`, `scripts/verify-6g1.sh` — verify-script names tied to a ticket
-- `proof/4G-ui-cycle/`, `evidence/Slice-3/` — artifact directories named after a gate
+- `proof/gate-7-cycle/`, `evidence/Slice-3/` — artifact directories named after a gate
 - `tests/tickets/<ticket-id>.py` — test files named after the ticket
 - `docs/PRD-<cycle>.md` referenced as a long-lived doc — these belong in `.plan/`
 
 These names rot the moment the ticket closes or the gate is renamed.
 Use names that describe the *test scope* or *feature*:
-`scripts/verify-llm-config.sh`, `proof/chat-stack-smoke/`,
+`scripts/verify-config.sh`, `proof/stack-smoke/`,
 `tests/infra/test_compose_helm_parity.py`.
 
 If a per-cycle artifact directory is genuinely needed, make the path
@@ -39,14 +39,14 @@ the names must reflect the *abstraction*, not today's instantiation.
 
 Bad → Good:
 
-- `agent.local-vendor-a.yaml` → `agent.local.yaml` (runtime selected by an env var, not the filename)
-- `DockerModelRunnerClient` → `OpenAICompatibleClient` (VENDOR_A is one of many endpoints)
+- `agent.local-<vendor>.yaml` → `agent.local.yaml` (runtime selected by an env var, not the filename)
+- `VendorXClient` → `OpenAICompatibleClient` (vendor X is one of many endpoints)
 - `EMBEDDING_PULL_TAG = "hf.co/unsloth/..."` → catalog file keyed by alias, source ref per runtime
-- `/api/v1/agent/docker-model-runner/status` → `/api/v1/agent/runtime/status`
+- `/api/v1/agent/vendor-x/status` → `/api/v1/agent/runtime/status`
 - `function processOllamaResponse(...)` → `function processModelResponse(...)`
 
 Allowed exceptions: runtime-specific code paths that *only* run for
-that runtime (e.g. `provision_dmr()` inside a bootstrap script that
+that runtime (e.g. `provision_vendor_x()` inside a bootstrap script that
 branches on `LLM_RUNTIME`); their names earn the vendor token because
 they literally implement that vendor's protocol.
 
@@ -70,8 +70,8 @@ under `docs/`, RFC URL, or spec filename) when one exists.
 When a task in Section 3 mandates writing a file, naming a function,
 or adding a docstring, scan it against rules 1–3 before listing the
 file in `Files likely affected:`. If a name is borderline, name it
-after the *feature* (`chat-stack-smoke`) rather than the *cycle*
-(`4G-ui-cycle`).
+after the *feature* (`stack-smoke`) rather than the *cycle*
+(`gate-7-cycle`).
 
 ---
 

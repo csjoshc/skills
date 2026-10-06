@@ -14,11 +14,11 @@ flowchart TB
   %% ─── Nodes by category ───────────────────────────────────
   User["User<br/>(Browser)"]:::person
   API["API Gateway<br/>FastAPI :8090"]:::service
-  Orch["Orchestration<br/>Python library"]:::library
-  Guard["Input Guardrails<br/>PromptInjectionDetector<br/>ClassificationLevelCheck"]:::guard
+  Core["Core Library<br/>Python library"]:::library
+  Guard["Input Checks<br/>CheckA<br/>CheckB"]:::guard
   LLM["LLM Provider<br/>Ollama / Cloud"]:::external
   Config["AgentConfig<br/>(frozen Pydantic)"]:::state
-  Blocked["GuardrailBlockedError<br/>→ HTTP 400"]:::errBlock
+  Blocked["ValidationError<br/>→ HTTP 400"]:::errBlock
   Success["Sanitized response<br/>→ SSE stream"]:::passNode
 
   %% ─── Edges by style ──────────────────────────────────────

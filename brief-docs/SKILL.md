@@ -65,9 +65,9 @@ Bare label drops fail this skill's quality bar.
 
 ### Name the abstraction, not today's vendor
 
-If the doc claims to describe a runtime-agnostic or vendor-agnostic feature, the prose, table headers, and Mermaid node labels must reflect the abstraction (`Model runtime`, `OpenAI-compatible endpoint`) — not a current default (`Vendor A runtime`, `Ollama`). Runtime-specific notes go in a side table or per-runtime subsection.
+If the doc claims to describe a runtime-agnostic or vendor-agnostic feature, the prose, table headers, and Mermaid node labels must reflect the abstraction (`Model runtime`, `OpenAI-compatible endpoint`) — not a current default (`Vendor A`, `Vendor B`). Runtime-specific notes go in a side table or per-runtime subsection.
 
-A doc title "Local dev with VENDOR_A" for a runtime-agnostic stack is the canonical version of this failure — the title picks a winner the architecture deliberately doesn't pick.
+A doc title "Local dev with Vendor A" for a runtime-agnostic stack is the canonical version of this failure — the title picks a winner the architecture deliberately doesn't pick.
 
 ## Companion references
 

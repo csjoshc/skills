@@ -24,10 +24,7 @@ AC→Test Traceability table names it. Write the file there from the first keyst
 | Dockerfile / Helm / nginx / CI workflow regression | `tests/infra/test_<artifact>.py` |
 | Documentation consistency | `tests/docs/test_<topic>.py` |
 | Package unit/integration | `packages/<pkg>/tests/test_<module>.py` |
-| E2E | `tests/template_agent_e2e/` |
-
-Include a `test_coverage_anchor` function with `import agent_checks` so the
-coverage gate passes for YAML/Dockerfile-only diffs (no `conftest.py` shim needed).
+| E2E | `tests/e2e/` |
 
 Companion files to load at specific phases:
 - [SCOPING.md](./SCOPING.md) — **required Phase 0**. Produces the ranked Test Obligation Queue (`.tickets/tdd/toq-<ticket-id>.yaml`) from diff, dependency graph, risk registry, and churn. Every downstream phase reads from this queue; nothing is invented from prose.
@@ -241,7 +238,7 @@ When a file/module is confirmed unused or explicitly deprecated:
 Run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
 ranked Test Obligation Queue at `.tickets/tdd/toq-<ticket-id>.yaml`.
 
-Inputs are pulled from the orchestrate envelope (ticket path, diff base, registry
+Inputs are pulled from the ticket runner envelope (ticket path, diff base, registry
 path) or discovered from the working tree. Signal collection (diff, blast radius,
 MCP dependency graph, churn, failure history, existing tests, risk tier) is
 deterministic — no LLM inference. The model only **ranks and shapes** candidates

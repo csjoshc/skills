@@ -14,7 +14,7 @@ Read ~/.cursor/rules/cleanup/QUALITY_RUBRIC.md for checkable AC tied to mechanic
 For each ticket in .tickets/ (or paths named):
 1. Stage header valid; dependencies and Architecture Decisions alignment.
 2. If BUILD implied: explicit TDD, Verification commands, Self-review checklist.
-3. >5 production files → split 01a/01b…; parent epic per orchestrate.
+3. >5 production files → split 01a/01b…; parent epic per the ticket runner's format.
 4. No vague AC; assumptions in Architecture Decisions or [ASSUMPTION] + BLOCKED.
 5. You MAY edit ticket markdown to satisfy the above.
 
@@ -27,7 +27,7 @@ Backend: pytest (or project standard) for contracts and unhappy paths.
 When the user wants **new** tickets from an audit report (adapt repo root):
 
 ```
-Create actionable tasks in .tickets/ using orchestrate ticket shape, spec-writer and ticket-critic discipline.
+Create actionable tasks in .tickets/ using the project's ticket shape, spec-writer and ticket-critic discipline.
 
 Each ticket: explicit target file list (≤5 files), AGENTS.md/Architecture Decisions alignment, checkable AC, Verification commands, TDD where implementation is implied.
 

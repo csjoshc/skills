@@ -43,7 +43,7 @@ If this is a squash with multiple logical changes, split into sub-sections:
 
 These are upstream platform features that landed in the same squash but are **not app-specific**:
 
-| Toolkit change | Files | Purpose |
+| Base template change | Files | Purpose |
 |---|---|---|
 | <change name> | `<paths>` | <one paragraph: what / why / signature> |
 | … | … | … |

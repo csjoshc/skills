@@ -8,7 +8,7 @@ description: >-
   Process: fan-out questions, human checkpoints, synthesize.
   Out: .plan/PRD.md + .plan/task-sequence.md.
 metadata:
-  short-description: Interactive PRD + ticket orchestrator
+  short-description: Interactive PRD + ticket planner
 ---
 
 # Make PRD
@@ -51,7 +51,6 @@ See companion files in `references/` for detailed templates and subagent prompts
 ## Progressive Disclosure
 
 Load companion files only when needed:
-- `references/runner-alignment.md`: exact mapping to current `write_prd` behavior
 - `references/workflow-map.md`: stage map and gate rules
 - `references/fanout-subagents.md`: role definitions and subagent prompts
 - `references/ambiguity-and-acceptance.md`: ambiguity resolution and acceptance criteria rubric
@@ -109,13 +108,13 @@ Record each decision in the PRD's Decision Ledger:
 
 ```yaml
 - name: agent.local.yaml
-  coupling: [runtime]  # would be coupled if named agent.local-vendor-a.yaml
+  coupling: [runtime]  # would be coupled if named agent.local-<vendor>.yaml
   decision: runtime-agnostic; runtime selected via LLM_RUNTIME env
   justification: |
-    PRD §5 commits to supporting VENDOR_A + Ollama + cloud OpenAI. The
-    config filename must outlive any one of those choices.
+    PRD §5 commits to supporting several LLM runtimes. The config
+    filename must outlive any one of those choices.
 
-- name: proof/chat-stack-smoke/
+- name: proof/stack-smoke/
   coupling: [test-scope]  # NOT cycle-coupled — describes the test
   decision: feature-scoped; env-overridable via PROOF_DIR
   justification: |
@@ -129,7 +128,7 @@ Record each decision in the PRD's Decision Ledger:
 
 Names that fail the audit and can't be justified surface as a
 HITL question (see *HITL Policy* gate 1 — scope boundary
-decisions): "PRD §X names this `agent.local-vendor-a.yaml` but §Y says
+decisions): "PRD §X names this `agent.local-<vendor>.yaml` but §Y says
 the runtime is configurable. Which is wrong — the name or the
 commitment?" The user picks; the answer goes in the ledger.
 
@@ -174,7 +173,7 @@ For each gate, present:
 Two durable artifacts written to disk:
 
 1. **`.plan/PRD.md`** — PRD draft with explicit assumptions and unresolved
-   questions. Conforms to runner's `docs/PRD_FORMAT.md` (v1).
+   questions.
 2. **`.plan/task-sequence.md`** — ordered task placeholders (title +
    one-line intent + dependencies + 2–3 invariant ACs). **Placeholders, not
    tickets.** `spec-writer` consumes these and expands each into
@@ -190,7 +189,6 @@ In the first response after invocation:
 1. Confirm objective and constraints in 3-6 bullets.
 2. Propose the immediate plan for this session.
 3. Ask the smallest set of clarification questions needed to start drafting.
-3.5. Confirm the PRD output will conform to PRD_FORMAT.md v1 unless user opts out.
 
 ## Assumptions & Escalation
 

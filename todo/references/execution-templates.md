@@ -7,7 +7,7 @@ template into the user-facing output.
 
 ## Contents
 
-- build-ticket-manual — per-ticket flow without Runner
+- build-ticket-manual — per-ticket flow without a ticket runner
 - build-ticket-resume — pick up a Stage: BUILD ticket mid-flight
 - slice-gate-review — gate closure with subagent-validated review
 
@@ -15,7 +15,7 @@ template into the user-facing output.
 
 ## build-ticket-manual
 
-For users executing tickets without Runner. Single-session per ticket
+For users executing tickets without a ticket runner. Single-session per ticket
 using `/tdd` for red-green-refactor and `/verify-claim` as the evidence
 gate before commit. Subagents are reserved for slice gates, not per-ticket.
 

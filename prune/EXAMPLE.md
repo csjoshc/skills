@@ -6,7 +6,7 @@ corrections the naive "zero-import → strip" approach missed**.
 
 ## Setup
 
-- Python workspace (uv): `core`, `adapters/*`, `guardrails`, `hitl`, `eval`,
+- Python workspace (uv): `core`, `adapters/*`, `checks`, `hitl`, `eval`,
   `rag`, plus `apps/*/backend`. `templates/` present but **not** a member
   (cookiecutter fixtures, pytest-ignored).
 - TS workspace (pnpm): `cli`, `eval-dashboard`, `mcp-data-server`, `docs-gen`,
@@ -21,19 +21,19 @@ corrections the naive "zero-import → strip" approach missed**.
 | `agent_core` | core | 9 (incl. 3 tests) | characterizer, llm_env, service, retry, scripted_provider, routes |
 | `@acme/ui` | ui | 10 | routes/*, components/*, styles |
 | `agent_rag` | rag | 2 (incl. 1 test) | chunk_stage |
-| `agent_checks` | guardrails | 2 | service, characterizer |
+| `agent_checks` | checks | 2 | service, characterizer |
 | `agent_adapters_genai` | adapters/genai | 1 | service |
 | `agent_adapters_langchain` | adapters/langchain | **0** | — |
 | `agent_adapters_claude` | adapters/claude | **0** | — |
 | `agent_hitl` | hitl | **0** | — |
 | `agent_eval` | eval | **0** | — |
-| `@acme/toolkit-cli` | cli | **0** | — |
+| `@acme/tools-cli` | cli | **0** | — |
 | `@acme/mcp-data-server` | mcp-data-server | **0** | — |
 | `@acme/docs-gen` | docs-gen | **0** | — |
 | `@acme/eval-dashboard` | eval-dashboard | **0** | — |
 
 Ground truth = the app's own Dockerfiles: backend COPYs exactly
-`core, rag, guardrails, adapters/genai`; frontend COPYs `ui`. That five-package
+`core, rag, checks, adapters/genai`; frontend COPYs `ui`. That five-package
 set is the real app dependency — everything else is a candidate.
 
 ## What the coupling scan corrected
@@ -72,7 +72,7 @@ package dir leaves `helm dep build` and compose broken.
 
 | Package | Verdict | Reason |
 |---|---|---|
-| core, ui, rag, guardrails, adapters/genai | KEEP | direct app deps (Dockerfile-confirmed) |
+| core, ui, rag, checks, adapters/genai | KEEP | direct app deps (Dockerfile-confirmed) |
 | eval, hitl | STRIP (extract-to-base) | 0 refs; generic, valuable to other pilots |
 | eval-dashboard, mcp-data-server | STRIP (delete) | 0 refs, pure leaves |
 | adapters/langchain, adapters/claude | STRIP (delete) | 0 refs, not in manifest |

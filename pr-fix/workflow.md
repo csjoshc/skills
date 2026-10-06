@@ -33,13 +33,13 @@ Parse the comments into a work list. Each item needs:
 - Pure questions with no actionable request
 - Bot-generated status comments (CI, coverage, etc.)
 
-### Step 1b: Platform context (proprietary platforms)
+### Step 1b: Platform context
 
-If any comment targets code on a proprietary platform (custom type
+If any comment targets platform-specific code (custom type
 systems, platform-specific server APIs, in-house test harnesses), load
 the matching platform-context skill or MCP server if one is installed
 (e.g. a `<platform>-pr-context` skill) before attempting fixes. Do not
-guess at proprietary APIs; general-purpose knowledge will not cover them.
+guess at platform APIs; general-purpose knowledge will not cover them.
 
 ## Step 2: Plan the work
 

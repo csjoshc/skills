@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart — log fire; reminder to use /caveman when context is high
 # Mode: setup-only (no block)
-LOG=~/.skills/hooks/hook.log
+LOG=$HOME/.skills/hooks/hook.log
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] caveman-budget-auto fired  cwd=$(pwd)" >> "$LOG"
 
 [ -f ".claude/hooks-disabled" ] && exit 0

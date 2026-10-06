@@ -255,18 +255,18 @@ rules:
       - Test files like `tests/tickets/test_T732_*.py`, `tests/<cycle>/test_*.py` (a `tests/tickets/` directory is itself an AP-24 marker — tests should live by their type, not their ticket)
       - Doc filenames `docs/PRD-<cycle>.md`, `docs/<gate>-cutover.md` kept in the long-lived `docs/` tree instead of `.plan/` or `.tickets/`
       - e2e configs that hardcode `PROOF_DIR = "../proof/<gate-slug>/..."` in playwright/jest/cypress configs instead of taking the path from env
-      - Diff stats that show a new top-level directory whose name encodes the ticket lifecycle (e.g. `4G-ui-cycle/`, `IG-7G4/`) rather than the feature
+      - Diff stats that show a new top-level directory whose name encodes the ticket lifecycle (e.g. `ui-cycle/`, `IG-N/`) rather than the feature
 
   - id: AP-25
     name: Vendor Coupling in Agnostic Identifier
     phase: design
     detection_signals:
-      - Config files named `*-<vendor>.<ext>` (`agent.local-vendor-a.yaml`, `provider-ollama.json`) when the spec says provider/runtime is selected by env var or CLI flag
-      - Class / function / module names containing a vendor token when the same code paths handle multiple vendors (`OllamaClient` in a module that also handles vLLM, ChatGPT, and Bedrock)
-      - Env vars / config keys with vendor prefixes (`OLLAMA_BASE_URL`, `DMR_MODEL`) when the spec defines a runtime-agnostic surface — the project's own naming convention should be `LLM_BASE_URL` / `LLM_MODEL`
-      - Doc page titles "Local dev with Vendor A runtime" when the doc actually describes a runtime-agnostic startup flow whose only VENDOR_A-specific content is the default `base_url`
-      - Mermaid diagram nodes labeled `Vendor A runtime` / `<host>:<port>` in an architecture doc that's supposed to read at the abstraction level
-      - Test data tags hardpinning the vendor's source ref (`EMBEDDING_PULL_TAG = "hf.co/unsloth/..."`) in a doc-test that's supposed to assert the alias is documented
+      - Config files named `*-<vendor>.<ext>` (`agent.local-vendora.yaml`, `provider-vendorb.json`) when the spec says provider/runtime is selected by env var or CLI flag
+      - Class / function / module names containing a vendor token when the same code paths handle multiple vendors (`VendorBClient` in a module that also handles vLLM, ChatGPT, and Bedrock)
+      - Env vars / config keys with vendor prefixes (`VENDOR_B_BASE_URL`, `VENDOR_A_MODEL`) when the spec defines a runtime-agnostic surface — the project's own naming convention should be `LLM_BASE_URL` / `LLM_MODEL`
+      - Doc page titles "Local dev with Vendor A" when the doc actually describes a runtime-agnostic startup flow whose only vendor-specific content is the default `base_url`
+      - Mermaid diagram nodes labeled `Vendor A runtime` / `localhost:<vendor-port>` in an architecture doc that's supposed to read at the abstraction level
+      - Test data tags hardpinning the vendor's source ref (`EMBEDDING_PULL_TAG = "registry.example/org/model"`) in a doc-test that's supposed to assert the alias is documented
 
   - id: AP-26
     name: Operator Entry Point Not Smoke-Tested
@@ -277,7 +277,7 @@ rules:
       - Compose / Makefile / wrapper-script ticket references "profiles", "services", or "env_file" but no AC asserts the operator invocation produces only the intended services / env / state (positive AND negative — intended up, unintended NOT up)
       - Subagent verification path for an operator-target ticket uses an explicit-service or sidestep invocation (docker compose up svc1 svc2) instead of the wrapper target the operator will type (make compose-patent) — the sidestep masks bugs in the wrapper
       - Compose stack adds new profile-tagged services to a root compose that has default-profile services; no AC scopes the up invocation to the new profile's services explicitly and no AC verifies the default services do NOT get auto-up'd by --profile X
-      - Ticket DAG defers operator validation to a downstream integration gate that is itself skip-prone (Docker not running, DB unreachable, Ollama unavailable) — when the gate skips, the operator command is never end-to-end-validated
+      - Ticket DAG defers operator validation to a downstream integration gate that is itself skip-prone (Docker not running, DB unreachable, local model server unavailable) — when the gate skips, the operator command is never end-to-end-validated
 
   - id: AP-27
     name: Brownfield Surface Lacks Runtime Contracts

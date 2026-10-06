@@ -104,8 +104,8 @@ wording, and structure — not just length.
 #### Runtime-agnostic naming pass
 
 When the source material covers multiple runtime modes or vendor
-choices (e.g. process / Docker Compose / kind+helm; VENDOR_A / Ollama /
-cloud OpenAI), apply this pass before structure selection:
+choices (e.g. process / Docker Compose / kind+helm; local runtime /
+self-hosted server / cloud API), apply this pass before structure selection:
 
 1. **Identify the abstraction name** — the role-based noun the
    feature plays: "model runtime", "chat stack", "inference

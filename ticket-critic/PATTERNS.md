@@ -493,11 +493,11 @@ would put planning artifacts into the long-lived tree:
    test files under `tests/tickets/`, doc filenames in `docs/`
    carrying a cycle slug.
 2. **Vendor / runtime tokens in supposedly-agnostic identifiers** —
-   config filenames like `agent.local-vendor-a.yaml`, env vars like
-   `OLLAMA_BASE_URL` when the project surface is the agnostic
-   `LLM_BASE_URL`, class names like `DockerModelRunnerClient` in a
+   config filenames like `agent.local-<vendor>.yaml`, env vars like
+   `VENDOR_BASE_URL` when the project surface is the agnostic
+   `LLM_BASE_URL`, class names like `VendorXClient` in a
    module whose other branches handle multiple providers, doc-page
-   titles "Local dev with VENDOR_A" for a runtime-agnostic doc.
+   titles "Local dev with <vendor>" for a runtime-agnostic doc.
 3. **Internal labels in committed prose** — docstrings, code comments,
    doc bodies, API response fields, enum values, or error codes that
    carry `ADR-NN`, `Constitution P\d+`, `T-\d+`, `RISK-NN`, `AC-\d+`,
@@ -525,13 +525,13 @@ cycle closes.
   review-time finding codes (`F-NNN`, `RISK-NN`)
 
 **Red flags:**
-- `proof/4G-ui-cycle/` or similar gate-slug paths in playwright /
+- `proof/gate-7-cycle/` or similar gate-slug paths in playwright /
   pytest / artifact configs the ticket mandates committing
 - `tests/tickets/test_T732_*.py` — tests should live under
   `tests/<type>/`, not `tests/tickets/`
 - `scripts/verify-6g1.sh` — verify scripts named after their birthing
   ticket get committed and never deleted
-- A config filename `agent.local-vendor-a.yaml` whose spec elsewhere says
+- A config filename `agent.local-<vendor>.yaml` whose spec elsewhere says
   `LLM_RUNTIME` is configurable
 - Task instructions like *"add a docstring `\"\"\"ADR-CHAT-1: single SSE
   endpoint\"\"\"`"* — the AC name-drops the label without requiring
@@ -547,9 +547,9 @@ cycle closes.
    fixture directories under `tests/` are exempt only when the path
    *is* the test scope.
 2. For any new committed config filename, check that it does not
-   contain a runtime / vendor token (`vendor-a`, `ollama`, `bedrock`,
+   contain a runtime / vendor token (`ollama`, `bedrock`,
    `s3`, ...) unless the file is by design vendor-specific (e.g.
-   `provision_dmr.sh`, `terraform/aws/*.tf`).
+   `provision_ollama.sh`, `terraform/aws/*.tf`).
 3. For docstring templates the ticket includes verbatim, run the
    `SKILL_NOISE_TERMS` grep set; any hit must be paired with a
    prose explanation of *why*, not just the label.

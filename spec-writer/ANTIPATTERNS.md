@@ -153,7 +153,7 @@ api/dto/
 ### Source-only Verification on a Running-Container Artifact
 **Definition:** Ticket ACs verify only source files (`grep`, `helm lint`, `helm template --validate`) for an artifact whose runtime is a container or pod. Deploy-time bugs (CrashLoopBackOff, port-bind denied under non-root, NetworkPolicy zero-match) ship to the cluster because `helm lint` PASS was treated as deploy proof.
 
-**Examples (from `image-publish`):**
+**Examples:**
 - `helm lint` PASS but pod CrashLoops on `cp` over an existing base-image file
 - `helm template` renders a NetworkPolicy that matches zero pods because `namespaceSelector` keys on an unset label
 - `readOnlyRootFilesystem: true` + script writing outside emptyDir mounts

@@ -55,7 +55,7 @@ Treat every external input as hostile, every secret as sacred, every authorizati
 - Use `eval()` or `innerHTML` with user data
 - Store sessions in client-accessible storage
 - Expose stack traces to users
-- Hardcode runtime / vendor / environment names into identifiers, config filenames, or paths in code that is supposed to be agnostic — `agent.local-vendor-a.yaml` for a runtime-agnostic config, `OLLAMA_BASE_URL` for what should be `LLM_BASE_URL`, `"../proof/4G-ui-cycle"` for a proof root. These look cosmetic but rotate the threat surface: when defaults shift or fall-throughs hit, the wrong subsystem is reached and security assumptions (URL allow-lists, network policies, TLS bindings) silently move. Names must reflect the abstraction; vendor tokens belong in `runtime:` selector values or per-vendor adapter modules only.
+- Hardcode runtime / vendor / environment names into identifiers, config filenames, or paths in code that is supposed to be agnostic — `agent.local-vendorx.yaml` for a runtime-agnostic config, `VENDOR_X_BASE_URL` for what should be `LLM_BASE_URL`, `"../proof/ui-cycle"` for a proof root. These look cosmetic but rotate the threat surface: when defaults shift or fall-throughs hit, the wrong subsystem is reached and security assumptions (URL allow-lists, network policies, TLS bindings) silently move. Names must reflect the abstraction; vendor tokens belong in `runtime:` selector values or per-vendor adapter modules only.
 
 ## OWASP Top 10 Prevention
 
@@ -294,8 +294,8 @@ git diff --cached | grep -i "password\|secret\|api_key\|token"
 - No rate limiting on auth endpoints
 - Stack traces exposed to users
 - Critical-vuln deps
-- Runtime/vendor name hardcoded into a config or path that should be agnostic (a `local-vendor-a.yaml` whose only VENDOR_A-specific content is `provider.base_url`; an `OLLAMA_BASE_URL` env var in a project whose surface is supposed to be `LLM_*`) — the name asserts a coupling the architecture denies, and operational defaults drift silently when the vendor swap happens
-- Hardcoded artifact paths containing cycle / gate / ticket slugs (`PROOF_DIR = "../proof/4G-ui-cycle"`) — proof and evidence paths inside production code rot the moment the cycle closes and become attack-tooling debris
+- Runtime/vendor name hardcoded into a config or path that should be agnostic (a `local-vendorx.yaml` whose only vendor-specific content is `provider.base_url`; a `VENDOR_X_BASE_URL` env var in a project whose surface is supposed to be `LLM_*`) — the name asserts a coupling the architecture denies, and operational defaults drift silently when the vendor swap happens
+- Hardcoded artifact paths containing cycle / gate / ticket slugs (`PROOF_DIR = "../proof/ui-cycle"`) — proof and evidence paths inside production code rot the moment the cycle closes and become attack-tooling debris
 
 ## Verification
 

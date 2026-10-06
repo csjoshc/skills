@@ -2,7 +2,7 @@
 
 Source-file ACs (`helm lint`, `helm template --validate`, `grep` for a key)
 are necessary but **not sufficient** for any ticket whose artifact is loaded
-into a running container or cluster. The `image-publish` cycle shipped a
+into a running container or cluster. A past cycle shipped a
 chart that passed `helm lint` but CrashLooped on deploy (busybox `cp` over
 existing file, nginx :80 bind under non-root + drop ALL, NetworkPolicy
 `namespaceSelector` keyed on an unset label, ROFS vs script write paths).
@@ -51,8 +51,8 @@ docker run --rm --entrypoint /bin/sh <base_image> -c 'ls -la <write-path>'
 
 The agent then knows whether the base image ships a pre-existing file at
 that path. If it does, the script must use `-f` / `rm` first / a different
-target path / or accept an emptyDir mount that shadows it. The
-`image-publish` T-730 cookiecutter shipped a `cp $tls_conf /etc/nginx/conf.d/default.conf`
+target path / or accept an emptyDir mount that shadows it. A
+cookiecutter ticket shipped a `cp $tls_conf /etc/nginx/conf.d/default.conf`
 that busybox-`cp`-errored because `nginx:1.27-alpine` already ships
 `/etc/nginx/conf.d/default.conf` — caught only at deploy time.
 
@@ -77,7 +77,7 @@ kubectl run np-probe --rm -i --restart=Never -n <src-ns> \
 of: `kubectl label ns <ns> <key>=<value>` in a bootstrap script, an
 init-container, a helm pre-install hook, or an explicit operator-runbook
 step in the ticket body. Without this, the selector matches zero pods and
-cross-pod traffic silently 504s — the T-732 failure mode.
+cross-pod traffic silently 504s — a common failure mode.
 
 Recommended detection during spec generation:
 
@@ -87,23 +87,23 @@ grep -oE 'namespaceSelector:\s*$\s*matchLabels:\s*$\s*[a-zA-Z0-9_./-]+:' \
 # If any output: emit the labeling-AC automatically.
 ```
 
-## Concrete shape — pulled from a Helm UI-subchart ticket
+## Concrete shape — from a Helm UI-subchart ticket
 
-T-732's AC list had `helm lint helm/chat-stack` (AC10) and the
+An example AC list had `helm lint helm/web-stack` (AC10) and the
 `helm template` render set (AC5–AC9). Under these conventions it would also
 have carried:
 
 **Added under Convention 1:**
 
 ```
-13. helm install + Available smoke (deferred to IG-7G3a terminal gate).
+13. helm install + Available smoke (deferred to the terminal gate).
     Verify (on terminal gate ticket):
-      helm install chat-stack helm/chat-stack -n chat-stack --create-namespace \
+      helm install web-stack helm/web-stack -n web-stack --create-namespace \
         --wait --timeout=2m \
         --set data-mcp.image.tag=v0.0.0-rc1 \
         --set api.image.tag=v0.0.0-rc1 \
         --set web-ui.image.tag=v0.0.0-rc1
-      kubectl wait deployment/web-ui --for=condition=Available --timeout=60s -n chat-stack
+      kubectl wait deployment/web-ui --for=condition=Available --timeout=60s -n web-stack
 ```
 
 **Added under Convention 3 — Trigger A:**
@@ -111,27 +111,27 @@ have carried:
 ```
 14. Cross-pod reachability from api → web-ui.
     Verify:
-      kubectl run np-probe --rm -i --restart=Never -n chat-stack \
+      kubectl run np-probe --rm -i --restart=Never -n web-stack \
         --image=busybox:1.36 -- \
-        wget --timeout=3 -qO- http://web-ui.chat-stack.svc.cluster.local:80/
+        wget --timeout=3 -qO- http://web-ui.web-stack.svc.cluster.local:80/
       # Exit 0; body contains '<!doctype html>'.
 ```
 
 **Added under Convention 3 — Trigger B** (the template renders
-`namespaceSelector: matchLabels: name: chat-stack` — not the auto-applied
+`namespaceSelector: matchLabels: name: web-stack` — not the auto-applied
 `kubernetes.io/metadata.name`):
 
 ```
 15. Namespace label setup precondition.
     Verify (run before AC13):
-      kubectl label ns chat-stack name=chat-stack --overwrite
-      kubectl get ns chat-stack -o jsonpath='{.metadata.labels.name}' | grep -q '^chat-stack$'
+      kubectl label ns web-stack name=web-stack --overwrite
+      kubectl get ns web-stack -o jsonpath='{.metadata.labels.name}' | grep -q '^web-stack$'
     OR: refactor the template's namespaceSelector to use the auto-applied
-    `kubernetes.io/metadata.name: chat-stack` key (preferred — no operator
+    `kubernetes.io/metadata.name: web-stack` key (preferred — no operator
     runbook step needed).
 ```
 
-**Note on T-730** (which would also be hit by Convention 2 — its
+**Note on the cookiecutter ticket** (which would also be hit by Convention 2 — its
 `Files:` list included `react/start-nginx.sh`):
 
 ```

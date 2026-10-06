@@ -207,7 +207,7 @@ the claim. Common offenders:
 
 | Token | When it's wrong | What to write instead |
 |---|---|---|
-| "Vendor A runtime" / "VENDOR_A" | Doc claims runtime is configurable | "Local model runtime" or "OpenAI-compatible endpoint" |
+| "Vendor A runtime" | Doc claims runtime is configurable | "Local model runtime" or "OpenAI-compatible endpoint" |
 | "Ollama" | Same | Same — vendor name in a `runtime:` selector value only |
 | "<host>:<port>" | In a doc that's supposed to read at the abstraction level | "the host-side runtime URL (see `LLM_BASE_URL`)" |
 | "nginx" (in a load-balancer-agnostic doc) | When the reverse proxy is swappable | "reverse proxy" |

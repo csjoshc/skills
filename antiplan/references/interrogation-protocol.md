@@ -264,17 +264,17 @@ directory, constant, public function, error code), also apply the
 - "If this thing's directory lives under `proof/`, `evidence/`, or any
   artifact root: is the directory name describing the *test scope* or
   the *cycle that birthed the test*? Cycle-named directories (e.g.
-  `proof/4G-ui-cycle/`) rot the moment the gate is renamed."
+  `proof/ui-cycle/`) rot the moment the gate is renamed."
 
 Names that fail the coupling sub-test trigger AP-24 (Cycle-Path
 Coupling) or AP-25 (Vendor Coupling in Agnostic Identifier).
 
-Reject `agent.local-vendor-a.yaml` if the spec says the runtime is
-configurable. Reject `DockerModelRunnerClient` if the design says the
-provider is OpenAI-compatible. Reject `proof/4G-ui-cycle/` if the test
-exercises the chat-stack smoke (not the cycle). The fix is almost always
+Reject `agent.local-vendorx.yaml` if the spec says the runtime is
+configurable. Reject `VendorXClient` if the design says the
+provider is OpenAI-compatible. Reject `proof/ui-cycle/` if the test
+exercises the stack smoke (not the cycle). The fix is almost always
 a runtime-agnostic noun: `agent.local.yaml`, `OpenAICompatibleClient`,
-`proof/chat-stack-smoke/`.
+`proof/stack-smoke/`.
 
 #### Reinvention Test
 - "Does an existing library, framework feature, or known pattern already do

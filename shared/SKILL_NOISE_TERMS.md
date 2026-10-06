@@ -32,7 +32,7 @@ the long-lived tree.
 | `MTP` | "Multi-Tier Proof" — skill delivery-cycle jargon |
 | `IG-*` (e.g. `IG-7G4`) | Integration Gate ID pattern |
 | `\d+G\d+\b` (e.g. `7G4`, `4G1`, `6G1`) | Bare gate ID pattern (without `IG-` prefix) — leaks as path slugs and script names |
-| `<n>G-<slug>-cycle` (e.g. `4G-ui-cycle`, `3G-rerun-screenshots`) | Cycle-slug pattern used in `proof/`, `evidence/`, and test-artifact paths |
+| `<n>G-<slug>-cycle` (e.g. `7G-ui-cycle`, `3G-rerun-screenshots`) | Cycle-slug pattern used in `proof/`, `evidence/`, and test-artifact paths |
 | `Slice \d+` | Spec-writer decomposition index (kept in `.tickets/`, not in code/docs) |
 | `cycle:` as a prose label | Skill sprint-cycle reference |
 | `cycle-close` in commit/PR titles | Skill sprint-closure marker |
@@ -46,7 +46,6 @@ the long-lived tree.
 | `FR-NN`, `NFR-NN`, `RISK-NN` | Functional / non-functional / risk requirement codes |
 | `ADR-NN`, `DEBT-NN` | Decision record / tech-debt ticket codes |
 | `T-NNN` (e.g. `T-762`, `T-767`) | Internal ticket ID pattern |
-| `Stage: NEW\|SPEC\|PLAN\|BUILD\|REVIEW\|COMPLETE\|FAILED` | Runner stage enum |
 | `[FALLIBLE_IO]` | Spec annotation tag |
 | `ASSUMPTION:` | Spec assumption annotation |
 | `PDCA-T` | Skill methodology label |
@@ -156,4 +155,4 @@ Finding text: `"<term>" is skill-internal scaffolding vocabulary — strip from 
 
 ### Why this matters
 
-Docstrings and path literals are the **highest-impact** surfaces because they outlive the cycle that named them. An ADR label in a docstring confuses every future reader who doesn't have the ADR open; a gate slug in a path (`proof/4G-ui-cycle/`) makes the path stale the moment the gate is renamed. Code comments rot but get re-read rarely; docstrings get rendered into hover-help, autocomplete, generated docs sites, and onboarding wikis.
+Docstrings and path literals are the **highest-impact** surfaces because they outlive the cycle that named them. An ADR label in a docstring confuses every future reader who doesn't have the ADR open; a gate slug in a path (`proof/7G-ui-cycle/`) makes the path stale the moment the gate is renamed. Code comments rot but get re-read rarely; docstrings get rendered into hover-help, autocomplete, generated docs sites, and onboarding wikis.

@@ -227,8 +227,8 @@ functionality already present in existing modules.
 
 **Negative example from evaluation:** An implementing agent was given a
 brownfield-context that used conceptual paths (`packages/orchestration/`)
-instead of `ls`-verified paths (`packages/orchestration/`). The agent
-created `packages/orchestration/` importing `chat_orchestration` —
+instead of `ls`-verified paths (`packages/core/`). The agent
+created `packages/foo-core/` importing `foo_core` —
 a package that didn't exist. Every downstream ticket failed to integrate
 because imports pointed to the invented package name.
 
@@ -668,7 +668,7 @@ are the canonical mechanisms.
   containing the deny-list strings above blocks closure.
 - ticket-critic checks every gate ticket's proof artifact at
   closure time, not just at planning time.
-- Orchestrator never auto-commits a gate ticket on silence. Gate
+- The runner never auto-commits a gate ticket on silence. Gate
   closure is human-or-explicit-pass only.
 - Gate scope must allow the changes its ACs require. If installing
   Playwright is required, the gate ticket includes that work.
@@ -911,14 +911,14 @@ a real kubelet").
   manifest to a real kind/k3d/minikube cluster and waits for `Ready`
 - Failure-path AC for the security context is hypothetical ("Given
   emptyDir volumes are missing, when deployed, then CrashLoopBackOff
-  caught by IG-7G4") — the "caught at the terminal gate" clause is
+  caught by IG-N") — the "caught at the terminal gate" clause is
   the smell; the terminal gate is the *first* deploy
 - Image base + non-root UID combination is novel for the cycle
   (`nginx:1.27-alpine` + `runAsUser: 101`, `python:3.13-slim` +
   `runAsUser: 1000`) and the PRD does not name a prior cycle, prior
   image, or prior chart that has booted this exact combination green
-- Chart inherits a security baseline from a sibling chart (api,
-  data-mcp) but the new image runs a *different* entrypoint
+- Chart inherits a security baseline from a sibling chart (a sibling
+  service chart) but the new image runs a *different* entrypoint
   (nginx + start-nginx.sh vs python + uvicorn) — the baseline was
   validated against the sibling's entrypoint, not yours
 - Cycle budget assumes one `make local-up` succeeds first try; no
@@ -928,7 +928,7 @@ a real kubelet").
 - "Name the prior cluster deploy where this exact combination of
   securityContext flags ran against this exact entrypoint script on
   this exact base image. Cite the proof artifact path, the cluster,
-  the date — not 'we did this for api'."
+  the date — not 'we did this for the sibling chart'."
 - "`helm lint` and `helm template` will pass a chart that
   CrashLoopBackOff on first pod start. Which AC in this DAG runs
   `kubectl apply` (or `helm install`) against a real cluster and waits
@@ -1079,7 +1079,7 @@ are named after the *cycle, ticket, gate, or slice* that created them
 rather than the *test scope or feature* they actually exercise. The
 name rots the moment the cycle closes, the ticket is renumbered, or
 the gate is renamed; downstream readers see a path that points
-nowhere conceptual ("what's `4G-ui-cycle`?") and cannot tell whether
+nowhere conceptual ("what's `ui-cycle`?") and cannot tell whether
 the artifact is still load-bearing.
 
 AP-24 is the path-and-filename cousin of constitutional-leakage
@@ -1103,22 +1103,22 @@ the long-lived tree where it has no audience.
   in playwright/jest/cypress configs instead of taking the path from
   env
 - Diff stats that show a new top-level directory whose name encodes
-  the ticket lifecycle (e.g. `4G-ui-cycle/`, `IG-7G4/`) rather than
+  the ticket lifecycle (e.g. `ui-cycle/`, `IG-N/`) rather than
   the feature
 
 **Challenge questions:**
-- "When this cycle closes and someone reads `proof/4G-ui-cycle/`
+- "When this cycle closes and someone reads `proof/ui-cycle/`
   three quarters from now, what does the directory name tell them
   about the *test it contains*? If the answer is 'nothing — they'd
   have to open the spec to know', the name is a planning artifact
   leaking into the long-lived tree."
 - "Is this proof / fixture / artifact directory load-bearing for any
   CI step or runtime code path? If yes, name it after the *step*
-  (`proof/chat-stack-smoke/`); if no, gitignore it."
+  (`proof/stack-smoke/`); if no, gitignore it."
 - "Why does the playwright config bake the gate slug into
   `PROOF_DIR`? An env-var default with a feature-scoped fallback
   costs three lines and outlives every gate."
-- "If we rename this ticket from `4G-ui-cycle` to `chat-stack-rollout`
+- "If we rename this ticket from `ui-cycle` to `stack-rollout`
   next week, how many file paths change? Every `mv` is an AP-24
   data point."
 
@@ -1146,8 +1146,8 @@ the long-lived tree where it has no audience.
 
 **Definition:** A named entity — config filename, environment
 variable, identifier, route, error code, log field, doc title —
-contains a specific vendor / runtime / product token (`-vendor-a`,
-`-ollama`, `DockerModelRunner`, `bedrock_`, `s3_`) when the design
+contains a specific vendor / runtime / product token (`-vendora`,
+`-vendorb`, `VendorARuntime`, `bedrock_`, `s3_`) when the design
 explicitly says the choice of vendor is configurable or pluggable.
 The name asserts a coupling the architecture denies. Every future
 contributor who tries to swap the vendor either edits the name
@@ -1159,24 +1159,24 @@ doesn't have; AP-25 names its infrastructure after a vendor the
 user is supposed to be able to swap out.
 
 **Detection signals:**
-- Config files named `*-<vendor>.<ext>` (`agent.local-vendor-a.yaml`,
-  `provider-ollama.json`) when the spec says provider/runtime is
+- Config files named `*-<vendor>.<ext>` (`agent.local-vendora.yaml`,
+  `provider-vendorb.json`) when the spec says provider/runtime is
   selected by env var or CLI flag
 - Class / function / module names containing a vendor token when
-  the same code paths handle multiple vendors (`OllamaClient` in a
+  the same code paths handle multiple vendors (`VendorBClient` in a
   module that also handles vLLM, ChatGPT, and Bedrock)
-- Env vars / config keys with vendor prefixes (`OLLAMA_BASE_URL`,
-  `DMR_MODEL`) when the spec defines a runtime-agnostic surface
+- Env vars / config keys with vendor prefixes (`VENDOR_B_BASE_URL`,
+  `VENDOR_A_MODEL`) when the spec defines a runtime-agnostic surface
   (the project's own naming convention should be
   `LLM_BASE_URL` / `LLM_MODEL`)
-- Doc page titles "Local dev with Vendor A runtime" when the
+- Doc page titles "Local dev with Vendor A" when the
   doc actually describes a runtime-agnostic startup flow whose only
-  VENDOR_A-specific content is the default `base_url`
+  vendor-specific content is the default `base_url`
 - Mermaid diagram nodes labeled `Vendor A runtime` /
-  `<host>:<port>` in an architecture doc that's
+  `localhost:<vendor-port>` in an architecture doc that's
   supposed to read at the abstraction level
 - Test data tags hardpinning the vendor's source ref
-  (`EMBEDDING_PULL_TAG = "hf.co/unsloth/..."`) in a doc-test that's
+  (`EMBEDDING_PULL_TAG = "registry.example/org/model"`) in a doc-test that's
   supposed to assert the *alias* is documented
 
 **Challenge questions:**
@@ -1184,13 +1184,13 @@ user is supposed to be able to swap out.
   supposed to support next. Now read the filename / class name /
   env-var name out loud as if that alternate were the active
   choice. Does it still make sense, or does it lie?"
-- "If your design supports VENDOR_A *and* Ollama *and* a cloud OpenAI-
+- "If your design supports Vendor A *and* Vendor B *and* a cloud OpenAI-
   compatible endpoint, which one of the three does the
   *filename* / *class name* / *env-var name* describe? If it
   describes one, the name picks a winner."
 - "What is the cost of swapping vendors today? Count the files
   that would need to be renamed if `LLM_RUNTIME=vendor-a` became
-  `LLM_RUNTIME=ollama` as the default."
+  `LLM_RUNTIME=vendor-b` as the default."
 - "Show me the docstring or doc page that calls this an
   abstraction. Now show me the filename. Do they agree?"
 
@@ -1198,19 +1198,19 @@ user is supposed to be able to swap out.
 - **Name the abstraction, not today's instantiation.** If the spec
   promises agnosticism, every committed identifier reflects that.
   The vendor's name appears only in: (a) runtime-specific code
-  paths that exist *to implement that vendor* (`provision_dmr()`),
+  paths that exist *to implement that vendor* (`provision_vendor_a()`),
   (b) `LLM_RUNTIME=<vendor>` values, (c) runtime-tagged fixtures
   inside `tests/`.
 - **Project-prefixed env vars over vendor-prefixed env vars.**
-  `LLM_BASE_URL` not `OLLAMA_BASE_URL`. `LLM_MODEL` not `DMR_MODEL`.
+  `LLM_BASE_URL` not `VENDOR_B_BASE_URL`. `LLM_MODEL` not `VENDOR_A_MODEL`.
   If the same surface needs to accept both, normalize to the
   project prefix and route via a single override seam.
 - **Doc-page titles describe the role, not the runtime.** "Local
-  dev" rather than "Local dev with Vendor A runtime". The
+  dev" rather than "Local dev with Vendor A". The
   body's runtime-specific notes go in a side table or per-runtime
   subsection.
 - **Catalog files for vendor-specific data.** When a runtime needs
-  per-vendor source refs (Hugging Face tags, Ollama model names),
+  per-vendor source refs (Hugging Face tags, vendor model names),
   extract them to a `config/<thing>-catalog.{json,yaml}` keyed by
   alias × runtime. The code path that consumes the catalog stays
   vendor-agnostic; the catalog itself names vendors because that's
@@ -1256,7 +1256,7 @@ consumes it.
   default services do NOT get auto-up'd by `--profile X`
 - Ticket DAG defers operator validation to a downstream integration
   gate that is itself skip-prone (Docker not running, DB unreachable,
-  Ollama unavailable) — when the gate skips, the operator command is
+  local model server unavailable) — when the gate skips, the operator command is
   never end-to-end-validated
 
 **Challenge questions:**
@@ -1267,7 +1267,7 @@ consumes it.
   did it run an explicit invocation that sidesteps the wrapper? If
   sidestep, the wrapper is unverified."
 - "When the downstream integration gate skips because Docker / DB /
-  Ollama isn't available, what code path verifies the wrapper? If
+  the model server isn't available, what code path verifies the wrapper? If
   the answer is 'the operator', AP-26 is live."
 - "If a maintainer adds a new default-profile service to the root
   compose tomorrow, does this wrapper still work? If your AC scopes

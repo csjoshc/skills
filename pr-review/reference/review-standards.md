@@ -70,8 +70,8 @@ Bad:
 ```bash
 catalog_source() {
   case "$1,$2,$3" in
-    vendor-a,chat,gemma4-e2b-64k)        echo "hf.co/unsloth/...:Q3_K_M" ;;
-    ollama,chat,gemma4-e2b-64k)     echo "gemma4:e2b" ;;
+    runtime-a,chat,model-x)         echo "registry-a/model-x:Q3_K_M" ;;
+    runtime-b,chat,model-x)         echo "model-x:small" ;;
     # … 6 more cases
   esac
 }
@@ -100,7 +100,7 @@ roots in production code (not tests) must come from environment variables
 or constructor arguments with a stable default — not from inline cycle
 slugs, gate IDs, or ticket-named directories.
 
-The failure mode is path rot: a `proof/4G-ui-cycle/` constant works for
+The failure mode is path rot: a `proof/gate-7-cycle/` constant works for
 one cycle and becomes wrong (or confusing) the moment the gate is
 renamed or the ticket closes. Test fixtures inside `tests/` are exempt
 (the path *is* the test scope).
@@ -108,14 +108,14 @@ renamed or the ticket closes. Test fixtures inside `tests/` are exempt
 Bad:
 
 ```ts
-const PROOF_DIR = "../proof/4G-ui-cycle";
+const PROOF_DIR = "../proof/gate-7-cycle";
 mkdirSync(PROOF_DIR, { recursive: true });
 ```
 
 Good:
 
 ```ts
-const PROOF_DIR = process.env.PROOF_DIR ?? "../proof/chat-stack-smoke";
+const PROOF_DIR = process.env.PROOF_DIR ?? "../proof/stack-smoke";
 mkdirSync(PROOF_DIR, { recursive: true });
 ```
 
@@ -124,8 +124,8 @@ and the env var lets CI / orchestration override per-cycle without
 re-editing the source.
 
 Also flag: runtime-specific tokens baked into config filenames that
-should be runtime-agnostic — e.g. `agent.local-vendor-a.yaml` for a config
-whose only VENDOR_A-specific thing is the current default `base_url`. Rename
+should be runtime-agnostic — e.g. `agent.local-<vendor>.yaml` for a config
+whose only vendor-specific thing is the current default `base_url`. Rename
 to `agent.local.yaml` and let `LLM_RUNTIME` / `LLM_BASE_URL` carry the
 runtime distinction.
 

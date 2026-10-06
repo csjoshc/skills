@@ -41,7 +41,7 @@ Build subagents report what they *intended* to do — not necessarily
 what's true on disk. Without an independent reviewer, these failure
 modes compound across tickets:
 
-- ACs that depend on env (DB, Ollama, network) get marked PASS-via-skip
+- ACs that depend on env (DB, local model server, network) get marked PASS-via-skip
   without external verification of the skip path
 - Subagents patch files outside the ticket's declared `Files:` list;
   deviation noted in final report but not flagged for human review

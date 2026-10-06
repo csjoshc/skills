@@ -162,7 +162,7 @@ echo ""
 echo "--- Shared File Reference Check ---"
 shared_tiers="shared/ASSUMPTION_TIERS.md"
 shared_arch="shared/ARCHITECTURE_DECISIONS.md"
-planning_skills=("spec-writer" "ticket-critic" "cleanup" "handoff" "write-prd" "tdd" "orchestrate")
+planning_skills=("spec-writer" "ticket-critic" "cleanup" "handoff" "write-prd" "tdd")
 for skill in "${planning_skills[@]}"; do
   file="$SKILL_DIR/$skill/SKILL.md"
   if [[ -f "$file" ]]; then
@@ -240,16 +240,16 @@ done
 
 echo ""
 
-# Check stage enum consistency (skills referencing stages should point to orchestrate)
+# Check stage enum consistency (skills referencing stages should point to a shared reference)
 echo "--- Stage Enum Consistency Check ---"
 stage_skills=("ticket-critic" "spec-writer")
 for skill in "${stage_skills[@]}"; do
   file="$SKILL_DIR/$skill/SKILL.md"
   if [[ -f "$file" ]]; then
-    if grep -q "orchestrate" "$file" 2>/dev/null; then
-      echo "OK: $skill references orchestrate for stage enum"
+    if grep -q "stage enum" "$file" 2>/dev/null; then
+      echo "OK: $skill references the stage enum"
     else
-      echo "WARN: $skill may re-define stage enum instead of referencing orchestrate"
+      echo "WARN: $skill may re-define stage enum instead of referencing it"
       WARNINGS=$((WARNINGS + 1))
     fi
   fi

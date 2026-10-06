@@ -3,7 +3,7 @@ name: prune
 description: >-
   Strips inherited-but-unused packages and modules from a template-derived
   monorepo down to load-bearing code. Use when a repo was forked or scaffolded
-  from a base template (e.g. an in-house starter toolkit) and carries packages the live
+  from a base template (e.g. a starter template) and carries packages the live
   app never uses, or when reducing repo surface so an AI coding agent has less
   context to wade through. Covers load-bearing detection via static + smoke-test
   gates, strip ordering, and the non-obvious coupling checks (workspace
@@ -15,8 +15,8 @@ description: >-
 # prune
 
 Strip a template-derived monorepo down to the code its live application actually
-depends on. The target repo was scaffolded or forked from a base (an in-house starter
-toolkit, a generator, a starter monorepo) and inherited packages the use case
+depends on. The target repo was scaffolded or forked from a base (a starter
+template, a generator, a starter monorepo) and inherited packages the use case
 never exercises. Pruning removes that dead weight so CI is faster, the security
 scan surface shrinks, and an AI coding agent reads less irrelevant context.
 

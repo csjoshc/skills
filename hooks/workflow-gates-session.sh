@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart — print WORKFLOW_GATES context if present; always log fire
 # Mode: setup-only (no block)
-LOG=~/.skills/hooks/hook.log
+LOG=$HOME/.skills/hooks/hook.log
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] workflow-gates-session fired  cwd=$(pwd)" >> "$LOG"
 
 [ -f ".claude/hooks-disabled" ] && exit 0

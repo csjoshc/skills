@@ -13,8 +13,8 @@ loop will execute.
 
 | Input | Source | Required |
 |---|---|---|
-| `diff_base` | orchestrate envelope, else `git merge-base HEAD main` | yes |
-| `ticket_path` | orchestrate envelope (`.tickets/NNN-slug.md`) | yes |
+| `diff_base` | ticket runner envelope, else `git merge-base HEAD main` | yes |
+| `ticket_path` | ticket runner envelope (`.tickets/NNN-slug.md`) | yes |
 | `risk_registry` | repo root `.risk-registry.yaml` | optional |
 | `prd_path` | `.tickets/prep/prd.md` (for Risk Surface fallback) | optional |
 | `flake_log` | `.tickets/tdd/flake-log.jsonl` | optional |

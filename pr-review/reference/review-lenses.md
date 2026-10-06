@@ -302,7 +302,7 @@ without removing the cruft that caused the original drift.
   an override silently removes, reroutes, or breaks — and the PR does
   not fold the override into the base
 - Config default whose value the canonical operator path doesn't use
-  (base file says `OLLAMA_BASE_URL=http://ollama:11434`; every actual
+  (base file says `LLM_BASE_URL=http://runtime:PORT`; every actual
   run uses `<host>:<port>` via override)
 - Gitignored file in the working tree that documents how the system
   actually works — the divergence is load-bearing but unversioned
@@ -355,11 +355,11 @@ into the base so the topology is honest.
 **Finding shape:** `category: Operational Hygiene` with
 `decidable_at: design` (the design-time gate is antiplan AP-21).
 `proof:` must cite the specific override/base/comment pair as a
-quoted excerpt plus a one-line reproducer (e.g. "with `--profile chat
+quoted excerpt plus a one-line reproducer (e.g. "with `--profile web
 up` and override applied, `docker inspect --format
-'{{.NetworkSettings.Networks}}' ollama-1` shows the service running;
-`docker exec api env | grep OLLAMA_BASE_URL` shows
-`host.docker.internal`, so the network the container joins serves no
+'{{.NetworkSettings.Networks}}' db-1` shows the service running;
+`docker exec api env | grep DB_BASE_URL` shows
+`<host-gateway>`, so the network the container joins serves no
 client").
 
 ---

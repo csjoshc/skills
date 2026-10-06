@@ -548,7 +548,7 @@ Rules:
 
 ## make-prd-specific templates
 
-### PRD Output Template (conforms to docs/PRD_FORMAT.md)
+### PRD Output Template
 
 <!-- PRD-CONTRACT-VERSION: 1 -->
 
@@ -573,12 +573,10 @@ Rules:
 ## Verification
 <Recommended manual verification steps>
 
-> See [Runner PRD Contract](https://github.com/<repo>/blob/main/docs/PRD_FORMAT.md) for the authoritative spec.
-
 ---
 
-### PRD Template (Concise - Non-Contract)
-*Use this only if the user explicitly opts out of the Runner contract.*
+### PRD Template (Concise)
+*Use this when the user wants a lighter-weight PRD.*
 
 1. Title
 2. Problem

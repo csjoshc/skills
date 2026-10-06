@@ -252,7 +252,7 @@ runtime topology.
 | ./scripts/start-local-stack.sh         | Vite SPA             | 8000          | none                     | "SPA renders"                |
 | apps/psp7-gateway/docker-compose.yml   | Keycloak + Postgres  | 8080, 5432    | KC_DB_*                  | "Keycloak admin reachable"   |
 | apps/psp7-gateway/backend uvicorn      | FastAPI auth         | 8000 (CLASH!) | DEBUG, OAUTH_*           | "Login → token issuance"     |
-| pnpm --filter @acme/api dev        | Chat BFF + SSE       | 7000          | OPENAI_API_KEY, etc.     | "Chat turn streams tokens"   |
+| pnpm --filter @acme/api-svc dev        | Backend + SSE      | 7000          | OPENAI_API_KEY, etc.     | "Stream turn emits tokens"  |
 ```
 
 An entry point is any operator-runnable command that boots part of
@@ -652,7 +652,7 @@ After the DAG is constructed, annotate parallelizable ticket groups:
 - Window 2: T-5, T-6 (both depend only on IG-2)
 ```
 
-This helps the `orchestrate` skill schedule work efficiently. Tickets in the
+This helps the ticket runner schedule work efficiently. Tickets in the
 same window can run concurrently.
 
 ---

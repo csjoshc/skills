@@ -238,7 +238,7 @@ for f in ~/.skills/reviews/arch-violations/[01][0-9]-*.md; do
     || { echo "FAIL: $f"; exit 1; }
 done
 
-# Skillsmith audit must stay clean (only unrelated orchestrate FAIL).
+# Skillsmith audit must stay clean (no new FAILs).
 python3 ~/.skills/skillsmith/scripts/skill_audit.py ~/.skills
 ```
 

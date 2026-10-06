@@ -261,7 +261,7 @@ is session context — recoverable via session ID if needed.
 - Integration gate tickets use `tdd` for test-first implementation
 - Gate tickets must include artifact links (CI URL, trace URL, curl
   transcript) — checklists alone are not sufficient
-- `orchestrate` executes the overall graph
+- The ticket runner executes the overall graph
 
 ---
 
