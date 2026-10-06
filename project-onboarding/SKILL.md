@@ -164,7 +164,9 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 
 ## 1. `AGENTS.md` — canonical agent instructions
 
-This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `CLAUDE.md`, `GEMINI.md`) are thin shims that reference it.
+Record only what the code can't say (trade-offs, domain rules, external constraints, files not to touch, how to run checks); each claim cites a file or issue. Skip README content and generic advice.
+
+This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `GEMINI.md`) are thin shims that reference it.
 
 Tools that auto-read `AGENTS.md`: OpenCode, GitHub Copilot (`.github/copilot-instructions.md` can reference it), and any agent given a cold-start prompt.
 
@@ -269,7 +271,7 @@ Place immediately after the Git workflow block in every project, regardless of s
 ```markdown
 ## Code comments
 
-Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why, not what. Only real footguns earn more.
+Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why, not what. Only real footguns earn more. History behind odd code earns a comment too, with an issue or file pointer.
 ```
 
 ### Codebase-Memory-MCP block (add when project uses it)
@@ -367,7 +369,6 @@ context exclusions, and operational rules.
 ```
 
 - **Cursor**: `.cursorrules` (Note: older `.cursorrules` with full Tokenify/stack blocks should be replaced with this shim).
-- **Claude Code**: `CLAUDE.md`
 - **Gemini CLI**: `GEMINI.md`
 - **Windsurf**: `.windsurfrules`
 - **Cline**: `.clinerules`
@@ -378,6 +379,7 @@ context exclusions, and operational rules.
 |------|----------------------------|
 | **OpenCode** | Reads `AGENTS.md` natively. |
 | **GitHub Copilot** | Reads `AGENTS.md` natively. |
+| **Claude Code** | Reads `AGENTS.md` when no `CLAUDE.md` exists. If one is needed, make it `@AGENTS.md`. |
 | **Aider** | Add `read: AGENTS.md` to `.aider.conf.yml`. |
 
 ---
@@ -422,6 +424,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] Global STANDARDS.md checked (`~/.skills/STANDARDS.md`)
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
+- [ ] `AGENTS.md` stays at or under 200 lines, with no README duplicates or uncited claims.
 - [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> Tokenify -> Karpathy.
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
@@ -429,7 +432,7 @@ Before completing onboarding, audit and establish symlinks according to these re
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
-- [ ] Cross-tool shims (`CLAUDE.md`, `GEMINI.md`) exist if multi-tool support was requested or defaulted.
+- [ ] Cross-tool shims (`GEMINI.md`, `.cursorrules`, etc.) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a recursive copy of `~/.skills` for Claude Desktop (run `cp -r ~/.skills /path/to/project/.claude/skills`). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
 - [ ] `.worktrees/` (or existing `worktrees/`) is gitignored; `AGENTS.md` includes the Parallel work (git worktrees) block; [`WORKTREES.md`](WORKTREES.md) is the operator playbook.

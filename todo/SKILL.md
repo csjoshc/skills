@@ -188,6 +188,8 @@ and quieter.
   and surface any `confidence: LOW`, `unresolved > 0`, or
   `Proceeding: no` hits as soft warnings. Do not block on these — they are
   advisory alongside the hard-gate `dag-done` validator run.
+- `.plan/brownfield-context.md` has a non-empty `open_questions` list →
+  warn: unresolved research questions; confirm they are answered or ticketed.
 
 ## Prompt Templates
 
