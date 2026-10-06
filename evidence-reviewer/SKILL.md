@@ -1,6 +1,6 @@
 ---
 name: evidence-reviewer
-description: Adversarial between-ticket subagent that independently verifies a BUILD subagent's claims against on-disk evidence before the next ticket starts. Returns VERIFIED, DRIFT-DETECTED, or EVIDENCE-INSUFFICIENT.
+description: Adversarial between-ticket subagent that independently verifies a BUILD subagent's claims against on-disk evidence before the next ticket starts. Use when a BUILD subagent reports a ticket done and the next ticket is about to start. Returns VERIFIED, DRIFT-DETECTED, or EVIDENCE-INSUFFICIENT.
 ---
 
 # evidence-reviewer
