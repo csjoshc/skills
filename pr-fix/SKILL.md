@@ -151,7 +151,7 @@ A return-early mutant of `applyDiscount` did not fail the test. The
 test passes whether the code runs or not. Options:
 
 1. Strengthen the assertion (describe what changed, not that a value
-   was returned).
+   was returned). Recommended.
 2. Add a second test that fails when the function short-circuits.
 3. Acknowledge and proceed (requires explicit user "ack-stale").
 ```
