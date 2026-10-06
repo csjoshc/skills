@@ -5,7 +5,9 @@
       "id": "detect-quotes-no-rewrite",
       "type": "behavior",
       "prompt": "Audit files/sloppy-announcement.md for AI writing patterns. Don't rewrite it, I just want to see what's wrong.",
-      "files": ["files/sloppy-announcement.md"],
+      "files": [
+        "files/sloppy-announcement.md"
+      ],
       "expected_behavior": [
         "Quotes at least three offending phrases or lines verbatim from the file, such as \"Here's the thing\" or \"Experts agree\"",
         "Names the pattern for each quoted item and gives a fix in a few words",
@@ -16,16 +18,19 @@
     {
       "id": "edit-no-em-dash-no-banned",
       "type": "behavior",
-      "prompt": "Edit files/release-draft.md to remove the AI-sounding parts. Return the edited text.",
-      "files": ["files/release-draft.md"],
+      "prompt": "Edit files/release-draft.md to remove the AI-sounding parts. Reply with only the edited text, no notes or change list.",
+      "files": [
+        "files/release-draft.md"
+      ],
       "expected_behavior": [
         "Output contains no em dashes",
-        "Output contains none of the banned words leverage, robust, streamline, delve, or the phrases \"This is huge\" and \"Let that sink in\"",
+        "Output contains none of the banned words leverage, robust, streamline, delve, the adverbs \"honestly\" and \"really\", or the phrases \"This is huge\" and \"Let that sink in\"",
         "Keeps the concrete facts: the Tuesday cut, the 40-minute regression suite, and Mina Okafor",
-        "Does not rewrite the plain first paragraph beyond minimal fixes"
+        "Does not rewrite the plain first paragraph beyond minimal fixes",
+        "Ends on the QA regression-suite sentence, with no added closing line, recap, or kicker"
       ],
       "check": {
-        "cmd": "! grep -qiE '—|leverage|robust|streamline|delve|this is huge|let that sink in' output.txt",
+        "cmd": "! grep -qiE '\u2014|leverage|robust|streamline|delve|honestly|really|this is huge|let that sink in' output.txt && tail -n 1 output.txt | grep -qi 'gate'",
         "expect_exit": 0
       }
     },
@@ -33,7 +38,10 @@
       "id": "internal-ids-flag-code-not-commit",
       "type": "behavior",
       "prompt": "I'm about to commit files/cache_sync.py with the message in files/commit-message.txt. Run stop-slop over both and tell me what to change before I commit.",
-      "files": ["files/cache_sync.py", "files/commit-message.txt"],
+      "files": [
+        "files/cache_sync.py",
+        "files/commit-message.txt"
+      ],
       "expected_behavior": [
         "Flags T-17 and IG-6 in the code comment of cache_sync.py for removal and says to describe what the retry does instead",
         "Flags the internal nickname \"Bluebird\" or the AC-3 reference in the code comment",
@@ -48,14 +56,20 @@
     {
       "id": "plain-vernacular-tests-vs-live",
       "type": "behavior",
-      "prompt": "Write a short explanation of the change in files/change-notes.md for a teammate who has never seen this service. They are reviewing it tomorrow.",
-      "files": ["files/change-notes.md"],
+      "prompt": "Explain the change in files/change-notes.md to a teammate who has never seen this service and reviews it tomorrow. Put the explanation in your reply.",
+      "files": [
+        "files/change-notes.md"
+      ],
       "expected_behavior": [
         "Has distinct what, why, and evidence parts, with the why naming the rejected alternative of failing the whole export",
-        "Evidence separates what local tests proved from what is not yet proved on staging or in CI",
+        "Evidence is a table with columns for the claim, what tests proved, and what a live PR / CI run proved, with yes, no, or partial in the proof cells",
         "States plainly that no live PR or CI run exists yet and does not imply the nightly job was verified",
         "Uses the concrete failure (invoices with a null due_date silently dropped) rather than words like improved reliability"
-      ]
+      ],
+      "check": {
+        "cmd": "grep -qi 'proved by tests' output.txt && grep -qiE 'proved by live' output.txt && ! grep -q '\u2014' output.txt",
+        "expect_exit": 0
+      }
     },
     {
       "id": "trigger-yes-deslop-draft",

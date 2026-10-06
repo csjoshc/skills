@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 SKILLS_ROOT = Path(__file__).resolve().parents[2]
+SUPPORT_DIRS = ("shared", "reviews", "standards")
 TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(git:*),Bash(python3:*),Bash(ls:*),Bash(cat:*),Bash(grep:*)"
 
 
@@ -82,6 +83,14 @@ def judge(case: dict, output: str, model: str | None) -> tuple[bool, list[dict]]
     return all(r.get("pass") for r in results) and len(results) == len(criteria), results
 
 
+def install_support_dirs(skills_dir: Path) -> None:
+    """Copy the shared folders skills link to (../shared, ../reviews, ../standards) so relative links resolve."""
+    for name in SUPPORT_DIRS:
+        d = SKILLS_ROOT / name
+        if d.is_dir():
+            shutil.copytree(d, skills_dir / d.name, ignore=shutil.ignore_patterns("evals", "runs", "__pycache__", "*.pyc"), dirs_exist_ok=True)
+
+
 def run_case(skill: str, case: dict, with_skill: bool, evals_dir: Path, runs_dir: Path, model, judge_model) -> dict:
     variant = "with" if with_skill else "without"
     with tempfile.TemporaryDirectory() as tmp:
@@ -90,6 +99,7 @@ def run_case(skill: str, case: dict, with_skill: bool, evals_dir: Path, runs_dir
         if with_skill:
             dest = run_dir / ".claude" / "skills" / skill
             shutil.copytree(SKILLS_ROOT / skill, dest, ignore=shutil.ignore_patterns("evals", "__pycache__"))
+            install_support_dirs(run_dir / ".claude" / "skills")
         init_git(run_dir)
         proc = claude(case["prompt"], run_dir, model, stream=True, tools=TOOLS)
         output, invoked = parse_stream(proc.stdout)

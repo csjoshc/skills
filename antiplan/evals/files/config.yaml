@@ -1,0 +1,9 @@
+# Parcel Pal config (fictional)
+slack:
+  channel: "#dock"
+  webhook_env: SLACK_WEBHOOK_URL
+poll_minutes: 15
+carriers:
+  - name: northline
+  - name: harborpost
+  - name: quickfreight
