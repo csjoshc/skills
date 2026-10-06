@@ -1,15 +1,6 @@
 ---
 name: prune
-description: >-
-  Strips inherited-but-unused packages and modules from a template-derived
-  monorepo down to load-bearing code. Use when a repo was forked or scaffolded
-  from a base template (e.g. a starter template) and carries packages the live
-  app never uses, or when reducing repo surface so an AI coding agent has less
-  context to wade through. Covers load-bearing detection via static + smoke-test
-  gates, strip ordering, and the non-obvious coupling checks (workspace
-  manifests, lockfiles, CI matrices, tsconfig refs, string-path loaders) that a
-  naive grep-and-delete misses. Not for deprecating a feature with live
-  consumers (use deprecate) or general code-health cleanup (use cleanup).
+description: Strips inherited-but-unused packages and modules from a template-derived monorepo down to load-bearing code. Use when a repo was forked or scaffolded from a base template and carries packages the live app never uses, or to reduce repo surface for an AI agent. Covers load-bearing detection, strip ordering, and coupling checks (workspace manifests, lockfiles, CI matrices, tsconfig refs, string-path loaders). Not for general code-health cleanup (use cleanup).
 ---
 
 # prune
@@ -32,7 +23,7 @@ separate concern; do that after the prune is clean, not interleaved.
 | Repo forked from a template, carries unused inherited packages | **Yes** |
 | Reducing repo surface for an AI agent / for onboarding | **Yes** |
 | Monorepo where one app uses a fraction of the workspace | **Yes** |
-| Deprecating one feature/library that has live consumers | No → `deprecate` |
+| Deprecating one feature/library that has live consumers | No → migrate callers, then delete it directly |
 | General code smell / quality audit of code you keep | No → `cleanup` |
 | One-shot removal of a single obvious dead file | No → just edit |
 | Porting survivors to a new platform / conventions | No → separate migration |
@@ -163,7 +154,7 @@ For a **package** target:
    reader, human or agent). Remove lines that described only the stripped target;
    update lines that named it alongside survivors. Exception: *generated* docs
    (docs-gen output) regenerate — don't hand-edit them. Use the
-   [`deprecate`] Step 3b scrub commands for the full file-type sweep.
+   sweep in `references/coupling-checklist.md` (doc and diagram debris) for the file-type list.
 4. Regenerate the lockfile (`uv lock`, `pnpm install`, `cargo update -p`).
 5. Run the full gate sequence below.
 6. Commit only when gates pass green.
@@ -286,8 +277,6 @@ dependencies rather than forking it — note it, but it is out of scope here.
   for one invocation.
 - [EXAMPLE.md](EXAMPLE.md) — worked example with real numbers from a starter-derived
   repo, including the corrections that naive grep missed.
-- `deprecate` skill — for removing a single feature/library that has live
-  consumers and needs a migration path (different problem).
 
 ## Final checklist (retrieval anchor)
 

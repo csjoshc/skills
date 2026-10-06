@@ -519,7 +519,7 @@ topology: /approve | /reject | n/a  # brownfield only
 ## PRD §8c Risk Surface
 
 Every PRD must include this section. It is the PRD-fallback source consumed
-by `/tdd` Phase 0 ([SCOPING.md](../../tdd/SCOPING.md)) when a repo has no
+by `/tdd` Phase 0 ([SCOPING.md](../tdd/SCOPING.md)) when a repo has no
 `.risk-registry.yaml`. Tiers are path-based, not component-based, so they
 survive renames.
 

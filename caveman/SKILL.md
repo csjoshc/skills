@@ -1,14 +1,6 @@
 ---
 name: caveman
-description: >-
-  Token-compression skill with two modes. Inline: apply "lithic"
-  compression to long agent prose responses. File: `/caveman compress
-  <path>` shrinks AI-facing markdown at rest with `.original.md` backup.
-  Compression performed by the resident agent (no API roundtrip). Code,
-  paths, commands, identifiers preserved byte-for-byte. Use when compressing
-  review summaries, multi-agent reports >1,000 words, or permanently
-  shrinking heavy SKILL.md / reference docs. Skip for specs, ACs, tickets,
-  user-facing prose.
+description: Token-compression skill. Inline: apply "lithic" compression to long agent prose. File: `/caveman compress <path>` shrinks AI-facing markdown at rest with an `.original.md` backup, done by the resident agent (no API call). Code, paths, commands and identifiers are preserved byte-for-byte. Use when compressing review summaries, multi-agent reports >1,000 words, or shrinking heavy SKILL.md/reference docs. Skip for specs, ACs, tickets, user-facing prose.
 ---
 
 # caveman
