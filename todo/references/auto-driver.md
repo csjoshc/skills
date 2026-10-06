@@ -10,6 +10,14 @@ make checkpoint commits (under the operator's standing authorization).
 
 ## Contents
 
+- Invocation
+- State machine
+- The build loop
+- Halt conditions
+- Halt output contract
+- Things /todo run may NOT do
+- Tools the auto-driver uses
+- Relationship to other sub-commands
 
 Every other sub-command remains advise-only. The user always retains
 the right to interrupt `/todo run` mid-stride; the auto-driver halts
