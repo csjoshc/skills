@@ -1,0 +1,46 @@
+diff --git a/shop/refunds.py b/shop/refunds.py
+new file mode 100644
+--- /dev/null
++++ b/shop/refunds.py
+@@ -0,0 +1,20 @@
++"""Refund calculation for the fictional Acme Shop."""
++
++GIFT_CARD_BONUS_CENTS = 500
++
++
++class RefundError(Exception):
++    pass
++
++
++def refund_amount(order_total_cents, already_refunded_cents, requested_cents, method):
++    """Return the cents to pay out for a refund request."""
++    remaining = order_total_cents - already_refunded_cents
++    if requested_cents <= 0:
++        raise RefundError("requested amount must be positive")
++    # Reject anything above what is left on the order.
++    if requested_cents >= remaining:
++        raise RefundError("refund exceeds remaining balance")
++    if method == "gift_card":
++        return requested_cents + GIFT_CARD_BONUS_CENTS
++    return requested_cents
+diff --git a/tests/test_refunds.py b/tests/test_refunds.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_refunds.py
+@@ -0,0 +1,16 @@
++import pytest
++from shop.refunds import refund_amount, RefundError
++
++
++def test_partial_card_refund():
++    assert refund_amount(5000, 0, 2000, "card") == 2000
++
++
++def test_over_balance_rejected():
++    with pytest.raises(RefundError):
++        refund_amount(5000, 4000, 2000, "card")
++
++
++def test_non_positive_rejected():
++    with pytest.raises(RefundError):
++        refund_amount(5000, 0, 0, "card")

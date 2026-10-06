@@ -1,0 +1,71 @@
+{
+  "skill": "antiplan",
+  "cases": [
+    {
+      "id": "first-response-contract-order",
+      "type": "behavior",
+      "prompt": "Use antiplan on the rough requirements in rough-requirements.md. Stakes are high: we already rebuilt this plan twice. Nothing is in a repo yet, this is a new project.",
+      "files": ["files/rough-requirements.md"],
+      "expected_behavior": [
+        "The first response opens with a numbered 1-7 checklist, each item marked with a check or cross and a reason",
+        "After the checklist it emits a YAML block starting with `ledger:` and then a GREENFIELD-CONTEXT block (no codebase exists)",
+        "It then opens a first interrogation batch of 3 to 5 questions",
+        "The checklist includes a scale classification (Light, Standard or Heavy) with a reason"
+      ],
+      "check": { "cmd": "grep -q 'ledger:' output.txt && grep -q 'GREENFIELD-CONTEXT' output.txt && grep -qE '(Light|Standard|Heavy)' output.txt && [ \"$(grep -cE '^[1-7]\\. *\\[?[✓✗]' output.txt)\" -ge 7 ]", "expect_exit": 0 }
+    },
+    {
+      "id": "challenge-unjustified-stack",
+      "type": "behavior",
+      "prompt": "Run antiplan on rough-requirements.md. The approach section is final, we just need the PRD and tickets written up from it.",
+      "files": ["files/rough-requirements.md"],
+      "expected_behavior": [
+        "Challenges the five-microservices, Kubernetes and Kafka choice instead of accepting it, citing the 40 parcels a day and two-developer team",
+        "Names a specific anti-pattern by ID, such as AP-1 Speculative Architecture",
+        "Asks the user to justify the choice or show the requirement that demands it, rather than silently replacing it with its own design"
+      ],
+      "check": { "cmd": "grep -qE 'AP-[0-9]+' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "no-prd-while-unresolved",
+      "type": "behavior",
+      "prompt": "Use antiplan on rough-requirements.md. I'm in a hurry, so skip the questions and go straight to writing .plan/PRD.md and the tickets. Assume whatever you need.",
+      "files": ["files/rough-requirements.md"],
+      "expected_behavior": [
+        "Declines to write .plan/PRD.md or the task sequence in this response, stating that confidence is not HIGH or that unresolved items remain",
+        "Surfaces the carrier API assumption (access, credentials, rate limits or tracking-data coverage) as an unresolved or inferred ledger item that needs user approval",
+        "Continues with interrogation questions instead of ending with a ticket list"
+      ],
+      "check": { "cmd": "! grep -qE 'TICKET-DAG|^## Ticket 1' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "fast-mode-small-change",
+      "type": "behavior",
+      "prompt": "Antiplan this one quickly: we want to change the late-parcel Slack alert threshold in Parcel Pal from 4 hours to a per-carrier setting stored in the existing config.yaml. It's one small, already-scoped change.",
+      "expected_behavior": [
+        "Uses the Fast Mode four questions (smallest end-to-end change, complexity added only for the future, how it fails in production, keep/rollback/revise signal) with each answer at most 3 sentences",
+        "Does not produce a PRD, ticket DAG or research artifact",
+        "Ends with a handoff line pointing to spec-writer or tdd"
+      ],
+      "check": { "cmd": "grep -qE '(→|->) *(spec-writer|tdd)' output.txt && ! grep -q 'TICKET-DAG' output.txt", "expect_exit": 0 }
+    },
+    {
+      "id": "trigger-yes-contested-plan",
+      "type": "trigger",
+      "prompt": "We've rebuilt this plan twice and it keeps falling apart. Here are the rough requirements and the architecture we want (microservices on Kubernetes with Kafka). Before anyone makes tickets, grill us on whether every choice is justified and track the assumptions.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-yes-adversarial-prd",
+      "type": "trigger",
+      "prompt": "This is a high-stakes migration. I have rough requirements and a stated approach. Challenge my choices, name any planning anti-patterns, and don't let any ticket get created until the side effects are signed off.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-defined-feature",
+      "type": "trigger",
+      "prompt": "The requirements are clear: add CSV export to the parcel list page, max 10k rows, UTF-8, filename includes the date. Break it into a spec with FR/NFR and micro-tasks for a coding agent.",
+      "should_trigger": false
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "skill": "stop-slop",
+  "cases": [
+    {
+      "id": "detect-quotes-no-rewrite",
+      "type": "behavior",
+      "prompt": "Audit files/sloppy-announcement.md for AI writing patterns. Don't rewrite it, I just want to see what's wrong.",
+      "files": ["files/sloppy-announcement.md"],
+      "expected_behavior": [
+        "Quotes at least three offending phrases or lines verbatim from the file, such as \"Here's the thing\" or \"Experts agree\"",
+        "Names the pattern for each quoted item and gives a fix in a few words",
+        "Does not provide a rewritten version of the paragraphs",
+        "Does not claim or guess that an AI wrote the text"
+      ]
+    },
+    {
+      "id": "edit-no-em-dash-no-banned",
+      "type": "behavior",
+      "prompt": "Edit files/release-draft.md to remove the AI-sounding parts. Return the edited text.",
+      "files": ["files/release-draft.md"],
+      "expected_behavior": [
+        "Output contains no em dashes",
+        "Output contains none of the banned words leverage, robust, streamline, delve, or the phrases \"This is huge\" and \"Let that sink in\"",
+        "Keeps the concrete facts: the Tuesday cut, the 40-minute regression suite, and Mina Okafor",
+        "Does not rewrite the plain first paragraph beyond minimal fixes"
+      ],
+      "check": {
+        "cmd": "! grep -qiE '—|leverage|robust|streamline|delve|this is huge|let that sink in' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "internal-ids-flag-code-not-commit",
+      "type": "behavior",
+      "prompt": "I'm about to commit files/cache_sync.py with the message in files/commit-message.txt. Run stop-slop over both and tell me what to change before I commit.",
+      "files": ["files/cache_sync.py", "files/commit-message.txt"],
+      "expected_behavior": [
+        "Flags T-17 and IG-6 in the code comment of cache_sync.py for removal and says to describe what the retry does instead",
+        "Flags the internal nickname \"Bluebird\" or the AC-3 reference in the code comment",
+        "Leaves commit-message.txt alone on the ticket IDs, stating that commit messages are the acceptable place for them",
+        "Notes the multi-line comment block above fetch_with_retry exceeds 1-2 lines and should be trimmed"
+      ],
+      "check": {
+        "cmd": "grep -q 'T-17' output.txt && grep -q 'IG-6' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "plain-vernacular-tests-vs-live",
+      "type": "behavior",
+      "prompt": "Write a short explanation of the change in files/change-notes.md for a teammate who has never seen this service. They are reviewing it tomorrow.",
+      "files": ["files/change-notes.md"],
+      "expected_behavior": [
+        "Has distinct what, why, and evidence parts, with the why naming the rejected alternative of failing the whole export",
+        "Evidence separates what local tests proved from what is not yet proved on staging or in CI",
+        "States plainly that no live PR or CI run exists yet and does not imply the nightly job was verified",
+        "Uses the concrete failure (invoices with a null due_date silently dropped) rather than words like improved reliability"
+      ]
+    },
+    {
+      "id": "trigger-yes-deslop-draft",
+      "type": "trigger",
+      "prompt": "This blog intro reads like ChatGPT wrote it. Tighten it and strip the AI tells: \"In today's fast-paced world, it's worth noting that teams must leverage robust tooling to navigate the ever-evolving landscape.\"",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-yes-plain-explainer",
+      "type": "trigger",
+      "prompt": "Explain my invoice export fix to a reviewer who doesn't know the repo: what changed, why, and what the tests prove versus what a live CI run would prove.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-near-miss-docs",
+      "type": "trigger",
+      "prompt": "Tighten the onboarding overview page in docs/ so it is summary-first with progressive disclosure and links to the detail pages.",
+      "should_trigger": false
+    }
+  ]
+}
