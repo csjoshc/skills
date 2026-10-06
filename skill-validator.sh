@@ -121,11 +121,11 @@ echo ""
 
 # Check for Windows backslashes in paths
 echo "--- Path Format Check ---"
-backslash_count=$(grep -r '\\\\' "$SKILL_DIR" --include="SKILL.md" 2>/dev/null | wc -l || true)
+backslash_count=$(grep -rE '[A-Za-z0-9_-]+\\[A-Za-z0-9_-]+\.(md|py|sh|json|yaml)' "$SKILL_DIR" --include="SKILL.md" 2>/dev/null | wc -l || true)
 if [[ $backslash_count -gt 0 ]]; then
   echo "FAIL: Found $backslash_count Windows backslashes in paths"
   ERRORS=$((ERRORS + 1))
-  grep -r '\\\\' "$SKILL_DIR" --include="SKILL.md" 2>/dev/null | head -5
+  grep -rE '[A-Za-z0-9_-]+\\[A-Za-z0-9_-]+\.(md|py|sh|json|yaml)' "$SKILL_DIR" --include="SKILL.md" 2>/dev/null | head -5
 else
   echo "OK: No Windows backslashes found"
 fi
@@ -258,6 +258,28 @@ done
 echo ""
 
 # ── SUMMARY ────────────────────────────────────────────────────────────────
+
+# Check for hidden Unicode (zero-width, bidi controls, tag characters) that can smuggle instructions
+echo "--- Hidden Unicode Check ---"
+hidden=$(python3 - "$SKILL_DIR" <<'PY'
+import re, sys
+from pathlib import Path
+bad = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff\U000e0000-\U000e007f]")
+for p in sorted(Path(sys.argv[1]).rglob("*")):
+    if p.is_file() and p.suffix in {".md", ".yaml", ".yml", ".sh", ".py", ".json", ".mmd"} and ".git" not in p.parts:
+        if bad.search(p.read_text(encoding="utf-8", errors="ignore")):
+            print(p)
+PY
+)
+if [[ -n "$hidden" ]]; then
+  echo "FAIL: Hidden Unicode characters found in:"
+  echo "$hidden" | head -5
+  ERRORS=$((ERRORS + 1))
+else
+  echo "OK: No hidden Unicode characters found"
+fi
+
+echo ""
 
 echo "=== Summary ==="
 echo "Errors: $ERRORS"
