@@ -57,6 +57,10 @@ Full schemas in `~/.skills/shared/PRD_TEMPLATES.md` and
 **Ledger confidence gate:** Phase 3 cannot begin until
 `confidence: HIGH`, `contested: 0`, `unresolved: 0` (or all Unresolved items
 are explicitly Deferred with named validation tickets).
+A user request to skip the questions does not lift this gate. Do not write
+`.plan/PRD.md` or `.plan/task-sequence.md`. List the unresolved assumptions,
+state what is needed to close each, and stop. Offer Fast Mode only if the
+change is already scoped and small.
 
 ---
 

@@ -258,6 +258,12 @@ Display a summary to the user:
 - Tests: PASS (N passed, 0 failed)
 ```
 
+Use this exact layout. Both tables always carry `#`, `File`, `Comment`
+and the last column, even when every row touches the same file; put the
+file in the `File` cell, not in a heading. Skipped table columns are
+`# | File | Comment | Reason`. End the output at the Verification list:
+no prose after it, and put notes in the Comment, Status or Reason cells.
+
 Do NOT commit or push automatically. Let the user review the changes
 and decide when to commit.
 

@@ -17,6 +17,10 @@ AI anti-patterns).
 **Does NOT post GitHub comments.** For live PR review with inline GitHub
 comments, use the `pr-review` skill.
 
+If asked to also post comments or edit tickets, decline that part, name `pr-review`
+(or `ticket-critic` for tickets) as the skill to use, and still deliver the audit report.
+Do not offer to post them yourself.
+
 ## Contents
 
 - When to use
