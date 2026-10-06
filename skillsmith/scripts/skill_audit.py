@@ -25,6 +25,8 @@ WHEN_RE = re.compile(r"\buse when\b|\bwhen the user\b|\bwhen users\b", re.IGNORE
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 DESC_MIN_CHARS = 60
 
+HIDDEN_UNICODE_RE = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff\U000e0000-\U000e007f]")
+HIDDEN_SCAN_SUFFIXES = {".md", ".yaml", ".yml", ".sh", ".py", ".json", ".mmd"}
 
 @dataclass
 class Issue:
@@ -186,6 +188,12 @@ def audit_skill(skill_path: Path) -> list[Issue]:
                 f"SKILL.md body is {body_lines} lines; must be <= 500.",
             )
         )
+
+    # Hidden Unicode can smuggle instructions past a human reviewer
+    for f in sorted(skill_path.parent.rglob("*")):
+        if f.is_file() and f.suffix in HIDDEN_SCAN_SUFFIXES:
+            if HIDDEN_UNICODE_RE.search(f.read_text(encoding="utf-8", errors="ignore")):
+                issues.append(Issue("FAIL", f, "hidden-unicode", "Contains zero-width, bidi-control, or tag characters."))
 
     # Evals — warn only, so coverage can grow gradually
     if not (skill_path.parent / "evals" / "evals.json").exists():
