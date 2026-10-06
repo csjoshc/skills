@@ -423,6 +423,10 @@ must_not_break:
   - <behavior>
 architecture_interpretation: |
   <agent's written understanding>
+history_and_owners:          # optional; why things are this way, each with an issue/file pointer
+  - <fact> (<pointer>)
+open_questions:               # optional; surfaced by /todo until resolved
+  - <question>
 topology_preview:
   - feature: <name>
     files_to_modify: [<paths>]
