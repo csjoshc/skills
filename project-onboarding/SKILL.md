@@ -10,9 +10,9 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
-- Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy. `gh stack` workflow (link-only mode for worktree-per-branch repos), cascading rebases, bottom-up merges, and the AGENTS.md block to merge on request. Follows https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/managing-stacked-pull-requests
+- Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy (`gh stack` workflow, cascading rebases, AGENTS.md block to merge on request).
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
-- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — defines which skills fire at which phase (spec, implement, test, done, PR) and provides the SessionStart digest the agent emits on open. Load this when setting up the agent loop for a repo, not for file-level onboarding.
+- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase, plus the SessionStart digest. Load when setting up the agent loop for a repo, not for file-level onboarding.
 - Token budget strategy: [shared/TOKEN_BUDGET.md](../shared/TOKEN_BUDGET.md) — install RTK (input-side CLI proxy) during onboarding; caveman (output-side) activates automatically above 50% context usage if hooks are installed.
 - Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
@@ -46,7 +46,7 @@ Before any other onboarding steps:
    - Agents: Check STANDARDS.md before blocking on architectural questions; use pre-flight checklist for blocker detection
    ```
 
-**Why:** STANDARDS.md is the single source of truth for architectural decisions. Copying it locally ensures the project has a stable, versionable set of rules that can be extended without affecting other projects.
+**Why:** STANDARDS.md is the single source of truth for architectural decisions; a local copy is stable, versionable, and extendable per project.
 
 ---
 
@@ -64,8 +64,6 @@ Classify:
 | **Python (manifest)** | `pyproject.toml`, `Pipfile`, `poetry.lock`, `requirements.txt`, `requirements-*.txt`, `setup.py`, `setup.cfg`, `manage.py`, `tox.ini` |
 
 ### Python without a manifest (backend / platform code)
-
-Some repos ship Python **application or platform code** (e.g. platform type definitions, server modules) **without** a `pyproject.toml` or `requirements.txt` at rest in the tree.
 
 If **no** Python manifest row matches but you find **`.py` files that look like project source** (e.g. under `api/`, `backend/`, `server/`, `src/` of a named package, or `**/SomePackage/src/*.py`), treat **Python** as present:
 
@@ -110,7 +108,7 @@ If the repo does not have hooks yet:
   - If no TypeScript config exists, run `eslint` only (do not invent `tsconfig.json`).
 
 - **npm + Python present**:
-  - Prefer keeping both checks enforced. If adopting two hook frameworks would be messy, prefer a single hook runner that can call both toolchains (commonly `lefthook`), but only if adding it is low-risk for the repo. Otherwise, use the repo’s existing mechanism and add the missing checks there.
+  - Enforce both. Prefer one runner that calls both toolchains (commonly `lefthook`) if low-risk; otherwise extend the existing mechanism.
 
 ### “Run everything” documentation (required)
 
@@ -119,27 +117,19 @@ Ensure the repo has a documented way to run the same checks outside git hooks, i
 - **Python**: `make check`, `uv run pre-commit run -a`, `python -m ruff check . && python -m mypy ...`, etc.
 - **Node**: `npm run lint`, `npm run typecheck`, or a combined `npm run check`.
 
-The exact commands depend on what the repo already uses; do not guess package manager or tooling beyond “npm/Python present” detection. The goal is: **hooks enforce**, and **developers can run the same checks directly**.
+Use what the repo already has; do not guess tooling beyond npm/Python detection. **Hooks enforce**; developers can run the same checks directly.
 
 ---
 
 ## 0d. Identifier + doc-staleness audit (forks / inherited projects)
 
-Run two grep scans before declaring onboarding done: (1) **identifier
-scope scan** for ADR labels, ticket IDs, Constitution principles, and
-gate/slice/cycle slugs that leaked into committed source / docstrings
-/ config filenames / test artifact paths; (2) **doc-stale-ness scan**
-for `docs/` and README pages referencing deleted or renamed entities.
-Both become handoff debt items, not blockers. Add a `STANDARDS.md` /
-`AGENTS.md` note stating planning-system IDs belong in commit messages
-and PR threads, never in committed prose. Full grep commands +
-classification + template: [`IDENTIFIER_AND_DOC_STALENESS.md`](IDENTIFIER_AND_DOC_STALENESS.md).
+Before declaring onboarding done, run two grep scans: (1) **identifier scope scan** for ADR labels, ticket IDs and gate/slice slugs leaked into committed source; (2) **doc-staleness scan** of `docs/` and README for deleted or renamed entities. Both become handoff debt, not blockers. Add a `STANDARDS.md` / `AGENTS.md` note that planning-system IDs belong in commit messages and PR threads, never committed prose. Commands + template: [`IDENTIFIER_AND_DOC_STALENESS.md`](IDENTIFIER_AND_DOC_STALENESS.md).
 
 ---
 
 ## 0e. Parallel worktrees (required for multi-session / write-subagent safety)
 
-Concurrent agent sessions (or a parent plus **write** subagents) that share one working tree race on `HEAD`: any `git checkout` / `git switch` moves the branch for every session rooted there.
+Concurrent sessions (or a parent plus **write** subagents) sharing one working tree race on `HEAD`.
 
 **Onboarding actions (do these; do not create worktrees unless the user asks):**
 
@@ -168,8 +158,6 @@ Record only what the code can't say (trade-offs, domain rules, external constrai
 
 This is the **single source of truth** read by every tool. All other instruction files (`.cursorrules`, `GEMINI.md`) are thin shims that reference it.
 
-Tools that auto-read `AGENTS.md`: OpenCode, GitHub Copilot (`.github/copilot-instructions.md` can reference it), and any agent given a cold-start prompt.
-
 Create **`AGENTS.md`** at the project root using the appropriate stack template below.
 
 The **Git workflow block** and **Code comments block** (below) are unconditional — always merge them into every project's `AGENTS.md`, regardless of stack.
@@ -189,69 +177,7 @@ When merging into an existing `AGENTS.md`: keep user sections; append missing pa
 
 ### Stack-specific preamble (pick one)
 
-**npm only:**
-
-```markdown
-# Project Context
-
-- **Stack:** npm / Node
-- Prefer app source under `src/` or this repo's layout.
-- Commits must be blocked by pre-commit hooks running static analysis (e.g. `eslint`, `tsc` where applicable).
-- **Do not read** these paths unless they are the direct subject of the task:
-  `node_modules/`, `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `.svelte-kit/`,
-  `.parcel-cache/`, `.vite/`, `.cache/`, `.turbo/`, `storybook-static/`,
-  `coverage/`, `.nyc_output/`, lock files (`package-lock.json`, `pnpm-lock.yaml`,
-  `yarn.lock`, `bun.lock`), `*.tsbuildinfo`, `*.log`.
-- Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
-```
-
-**Python only:**
-
-```markdown
-# Project Context
-
-- **Stack:** Python
-- Prefer package/app source directories.
-- Commits must be blocked by pre-commit hooks running static analysis (e.g. `ruff`, `mypy`).
-- **Do not read** these paths unless they are the direct subject of the task:
-  `.venv/`, `venv/`, `env/`, `__pycache__/`, `*.py[cod]`, `*.so`,
-  `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `.tox/`, `.hypothesis/`,
-  `.pytype/`, `.ipynb_checkpoints/`, `*.egg-info/`, `.eggs/`, `.uv/`,
-  `htmlcov/`, `conda-meta/`, `dist/`, `build/`, lock files.
-- Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
-```
-
-**npm + Python:**
-
-```markdown
-# Project Context
-
-- **Stack:** npm / Node + Python
-- Prefer app/package source directories.
-- Commits must be blocked by pre-commit hooks running static analysis (e.g. `eslint`/`tsc`, `ruff`/`mypy` as applicable).
-- **Do not read** these paths unless they are the direct subject of the task:
-  `node_modules/`, `dist/`, `build/`, `out/`, `.next/`, `.nuxt/`, `.svelte-kit/`,
-  `.parcel-cache/`, `.vite/`, `.cache/`, `.turbo/`, `storybook-static/`,
-  `coverage/`, `.nyc_output/`, `*.tsbuildinfo`,
-  `.venv/`, `venv/`, `__pycache__/`, `*.py[cod]`, `*.so`,
-  `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `.tox/`, `.hypothesis/`,
-  `.pytype/`, `.ipynb_checkpoints/`, `*.egg-info/`, `.eggs/`, `.uv/`,
-  `htmlcov/`, `conda-meta/`, lock files, `*.log`.
-- Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
-```
-
-**Optional (monorepos, `npm + Python` only):** After the line `Prefer app/package source directories.`, add one bullet listing top-level subtrees you actually found (e.g. ``- Main subtrees: `apps/web/` (npm), `services/api/` (Python).``). Use real directory names from the repo, not placeholders.
-
-**Neither** (no npm/Python markers):
-
-```markdown
-# Project Context
-
-- Prefer source directories; avoid large or generated trees.
-- **Do not read** build output, dependency caches, lock files, or log files
-  unless they are the direct subject of the task.
-- Cursor users: see `.cursorignore` for indexing exclusions (separate from `.gitignore`).
-```
+Read [STACK_PREAMBLES.md](STACK_PREAMBLES.md) once the stack is detected. It holds the verbatim `# Project Context` templates for npm only, Python only, npm + Python (with the optional monorepo subtree bullet), and neither. Copy the one that matches.
 
 ### Git workflow block (always add — copy verbatim, stack-agnostic)
 
@@ -276,44 +202,7 @@ Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why
 
 ### Codebase-Memory-MCP block (add when project uses it)
 
-Place this block early in `AGENTS.md` (before generic coding style rules) so it shapes tool selection first:
-
-```markdown
-## Codebase-Memory-MCP
-
-- **Critical rule:** For code discovery, navigation, and impact analysis, use `codebase-memory-mcp` first. Do not start with grep/glob for code symbols.
-
-### Discovery Order (Mandatory)
-
-1. `search_graph` — find functions, classes, routes, and variables by name/pattern
-2. `trace_call_path` — identify callers/callees and impact
-3. `get_code_snippet` — read implementation for exact qualified names
-4. `query_graph` — use for multi-hop or aggregate questions
-5. `get_architecture` — use for high-level structure when needed
-
-### Fallback Rules (Only When Needed)
-
-Use grep/glob/file search only for:
-
-- string literals, error messages, and config values
-- non-code files (`Dockerfile`, YAML/TOML/JSON configs, shell scripts, docs)
-- cases where MCP returns insufficient results
-
-### Required Self-Check Before Finalizing
-
-- Confirm MCP graph tools were used for code discovery
-- If fallback search was used, explicitly state why MCP was insufficient
-- Keep evidence concise: symbol queried, tool used, and result
-
-### MCP Query Tips (Tests)
-
-- In many repos, code files (including tests) are represented primarily as `Module` nodes rather than `File` nodes.
-- For test discovery, start with:
-  - `search_graph(label="Module", name_pattern=".*test.*")`
-  - `search_graph(label="Function", name_pattern="test_.*")`
-- `search_code` is content-based grep; it is not a filename index.
-- If `label="File"` looks sparse, retry with `label="Module"` before using grep/glob fallback.
-```
+Verbatim block lives in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md); read it only when MCP is in use. Place it early in `AGENTS.md` (before generic coding style rules) so it shapes tool selection first.
 
 ### Optional verbatim blocks (Tokenify, Karpathy Guidelines, graphify, MCP Tools)
 
@@ -386,35 +275,14 @@ context exclusions, and operational rules.
 
 ## 5. Agent Synchronization & Symlinking (Multi-Tool)
 
-To ensure consistency across Cursor, Gemini CLI, Claude Code, and other agents, we use a single authoritative store (\`~/.skills\`) and map all tool-specific paths to it via symlinks.
+`~/.skills` is the single authoritative store; tool-specific paths map to it.
 
-### Claude Code CLI (global symlink)
-
-The global symlink at `~/.claude/skills → ~/.skills` gives Claude Code CLI access to all skills. No project-level action needed for CLI sessions.
-
-### Claude Desktop (project-level recursive copy)
-
-Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Ensure it has access to skills via a **recursive copy**:
-
-```bash
-rm -rf /path/to/project/.claude/skills
-cp -r ~/.skills /path/to/project/.claude/skills
-```
-
-Re-run `cp -r` (or use the `skill-sync` skill) whenever the master store is updated to keep the project copy current.
-
-### Multi-Tool Symlink Mapping
-
-Before completing onboarding, audit and establish symlinks according to these references:
-
-- **Symlinks:** See [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) for global and project-level mappings.
-
-### Symlinking Principles
-
-1. **Link, Don't Copy** (default): Symlink to the master store at \`~/.skills\`.
-   - **Exception — Claude Desktop:** Use \`cp -r ~/.skills .claude/skills\` instead of a symlink (sandbox cannot follow external symlinks). Re-copy when the master store changes. Claude Code CLI uses the global symlink and needs no project-level copy.
-2. **Ignore Local Shims:** Always add project-level skill folders (\`.skills/\`, \`.gemini/skills/\`, \`.claude/skills/\`, etc.) to \`.gitignore\`.
-3. **Automate Sync:** Use the \`skill-sync\` skill to audit and fix broken or missing links (and stale copies for Claude Desktop) across all platforms.
+- **Claude Code CLI:** the global symlink `~/.claude/skills -> ~/.skills` covers it. No project-level action.
+- **Claude Desktop:** sandboxed, cannot follow external symlinks. Use a recursive copy and re-run it (or `skill-sync`) when the master store changes:
+  `rm -rf /path/to/project/.claude/skills && cp -r ~/.skills /path/to/project/.claude/skills`
+- **Everything else:** audit and establish links per [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) before completing onboarding. Link, don't copy.
+- Add project-level skill folders (`.skills/`, `.gemini/skills/`, `.claude/skills/`, etc.) to `.gitignore`.
+- Use `skill-sync` to audit and fix broken links and stale copies.
 
 ---
 
@@ -441,15 +309,11 @@ Before completing onboarding, audit and establish symlinks according to these re
 
 ## Notes for the agent
 
-- `AGENTS.md` is the **canonical source of truth** for project conventions. All other instruction files are shims or references.
 - `STANDARDS.md` (global: `~/.skills/STANDARDS.md`) is the **architectural oracle** — agents check this before blocking on assumptions.
-- Exact patterns live only in this skill—copy blocks verbatim so onboarding stays consistent.
-- When `codebase-memory-mcp` is in use, place its block near the top of `AGENTS.md` so it is not diluted by lower-priority style guidance.
-- Do not add the MCP block to projects where MCP is not in use.
-- Future stacks (Rust, Go, Java, etc.) should be new labeled blocks in this skill, not ad hoc edits during a run.
+- Future stacks (Rust, Go, Java, etc.) become new labeled blocks in [STACK_PREAMBLES.md](STACK_PREAMBLES.md), not ad hoc edits.
+- Exact patterns live in this skill and its companions; copy blocks verbatim. The `AGENTS.md` exclusion list is a soft ignore for tools without an ignore file.
 - Never replace a user's `AGENTS.md` / `.cursorignore` / `.cursorrules` / `STANDARDS.md` wholesale; merge and dedupe.
 - When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Gemini CLI), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use the **orchestrate** skill for `.tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
-- The exclusion list in `AGENTS.md` serves as a "soft ignore" for tools without a dedicated ignore file. It tells the agent what not to read, even though the tool has no `.cursorignore` equivalent.
 - **Nested layouts:** Do not conclude "npm only" just because the workspace root lacks `package.json`; nested `package.json` still means npm. Same for Python manifests or backend `.py` trees under a subfolder.
 - **STANDARDS.md lifecycle:**
   - Created once (globally) on first onboarding

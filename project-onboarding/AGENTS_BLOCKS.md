@@ -1,5 +1,13 @@
 # AGENTS.md Verbatim Blocks
 
+## Contents
+
+- Tokenify block
+- Karpathy Guidelines block
+- graphify (if present)
+- MCP Tools (optional)
+- Codebase-Memory-MCP block (only when MCP is in use)
+
 Copy-verbatim blocks appended to `AGENTS.md` after the stack preamble. Extracted from `SKILL.md` for the 500-line budget.
 
 ### Tokenify block (append after optional MCP block; otherwise after stack preamble — copy verbatim)
@@ -101,5 +109,44 @@ Add any Model Context Protocol tools available in your workflow:
 ```
 
 If you use mcp-cli, include it so agents know to use `mcp-cli <server> <command>` for tasks involving those tools.
+
+### Codebase-Memory-MCP block (add only when MCP is in use; place right after the Code comments block)
+
+```markdown
+## Codebase-Memory-MCP
+
+- **Critical rule:** For code discovery, navigation, and impact analysis, use `codebase-memory-mcp` first. Do not start with grep/glob for code symbols.
+
+### Discovery Order (Mandatory)
+
+1. `search_graph` — find functions, classes, routes, and variables by name/pattern
+2. `trace_call_path` — identify callers/callees and impact
+3. `get_code_snippet` — read implementation for exact qualified names
+4. `query_graph` — use for multi-hop or aggregate questions
+5. `get_architecture` — use for high-level structure when needed
+
+### Fallback Rules (Only When Needed)
+
+Use grep/glob/file search only for:
+
+- string literals, error messages, and config values
+- non-code files (`Dockerfile`, YAML/TOML/JSON configs, shell scripts, docs)
+- cases where MCP returns insufficient results
+
+### Required Self-Check Before Finalizing
+
+- Confirm MCP graph tools were used for code discovery
+- If fallback search was used, explicitly state why MCP was insufficient
+- Keep evidence concise: symbol queried, tool used, and result
+
+### MCP Query Tips (Tests)
+
+- In many repos, code files (including tests) are represented primarily as `Module` nodes rather than `File` nodes.
+- For test discovery, start with:
+  - `search_graph(label="Module", name_pattern=".*test.*")`
+  - `search_graph(label="Function", name_pattern="test_.*")`
+- `search_code` is content-based grep; it is not a filename index.
+- If `label="File"` looks sparse, retry with `label="Module"` before using grep/glob fallback.
+```
 
 ---
