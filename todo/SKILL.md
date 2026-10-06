@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Routes and coordinates the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → ticket runner (your choice) + tdd). Detects pipeline state from artifacts on disk, emits copy-pasteable prompts for the next session, and generates cold-start handoff prompts before /clear or /compact. Advise-only — never blocks or rewrites the user's work. Use when starting any non-trivial feature, when unsure which planning skill applies, when resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, browser test, review) — invoke those skills directly.
+description: Routes and coordinates the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Detects pipeline state from artifacts on disk, emits copy-pasteable prompts for the next session, and generates cold-start handoff prompts before /clear or /compact. Advise-only — never blocks or rewrites the user's work. Use when starting any non-trivial feature, when unsure which planning skill applies, when resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, browser test, review) — invoke those skills directly.
 ---
 
 # /todo — Pipeline Coordinator
@@ -20,7 +20,8 @@ antiplan   → .plan/brownfield-context.md (brownfield only)
             → .plan/task-sequence.md
 spec-writer → .tickets/NNN-slug.md × N (one per stub in task-sequence.md)
 ticket-critic → .plan/critic-report.md (pass/fail per ticket)
-ticket runner → mutates .tickets/NNN-slug.md frontmatter (Stage: NEW → BUILD → COMPLETE)
+build        → mutates .tickets/NNN-slug.md frontmatter (Stage: NEW → BUILD → COMPLETE)
+             via /todo build (manual, one ticket per session) or /todo run (auto-driver)
 tdd          → runs inside each build session for red-green-refactor on ONE ticket
              → writes .tickets/tdd/toq-<ticket-id>.yaml (ranked Test Obligation Queue, Phase 0)
 ```
@@ -32,7 +33,7 @@ the pipeline work yourself.
 ## Invariants
 
 1. **Advise only.** Never run antiplan, spec-writer, ticket-critic, or
-   the ticket runner on the user's behalf. Never write or modify pipeline
+   /todo run's build waves on the user's behalf. Never write or modify pipeline
    artifacts (brownfield-context.md, PRD.md, task-sequence.md, .tickets/*.md,
    critic-report.md). Only read them.
 2. **Artifact location is `.plan/` for planning artifacts and
@@ -62,8 +63,7 @@ Dispatch based on the user's argument:
   time, per-ticket `Stage:` value, staleness warnings.
 - `/todo build` → **Emit per-ticket manual-execution prompt** for the next
   `Stage: NEW` ticket (DAG-respecting). Uses `/tdd` + `/verify-claim`
-  inline; does NOT spawn implementer subagents per ticket. For users
-  running without a ticket runner.
+  inline; does NOT spawn implementer subagents per ticket.
 - `/todo build <ticket-id>` → Same but for a specific ticket file. Skips
   the DAG-readiness check (assumes user knows what they're doing).
 - `/todo gate <slice-id>` → **Emit slice-gate review prompt** with a
@@ -140,21 +140,20 @@ and quieter.
 - **critic-failed** — critic-report.md contains the literal string `FAIL` →
   recommend fix-cycle: return to spec-writer for failing tickets
 - **ready-for-build** — critic-report.md passes; some tickets still
-  `Stage: NEW` → recommend your ticket runner OR `/todo build`
-  (manual-execution users) for the next `NEW` ticket. Bare `/todo` may
+  `Stage: NEW` → recommend `/todo build` (manual, one ticket per
+  session) or `/todo run` (auto-driver) for the next `NEW` ticket. Bare `/todo` may
   ask which mode the user prefers if it's the first build session.
 - **slice-gate-pending** — within a slice, every non-gate ticket is
   `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
   ticket with `gate: true` in frontmatter) is `Stage: NEW` → recommend
   `/todo gate <slice-id>` (subagent-validated review) before flipping
-  the gate to BUILD/COMPLETE. Users running a ticket runner may still use
-  it here; the subagent review is an optional layer on top.
+  the gate to BUILD/COMPLETE.
 - **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
   active session is running it (heuristic: invoked from a fresh /todo
   call with no in-conversation evidence of the build). Recommend
   `/todo resume` to pick up where the prior session left off.
 - **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → recommend
-  continuing the ticket runner for remaining `NEW` tickets
+  continuing with `/todo build` or `/todo run` for remaining `NEW` tickets
 - **build-unscoped** — a ticket is `Stage: BUILD` but no matching
   `.tickets/tdd/toq-<id>.yaml` exists → recommend invoking `/tdd` Phase 0
   before continuing the cycle (this catches BUILD sessions that were
@@ -308,7 +307,7 @@ intentionally absent:**
 
 **NOT acceptable as a fix:**
 - Adding a comment / note / docstring that asserts the invariant
-  without changing runtime behavior (the orchestrator reads exit
+  without changing runtime behavior (the build driver reads exit
   codes, not prose)
 - Justifying that an existing gate is "sufficient" if the Challenger
   already flagged it as skip-prone — that loops the AP-N signal back
@@ -453,22 +452,9 @@ Invoke /spec-writer in fix mode.
 Do not rewrite passing tickets. Do not renumber.
 ```
 
-### Template: runner-next (ready-for-build / partial-build)
+### Template: build-ticket-manual (ready-for-build / partial-build)
 
-```
-Run your ticket runner on the next ticket.
-
-**Next ticket:** .tickets/<NNN-slug>.md  (first Stage: NEW in order)
-**Ticket Contract:** .plan/task-sequence.md §3
-**PRD:** .plan/PRD.md
-
-Run the ticket to Stage: COMPLETE using tdd inside the BUILD stage. Do
-not start subsequent tickets in this session — one ticket per session.
-```
-
-### Template: build-ticket-manual (ready-for-build, no ticket runner)
-
-Per-ticket flow without a ticket runner. Single session per ticket using
+Per-ticket flow. Single session per ticket using
 `/tdd` for red-green-refactor and `/verify-claim` as the evidence gate
 before commit. Subagents are reserved for slice gates, not per-ticket.
 

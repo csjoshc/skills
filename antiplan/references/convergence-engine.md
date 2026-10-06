@@ -652,7 +652,7 @@ After the DAG is constructed, annotate parallelizable ticket groups:
 - Window 2: T-5, T-6 (both depend only on IG-2)
 ```
 
-This helps the ticket runner schedule work efficiently. Tickets in the
+This helps the build driver (`/todo run`) schedule work efficiently. Tickets in the
 same window can run concurrently.
 
 ---
