@@ -492,6 +492,6 @@ blocks `Stage: BUILD` transitions if any hard gate fails.
    contract. If any hard gate fails, ticket-critic emits a report; the
    offending ticket remains `Stage: NEW` until re-drafted.
 3. Tickets that pass ticket-critic transition to `Stage: BUILD` and are
-   executed by the ticket runner.
+   executed via `/todo build` or `/todo run`.
 4. Integration gates (`IG-*`) block their downstream tickets until
-   `Stage: COMPLETE` — enforced by the ticket runner, not by convention alone.
+   `Stage: COMPLETE` — enforced by the build driver, not by convention alone.
