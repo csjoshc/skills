@@ -1,5 +1,17 @@
 # Subagent Prompts
 
+## Contents
+
+- Orchestration Flow
+- Context Compression
+- Planner Subagent Prompt
+- Challenger Subagent Prompt
+- Reconciliation Round
+- Main Agent Decision
+- Additional Subagents (Heavy Projects Only)
+- WARN Reconciliation Throttle
+
+
 Loaded during Phase 3 (Convergence Synthesis). Defines the prompts for the
 Planner and Challenger subagents that construct and validate the ticket DAG.
 

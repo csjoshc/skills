@@ -107,7 +107,7 @@ set or the analyzer reports a live file as dead):** dynamic imports, reflection,
 registries. For each, add the real root to the analyzer config (knip
 `entry`/`project`, vulture whitelist, an explicit entrypoint list for grimp) so
 the reachable set is honest. This is the same coupling surface as the main
-checklist's §5/§7 — see [coupling-checklist.md](coupling-checklist.md).
+checklist's §5/§7 — see `coupling-checklist.md`.
 
 ## The delete-and-prove loop
 

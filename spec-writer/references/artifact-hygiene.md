@@ -1,5 +1,11 @@
 # Artifact naming hygiene + Docs to Update
 
+## Contents
+
+- Artifact naming hygiene
+- Docs to Update — mandatory ticket section
+
+
 Companion to `spec-writer/SKILL.md`. Loaded when authoring or
 critiquing a spec that introduces named files, paths, identifiers,
 or docstrings.

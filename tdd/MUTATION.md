@@ -10,6 +10,17 @@ description: >-
 
 # mutation-critic
 
+## Contents
+
+- When to invoke
+- When to skip
+- Mutant catalogue
+- Workflow
+- Integration points
+- Hard rules
+- Output contract
+
+
 Kills circular tests. A test that passes while the code under test is
 deliberately broken is not a test — it's a restatement of the
 implementation. This skill injects small, semantically meaningful
@@ -20,7 +31,7 @@ them.
 
 - **Auto-fire** after the `tdd` green step for any TOQ entry with
   `mutation_candidate: true` (set in `.tickets/tdd/toq-<ticket-id>.yaml` when
-  tier is T1 AND score > 60 — see [SCOPING.md](./SCOPING.md)). This is the
+  tier is T1 AND score > 60 — see `./SCOPING.md`). This is the
   default path; no opt-in required.
 - After `tdd` green step for any other entry, **optional** — invoke on demand
   when test quality is in question

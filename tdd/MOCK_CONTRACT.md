@@ -11,6 +11,18 @@ description: >-
 
 # mock-contract
 
+## Contents
+
+- When to invoke
+- Which mocks are boundary mocks
+- Required contract reference
+- SDK-style mocks required
+- Workflow
+- Integration points
+- Hard rules
+- Output contract
+
+
 Mocks that drift from the real contract cause silent production failures.
 A test can stay green for months while the real API evolves underneath.
 This skill requires every boundary mock to point at an authoritative

@@ -175,3 +175,9 @@ Add an optional line under "Constraints" or "Context":
 - [ ] Verification / acceptance criteria included.
 - [ ] Skill cluster guidance included if applicable (see "Skill Clusters" section)
 - [ ] Handoff prompt prose passes `/stop-slop` to remove AI writing patterns.
+
+## Companion files
+
+Read only when the situation matches:
+
+- [TEMPLATE.md](TEMPLATE.md): writing the handoff prompt block and its anti-patterns

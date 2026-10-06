@@ -1,5 +1,14 @@
 # Audit Mode — Diff Codebase Against DESIGN.md
 
+## Contents
+
+- Pre-flight
+- Deterministic checks (run first, no LLM)
+- Specialist lenses (per DESIGN.md section)
+- Report format
+- Hard rules
+
+
 Output: `ui-audit.md` at repo root. Per-section findings with file:line citations. Categories ✅ conforms / ⚠️ drift / ❌ violation.
 
 ## Pre-flight

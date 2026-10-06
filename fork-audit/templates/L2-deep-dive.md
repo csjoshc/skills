@@ -1,5 +1,13 @@
 # L2 — Deep Dive
 
+## Contents
+
+- Commit/PR <n> — <title> (<sha>)
+- Commit/PR <n+1> — <title> (<sha>)
+- Commit/PR <n+2> — <title> (<sha>)
+- Quick navigation
+
+
 **Repo:** `<owner/repo>` (head)
 **Base:** `<upstream owner/repo>@<sha>`
 **Head:** `<head ref>@<sha>`
@@ -117,5 +125,5 @@ Mention here if a file added in an earlier commit was only **wired** in this one
 | The medallion / pipeline / orchestration architecture | [topics/<novel-pattern>.md](./topics/<novel-pattern>.md) |
 | The distinctive feature in detail | [topics/<distinctive-feature>.md](./topics/<distinctive-feature>.md) |
 | What changed inside the shared `packages/*` | [topics/<package-diff>.md](./topics/<package-diff>.md) |
-| The architect's-eye view | [L1 — Technical Overview](./L1-technical-overview.md) |
-| The exec summary | [L0 — Executive Summary](./L0-executive-summary.md) |
+| The architect's-eye view | L1 — Technical Overview (`./L1-technical-overview.md`) |
+| The exec summary | L0 — Executive Summary (`./L0-executive-summary.md`) |

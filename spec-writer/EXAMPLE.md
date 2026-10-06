@@ -1,5 +1,11 @@
 # spec-writer Example Outputs
 
+## Contents
+
+- Example A: Additive ticket (Python service)
+- Example B: Generic ticket (product feature)
+
+
 ---
 
 ## Example A: Additive ticket (Python service)

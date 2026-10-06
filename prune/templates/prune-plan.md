@@ -1,5 +1,19 @@
 # Prune Plan — <repo name>
 
+## Contents
+
+- Context
+- 0. Baseline
+- 1. Workspace inventory
+- 2. Reference & coupling matrix
+- 3. Strip order (leaves first)
+- 4. Per-target co-changes
+- 5. Gate results per target (package-level)
+- 5b. File-level removal log
+- 6. Final parity gate
+- 7. CI ratchet
+
+
 > Fill one of these per prune invocation. Save to `.prune/prune-plan.md` in the
 > target repo. It is the auditable record of what was stripped and why.
 
@@ -31,7 +45,7 @@ Dirs present but NOT workspace members: `<...>`
 
 ## 2. Reference & coupling matrix
 
-Run [../references/coupling-checklist.md](../references/coupling-checklist.md) per
+Run `../references/coupling-checklist.md` per
 candidate. One row per candidate.
 
 | Package | App imports (app/test) | Manifest dep of kept? | tsconfig ref | CI refs | Container/helm | String-path/dynamic | Re-export | Verdict |
@@ -75,7 +89,7 @@ For each STRIP target, every file that must change in the same commit:
 Dead files/modules removed from KEEP packages, via the delete-and-prove loop,
 iterated to fixpoint. Confidence tier: High (statically-proven-unreachable) /
 Medium (no-grep-hits only) / Low (dynamic-load — needs runtime evidence).
-See [../references/static-analysis.md](../references/static-analysis.md).
+See `../references/static-analysis.md`.
 
 | Round | Target file | Confidence tier | G1.5 static result | G6 test result | Commit / revert |
 |---|---|---|---|---|---|
@@ -98,4 +112,4 @@ Fixpoint reached (analyzer reports no new orphans)? `<yes/no>`
 - [ ] Dead-code analyzer wired as a required CI check so dead code cannot regrow
       (`knip` / `vulture` + `deptry` / `cargo machete` — pick per stack), with the
       dynamic-load whitelist seeded. See
-      [../references/static-analysis.md](../references/static-analysis.md).
+      `../references/static-analysis.md`.

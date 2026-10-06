@@ -1,5 +1,14 @@
 # TDD Workflow Details
 
+## Contents
+
+- 1. Planning
+- 2. Tracer Bullet
+- 3. Incremental Loop
+- 4. Refactor
+- Applying to Bug Fixes
+
+
 ## 1. Planning
 
 Before writing any code:
@@ -24,7 +33,7 @@ Dependency order inside the cycle (skip steps the node does not need):
 
 1. Contract / types (interface)
 2. Type-guard tests → guards (when used)
-3. Interaction expectations (see [INTERFACE_DESIGN.md](./INTERFACE_DESIGN.md) — interaction spec)
+3. Interaction expectations (see `./INTERFACE_DESIGN.md` — interaction spec)
 4. Canonical mocks / factories for this unit
 5. RED behavioral tests
 6. Implementation

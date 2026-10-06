@@ -36,4 +36,4 @@ What this shows:
 - **Satellite** = one concern + link back to hub.
 - **Canonical** ports, env names, and URLs live on dedicated lookup pages; the hub does not duplicate full tables.
 
-After behavior changes, update the relevant **Summary** first; put implementation detail in **Follow-up** and run through [accuracy-and-drift.md](accuracy-and-drift.md) before merge.
+After behavior changes, update the relevant **Summary** first; put implementation detail in **Follow-up** and run through `accuracy-and-drift.md` before merge.

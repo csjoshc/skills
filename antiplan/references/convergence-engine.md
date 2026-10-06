@@ -1,5 +1,23 @@
 # Convergence Engine
 
+## Contents
+
+- Core Principle: Negative Feedback Loop
+- Ordering Rules
+- Integration Gate Ticket Template
+- Tracer Bullets
+- Ticket Execution Modes
+- DAG Construction Process
+- Convergence Verification
+- DAG Readiness Gate
+- Requirements Coverage Gate
+- Failure Origin Tagging
+- Parallel Execution Markers
+- YAML Convergence Ledger Schema
+- Phase-Gate Audit Line (every transition)
+- Phase 3 Guardrails (Subagent Orchestration)
+
+
 Loaded during Phase 3 (Convergence Synthesis). Defines how the resolved
 decisions from Phase 1-2 are transformed into a ticket dependency graph that
 surfaces integration failures as early as possible.

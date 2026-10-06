@@ -68,8 +68,8 @@ Same architecture vocabulary, different <data / tool / deployment> topology.
 
 | To understand… | Read |
 |---|---|
-| The technical shape of the diff (architecture, components, integration points) | [L1 — Technical Overview](./L1-technical-overview.md) |
-| File-by-file walkthrough of the divergent commits | [L2 — Deep Dive](./L2-deep-dive.md) |
+| The technical shape of the diff (architecture, components, integration points) | L1 — Technical Overview (`./L1-technical-overview.md`) |
+| File-by-file walkthrough of the divergent commits | L2 — Deep Dive (`./L2-deep-dive.md`) |
 | The novel architectural pattern | [topics/<novel-pattern>.md](./topics/<novel-pattern>.md) |
 | The distinctive feature added on top | [topics/<distinctive-feature>.md](./topics/<distinctive-feature>.md) |
 | What changed inside the shared platform packages | [topics/<package-diff>.md](./topics/<package-diff>.md) |

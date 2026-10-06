@@ -1,6 +1,6 @@
 # Vibe Quick-Pick — Aesthetic Matrix (Slim)
 
-Single-glance reference. For the full matrix with hybrids and density rules, see [/make-design-md](../../make-design-md/references/decision-matrix.md).
+Single-glance reference. For the full matrix with hybrids and density rules, see /make-design-md (`../../make-design-md/references/decision-matrix.md`).
 
 ## Matrix
 

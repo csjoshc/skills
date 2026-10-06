@@ -17,26 +17,26 @@ Antiplan's output boundary is three files:
 
 | File | Purpose |
 | --- | --- |
-| [brownfield-context.md](brownfield-context.md) | Phase 0 research artifact — agent's written understanding of the existing codebase, reviewed and corrected by the user |
-| [prd.md](prd.md) | Convergence-verified PRD — §1 problem statement through §17 Implementation Readiness Checklist, including §8b Implementation Topology |
-| [ticket-dag.md](ticket-dag.md) | Phase 3 output — ordered DAG, per-ticket stubs (YAML frontmatter + 1-paragraph scope + 2-3 invariant ACs), and the Ticket Contract every fleshed ticket must satisfy |
+| `brownfield-context.md` | Phase 0 research artifact — agent's written understanding of the existing codebase, reviewed and corrected by the user |
+| `prd.md` | Convergence-verified PRD — §1 problem statement through §17 Implementation Readiness Checklist, including §8b Implementation Topology |
+| `ticket-dag.md` | Phase 3 output — ordered DAG, per-ticket stubs (YAML frontmatter + 1-paragraph scope + 2-3 invariant ACs), and the Ticket Contract every fleshed ticket must satisfy |
 
-[ticket-pack.md](ticket-pack.md) is **downstream** — it is what `spec-writer`
+`ticket-pack.md` is **downstream** — it is what `spec-writer`
 produces when it expands each stub using the Ticket Contract. It is
 included here as the quality bar `ticket-critic` validates against, and
 as a few-shot reference for `spec-writer`'s output shape.
 
 ## Contents
 
-- [brownfield-context.md](brownfield-context.md) — codebase state at
+- `brownfield-context.md` — codebase state at
   planning time, existing packages, conventions, key function signatures
   (the agent's interpretation of the architecture, written to file and
   reviewed by the user before Phase 1 began)
-- [prd.md](prd.md) — PRD §1-§17 including the §8b Implementation Topology
+- `prd.md` — PRD §1-§17 including the §8b Implementation Topology
   table that anchors every ticket to concrete file paths
-- [ticket-dag.md](ticket-dag.md) — Phase 3 DAG + ticket stubs + **Ticket
+- `ticket-dag.md` — Phase 3 DAG + ticket stubs + **Ticket
   Contract** (the formal schema that bridges antiplan → spec-writer → ticket-critic)
-- [ticket-pack.md](ticket-pack.md) — spec-writer's downstream output:
+- `ticket-pack.md` — spec-writer's downstream output:
   fleshed ticket bodies T-1 through T-7 + T-4a + IG-1/IG-2/IG-3, each
   satisfying every Ticket Contract hard gate
 

@@ -1,5 +1,15 @@
 # Brownfield Context: TaskBoard Threaded Comments
 
+## Contents
+
+- Existing Package Inventory
+- Existing Architecture (Observed)
+- Pre-Existing Behaviors That Must NOT Break
+- Naming Conventions (Observed)
+- Key Existing Function Signatures
+- What This Plan Changes (Summary)
+
+
 Phase 0 research artifact — the agent's written understanding of the codebase
 at planning time. This was written to file (not summarized verbally) and
 reviewed by the user, who corrected the agent's interpretation where needed.

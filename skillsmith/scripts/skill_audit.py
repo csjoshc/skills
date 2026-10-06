@@ -198,6 +198,14 @@ def audit_skill(skill_path: Path) -> list[Issue]:
             )
         )
 
+    # Long companion files need a contents list so partial reads still show scope
+    for ref in sorted(skill_path.parent.rglob("*.md")):
+        if ref.name == "SKILL.md" or "evals" in ref.relative_to(skill_path.parent).parts:
+            continue
+        ref_text = ref.read_text(encoding="utf-8", errors="ignore")
+        if len(ref_text.splitlines()) > 100 and not re.search(r"(?im)^#+\s*(table of )?contents", ref_text):
+            issues.append(Issue("WARN", ref, "no-contents", "Companion over 100 lines needs a `## Contents` list."))
+
     # Broken local .md references — prevents dead traversal paths
     for link in LINK_RE.findall(text):
         if not is_local_md_link(link):

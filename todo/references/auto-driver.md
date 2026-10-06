@@ -8,6 +8,9 @@ invoke skills as subagents, only `/todo run` may modify pipeline
 artifacts (and only via the skills it invokes), only `/todo run` may
 make checkpoint commits (under the operator's standing authorization).
 
+## Contents
+
+
 Every other sub-command remains advise-only. The user always retains
 the right to interrupt `/todo run` mid-stride; the auto-driver halts
 gracefully on any structured halt condition.

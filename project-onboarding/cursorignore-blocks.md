@@ -1,5 +1,12 @@
 # `.cursorignore` blocks (verbatim)
 
+## Contents
+
+- Block A — Universal (always)
+- Block B — npm / Node (if stack detected)
+- Block C — Python (if stack detected)
+
+
 Companion to SKILL.md §3. Copy the relevant blocks for the detected stack.
 
 ## Block A — Universal (always)

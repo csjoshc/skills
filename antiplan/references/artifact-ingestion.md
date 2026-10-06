@@ -1,5 +1,13 @@
 # Artifact Ingestion Protocol
 
+## Contents
+
+- Core Rule
+- Supported Artifact Types
+- Ingestion Workflow
+- Anti-Pattern Guards
+
+
 Defines how the antiplan skill handles user-provided reference material during
 planning. Nothing from an artifact is adopted by default. Every item must be
 explicitly whitelisted and interrogated before it enters the plan.

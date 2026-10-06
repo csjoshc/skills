@@ -1,5 +1,12 @@
 # DESIGN.md Format — Canonical Stitch + Skill Extensions
 
+## Contents
+
+- Front Matter (required)
+- Body sections
+- Stitch consumer-behavior rules
+
+
 Source of truth: [Google Stitch DESIGN.md specification](https://stitch.withgoogle.com/docs/design-md/specification/) and [overview](https://stitch.withgoogle.com/docs/design-md/overview/).
 
 A DESIGN.md has two layers:

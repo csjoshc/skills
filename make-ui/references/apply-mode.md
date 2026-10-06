@@ -1,5 +1,13 @@
 # Apply Mode — Conform a Codebase to DESIGN.md
 
+## Contents
+
+- Pre-flight
+- Phases
+- Conditional Steps
+- Common Mistakes
+
+
 Runs phased application of any DESIGN.md spec.
 
 ## Pre-flight

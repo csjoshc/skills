@@ -1,5 +1,14 @@
 # Upstream Sync Guide
 
+## Contents
+
+- Architectural divergence
+- File map
+- Local-only content — never overwrite
+- Local patches applied to upstream scripts
+- How to upgrade
+
+
 Upstream repo: https://github.com/JuliusBrussee/caveman
 Last synced: 2026-04-27
 
