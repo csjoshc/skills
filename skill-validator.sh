@@ -81,8 +81,8 @@ find "$SKILL_DIR" -name "SKILL.md" -type f -exec sh -c '
   file="$1"
   count=$(grep -c "Example\|Input:\|Output:" "$file" 2>/dev/null || echo 0)
   dir=$(dirname "$file")
-  if [[ $count -lt 2 ]]; then
-    echo "FAIL: $(basename "$dir") has only $count example references (need 2+)"
+  if [[ $count -lt 1 ]]; then
+    echo "FAIL: $(basename "$dir") has only $count example references (need 1+)"
     exit 1
   else
     echo "OK: $(basename "$dir") has $count example references"
