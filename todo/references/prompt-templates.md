@@ -5,6 +5,17 @@ Fill bracketed slots from detected state; each prompt is stand-alone.
 
 ## Contents
 
+- Template: antiplan-start (for /todo start <feature>)
+- Template: antiplan-resume (Phase 0 or 1 incomplete)
+- Template: antiplan-audit-resume (dag-done-no-audits)
+- Template: audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
+- Template: spec-writer-next (dag-done)
+- Template: ticket-critic-next (tickets-written-uncriticized)
+- Template: spec-writer-fix (critic-failed)
+- Template: build-ticket-manual (ready-for-build / partial-build)
+- Template: build-ticket-resume (mid-build-resume)
+- Template: slice-gate-review (slice-gate-pending)
+- Template: handoff (generic cold-start prompt for current stage)
 
 When emitting a prompt for the user to paste into the next session, use
 these templates. Fill in the bracketed slots from detected state. Each
