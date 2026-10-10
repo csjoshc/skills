@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import unittest
 
 import board_refresh as br
 from board_export import TARGETS
@@ -194,3 +195,7 @@ class TestPrecedence(AuthoredBase):
             text = out.read_text(encoding="utf-8")
             for needle in ("Buyers pay by card on one screen", "chat 2030-01-01", "PR #12", "test agent"):
                 self.assertIn(needle, text, f"{target}: {needle}")
+
+
+if __name__ == "__main__":
+    unittest.main()
