@@ -176,8 +176,10 @@ a { color: var(--accent); }
   var specced = tickets.filter(function (t) { return (t.acceptance || []).length || t.intent; });
   if (specced.length) {
     var specNode = el("div", {}, []);
-    STAGES.forEach(function (s) {
-      var group = specced.filter(function (t) { return t.stage === s; });
+    var specStages = STAGES.concat(specced.map(function (t) { return String(t.stage); })
+      .filter(function (s, i, all) { return STAGES.indexOf(s) < 0 && all.indexOf(s) === i; }).sort());
+    specStages.forEach(function (s) {
+      var group = specced.filter(function (t) { return String(t.stage) === s; });
       if (!group.length) return;
       specNode.appendChild(el("div", { "class": "label" }, [s + " (" + group.length + ")"]));
       group.forEach(function (t) {
