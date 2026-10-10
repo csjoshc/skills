@@ -50,6 +50,11 @@ class TestMarkdown(Base):
     def test_table_cells_cannot_break_columns(self) -> None:
         self.assertEqual(be.md_cell("a|b\nc"), "a\\|b c")
 
+    def test_unknown_stage_ticket_keeps_its_spec(self) -> None:
+        odd = {**T1, "id": "T-9", "stage": "SPEC_DRAFT", "intent": "Does x", "acceptance": [{"text": "AC one"}]}
+        md = be.render_md({**BOARD, "tickets": [odd]})
+        self.assertIn("**T-9 Card form** (SPEC_DRAFT): Does x\n- AC one", md)
+
 
 class TestHtml(Base):
     def test_data_survives_script_close_and_parses_back(self) -> None:
