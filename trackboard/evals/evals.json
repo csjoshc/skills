@@ -97,7 +97,7 @@
         "Leaves the ticket files unchanged"
       ],
       "check": {
-        "cmd": "f=chat-shop/.plan/board/brief.md; test -f $f && awk '/^## /{s=($0 ~ /^## (Building|Not building|Proof)/); next} s && NF && $0 !~ /\\]$/ {bad=1} END{exit bad}' $f && ! grep -qE '^[[:space:]]*[-*] \\[[ xX]\\]|AC:' $f && grep -q '^covers: sha256:' $f && grep -q 'survives a restart' chat-shop/.tickets/T-001.md",
+        "cmd": "f=chat-shop/.plan/board/brief.md; test -f $f && test $(grep -cE '^## (Building|Not building|Spec|Proof)$' $f) -eq 4 && awk '/^## /{s=($0 ~ /^## (Building|Not building|Proof)/); next} s && NF && $0 !~ /\\]$/ {bad=1} END{exit bad}' $f && ! grep -qE '^[[:space:]]*[-*] \\[[ xX]\\]|AC:' $f && grep -q '^covers: sha256:' $f && grep -q 'survives a restart' chat-shop/.tickets/T-001.md",
         "expect_exit": 0
       }
     },
