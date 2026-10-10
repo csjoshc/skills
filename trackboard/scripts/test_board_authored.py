@@ -122,6 +122,14 @@ class TestCovers(AuthoredBase):
         self.run_cli("export", "--target", "md", "--out", str(out))
         self.assertIn("Brief written 2030-01-02; 1 ticket changed since (T-002)", out.read_text())
 
+    def test_stale_without_snapshot_names_tickets_from_events(self) -> None:
+        code, out = self.cli_out("brief-hash", "--today", "2030-01-02")
+        write(self.brief_path, BRIEF.format(covers=out.strip()))
+        t2 = self.root / ".tickets" / "t-002.md"
+        t2.write_text(t2.read_text().replace("Stage: NEW", "Stage: BUILD"))
+        self.run_cli("refresh", "--today", "2030-01-04")
+        self.assertEqual((self.brief()["stale"], self.brief()["changed"]), (True, ["T-002"]))
+
     def test_strict_brief_check(self) -> None:
         self.write_brief()
         self.assertEqual(self.run_cli("refresh", "--check", "--strict-brief", "--today", "2030-01-02"), 0)
