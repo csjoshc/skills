@@ -55,6 +55,8 @@ const GROUPS: { id: string; label: string; views: string[] }[] = [
 const ticketById = new Map(BOARD.tickets.map((t) => [t.id, t]));
 const cycleName = new Map(BOARD.cycles.map((c) => [c.id, c.name || c.id]));
 const specced = BOARD.tickets.filter((t) => (t.acceptance ?? []).length > 0 || t.intent);
+const specStages: string[] = [...STAGES, ...Array.from(new Set(specced.map((t): string => t.stage)))
+  .filter((s) => !(STAGES as string[]).includes(s)).sort()];
 
 function evidenceText(items: Evidence[]): string {
   return items.map((e) => `[${e.label}](${e.url})`).join(", ");
@@ -165,7 +167,7 @@ function SpecView() {
   return (
     <Stack gap={12}>
       <H2>What defines done for each ticket</H2>
-      {STAGES.filter((s) => specced.some((t) => t.stage === s)).map((s) => (
+      {specStages.filter((s) => specced.some((t) => t.stage === s)).map((s) => (
         <Stack key={s} gap={8}>
           <H3>{`${s} (${specced.filter((t) => t.stage === s).length})`}</H3>
           {specced.filter((t) => t.stage === s).map((t) => (
