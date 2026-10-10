@@ -110,6 +110,15 @@ class TestDrift(Base):
         self.init()
         self.assertNotEqual(self.run_cli("refresh", "--check", "--today", "2030-01-03"), 0)
 
+    def test_override_for_unknown_id_is_drift_not_a_ticket(self) -> None:
+        ticket(self.root, "T-001", "BUILD")
+        write(self.board_dir / "stages.yaml", "T-01: COMPLETE\n")
+        self.init()
+        board = json.loads(self.board.read_text())
+        self.assertEqual([t["id"] for t in board["tickets"]], ["T-001"])
+        self.assertEqual(board["drift"], [{"ticket": "T-01", "kind": "orphan-override",
+                                           "values": {"stages": "COMPLETE"}}])
+
 
 class TestHistory(Base):
     def test_append_only_and_baseline(self) -> None:

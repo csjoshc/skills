@@ -80,6 +80,9 @@ def collect(root: Path) -> tuple[list[Json], list[Json], list[Json]]:
         if rows:
             per_source.append(("task-sequence", ".plan/task-sequence.md", rows))
     override = parse_stages_override(p["dir"])
+    known = {r["id"] for _, _, rows in per_source for r in rows}
+    orphans = {k: v for k, v in override.items() if known and k not in known}
+    override = {k: v for k, v in override.items() if k not in orphans}
     if override:
         rows = [dict(blank_ticket(k), stage=v) for k, v in override.items()]
         per_source.append(("stages", ".plan/board/stages.yaml", rows))
@@ -104,7 +107,8 @@ def collect(root: Path) -> tuple[list[Json], list[Json], list[Json]]:
                 t["acceptance"] = seq_acs.get(tid, [])
     sources = [{"kind": k, "path": path, "count": len(rows)} for k, path, rows in per_source]
     kind_rank = {"tickets": 0, "task-sequence": 1, "stages": 2}
-    drift: list[Json] = []
+    drift: list[Json] = [{"ticket": k, "kind": "orphan-override", "values": {"stages": v}}
+                         for k, v in sorted(orphans.items())]
     gate_ids = {t["gate"] for t in merged.values() if t["gate"]}
     for tid, t in merged.items():
         votes = dict(sorted(stage_votes.get(tid, {}).items(), key=lambda kv: kind_rank[kv[0]]))
