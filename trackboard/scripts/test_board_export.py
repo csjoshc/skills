@@ -75,5 +75,33 @@ class TestTemplates(Base):
         self.assertEqual(be.export(self.root / "missing.json", "md", self.root / "x.md"), 1)
 
 
+TSX = {"artifact": {"react"}}
+
+
+class TestReactTemplates(Base):
+    def test_board_inlined_as_literal_with_sandbox_safe_imports(self) -> None:
+        for target, allowed in TSX.items():
+            text = self.export(target)
+            data, _ = json.JSONDecoder().raw_decode(text.split("const BOARD: Board = ", 1)[1])
+            self.assertEqual(data, BOARD, target)
+            self.assertEqual(set(re.findall(r'from "([^"]+)"', text)), allowed, target)
+            self.assertIn("export default function", text, target)
+
+    def test_types_declare_every_field_refresh_writes(self) -> None:
+        import board_refresh as br
+
+        (self.root / ".tickets").mkdir()
+        (self.root / ".tickets" / "t.md").write_text("---\nid: T\nStage: NEW\n---\n", encoding="utf-8")
+        for cmd in ("init", "refresh"):
+            self.assertEqual(br.main([cmd, "--root", str(self.root), "--today", "2030-01-02"]), 0)
+        board = json.loads((self.root / ".plan" / "board" / "board.json").read_text(encoding="utf-8"))
+        for target in TSX:
+            src = (be.TEMPLATES / be.TARGETS[target]).read_text(encoding="utf-8")
+            for type_name, keys in (("Board", board), ("Ticket", board["tickets"][0])):
+                decl = src.split(f"type {type_name} = {{", 1)[1].split("\n};", 1)[0]
+                for key in keys:
+                    self.assertRegex(decl, rf"\b{key}\??:", f"{target} {type_name}.{key}")
+
+
 if __name__ == "__main__":
     unittest.main()
