@@ -171,6 +171,21 @@ class TestCycles(Base):
         self.assertEqual(burn["C2"]["started"], 1)
         self.assertEqual(burn["C2"]["completed"], 0)
 
+    def test_removed_ticket_stops_counting_open(self) -> None:
+        ticket(self.root, "T-001", "BUILD")
+        ticket(self.root, "T-002", "BUILD")
+        self.init()
+        self.run_cli("refresh", "--today", "2030-01-03")
+        (self.root / ".tickets" / "t-002.md").unlink()
+        self.run_cli("refresh", "--today", "2030-01-09")
+        board = json.loads(self.board.read_text())
+        burn = {b["cycle"]: b["open_at_end"] for b in board["burn"]}
+        self.assertEqual(burn, {"C1": 2, "C2": 1})
+        last = json.loads(lines(self.history)[-1])
+        self.assertEqual((last["ticket"], last["from"], last["to"], last["cycle"]), ("T-002", "BUILD", "REMOVED", "C2"))
+        self.assertEqual(self.run_cli("refresh", "--today", "2030-01-10"), 0)
+        self.assertEqual(len(lines(self.history)), 3)
+
     def test_cycle_for_date(self) -> None:
         self.assertEqual(br.cycle_for("2030-01-07", CYCLES), "C1")
         self.assertEqual(br.cycle_for("2030-01-08", CYCLES), "C2")

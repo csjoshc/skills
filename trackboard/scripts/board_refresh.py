@@ -36,6 +36,7 @@ __all__ = ["DEFAULT_STAGE_RULES", "PLACEHOLDER", "STAGES", "cycle_for", "main", 
            "parse_brief", "parse_ticket_file"]
 
 SCHEMA_VERSION = 1
+REMOVED = "REMOVED"  # history `to` value when a ticket leaves every source; not a board stage
 DEFAULT_VIEWS = ["overview", "spec", "proof", "now", "timeline", "dag", "gates", "burn"]
 
 Json = dict[str, Any]
@@ -134,7 +135,7 @@ def compute_burn(cycles: list[Json], events: list[Json]) -> list[Json]:
             "cycle": c["id"],
             "started": len({e["ticket"] for e in moves if e["to"] == "BUILD"}),
             "completed": len({e["ticket"] for e in moves if e["to"] == "COMPLETE"}),
-            "open_at_end": sum(1 for s in latest.values() if s and s != "COMPLETE"),
+            "open_at_end": sum(1 for s in latest.values() if s and s not in ("COMPLETE", REMOVED)),
         })
     return out
 
@@ -224,6 +225,9 @@ def plan_refresh(root: Path, today: str, evidence: list[str]) -> tuple[Json, lis
                 "to": t["stage"], "evidence": t["evidence"],
             })
     by_id = {t["id"]: t for t in tickets}
+    for tid in sorted(set(prev_stage) - set(by_id)):  # gone from every source since the last board
+        new_events.append({"ts": today, "cycle": cycle, "ticket": tid, "from": prev_stage[tid], "to": REMOVED,
+                           "evidence": []})
     seen_urls = {(e["ticket"], ev["url"]) for e in history for ev in e.get("evidence", [])}
     for spec in evidence:
         tid, _, rest = spec.partition("=")
