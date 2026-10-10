@@ -96,7 +96,7 @@ A `stage_rules` object in `config.json` replaces the default for each stage it n
 - `ts`: the run date (`--today` or the local date).
 - `cycle`: id of the cycle whose `start..end` contains `ts`, or `null`.
 - `from`: the stage in the previous `board.json`; `null` the first time a ticket appears.
-- `to`: the new stage. When `from` equals `to`, the line records evidence only (`refresh --evidence`).
+- `to`: the new stage. When `from` equals `to`, the line records evidence only (`refresh --evidence`). `REMOVED` means the ticket id left every source since the previous `board.json`; burn stops counting it as open from that line on. Files written before this value existed load unchanged.
 
 ## config.json
 
