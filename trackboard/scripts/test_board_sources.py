@@ -63,6 +63,12 @@ class TestTicketFile(Base):
         t = bs.parse_ticket_file(self.write(".tickets/x.md", "# Only a heading\n"))
         self.assertEqual((t["id"], t["stage"]), ("x", None))
 
+    def test_gate_template_body_stage_and_deps(self) -> None:
+        p = self.write(".tickets/IG-1.md", "# IG-1: Integration Gate\n\n## Stage: NEW\n\n## Dependencies\n"
+                       "- depends_on: [T-1, T-2]\n- blocks: [T-3]\n")
+        t = bs.parse_ticket_file(p)
+        self.assertEqual((t["stage"], t["deps"]), ("NEW", ["T-1", "T-2"]))
+
 
 class TestTaskSequence(Base):
     def test_first_table_with_id_column_wins(self) -> None:

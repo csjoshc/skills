@@ -49,6 +49,9 @@ BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+?):?\*\*:?\s*$")
 TAG_TAIL_RE = re.compile(r"(?:\s*\[[^\[\]]+\])+\s*$")
 KEYED_RE = re.compile(r"^([A-Z][A-Z0-9_-]*):\s+(.*)$")
 SPEC_KEY_RE = re.compile(r"^`?([A-Za-z0-9][\w.-]*)`?:\s+(.*)$")  # ticket ids: T-4a, `T-001`, 001-auth
+# Body fallbacks for templates that put these outside frontmatter (antiplan integration-gate template).
+BODY_STAGE_RE = re.compile(r"^#{1,6}\s+Stage:\s*(\S+)", re.IGNORECASE)
+BODY_DEPS_RE = re.compile(r"^\s*[-*]\s+depends[_ -]on:\s*(.+)$", re.IGNORECASE)
 BRIEF_SECTIONS = {"building": "building", "not building": "not_building", "spec": "spec", "proof": "proof"}
 
 
@@ -211,9 +214,11 @@ def parse_ticket_file(path: Path) -> Json:
     t = blank_ticket(tid)
     h1 = next((ln[2:].strip() for ln in body if ln.startswith("# ")), "")
     t["title"] = as_text(pick(fm, "title")) or h1 or tid
-    stage = as_text(pick(fm, "stage"))
+    stage = as_text(pick(fm, "stage")) or next(
+        (m.group(1) for m in map(BODY_STAGE_RE.match, body) if m), "")
     t["stage"] = normalize_stage(stage) if stage else None
-    t["deps"] = as_list(pick(fm, "deps"))
+    t["deps"] = as_list(pick(fm, "deps")) or next(
+        (split_ids(m.group(1)) for m in map(BODY_DEPS_RE.match, body) if m), [])
     t["gate"], t["is_gate"] = gate_fields(as_text(pick(fm, "gate")))
     t["owner"] = as_text(pick(fm, "owner")) or None
     t["note"] = as_text(pick(fm, "note")) or None
