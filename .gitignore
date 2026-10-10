@@ -14,3 +14,4 @@ codex-primary-runtime/
 
 # Eval run outputs
 */evals/runs/
+.trash/
