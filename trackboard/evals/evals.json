@@ -1,0 +1,123 @@
+{
+  "skill": "trackboard",
+  "cases": [
+    {
+      "id": "drift-reported-not-resolved",
+      "type": "behavior",
+      "prompt": "Refresh the progress board for the project in drift-shop/ and tell me where things stand.",
+      "files": [
+        "files/drift-shop/.tickets/T-001.md",
+        "files/drift-shop/.tickets/T-002.md",
+        "files/drift-shop/.plan/board/stages.yaml"
+      ],
+      "expected_behavior": [
+        "Reports that T-002 has conflicting stages: BUILD in .tickets/T-002.md and COMPLETE in .plan/board/stages.yaml",
+        "Leaves both source files unchanged and asks the user which one to fix",
+        "Writes drift-shop/.plan/board/board.json with a drift entry for T-002"
+      ],
+      "check": {
+        "cmd": "grep -q 'Stage: BUILD' drift-shop/.tickets/T-002.md && grep -q 'T-002: COMPLETE' drift-shop/.plan/board/stages.yaml && grep -q 'stage-mismatch' drift-shop/.plan/board/board.json",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "one-history-line-per-change",
+      "type": "behavior",
+      "prompt": "T-002 in shipped-shop/ just merged and I set it to COMPLETE. Update the board so the cycle record shows it.",
+      "files": [
+        "files/shipped-shop/.tickets/T-001.md",
+        "files/shipped-shop/.tickets/T-002.md",
+        "files/shipped-shop/.plan/board/config.json",
+        "files/shipped-shop/.plan/board/history.jsonl",
+        "files/shipped-shop/.plan/board/board.json"
+      ],
+      "expected_behavior": [
+        "Runs refresh rather than editing board.json or history.jsonl by hand",
+        "history.jsonl keeps its two original lines and gains exactly one line with ticket T-002, from REVIEW, to COMPLETE",
+        "Does not edit any file under shipped-shop/.tickets/"
+      ],
+      "check": {
+        "cmd": "test $(wc -l < shipped-shop/.plan/board/history.jsonl) -eq 3 && tail -1 shipped-shop/.plan/board/history.jsonl | grep -q '\"to\": \"COMPLETE\"'",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "terminal-html-export",
+      "type": "behavior",
+      "prompt": "I'm in a terminal agent with no canvas. Set up a board for terminal-shop/ that I can open in a browser and commit with the repo.",
+      "files": [
+        "files/terminal-shop/.tickets/T-001.md",
+        "files/terminal-shop/.tickets/T-002.md"
+      ],
+      "expected_behavior": [
+        "Runs init for terminal-shop/ and exports the html target",
+        "Writes a single HTML file with the board data inside a script tag with id board-data",
+        "Gives the path to the HTML file and the OS command to open it"
+      ],
+      "check": {
+        "cmd": "grep -rlq 'id=\"board-data\"' terminal-shop/ && test -f terminal-shop/.plan/board/history.jsonl",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "brief-reads-not-writes",
+      "type": "behavior",
+      "prompt": "Show me a brief for brief-shop/: what we're building, what done means for each ticket, and what proves each stage. Give me markdown I can paste into a PR.",
+      "files": [
+        "files/brief-shop/.plan/PRD.md",
+        "files/brief-shop/.plan/task-sequence.md",
+        "files/brief-shop/.tickets/T-001.md",
+        "files/brief-shop/.tickets/T-002.md"
+      ],
+      "expected_behavior": [
+        "Runs init or refresh, then exports the md target",
+        "The markdown shows the PRD goal sentence about clinics losing slots, T-001's two criteria with one checked, and T-002's criterion taken from task-sequence.md",
+        "Says the stage exit rules are generic defaults and points to stage_rules in config.json",
+        "Leaves PRD.md, task-sequence.md and both ticket files unchanged"
+      ],
+      "check": {
+        "cmd": "grep -q 'Opt-in only' brief-shop/.plan/PRD.md && grep -q '\\[ \\] Skips patients' brief-shop/.tickets/T-001.md && python3 -c \"import json,sys; b=json.load(open('brief-shop/.plan/board/board.json')); t={x['id']:x for x in b['tickets']}; sys.exit(0 if b['brief']['overview']['title']=='Appointment reminders' and t['T-002']['acceptance'][0]['text'].startswith('Patients can') and b['brief']['stage_rules_source']=='default' else 1)\"",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "brief-authored-from-chat",
+      "type": "behavior",
+      "prompt": "Write the trackboard brief for chat-shop/ from our planning chat in chat-shop/notes/planning-chat.md.",
+      "files": [
+        "files/chat-shop/notes/planning-chat.md",
+        "files/chat-shop/.tickets/T-001.md",
+        "files/chat-shop/.tickets/T-002.md"
+      ],
+      "expected_behavior": [
+        "Writes chat-shop/.plan/board/brief.md with Building, Not building, Spec and Proof sections and the three frontmatter keys",
+        "Ends every claim line in Building, Not building and Proof with a source tag such as [D1], [T-002] or [chat 2030-02-03]",
+        "Adds no acceptance criteria: no checkboxes, no AC: lines, and no requirement the chat did not state",
+        "Takes covers from brief-hash, runs refresh, and reports no brief_untagged warning",
+        "Leaves the ticket files unchanged"
+      ],
+      "check": {
+        "cmd": "f=chat-shop/.plan/board/brief.md; test -f $f && awk '/^## /{s=($0 ~ /^## (Building|Not building|Proof)/); next} s && NF && $0 !~ /\\]$/ {bad=1} END{exit bad}' $f && ! grep -qE '^[[:space:]]*[-*] \\[[ xX]\\]|AC:' $f && grep -q '^covers: sha256:' $f && grep -q 'survives a restart' chat-shop/.tickets/T-001.md",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "trigger-yes-sprint-progress",
+      "type": "trigger",
+      "prompt": "Can you show me how our tickets moved over the last two sprints, with the gate evidence?",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-next-task",
+      "type": "trigger",
+      "prompt": "What should I work on next in this repo?",
+      "should_trigger": false
+    },
+    {
+      "id": "trigger-no-plan-feature",
+      "type": "trigger",
+      "prompt": "Break the checkout feature into tickets with dependencies and gates.",
+      "should_trigger": false
+    }
+  ]
+}

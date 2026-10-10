@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "title": "Fixture shop",
+  "generated_at": "2030-01-03T00:00:00Z",
+  "sources": [
+    {
+      "kind": "tickets",
+      "path": ".tickets/*.md",
+      "count": 2
+    }
+  ],
+  "cycles": [
+    {
+      "id": "C1",
+      "name": "Cycle 1",
+      "start": "2030-01-01",
+      "end": "2030-01-14"
+    }
+  ],
+  "views": {
+    "order": [
+      "now",
+      "timeline",
+      "dag",
+      "gates",
+      "burn"
+    ]
+  },
+  "tickets": [
+    {
+      "id": "T-001",
+      "title": "Cart model",
+      "stage": "COMPLETE",
+      "deps": [],
+      "gate": null,
+      "is_gate": false,
+      "owner": null,
+      "note": null,
+      "evidence": []
+    },
+    {
+      "id": "T-002",
+      "title": "Cart API",
+      "stage": "REVIEW",
+      "deps": [
+        "T-001"
+      ],
+      "gate": null,
+      "is_gate": false,
+      "owner": null,
+      "note": null,
+      "evidence": []
+    }
+  ],
+  "events": [
+    {
+      "ts": "2030-01-03",
+      "cycle": "C1",
+      "ticket": "T-001",
+      "from": null,
+      "to": "COMPLETE",
+      "evidence": []
+    },
+    {
+      "ts": "2030-01-03",
+      "cycle": "C1",
+      "ticket": "T-002",
+      "from": null,
+      "to": "REVIEW",
+      "evidence": []
+    }
+  ],
+  "burn": [
+    {
+      "cycle": "C1",
+      "started": 0,
+      "completed": 1,
+      "open_at_end": 1
+    }
+  ],
+  "drift": []
+}
