@@ -13,6 +13,7 @@ Json = dict[str, Any]
 PLACEHOLDER = "__TRACKBOARD_DATA__"
 TEMPLATES = Path(__file__).resolve().parent.parent / "templates"
 TARGETS = {
+    "cursor": "cursor.canvas.tsx",
     "artifact": "artifact.tsx",
     "html": "board.html",
     "md": "board.md",
