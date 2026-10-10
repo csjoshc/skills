@@ -48,6 +48,7 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+?):?\*\*:?\s*$")
 TAG_TAIL_RE = re.compile(r"(?:\s*\[[^\[\]]+\])+\s*$")
 KEYED_RE = re.compile(r"^([A-Z][A-Z0-9_-]*):\s+(.*)$")
+SPEC_KEY_RE = re.compile(r"^`?([A-Za-z0-9][\w.-]*)`?:\s+(.*)$")  # ticket ids: T-4a, `T-001`, 001-auth
 BRIEF_SECTIONS = {"building": "building", "not building": "not_building", "spec": "spec", "proof": "proof"}
 
 
@@ -347,7 +348,8 @@ def parse_brief(path: Path) -> Json:
                 continue
             if key != "spec" and not tagged:
                 out["untagged"].append(claim["text"])
-            keyed = KEYED_RE.match(claim["text"]) if key in ("spec", "proof") else None
+            rx = {"spec": SPEC_KEY_RE, "proof": KEYED_RE}.get(key)
+            keyed = rx.match(claim["text"]) if rx else None
             if keyed:
                 out[key][keyed.group(1)] = {"text": keyed.group(2), "tags": claim["tags"]}
             elif key == "proof":

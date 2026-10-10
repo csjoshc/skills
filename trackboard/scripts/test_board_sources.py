@@ -113,6 +113,11 @@ class TestBriefSources(Base):
         self.assertEqual(b["spec"]["T-1"]["text"], "Form validates.")
         self.assertEqual(b["proof"]["BUILD"], {"text": "Tests fail first.", "tags": ["D3"]})
 
+    def test_spec_keys_accept_real_ticket_id_styles(self) -> None:
+        p = self.write("brief.md", "## Spec\n\n- T-4a: Split helper. [PRD]\n- `T-001`: Form validates.\n"
+                       "- 001-auth: Login works.\n")
+        self.assertEqual(sorted(bs.parse_brief(p)["spec"]), ["001-auth", "T-001", "T-4a"])
+
     def test_authored_sections_win_prd_fills_rest(self) -> None:
         prd = {"title": "T", "goal": [{"text": "g"}], "non_goals": [{"text": "n"}], "constraints": [], "source": "P"}
         merged = bs.merge_overview(prd, {"building": [{"text": "b"}], "not_building": []})
