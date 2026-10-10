@@ -135,7 +135,7 @@ Matching ignores case, spaces and hyphens. Any other value lands in `drift[]` as
 
 ## Sources and the fields each one supplies
 
-1. `.tickets/*.md` frontmatter. Keys, case-insensitive: `id`, `title`, `Stage` (or `Status`), `Depends-On` (or `deps`, `depends`, `dependencies`, `blocked_by`), `Gate` (an id, or `true` for a gate ticket), `owner`, `note`, `evidence`. Lists may be inline (`[T-001, T-002]`) or block (`- T-001`). Write evidence items as `label | url`.
+1. `.tickets/*.md` frontmatter. Keys, case-insensitive: `id`, `title`, `Stage` (or `Status`), `Depends-On` (or `deps`, `depends`, `dependencies`, `blocked_by`), `Gate` (an id, or `true` for a gate ticket), `owner`, `note`, `evidence`. Lists may be inline (`[T-001, T-002]`) or block (`- T-001`). Write evidence items as `label | url`. When frontmatter has no stage or deps, a body `## Stage: X` heading and a `- depends_on: [...]` bullet are read instead (the antiplan integration-gate template).
 2. `.plan/task-sequence.md`. The script reads the first markdown table whose header row has an id column. Header names it accepts: `ID`/`Ticket`/`Key`, `Title`/`Name`/`Summary`, `Depends on`/`Depends-On`/`Deps`/`Blocked by`, `Stage`/`Status`, `Gate`, `Owner`/`Assignee`. It ignores other columns, strips backticks, bold and link markup, and treats `-`, an em dash, and `none` as empty. Rows missing from `.tickets/` still appear; for rows present in both, ticket frontmatter supplies title, deps and gate.
 3. `.plan/board/stages.yaml`. A flat `ID: STAGE` list, one per line, `#` comments allowed. The script parses this subset itself so it needs no YAML library. `stages.json` (a flat `{"T-001": "BUILD"}` object) takes precedence when both exist.
 
@@ -179,7 +179,7 @@ Saved cards wait for a later cycle. [D2]
 - Sections are matched by name, case-insensitive. Missing sections fall back to extraction; other sections are ignored.
 - One claim per line. A bullet marker is optional.
 - Source tag: one or more `[text]` groups at the end of the line, for example `[T-003]`, `[D2] [T-003]`, `[PR #12]`, `[chat 2030-01-05]`, `[PRD]`. Renderers show tags as small labels. `[x]` at the start of a line is a checkbox, not a tag.
-- `## Spec` and `## Proof` lines that start with an uppercase id and a colon (`T-001:`, `BUILD:`, `GATE-1:`) attach to that ticket, stage or gate. Spec lines need no tag; they restate the ticket's intent, never its criteria.
+- `## Spec` lines that start with a ticket id and a colon (`T-001:`, `T-4a:`, `` `T-001`: ``, `001-auth:`) attach to that ticket. `## Proof` lines that start with an uppercase id and a colon (`BUILD:`, `GATE-1:`) attach to that stage or gate. Spec lines need no tag; they restate the ticket's intent, never its criteria.
 - `covers` is `sha256:` plus the hex SHA-256 of a UTF-8 JSON array, compact separators (`,` and `:`), of `[id, stage, [acceptance texts]]` per ticket, sorted by id. Intent and brief text are not covered, so editing the brief does not make it stale. `brief-hash` prints this value for the current sources.
 
 ## Drift entries
@@ -190,7 +190,12 @@ When two sources give one ticket different stages, `refresh` records:
 {"ticket": "T-001", "kind": "stage-mismatch", "values": {"tickets": "BUILD", "stages": "COMPLETE"}}
 ```
 
-It keeps the ticket's stage from the previous `board.json` (or the first source on first sight) and writes no history line for that ticket until a person fixes the disagreement in the sources. `refresh --check` exits 2 while any drift exists.
+It keeps the ticket's stage from the previous `board.json` (or the first source on first sight) and writes no history line for that ticket until a person fixes the disagreement in the sources. Other kinds:
+
+- `unknown-stage`, `values: {"stage": "<raw>"}`: a source gave a stage outside the vocabulary; the ticket keeps that raw value.
+- `orphan-override`, `values: {"stages": "<stage>"}`: `stages.yaml` names an id that no ticket file or task-sequence row has; the override is ignored.
+
+`refresh --check` exits 2 while any drift exists.
 
 ## Sample
 
