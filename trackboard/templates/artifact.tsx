@@ -194,6 +194,8 @@ function AcList({ items }: { items: Acceptance[] }) {
 function BriefViews({ b }: { b: Board }) {
   const ov = b.brief?.overview;
   const specced = b.tickets.filter((t) => (t.acceptance ?? []).length > 0 || t.intent);
+  const specStages: string[] = [...STAGES, ...Array.from(new Set(specced.map((t): string => t.stage)))
+    .filter((s) => !(STAGES as string[]).includes(s)).sort()];
   const rules = STAGES.filter((s) => b.brief?.stage_rules[s]);
   const gates = b.brief?.gates ?? [];
   const label: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: ink.muted, marginTop: 8 };
@@ -220,7 +222,7 @@ function BriefViews({ b }: { b: Board }) {
       )}
       {specced.length > 0 && (
         <Section title="What defines done for each ticket">
-          {STAGES.filter((s) => specced.some((t) => t.stage === s)).map((s) => (
+          {specStages.filter((s) => specced.some((t) => t.stage === s)).map((s) => (
             <div key={s} style={{ marginBottom: 10 }}>
               <div style={label}>{s}</div>
               {specced.filter((t) => t.stage === s).map((t) => (
