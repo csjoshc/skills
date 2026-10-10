@@ -79,8 +79,9 @@ def render_brief(board: Json) -> list[str]:
     specced = [t for t in tickets if t.get("acceptance") or t.get("intent")]
     if specced:
         text = ["## What defines done"]
-        for stage in STAGES:
-            for t in (x for x in specced if x["stage"] == stage):
+        extra = sorted({str(t["stage"]) for t in specced} - set(STAGES))
+        for stage in (*STAGES, *extra):
+            for t in (x for x in specced if str(x["stage"]) == stage):
                 intent = md_claim({"text": t["intent"], "tags": t.get("intent_tags", [])}) if t.get("intent") else ""
                 head = f"**{t['id']} {t['title']}** ({stage})" + (f": {intent}" if intent else "")
                 text.append("\n".join([head, *map(md_ac, t.get("acceptance", []))]))
