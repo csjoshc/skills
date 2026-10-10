@@ -169,6 +169,7 @@ Antiplan's output boundary:
    per-task placeholder (YAML frontmatter + 1-paragraph scope + 2–3 invariant
    ACs). Placeholders, not tickets — `spec-writer` expands them into
    `.tickets/NN-<slug>.md`. See `references/example/ticket-dag.md` §3.
+   Optional: run `/trackboard init`, then `/trackboard brief`, to start a progress board.
 5. **Requirements Coverage Report** — feature/AC cross-check, non-goals leak
 6. **Implementation Readiness Checklist** (PRD §17) — final gate before handoff
 
