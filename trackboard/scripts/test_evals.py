@@ -51,6 +51,20 @@ class TestEvals(unittest.TestCase):
                         self.assertEqual(br.main([*argv, "--root", root, "--today", "2030-01-09"]), 0, argv)
                 self.assertEqual(run_check(), check["expect_exit"], "prescribed path fails the check")
 
+    def test_chat_brief_check_needs_sections(self) -> None:
+        check = CASES["brief-authored-from-chat"]["check"]
+        good = ("---\nwritten_at: 2030-02-03\nwritten_by: a\ncovers: sha256:x\n---\n## Building\n\nRepairs logged. [D1]\n"
+                "## Not building\n\n- Customer view [chat 2030-02-03]\n## Spec\n\n- T-001: Log a repair.\n"
+                "## Proof\n\n- BUILD: Tests fail first. [D1]\n")
+        for body, want in (("---\ncovers: sha256:x\n---\n", False), (good, True)):
+            with self.subTest(want=want), tempfile.TemporaryDirectory() as tmp:
+                shutil.copytree(EVALS / "files", tmp, dirs_exist_ok=True)
+                brief = Path(tmp) / "chat-shop" / ".plan" / "board" / "brief.md"
+                brief.parent.mkdir(parents=True)
+                brief.write_text(body, encoding="utf-8")
+                code = subprocess.run(["bash", "-c", check["cmd"]], cwd=tmp, capture_output=True).returncode
+                self.assertEqual(code == check["expect_exit"], want)
+
 
 if __name__ == "__main__":
     unittest.main()
