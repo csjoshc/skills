@@ -75,7 +75,7 @@ class TestTemplates(Base):
         self.assertEqual(be.export(self.root / "missing.json", "md", self.root / "x.md"), 1)
 
 
-TSX = {"artifact": {"react"}}
+TSX = {"cursor": {"cursor/canvas"}, "artifact": {"react"}}
 
 
 class TestReactTemplates(Base):
