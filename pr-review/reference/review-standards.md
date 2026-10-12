@@ -268,7 +268,10 @@ block comments, docstrings, and JSDoc.
 
 - `docs/ADR-*.md` and other ADR / RFC files under `docs/`
 - PR descriptions and commit messages
-- Files under `.tickets/`, `.plan/`, `.handoff/`
+- Files under `.tickets/`, `.plan/`, `.handoff/`: exempt because they are
+  never committed. If one appears in a PR diff, that is itself a HIGH
+  finding (see the tracked-but-ignored pre-flight check in
+  `review-operations.md`).
 - Filenames or path-string literals that include `ADR-` or `RFC-` (e.g.
   references like `docs/ADR-divergence-slice-3.md` are stable pointers,
   not artifacts)

@@ -116,6 +116,7 @@ dismiss it.
 | **Scope-leak vocabulary**  | `git grep -nE '(ADR-[A-Z0-9-]+\|T-[0-9]{3,}\|FR-[0-9]+\|NFR-[0-9]+\|RISK-[0-9]+\|IG-[0-9]+G[0-9]*\|[0-9]+G[0-9]+\|Slice [0-9]+\|Constitution P[0-9]+\|AP-[0-9]+)' -- '*.py'` (extend to docstrings) | `git grep -nE '<same>' -- '*.ts' '*.tsx' '*.js' '*.mjs' '*.sh'` |
 | **Cycle-coupled paths**    | `git grep -nE '"[^"]*(proof\|evidence)/[^"]*[0-9]G[0-9]+' -- '*.py'` | `git grep -nE '"[^"]*(proof\|evidence)/[^"]*[0-9]G[0-9]+' -- '*.ts' '*.tsx' '*.sh'` |
 | **Runtime-coupled names**  | filename grep: `find . -name '*-vendora.*' -o -name '*-vendorb.*' -o -name '*-openai.*'` (exclude `tests/` and explicit runtime-tagged fixtures) | same |
+| **Tracked-but-ignored**    | `git ls-files -ci --exclude-standard` plus `git ls-files .plan .tickets .handoff`; every path either prints is HIGH, ignore rule or not | same |
 | **Inline lookup tables**   | `grep -cE '^\s*(case\|match)\b\|=> *["'\'']' <file> | awk '$1>3{...}'` — branches > 3 should externalize per `DA-003` | same |
 
 Emit Phase 0 output in the `REVIEW-PHASE-0` block (schema:
