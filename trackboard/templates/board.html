@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>Trackboard</title>
+<style>
+:root { --bg: #ffffff; --fg: #1d1d1f; --muted: #6b6b73; --line: #e2e2e6; --fill: #f4f4f6;
+  --accent: #2463c2; --ok: #1d7a4f; --warn: #a3650b; --bad: #b3261e; }
+@media (prefers-color-scheme: dark) { :root { --bg: #17171a; --fg: #ececf0; --muted: #9a9aa3; --line: #2e2e34;
+  --fill: #222227; --accent: #6ea2f0; --ok: #58c08d; --warn: #e0a64a; --bad: #ef7a72; } }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 16px; margin: 28px 0 10px; } * { box-sizing: border-box; }
+.muted { color: var(--muted); font-size: 12px; } a { color: var(--accent); }
+.stats { display: flex; gap: 24px; flex-wrap: wrap; margin: 16px 0; } .stat b { display: block; font-size: 20px; }
+table { border-collapse: collapse; width: 100%; } th { font-size: 12px; color: var(--muted); font-weight: 600; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px;
+  border: 1px solid var(--line); background: var(--fill); white-space: nowrap; }
+.s-BUILD { color: var(--accent); } .s-REVIEW { color: var(--warn); }
+.s-BLOCKED { color: var(--bad); } .s-COMPLETE { color: var(--ok); }
+.drift { border: 1px solid var(--bad); border-radius: 6px; padding: 10px 12px; margin: 16px 0; }
+.cycle { margin-bottom: 14px; } .bar span { display: block; }
+.bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--fill); }
+svg text { fill: var(--fg); font-size: 11px; } .nav { display: flex; gap: 6px; margin: 16px 0 4px; }
+.tab { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 999px;
+  padding: 2px 12px; font: inherit; cursor: pointer; }
+.tab[aria-pressed="true"] { background: var(--fill); border-color: var(--fg); }
+.tag { margin-left: 6px; padding: 0 6px; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 11px; color: var(--muted); white-space: nowrap; }
+.notice { margin-top: 8px; } .spec { margin: 6px 0 12px; }
+.label { font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 4px; }
+.ac { list-style: none; padding: 0; margin: 4px 0; } .ac .done { color: var(--muted); }
+.gate { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+.linkbtn { border: none; background: none; padding: 0; color: var(--accent); cursor: pointer; font: inherit;
+  font-size: 12px; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="application/json" id="board-data">__TRACKBOARD_DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var board = JSON.parse(document.getElementById("board-data").textContent);
+  var app = document.getElementById("app");
+  var STAGES = ["NEW", "BUILD", "REVIEW", "BLOCKED", "COMPLETE"];
+  var COLORS = { NEW: "var(--muted)", BUILD: "var(--accent)", REVIEW: "var(--warn)",
+    BLOCKED: "var(--bad)", COMPLETE: "var(--ok)" };
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    (kids || []).forEach(function (c) {
+      n.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    });
+    return n;
+  }
+  function pill(stage) { return el("span", { "class": "pill s-" + stage }, [stage]); }
+  function link(e) {
+    var safe = /^https?:\/\//.test(e.url) ? e.url : "#";
+    return el("a", { href: safe, target: "_blank", rel: "noopener" }, [e.label]);
+  }
+  function cell(v) {
+    if (v === null || v === undefined) return el("td", {}, []);
+    return el("td", {}, [typeof v === "string" ? v : v]);
+  }
+  function table(headers, rows) {
+    var head = el("tr", {}, headers.map(function (h) { return el("th", {}, [h]); }));
+    var body = rows.map(function (r) { return el("tr", {}, r.map(cell)); });
+    return el("table", {}, [el("thead", {}, [head]), el("tbody", {}, body)]);
+  }
+  function section(title, node) { target.appendChild(el("h2", {}, [title])); target.appendChild(node); }
+  function claim(c, tag) {
+    var node = el(tag || "span", {}, [c.text]);
+    (c.tags || []).forEach(function (t) { node.appendChild(el("span", { "class": "tag" }, [t])); });
+    return node;
+  }
+  function acList(items) {
+    var ul = el("ul", { "class": "ac" }, []);
+    items.forEach(function (a, i) {
+      var box = a.checked === undefined ? "\u2022 " : a.checked ? "[x] " : "[ ] ";
+      var li = el("li", a.checked ? { "class": "done" } : {}, [box + a.text]);
+      if (i >= 3) li.hidden = true;
+      ul.appendChild(li);
+    });
+    if (items.length > 3) {
+      var more = el("button", { type: "button", "class": "linkbtn" }, [(items.length - 3) + " more"]);
+      more.addEventListener("click", function () {
+        [].forEach.call(ul.querySelectorAll("li[hidden]"), function (li) { li.hidden = false; });
+        more.parentNode.removeChild(more);
+      });
+      ul.appendChild(el("li", {}, [more]));
+    }
+    return ul;
+  }
+
+  var tickets = board.tickets || [];
+  var cycles = board.cycles || [];
+  var events = board.events || [];
+  var cycleName = {};
+  cycles.forEach(function (c) { cycleName[c.id] = c.name || c.id; });
+
+  app.appendChild(el("h1", {}, [board.title || "Board"]));
+  var srcs = (board.sources || []).map(function (s) { return s.path; }).join(", ");
+  app.appendChild(el("div", { "class": "muted" }, ["Generated " + (board.generated_at || "") +
+    (srcs ? " from " + srcs : "")]));
+
+  var stats = el("div", { "class": "stats" }, []);
+  STAGES.forEach(function (s) {
+    var n = tickets.filter(function (t) { return t.stage === s; }).length;
+    if (n) stats.appendChild(el("div", { "class": "stat" }, [el("b", {}, [String(n)]), s]));
+  });
+  app.appendChild(stats);
+
+  if ((board.drift || []).length) {
+    var box = el("div", { "class": "drift" }, [el("b", {}, ["Drift: sources disagree"])]);
+    board.drift.forEach(function (d) {
+      box.appendChild(el("div", {}, [d.ticket + " " + d.kind + " " + JSON.stringify(d.values)]));
+    });
+    app.appendChild(box);
+  }
+
+  var brief = board.brief || {};
+  if (brief.authored) {
+    var a = brief.authored, by = a.written_by || "unknown", n = (brief.changed || []).length, line;
+    if (brief.stale) {
+      line = "Brief written " + a.written_at + "; " + (n ? n + " ticket" + (n === 1 ? "" : "s") +
+        " changed since (" + brief.changed.join(", ") + ")" : "sources changed since") + ". Written by " + by + ".";
+    } else {
+      line = "Brief written " + a.written_at + " by " + by + ".";
+    }
+    app.appendChild(el("div", { "class": "muted notice" }, [line]));
+  }
+  var nav = el("div", { "class": "nav" }, []);
+  var briefPane = el("div", { id: "pane-brief" }, []);
+  var trackPane = el("div", { id: "pane-tracking" }, []);
+  app.appendChild(nav);
+  app.appendChild(briefPane);
+  app.appendChild(trackPane);
+  var target = briefPane;
+
+  var ov = brief.overview;
+  if (ov) {
+    var ovNode = el("div", {}, []);
+    if (ov.goal.length) {
+      ovNode.appendChild(el("p", {}, ov.goal.map(function (c) { var n = claim(c); n.appendChild(document.createTextNode(" ")); return n; })));
+    }
+    [["Not building", ov.non_goals], ["Constraints", ov.constraints]].forEach(function (pair) {
+      if (!pair[1].length) return;
+      ovNode.appendChild(el("div", { "class": "label" }, [pair[0]]));
+      ovNode.appendChild(el("ul", {}, pair[1].map(function (x) { return claim(x, "li"); })));
+    });
+    ovNode.appendChild(el("div", { "class": "muted" }, ["Source: " + ov.source]));
+    section(ov.title ? "What we are building: " + ov.title : "What we are building", ovNode);
+  }
+
+  var specced = tickets.filter(function (t) { return (t.acceptance || []).length || t.intent; });
+  if (specced.length) {
+    var specNode = el("div", {}, []);
+    var specStages = STAGES.concat(specced.map(function (t) { return String(t.stage); })
+      .filter(function (s, i, all) { return STAGES.indexOf(s) < 0 && all.indexOf(s) === i; }).sort());
+    specStages.forEach(function (s) {
+      var group = specced.filter(function (t) { return String(t.stage) === s; });
+      if (!group.length) return;
+      specNode.appendChild(el("div", { "class": "label" }, [s + " (" + group.length + ")"]));
+      group.forEach(function (t) {
+        var item = el("div", { "class": "spec" }, [el("b", {}, [t.id + " " + t.title])]);
+        if (t.intent) { var it = claim({ text: t.intent, tags: t.intent_tags }, "div"); it.className = "muted"; item.appendChild(it); }
+        if ((t.acceptance || []).length) item.appendChild(acList(t.acceptance));
+        specNode.appendChild(item);
+      });
+    });
+    section("What defines done for each ticket", specNode);
+  }
+
+  var rules = STAGES.filter(function (s) { return brief.stage_rules && brief.stage_rules[s]; });
+  var gateProof = brief.gates || [];
+  if (rules.length || gateProof.length) {
+    var proofNode = el("div", {}, []);
+    if (rules.length) {
+      proofNode.appendChild(table(["Stage", "Exit rule"], rules.map(function (s) {
+        return [pill(s), claim({ text: brief.stage_rules[s], tags: (brief.stage_rule_tags || {})[s] })];
+      })));
+      if (brief.stage_rules_source === "default") {
+        proofNode.appendChild(el("div", { "class": "muted" }, [
+          "Generic defaults. Set stage_rules in .plan/board/config.json to replace them."]));
+      }
+    }
+    if ((brief.proof_notes || []).length) {
+      proofNode.appendChild(el("ul", {}, brief.proof_notes.map(function (c) { return claim(c, "li"); })));
+    }
+    gateProof.forEach(function (g) {
+      var card = el("div", { "class": "gate" }, [
+        el("div", {}, [el("b", {}, [g.id + " "]), el("span", { "class": g.met ? "s-COMPLETE" : "s-REVIEW" },
+          [g.met ? "Met" : "Not met"])]),
+        el("div", {}, [g.question])
+      ]);
+      if (g.note) card.appendChild(claim(g.note, "div"));
+      if (g.acceptance.length) card.appendChild(acList(g.acceptance));
+      if (g.evidence.length) {
+        var ev = el("div", {}, ["Evidence: "]);
+        g.evidence.forEach(function (x, i) { if (i) ev.appendChild(document.createTextNode(", ")); ev.appendChild(link(x)); });
+        card.appendChild(ev);
+      }
+      proofNode.appendChild(card);
+    });
+    section("What proves each stage", proofNode);
+  }
+
+  target = trackPane;
+
+  var now = tickets.filter(function (t) { return ["BUILD", "REVIEW", "BLOCKED"].indexOf(t.stage) >= 0; });
+  if (now.length) {
+    section("Now", table(["ID", "Title", "Stage", "Owner", "Note"], now.map(function (t) {
+      return [t.id, t.title, pill(t.stage), t.owner, t.note];
+    })));
+  }
+
+  var moves = events.filter(function (e) { return e.from !== e.to || (e.evidence || []).length; });
+  if (moves.length) {
+    var tl = el("div", {}, []);
+    var groups = {};
+    var order = [];
+    moves.slice().reverse().forEach(function (e) {
+      var key = e.cycle || "";
+      if (!(key in groups)) { groups[key] = []; order.push(key); }
+      groups[key].push(e);
+    });
+    order.forEach(function (key) {
+      tl.appendChild(el("h3", { "class": "muted" }, [key ? cycleName[key] || key : "Outside any cycle"]));
+      tl.appendChild(table(["Date", "Ticket", "Change", "Evidence"], groups[key].map(function (e) {
+        var change = e.from === e.to ? el("span", {}, ["evidence"]) :
+          el("span", {}, [e.from ? pill(e.from) : "(new)", " to ", pill(e.to)]);
+        var ev = el("span", {}, []);
+        (e.evidence || []).forEach(function (x, i) { if (i) ev.appendChild(document.createTextNode(", ")); ev.appendChild(link(x)); });
+        return [e.ts, e.ticket, change, ev];
+      })));
+    });
+    section("Timeline by cycle", tl);
+  }
+
+  var ids = {};
+  tickets.forEach(function (t) { ids[t.id] = t; });
+  var edges = [];
+  tickets.forEach(function (t) {
+    t.deps.forEach(function (d) { if (ids[d]) edges.push([d, t.id]); });
+  });
+  if (edges.length) {
+    var rank = {};
+    var guard = 0;
+    function rankOf(id, seen) {
+      if (rank[id] !== undefined) return rank[id];
+      if (seen[id] || ++guard > 10000) return 0;
+      seen[id] = true;
+      var r = 0;
+      ids[id].deps.forEach(function (d) { if (ids[d]) r = Math.max(r, rankOf(d, seen) + 1); });
+      rank[id] = r;
+      return r;
+    }
+    tickets.forEach(function (t) { rankOf(t.id, {}); });
+    var cols = {};
+    tickets.forEach(function (t) { (cols[rank[t.id]] = cols[rank[t.id]] || []).push(t.id); });
+    var W = 150, H = 34, GX = 50, GY = 14, pos = {}, maxRows = 0, nCols = 0;
+    Object.keys(cols).forEach(function (r) {
+      nCols = Math.max(nCols, +r + 1);
+      maxRows = Math.max(maxRows, cols[r].length);
+      cols[r].forEach(function (id, i) { pos[id] = { x: +r * (W + GX) + 8, y: i * (H + GY) + 8 }; });
+    });
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    var sw = nCols * (W + GX), sh = maxRows * (H + GY) + 8;
+    svg.setAttribute("width", String(sw)); svg.setAttribute("height", String(sh));
+    svg.setAttribute("viewBox", "0 0 " + sw + " " + sh);
+    edges.forEach(function (e) {
+      var a = pos[e[0]], b = pos[e[1]];
+      var p = document.createElementNS(ns, "line");
+      p.setAttribute("x1", String(a.x + W)); p.setAttribute("y1", String(a.y + H / 2));
+      p.setAttribute("x2", String(b.x)); p.setAttribute("y2", String(b.y + H / 2));
+      p.setAttribute("stroke", "var(--line)"); p.setAttribute("stroke-width", "1.5");
+      svg.appendChild(p);
+    });
+    tickets.forEach(function (t) {
+      var q = pos[t.id];
+      var g = document.createElementNS(ns, "g");
+      var r = document.createElementNS(ns, "rect");
+      r.setAttribute("x", String(q.x)); r.setAttribute("y", String(q.y));
+      r.setAttribute("width", String(W)); r.setAttribute("height", String(H)); r.setAttribute("rx", "6");
+      r.setAttribute("fill", "var(--fill)"); r.setAttribute("stroke", COLORS[t.stage] || "var(--line)");
+      r.setAttribute("stroke-width", t.is_gate ? "2.5" : "1.5");
+      var tx = document.createElementNS(ns, "text");
+      tx.setAttribute("x", String(q.x + 8)); tx.setAttribute("y", String(q.y + 21));
+      tx.textContent = t.id + "  " + t.stage;
+      var tip = document.createElementNS(ns, "title"); tip.textContent = t.title;
+      g.appendChild(r); g.appendChild(tx); g.appendChild(tip); svg.appendChild(g);
+    });
+    section("Dependency graph", el("div", { style: "overflow-x:auto" }, [svg]));
+  }
+
+  var gates = tickets.filter(function (t) { return t.is_gate; });
+  if (gates.length) {
+    section("Gates and evidence", table(["Gate", "Stage", "Feeds", "Evidence"], gates.map(function (g) {
+      var feeds = tickets.filter(function (t) { return t.gate === g.id; });
+      var feedNode = el("span", {}, []);
+      (feeds.length ? feeds : g.deps.map(function (d) { return ids[d]; }).filter(Boolean)).forEach(function (f, i) {
+        if (i) feedNode.appendChild(document.createTextNode(", "));
+        feedNode.appendChild(el("span", { title: f.stage }, [f.id + (f.stage === "COMPLETE" ? " done" : " open")]));
+      });
+      var ev = el("span", {}, []);
+      g.evidence.forEach(function (x, i) { if (i) ev.appendChild(document.createTextNode(", ")); ev.appendChild(link(x)); });
+      return [g.id + " " + g.title, pill(g.stage), feedNode, ev];
+    })));
+  }
+
+  var burn = board.burn || [];
+  if (burn.length) {
+    var wrap = el("div", {}, []);
+    burn.forEach(function (b) {
+      var total = Math.max(1, b.completed + b.open_at_end);
+      var bar = el("div", { "class": "bar" }, [
+        el("span", { style: "width:" + (100 * b.completed / total) + "%;background:var(--ok)" }, []),
+        el("span", { style: "width:" + (100 * b.open_at_end / total) + "%;background:var(--accent);opacity:.35" }, [])
+      ]);
+      wrap.appendChild(el("div", { "class": "cycle" }, [
+        el("div", {}, [cycleName[b.cycle] || b.cycle, el("span", { "class": "muted" }, [
+          "  started " + b.started + ", completed " + b.completed + ", open at end " + b.open_at_end])]),
+        bar
+      ]));
+    });
+    section("Burn by cycle", wrap);
+  }
+
+  section("All tickets", table(["ID", "Title", "Stage", "Deps", "Gate"], tickets.map(function (t) {
+    return [t.id, t.title, pill(t.stage), t.deps.join(", "), t.gate];
+  })));
+
+  var panes = [["Brief", briefPane], ["Tracking", trackPane]].filter(function (p) { return p[1].childNodes.length; });
+  if (!briefPane.childNodes.length) briefPane.parentNode.removeChild(briefPane);
+  if (panes.length > 1) {
+    var buttons = panes.map(function (p, i) {
+      var b = el("button", { type: "button", "class": "tab", "aria-pressed": String(i === 0) }, [p[0]]);
+      b.addEventListener("click", function () {
+        panes.forEach(function (q, j) { q[1].hidden = j !== i; buttons[j].setAttribute("aria-pressed", String(j === i)); });
+      });
+      return b;
+    });
+    buttons.forEach(function (b) { nav.appendChild(b); });
+    panes.forEach(function (p, i) { p[1].hidden = i !== 0; });
+  } else {
+    nav.parentNode.removeChild(nav);
+  }
+  document.title = (board.title || "Board") + " | trackboard";
+})();
+</script>
+</body>
+</html>
