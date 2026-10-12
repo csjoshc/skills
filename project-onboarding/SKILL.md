@@ -134,7 +134,7 @@ Concurrent sessions (or a parent plus **write** subagents) sharing one working t
 **Onboarding actions (do these; do not create worktrees unless the user asks):**
 
 1. Ensure `.worktrees/` is in `.gitignore` (prefer that name; if `worktrees/` already exists and is ignored, keep it — do not invent a second location).
-2. Merge the **AGENTS.md block** from [`WORKTREES.md`](WORKTREES.md) (after Karpathy / before MCP tool lists is fine; dedupe if present).
+2. Merge the **AGENTS.md block** from [`WORKTREES.md`](WORKTREES.md) (after Engineering principles / before MCP tool lists is fine; dedupe if present).
 3. Operators use the full playbook in that companion (create/bind/subagents/cleanup).
 
 **Verify ignore before any later create:** `git check-ignore -q .worktrees || git check-ignore -q worktrees` — if that fails, add `.worktrees/` and commit before `git worktree add`.
@@ -171,7 +171,7 @@ Insertion order is mandatory:
 3. Code comments block (always)
 4. optional MCP block (only when MCP is in use)
 5. Tokenify block (optional; only on request)
-6. Karpathy Guidelines block (optional; only on request)
+6. Engineering principles block (always)
 
 When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it. If MCP is in use, ensure exactly one MCP block, placed immediately after the Code comments block.
 
@@ -204,10 +204,10 @@ Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why
 
 Verbatim block lives in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md); read it only when MCP is in use. Place it early in `AGENTS.md` (before generic coding style rules) so it shapes tool selection first.
 
-### Optional verbatim blocks (Tokenify, Karpathy Guidelines, graphify, MCP Tools)
+### Optional verbatim blocks (Tokenify, Engineering principles, graphify, MCP Tools)
 
 Append the matching blocks from `AGENTS_BLOCKS.md` in that order: Tokenify (optional, after the
-optional MCP block), Karpathy Guidelines (optional, after Tokenify), graphify (if present),
+optional MCP block), Engineering principles (always, after Tokenify if present), graphify (if present),
 MCP Tools (optional). Copy them verbatim.
 
 ## 2. Core agent behavior rule (Cursor-specific)
@@ -293,7 +293,7 @@ context exclusions, and operational rules.
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
 - [ ] `AGENTS.md` stays at or under 200 lines, with no README duplicates or uncited claims.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> (optional) Tokenify -> (optional) Karpathy.
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> (optional) Tokenify -> Engineering principles (always).
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
 - [ ] If included, MCP block appears exactly once, immediately after the Git workflow block, with mandatory discovery order, fallback boundaries, and completion self-check.
