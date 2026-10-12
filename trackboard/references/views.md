@@ -28,4 +28,4 @@ All four renderers also show a stage count strip, a drift notice when `drift[]` 
 - `timeline`: groups events by cycle, newest first. Events dated outside the configured cycles sit under "Outside any cycle". Lines where `from` equals `to` show as "evidence".
 - `dag`: the Cursor canvas lays out nodes with `computeDAGLayout` from `cursor/canvas`; the HTML and artifact renderers rank nodes by longest dependency path. The outline color shows the stage, and a thicker outline marks a gate.
 - `gates`: "Feeds" lists tickets whose `gate` names this gate, or the gate's own `deps` when no ticket names it.
-- `burn`: `started` counts tickets that moved to BUILD during the cycle, including a ticket first seen at BUILD; `completed` counts moves to COMPLETE; `open_at_end` counts tickets whose latest stage on the cycle's end date was not COMPLETE.
+- `burn`: `started` counts tickets that moved to BUILD during the cycle, including a ticket first seen at BUILD; `completed` counts moves to COMPLETE; `open_at_end` counts tickets whose latest stage on the cycle's end date was neither COMPLETE nor REMOVED.
