@@ -3,7 +3,7 @@
 ## Contents
 
 - Tokenify block
-- Karpathy Guidelines block
+- Engineering principles block
 - graphify (if present)
 - MCP Tools (optional)
 - Codebase-Memory-MCP block (only when MCP is in use)
@@ -35,8 +35,7 @@ Minimize token consumption and prevent context window pollution while maintainin
 - **The "Clean Slate" Protocol:** If a bug remains unresolved after 3 attempts, signal the user to "Hard Reset" the chat to purge the accumulated "hallucination debt" in the current context.
 
 ### 4. Modular Thinking
-- **Encourage Refactoring:** If a file exceeds 300 lines, proactively suggest breaking it into smaller modules. This makes future edits cheaper and more accurate.
-- **Spec-First Workflow:** Always request or generate a minimal test case/spec before implementation. This prevents "shotgun debugging" which wastes thousands of tokens.
+- **Spec-First Workflow:** For bug fixes, get a minimal failing test before changing code. This prevents "shotgun debugging" which wastes thousands of tokens.
 
 ### 5. Resource Allocation (Model Matching)
 - **Tiered Processing:**
@@ -50,35 +49,21 @@ Minimize token consumption and prevent context window pollution while maintainin
 ```
 
 
-### Karpathy Guidelines block (append after Tokenify — copy verbatim)
+### Engineering principles block (always add; append after Tokenify if present — copy verbatim)
 
 ```markdown
-# Behavioral Guidelines (Karpathy)
+# Engineering principles
 
-## 1. Think Before Coding
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
+Before writing code, in order:
+1. Reuse: check the repo, stdlib and platform first. Don't reinvent.
+2. YAGNI: build only what was asked. No abstraction for a single use.
+3. DRY: dedupe repeated *knowledge* at the 2nd-3rd real use, not look-alike code.
+4. SOLID: reshape only when a second real consumer or change pressure exists.
+YAGNI wins over DRY/SOLID until then. Prefer the shortest solution that is still correct.
 
-## 2. Simplicity First
-**Minimum code that solves the problem. Nothing speculative.**
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- If you write 200 lines and it could be 50, rewrite it.
-
-## 3. Surgical Changes
-**Touch only what you must. Clean up only your own mess.**
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-**Define success criteria. Loop until verified.**
-- Transform tasks into verifiable goals (e.g. "Add validation" → "Write tests for invalid inputs, then make them pass").
-- For multi-step tasks, state a brief plan and verify each step.
+Never trade away validation, error handling or auth checks at trust boundaries for brevity.
+Touch only what the task needs; match existing style.
+If requirements are ambiguous or conflict, state your assumption and ask. Don't pick silently.
 ```
 
 ### graphify (if present)
