@@ -1,0 +1,3 @@
+{"schema_version": 1, "title": "Fixture shop",
+ "cycles": [{"id": "C1", "name": "Cycle 1", "start": "2030-01-01", "end": "2030-01-14"}],
+ "views": {"order": ["now", "timeline", "dag", "gates", "burn"]}}
