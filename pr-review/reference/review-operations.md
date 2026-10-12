@@ -78,8 +78,10 @@ Look in this order; stop on first match:
    or text containing `ARCHITECTURE-DECISIONS` / `antiplan`.
 2. **Linked tickets** — any linked issue whose body contains an
    `ARCHITECTURE-DECISIONS` fenced block.
-3. **Branch artifacts** — `.tickets/PRD.md`, `plans/*.md`, `specs/*.md`
-   on the PR's head branch.
+3. **Local plan** — `.tickets/PRD.md`, `.plan/**/PRD.md` or
+   `.plan/**/task-sequence.md` in the reviewer's local checkout. Planning
+   dirs are never committed, so do not look for them on the PR branch; a
+   planning file in the PR diff is itself a finding (see pre-flight).
 
 ```bash
 gh pr view <PR> --json body,closingIssues
