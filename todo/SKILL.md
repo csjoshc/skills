@@ -161,6 +161,8 @@ and quieter.
 - **all-complete** — every ticket `Stage: COMPLETE` → announce the
   pipeline is done
 
+To show ticket state over days or sprints, run `/trackboard refresh`.
+
 ### Staleness warnings (non-blocking)
 
 - `PRD.md` modified after `task-sequence.md` → warn: DAG may be stale vs PRD
