@@ -30,6 +30,11 @@ elif rule == "gift-test-gap":
         re.search(r"category:\s*Test Gap", i) and re.search(r"gift_card|GIFT_CARD", i)
         for i in items
     )
+elif rule == "plan-leak":
+    ok = any(
+        ".plan/x.md" in i and re.search(r"severity:\s*(HIGH|CRITICAL)", i)
+        for i in items
+    )
 else:
     ok = False
 sys.exit(0 if ok else 1)
