@@ -49,7 +49,7 @@ Minimize token consumption and prevent context window pollution while maintainin
 ```
 
 
-### Engineering principles block (always add; append after Tokenify if present — copy verbatim)
+### Engineering principles block (always add; place right after the Code comments block — copy verbatim)
 
 ```markdown
 # Engineering principles
@@ -95,7 +95,7 @@ Add any Model Context Protocol tools available in your workflow:
 
 If you use mcp-cli, include it so agents know to use `mcp-cli <server> <command>` for tasks involving those tools.
 
-### Codebase-Memory-MCP block (add only when MCP is in use; place right after the Code comments block)
+### Codebase-Memory-MCP block (add only when MCP is in use; place right after the Engineering principles block)
 
 ```markdown
 ## Codebase-Memory-MCP

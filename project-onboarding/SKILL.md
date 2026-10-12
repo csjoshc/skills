@@ -162,18 +162,18 @@ Create **`AGENTS.md`** at the project root using the appropriate stack template 
 
 The **Git workflow block** and **Code comments block** (below) are unconditional — always merge them into every project's `AGENTS.md`, regardless of stack.
 
-If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the Git workflow block and before broader behavior/style sections.
+If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the Engineering principles block.
 If none of those signals are present, do **not** add the MCP block.
 
 Insertion order is mandatory:
 1. stack preamble
 2. Git workflow block (always)
 3. Code comments block (always)
-4. optional MCP block (only when MCP is in use)
-5. Tokenify block (optional; only on request)
-6. Engineering principles block (always)
+4. Engineering principles block (always)
+5. optional MCP block (only when MCP is in use)
+6. Tokenify block (optional; only on request)
 
-When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it. If MCP is in use, ensure exactly one MCP block, placed immediately after the Code comments block.
+When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it, then exactly one Engineering principles block. If MCP is in use, ensure exactly one MCP block, placed immediately after the Engineering principles block.
 
 ### Stack-specific preamble (pick one)
 
@@ -202,13 +202,13 @@ Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why
 
 ### Codebase-Memory-MCP block (add when project uses it)
 
-Verbatim block lives in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md); read it only when MCP is in use. Place it early in `AGENTS.md` (before generic coding style rules) so it shapes tool selection first.
+Verbatim block lives in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md); read it only when MCP is in use. Place it right after the Engineering principles block, before any other behavior or style sections.
 
-### Optional verbatim blocks (Tokenify, Engineering principles, graphify, MCP Tools)
+### Verbatim blocks (Engineering principles, Tokenify, graphify, MCP Tools)
 
-Append the matching blocks from `AGENTS_BLOCKS.md` in that order: Tokenify (optional, after the
-optional MCP block), Engineering principles (always, after Tokenify if present), graphify (if present),
-MCP Tools (optional). Copy them verbatim.
+Copy the matching blocks from `AGENTS_BLOCKS.md` verbatim. Engineering principles (always) goes right
+after Code comments, then the optional MCP block, then Tokenify (optional), graphify (if present),
+MCP Tools (optional).
 
 ## 2. Core agent behavior rule (Cursor-specific)
 
@@ -293,10 +293,10 @@ context exclusions, and operational rules.
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
 - [ ] `AGENTS.md` stays at or under 200 lines, with no README duplicates or uncited claims.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow block -> optional MCP block -> (optional) Tokenify -> Engineering principles (always).
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow -> Code comments -> Engineering principles -> (optional) MCP block -> (optional) Tokenify.
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
-- [ ] If included, MCP block appears exactly once, immediately after the Git workflow block, with mandatory discovery order, fallback boundaries, and completion self-check.
+- [ ] If included, MCP block appears exactly once, immediately after the Engineering principles block, with mandatory discovery order, fallback boundaries, and completion self-check.
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
