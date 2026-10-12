@@ -39,6 +39,20 @@ Skip review if:
 If the PR description is too weak to explain intent, edge cases, and
 integration points, request clarification before continuing.
 
+Tracked-but-ignored check (`source: tool-flagged`, severity HIGH for any hit).
+Planning dirs (`.plan/`, `.tickets/`, `.handoff/`) and gitignored paths
+must never appear in a PR diff:
+
+```bash
+gh pr view <PR> --json files -q '.files[].path' \
+  | rg '^\.(plan|tickets|handoff)/'
+gh pr view <PR> --json files -q '.files[].path' \
+  | git check-ignore --no-index --stdin
+```
+
+For a local diff, feed the changed paths (`git diff --name-only <base>...`)
+into the same two commands.
+
 ---
 
 ## Diff Sizing Gate

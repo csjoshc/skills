@@ -10,7 +10,7 @@
       ],
       "expected_behavior": [
         "Emits at least one REVIEW-FINDINGS block before any REVIEW-GATE line",
-        "Emits a REVIEW-GATE line for phase-1 \u2192 report before the REVIEW-LEDGER block",
+        "Emits a REVIEW-GATE line for phase-1 → report before the REVIEW-LEDGER block",
         "Emits a REVIEW-LEDGER block with findings_total, validated, dismissed, deferred, critical, confidence and plan_present fields",
         "Sets plan_present to false and confidence to LOW or MEDIUM, since the diff links no plan"
       ],
@@ -71,6 +71,23 @@
       ],
       "check": {
         "cmd": "python3 blocks.py gift-test-gap",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "planning-file-in-diff-high",
+      "type": "behavior",
+      "prompt": "Review plan-leak.diff with pr-review as a local diff. Nothing should be posted to GitHub.",
+      "files": [
+        "files/plan-leak.diff",
+        "files/blocks.py"
+      ],
+      "expected_behavior": [
+        "Reports .plan/x.md appearing in the diff as a REVIEW-FINDINGS entry with severity HIGH or CRITICAL and source tool-flagged",
+        "Recommends removing it from the PR (git rm --cached, keep it ignored) rather than reviewing its contents"
+      ],
+      "check": {
+        "cmd": "python3 blocks.py plan-leak",
         "expect_exit": 0
       }
     },

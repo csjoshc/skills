@@ -1,0 +1,14 @@
+diff --git a/.plan/x.md b/.plan/x.md
+new file mode 100644
+--- /dev/null
++++ b/.plan/x.md
+@@ -0,0 +1,3 @@
++# Session notes
++
++- next: wire refund_amount into checkout
+diff --git a/shop/version.py b/shop/version.py
+new file mode 100644
+--- /dev/null
++++ b/shop/version.py
+@@ -0,0 +1 @@
++VERSION = "1.4.0"
