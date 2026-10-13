@@ -32,38 +32,20 @@ These two paths share one `.mmd` source. The difference is at render time.
 For any diagram embedded in markdown (GitHub wikis, README files, etc.):
 
 **DO:**
-- Remove `%%{init}%%` blocks entirely — let GitHub's renderer auto-theme to the user's preference
-- Use `rgba(R, G, B, 0.25)` for rect highlights and other fills — these blend with the host background
-- Omit actor/text color overrides — GitHub handles contrast automatically
+- Remove `%%{init}%%` blocks entirely; let GitHub's renderer auto-theme to the user's preference
+- Use `rgba(R, G, B, 0.25)` for rect highlights and other fills; these blend with the host background
+- Omit actor/text color overrides; GitHub handles contrast automatically
 
 **DON'T:**
-- Include `%%{init}%%` with hardcoded colors — this locks the diagram to light mode even in dark mode
-- Use solid `rgb()` colors — they don't adapt to theme changes
+- Include `%%{init}%%` with hardcoded colors; it locks the diagram to light mode even in dark mode
+- Use solid `rgb()` colors; they don't adapt to theme changes
+- Embed `%%{init}%%` with hardcoded actor/text colors in diagrams meant for GitHub markdown. Set a theme only when rendering to static SVG with a known target.
 
-**Example:**
-```mermaid
-sequenceDiagram
-    participant A as Client
-    participant B as API
-    
-    rect rgba(168, 85, 247, 0.25)
-        Note over A,B: Authentication
-        A->>B: POST /oauth/token
-        B-->>A: 200 access_token
-    end
-    
-    rect rgba(59, 130, 246, 0.25)
-        Note over A,B: Authenticated request
-        A->>B: GET /resource
-        B-->>A: 200 payload
-    end
-```
-
-The semi-transparent rects blend with both light and dark backgrounds, and GitHub's mermaid renderer auto-adapts text colors for readability.
+Example and recipes: [AUTHORING.md](AUTHORING.md).
 
 ## Authoring Rules
 
-### 1. Parser safety
+### Parser safety
 
 - **No `{}`** or HTML entities in labels — mermaid's parser trips on them.
 - **Use `<br/>`** for line breaks in labels (not `\n`).
@@ -72,7 +54,7 @@ The semi-transparent rects blend with both light and dark backgrounds, and GitHu
 - **Edge `linkStyle N`** is index-based and breaks when you reorder edges.
   Prefer solid-vs-dashed arrows and descriptive labels.
 
-### 2. Semantic colors (the palette)
+### Semantic colors (the palette)
 
 Mermaid diagrams use color to encode meaning, not decoration. Same palette
 across flowchart `classDef` and sequence `rect`.
@@ -89,61 +71,7 @@ across flowchart `classDef` and sequence `rect`.
 | `passNode` | Success outcome, data-in-motion | `#34A853` | `#22C55E` | `rgba(34,197,94,0.25)` |
 | `auditNode` | Audit / logging / side-effect | `#9AA0A6` | `#6B7280` | `rgba(107,114,128,0.2)` |
 
-### 3. Sequence diagrams — use `rect rgba(...)` for mode-agnostic highlight
-
-Wrap token-acquisition, error paths, and multi-step sections in `rect` blocks.
-Use the rgba column above — these read on both light and dark backgrounds
-because semi-transparent fills blend with the host background.
-
-```
-sequenceDiagram
-    participant Client
-    participant API
-
-    rect rgba(168, 85, 247, 0.25)
-        Note over Client,API: Step 1 — Acquire token (state)
-        Client->>API: POST /oauth/token
-        API-->>Client: JWT
-    end
-
-    rect rgba(59, 130, 246, 0.25)
-        Note over Client,API: Step 2-N — Authenticated calls (service)
-        Client->>API: GET /resource  [Bearer JWT]
-    end
-```
-
-**Do NOT** embed `%%{init}%%` with hardcoded actor/text colors in diagrams
-intended for GitHub markdown rendering — that forces one theme and breaks
-user dark-mode adaptation. Set theme only when rendering to static SVG with
-a known target (§5).
-
-### 4. Flowcharts — use `classDef` + the palette
-
-```
-flowchart LR
-  classDef service fill:#4285F4,stroke:#1a73e8,color:#fff
-  classDef state fill:#A142F4,stroke:#8430ce,color:#fff
-  classDef errBlock fill:#EA4335,stroke:#c5221f,color:#fff
-
-  API["API Gateway"]:::service
-  Cache["Token Cache"]:::state
-  Err["403 Blocked"]:::errBlock
-
-  API --> Cache
-  API -.-> Err
-```
-
-Always include a **Legend subgraph** when a diagram uses more than 5 node
-classes — see [example-conventions.mmd](example-conventions.mmd).
-
-### 5. Edge styles
-
-| Style | Syntax | Meaning |
-|-------|--------|---------|
-| Solid + filled arrow | `A --> B` | Synchronous call |
-| Solid + label | `A -->\|"POST /foo"\| B` | HTTP or labeled sync call |
-| Dashed + filled arrow | `A -.-> B` | Async, streaming, exceptional path |
-| Dotted + open arrow | `A -.-\|"side-effect"\| B` | Dependency, audit, optional |
+Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORING.md](AUTHORING.md). Add a Legend subgraph when a flowchart uses more than 5 node classes ([example-conventions.mmd](example-conventions.mmd)).
 
 ## Rendering
 
@@ -184,70 +112,16 @@ mmdc -i diagram.mmd -o diagram.svg \
 Swap `light.json` → `dark.json` for the dark variant. `-b transparent` keeps
 the SVG background neutral so it picks up the host's page background.
 
-## Layout rules (for complex flowcharts)
-
-These matter when the SVG will be imported into a Confluence whiteboard or
-any renderer with a dynamic connector router. Ignore for simple flowcharts.
-
-### 1. Error-bus pattern — never fan-out block arrows
-
-**Bad:** N guardrail nodes each connect individually to a single error node
-far away → N diagonal arrows crossing the happy path.
-
-**Good:** Add one local collector per cascade, then one outbound to error.
-
-```
-IG1 --> IG2 --> IG3 --> IG4
-IG4 --> PassInput
-
-IG1 & IG2 & IG3 & IG4 -.-> InputErr["⛔ Block"]:::errBlock
-InputErr -.-> BlockInput
-```
-
-### 2. Cascade-local outcomes
-
-Keep pass/block nodes inside or immediately after their subgraph. Rule of
-thumb: no arrow should span more than ~800 px horizontally.
-
-### 3. One exit per subgraph
-
-Each subgraph should expose one outbound happy-path connector and one
-outbound error connector. Internal fan-out stays inside.
-
-### 4. Consistent anchor direction
-
-For horizontal cascades (LR flow), all connectors use:
-- **Source:** right-center `{left: 1, top: 0.5}`
-- **Target:** left-center `{left: 0, top: 0.5}`
-
-Never mix (e.g., bottom-center → left-center) — forces steep diagonals the
-router cannot clean up.
-
-### 5. Max one subgraph crossing per arrow
-
-If an arrow must cross more than one subgraph boundary, introduce an
-intermediary node at the boundary.
-
-### 6. Audit/side-effect aggregation
-
-Instead of 3 separate section→Audit arrows, add one invisible aggregation
-node:
-
-```
-InputCascade -.-> AuditBus[" "]
-OutputCascade -.-> AuditBus
-ToolCascade -.-> AuditBus
-AuditBus -.-|"all results logged"| Audit
-```
-
 ## Files in this skill
 
 | File | Purpose |
 |------|---------|
-| [palettes/light.json](palettes/light.json) | `mmdc -c` config — light-mode theme variables |
-| [palettes/dark.json](palettes/dark.json) | `mmdc -c` config — dark-mode theme variables |
-| [scripts/render.sh](scripts/render.sh) | Render a `.mmd` to both light + dark SVGs |
-| [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette + legend |
+| [AUTHORING.md](AUTHORING.md) | Read when writing a diagram: GitHub inline example, sequence `rect rgba()`, flowchart `classDef`, edge styles |
+| [LAYOUT_RULES.md](LAYOUT_RULES.md) | Read for complex flowcharts headed to a Confluence whiteboard or any dynamic connector router |
+| [palettes/light.json](palettes/light.json) | `mmdc -c` config, light-mode theme variables |
+| [palettes/dark.json](palettes/dark.json) | `mmdc -c` config, dark-mode theme variables |
+| [scripts/render.sh](scripts/render.sh) | Render a `.mmd` to both light and dark SVGs |
+| [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette and legend |
 | [example-sequence.mmd](example-sequence.mmd) | Sequence diagram using `rect rgba()` |
 
 ## Relation to other skills
@@ -263,7 +137,7 @@ AuditBus -.-|"all results logged"| Audit
 
 Before committing diagrams:
 
-- [ ] Each semantic color matches the palette table (§2).
+- [ ] Each semantic color matches the palette table (Semantic colors).
 - [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — otherwise dark
       mode viewers see the same fill as light mode.
 - [ ] No hardcoded `%%{init}%%` in files destined for GitHub markdown.
