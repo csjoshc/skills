@@ -9,7 +9,7 @@ verbs; listed below in order of the flow.
 | You're about to... | Invoke in order | Why |
 |---|---|---|
 | Open a new repo for the first time | `project-onboarding` | Writes AGENTS.md, installs pre-commit hooks, sets up STANDARDS.md, wires caveman. Loads `WORKFLOW_GATES.md` for session orchestration. |
-| Start a session in an existing repo | (nothing explicit — `workflow-gates-session` hook dumps AGENTS.md + STANDARDS.md as the SessionStart digest) | Grounds the agent in your rules. |
+| Start a session in an existing repo | (nothing explicit — the `workflow-gates-session` hook only prints a one-line gates notice; read AGENTS.md and the STANDARDS.md index yourself) | Grounds the agent in your rules. |
 | Turn a vague idea into a ticket | `spec-writer`, then `ticket-critic` | Produces Given/When/Then ACs and the mandatory AC→Test table. Blocks `Stage: BUILD` until each AC names its test. |
 | Stress-test a plan before building | `antiplan` | Adversarial interrogation; 14 anti-patterns including "never reinvent" and "YAGNI is law". |
 | Add a new file / module / utility | `cleanup` with its `WRITE_TIME_GUARD.md` companion | Blocks duplication and "just in case" code before the file exists. |

@@ -54,3 +54,32 @@ react-app/src/
 - **Soft limit:** 300 lines (proactively suggest refactoring)
 - **Hard limit:** 500 lines (must refactor before merging)
 - **Exceptions:** DTO files, generated code, test fixtures
+
+## Fractal module layout (optional, library-style units)
+
+When a unit is meant to be independently testable (or extractable), co-locate its support set rather than scattering types/mocks across shared buckets:
+
+```
+component/
+├── interface.*     # owned types + contracts
+├── guard.*         # runtime guards (+ guard tests)
+├── mocks.*         # canonical factories / doubles for consumers
+├── *.test.*        # unit behavior
+├── component.*     # implementation
+├── provides.*      # public exports (optional barrel)
+└── *.integration.* # producer→subject→consumer when at a boundary
+```
+
+Prefer this when DI and consumer mocks matter; keep the simpler tree above for thin app code. Details: `tdd/INTERFACE_DESIGN.md`, `tdd/MOCKING.md`.
+
+## Module support set (when co-locating)
+For library-style or heavily DI'd units, keep interface/guards/canonical mocks/tests with the source file (see Fractal module layout above and `tdd/INTERFACE_DESIGN.md`). Do not orphan type-only tickets — attach type/guard edits to the first consuming source-file task.
+
+## Error handling (pass-through)
+- Prefer explicitly typed errors at boundaries.
+- Do not swallow, store-and-forget, or rewrite errors into unrelated types to "keep going."
+- Surface the original failure (or a typed wrap that **preserves** cause/context) so it can be fixed.
+- One error value ≈ one specific failure mode.
+
+## Optional exported-function shape (TypeScript / strict DI)
+For new **exported** functions that must stay testable: split Deps / Params / Payload and return `Success | Error`. Internal helpers exempt; do not mass-convert existing code without a ticket.

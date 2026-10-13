@@ -81,7 +81,13 @@ Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 - Which symlinks to create (Gemini and VS Code are recommended; others are optional)
 - How to handle project-specific (non-synced) skills vs. master-synced skills
 
-**Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use `cp -r ~/.skills .claude/skills` instead of a symlink. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+**Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use the filtered copy below instead of a symlink (about 2 MB; a plain `cp -r` drags in `.git`, eval runs and mirrors, over 30 MB).
+
+```bash
+rsync -a --delete --exclude='.git' --exclude='.backup' --exclude='synced' --exclude='.trash' --exclude='__pycache__' --exclude='evals/runs' --exclude='*.log' --exclude='/master' ~/.skills/ .claude/skills/
+```
+
+Run it from the project root. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
 
 For VS Code workspaces specifically:
 - Global skills are available via `~/.vscode/skills`

@@ -1,5 +1,13 @@
 # Pre-Flight Checklist — Blocker Detection
 
+## Contents
+
+- 1-4 Blocker detection: dependency, redesign, contradiction, research
+- Quick Reference: Blocker Patterns
+- Ticket Review Workflow
+- Examples from Recent Audit
+- Ticket Review Template
+
 **Purpose:** Catch blocking issues during ticket review, not during implementation. Run this checklist BEFORE marking a ticket READY.
 
 ## 1. Dependency Detection
