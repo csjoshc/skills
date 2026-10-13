@@ -17,17 +17,4 @@
 
 ## Assumption Tiers
 
-### Tier 1: Reversible (LOW impact)
-- Naming conventions, file locations, UI copy
-- Library choices with easy migration path
-- **Action:** Proceed, flag for post-review
-
-### Tier 2: Architecture (MEDIUM impact)
-- API patterns, data model structure, layer ownership
-- Harder to change but not breaking
-- **Action:** Check STANDARDS.md, block if unresolved
-
-### Tier 3: Safety/Security (HIGH impact)
-- Authentication, authorization, data sensitivity
-- Public API contracts, database schema
-- **Action:** Always block for human confirmation
+Tier 1 (reversible), Tier 2 (architecture) and Tier 3 (safety/security) are defined in [`../shared/ASSUMPTION_TIERS.md`](../shared/ASSUMPTION_TIERS.md). Tier 3 always blocks for human confirmation.
