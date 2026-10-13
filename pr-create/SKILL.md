@@ -23,6 +23,16 @@ Phase 3: Evidence Collection (conditional)
 Phase 4: Create PR with rich description
 ```
 
+## Safety Rules
+
+- NEVER force-push to main/master
+- NEVER commit .env, credentials, or secret files
+- NEVER skip the secrets check (Phase 1.5)
+- NEVER use `git push --force` unless explicitly asked
+- NEVER amend commits that have been pushed to remote
+- NEVER leave evidence files (.evidence/) in the final branch HEAD — always remove them after capturing the commit SHA
+- Always verify `git status` shows clean after commit before pushing
+
 ## Phase 0: Pre-flight gates
 
 Before any git work, run the enforcement skills that prevent shipping
@@ -61,37 +71,7 @@ Before opening a PR, paste evidence inline in the description. No PR ships witho
 
 A claim of "fixed" without one of the above is a /verify-claim block. See `~/.skills/verify-claim/SKILL.md`.
 
-### Pre-launch checklist (production-bound PRs)
-
-<!-- merged from addyosmani/agent-skills shipping-and-launch -->
-
-Use when the PR ships to production directly or behind a flag. Skip for purely internal changes.
-
-| Category | Must be true |
-|---|---|
-| Code quality | Tests, build, lint, types pass; no `console.log`; error paths handled |
-| Security | No secrets in tree; `npm audit` clean (high/critical); auth/authz checks on new routes; CORS not wildcard |
-| Performance | No N+1; bundle within budget; indexes on new queries; CWV in "Good" |
-| Accessibility | Keyboard reachable; AA contrast; focus management on new modals; no axe warnings |
-| Infrastructure | Env vars set; migrations ready; health check live; logging + error reporting wired |
-| Documentation | README / API docs / ADR / CHANGELOG updated as applicable; **removed packages/modules also removed from docs, diagrams, CI path filters, helm values, and any manifest descriptions** (see Phase 3C) |
-
-### Rollback plan
-
-Every production-bound PR carries a rollback plan in the description.
-
-```markdown
-## Rollback Plan
-**Trigger:** error rate > 2x baseline, p95 latency > Xms, or user reports of <issue>.
-**Steps:**
-1. Disable feature flag <name>  — OR  `git revert <sha> && git push`
-2. Verify health check + error monitoring return to baseline
-3. Notify <channel>
-**Database:** migration <name> reversible via <command>; new-feature data preserved / cleaned per <plan>.
-**Time-to-rollback:** flag <1m / redeploy <5m / DB rollback <15m
-```
-
----
+**Production-bound PRs** (ship to production directly or behind a flag) also need the pre-launch checklist and a rollback plan in the description: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md). Skip for purely internal changes.
 
 ## Phase 1: Git Preparation
 
@@ -104,36 +84,8 @@ Checklist:
 - [ ] 1.5 Verify no secrets in staged files (.env, credentials, tokens)
 ```
 
-### Branch from dirty main
-
-When on `main` (or `master`) with local changes not on remote:
-
-```bash
-# Stage changes
-git add -A
-
-# Create descriptive branch name from the changes
-# Pattern: <type>/<short-description>
-# Types: feat, fix, refactor, style, docs, test, chore
-git checkout -b <type>/<short-description>
-```
-
-Branch name rules:
-- Lowercase, hyphens only (no spaces, underscores, or uppercase)
-- Max 50 chars
-- Derive from the actual diff content, not a generic name
-- Examples: `feat/theme-migration`, `fix/date-picker-dark-mode`, `refactor/api-error-handling`
-
-### Already on feature branch
-
-If already on a feature branch, just verify it's up to date with remote main:
-
-```bash
-git fetch origin
-git log --oneline origin/main..HEAD  # show what will be in the PR
-```
-
----
+Branch name: `<type>/<short-description>`, lowercase with hyphens, max 50 chars, derived from the actual diff.
+Branch-from-main commands and naming examples: [GIT_PREP.md](GIT_PREP.md).
 
 ## Phase 2: Commit & Push
 
@@ -145,29 +97,14 @@ Checklist:
 - [ ] 2.4 Push branch to remote with -u flag
 ```
 
-```bash
-git add -A
-git commit -m "$(cat <<'EOF'
-<type>(<scope>): <summary>
-
-<body — explain WHY, not WHAT>
-EOF
-)"
-git push -u origin HEAD
-```
-
-Commit message conventions:
-- First line: `type(scope): summary` under 72 chars
-- Body: explain the motivation, not a line-by-line changelog
-- Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`
-
----
+Commit message: `type(scope): summary` under 72 chars, body explains why. Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`.
+HEREDOC commit and push commands: [GIT_PREP.md](GIT_PREP.md).
 
 ## Phase 3: Evidence Collection
 
 > **Evidence files (screenshots, recordings, test logs) must NOT persist in the final
-> branch HEAD.** Use the **ephemeral commit** pattern below to embed images in the PR
-> description without polluting the codebase.
+> branch HEAD.** Use the **ephemeral commit** pattern (in EVIDENCE_UI.md) to embed images in
+> the PR description without polluting the codebase.
 
 Determine the change type by analyzing the diff:
 
@@ -175,196 +112,12 @@ Determine the change type by analyzing the diff:
 UI changes? → 3A (recording)
 Backend changes? → 3B (test logs)
 Both? → Do both 3A and 3B
+Deleted or renamed a package, symbol, route or config? → also 3C
 ```
 
-### 3A: UI Evidence (frontend changes)
-
-**Goal:** Attach visual documentation of the UI changes to the PR. This is MANDATORY for UI-heavy PRs — an agent MUST NOT skip this step.
-
-> ⚠️ **CRITICAL:** If the PR touches any UI (components, styles, pages, themes), you MUST capture visual evidence. Skipping this makes review harder and delays merging.
-
-**When to capture:**
-- Any visual change (new component, style change, theme change)
-- Form/input changes (empty, filled, error states)
-- Modal/dialog changes
-- Navigation/flow changes
-- Dark mode/light mode changes
-- Responsive layout changes
-
-**In Cursor (IDE browser available):**
-
-```
-Checklist:
-- [ ] Navigate to the running app using browser tools (browser_navigate)
-- [ ] Lock browser (browser_lock)
-- [ ] Walk through each affected user flow, taking screenshots at key states
-- [ ] For theme changes: capture both light and dark mode
-- [ ] For form changes: show empty, filled, and error states
-- [ ] For new components: show all visual states
-- [ ] Unlock browser (browser_unlock)
-- [ ] Collect screenshots into PR description as inline images
-```
-
-**Screen recording (preferred for complex flows):**
-```bash
-# Use Chrome DevTools MCP or cursor's built-in recording
-# Capture: full user flow from start to finish
-# Include: all interactions, state changes, edge cases
-```
-
-**Screenshot requirements:**
-1. Screenshot of change in default state (REQUIRED)
-2. Dark mode screenshot if theme exists (REQUIRED if applicable)
-3. Interactive states: empty → filled → error (REQUIRED for forms)
-4. Before/after comparison if refactoring
-
-Upload screenshots to the PR using the **ephemeral commit** pattern:
-
-```bash
-# The ephemeral commit pattern:
-# 1. Commit evidence files to .evidence/ and push
-# 2. Capture the commit SHA (pinned URL survives forever)
-# 3. Remove .evidence/ in the next commit and push
-# 4. Use raw.githubusercontent.com/{owner}/{repo}/{SHA}/.evidence/{file} in PR body
-#
-# Why it works: the "add" commit is an ancestor of HEAD, so GitHub never
-# garbage-collects it. The SHA-pinned URL renders images inline permanently,
-# even after the file is deleted from the branch tip.
-
-# Step 1: Save screenshots to .evidence/ in the repo root
-mkdir -p .evidence
-cp /tmp/screenshot-dark.png .evidence/
-cp /tmp/screenshot-light.png .evidence/
-
-# Step 2: Force-add (overrides .gitignore) and commit
-git add -f .evidence/
-git commit -m "evidence: PR screenshots [skip ci]"
-
-# Step 3: Capture the SHA and push
-EVIDENCE_SHA=$(git rev-parse HEAD)
-git push
-
-# Step 4: Remove evidence and push again
-git rm -r .evidence/
-git commit -m "chore: remove evidence files"
-git push
-
-# Step 5: Build image URLs from the pinned SHA
-# Pattern: https://raw.githubusercontent.com/{owner}/{repo}/{EVIDENCE_SHA}/.evidence/{filename}
-# Example:
-#   https://raw.githubusercontent.com/acme/app/a1b2c3d/.evidence/dashboard-dark.png
-
-# Step 6: Embed in PR body
-gh pr edit <PR_NUMBER> --body "$(cat <<'EOF'
-## Evidence
-![Dark mode](https://raw.githubusercontent.com/{owner}/{repo}/${EVIDENCE_SHA}/.evidence/dashboard-dark.png)
-![Light mode](https://raw.githubusercontent.com/{owner}/{repo}/${EVIDENCE_SHA}/.evidence/dashboard-light.png)
-EOF
-)"
-```
-
-> **Tip:** Add `.evidence/` to `.gitignore` so evidence files are ignored by default.
-> The flow uses `git add -f` to override the ignore for the ephemeral commit.
-
-**In terminal agent (no IDE browser):**
-
-```bash
-# Start a recording session with Chrome DevTools Protocol
-# Or use mcp-cli to interact with browser tools
-# CRITICAL: Do NOT skip this step - start dev server if needed
-# Save screenshots to /tmp/, then use the ephemeral commit pattern above.
-```
-
-**Minimum UI evidence for ANY frontend PR:**
-1. Screenshot or description of the change in default state (REQUIRED)
-2. If dark mode exists: both themes shown (REQUIRED if applicable)
-3. If interactive: key interaction states documented (REQUIRED if applicable)
-4. Screen recording for complex flows (RECOMMENDED)
-
-### 3B: Backend Evidence (backend changes)
-
-**Goal:** Attach test results and coverage to the PR. This is MANDATORY for code changes — an agent MUST capture test evidence.
-
-> ⚠️ **CRITICAL:** If the PR touches backend code (Python, API routes, services), you MUST run tests and capture evidence. Skipping test results makes review harder and risks regressions.
-
-**When to capture:**
-- Any backend code change (new endpoint, service, model)
-- Configuration changes
-- Database/schema changes
-- Integration with external services
-- Refactoring of backend logic
-
-```
-Checklist:
-- [ ] Run the project's test suite (REQUIRED)
-- [ ] Capture test output (pass/fail summary) (REQUIRED)
-- [ ] Run coverage if available (REQUIRED if applicable)
-- [ ] Format results for PR description (REQUIRED)
-- [ ] Save logs to file for attachment
-```
-
-```bash
-# Python projects
-python -m pytest --tb=short -q 2>&1 | tail -20 > /tmp/test-results.txt
-python -m pytest --cov --cov-report=term-missing 2>&1 | tail -30 > /tmp/coverage.txt
-
-# Node projects
-npm test 2>&1 | tail -20 > /tmp/test-results.txt
-npx vitest --coverage 2>&1 | tail -30 > /tmp/coverage.txt
-
-# Other platforms
-# Use the project's test runner as documented in AGENTS.md
-
-# IMPORTANT: Save logs to /tmp/ only. Paste contents into the PR body
-# as fenced code blocks. For large logs, use the ephemeral commit pattern
-# from 3A (save to .evidence/, commit, capture SHA, remove, embed URL).
-```
-
-**Test output requirements:**
-1. Pass/fail summary with counts (REQUIRED)
-2. Failed test names if any failures (REQUIRED if applicable)
-3. Coverage report (REQUIRED if available)
-4. Error messages from failures (REQUIRED if applicable)
-
-### 3C: Documentation cross-references (deletion or rename)
-
-**Goal:** Catch orphaned references when a package, module, public function, or endpoint is removed. The diff shows the deletion; what it doesn't show is every doc/diagram/CI filter that still points at the deleted thing.
-
-**Trigger:** the PR deletes any of:
-- A directory under `packages/`, `src/`, `lib/`, `apps/`
-- A top-level public function, class, or exported symbol
-- An HTTP endpoint (route handler) or its docstring
-- A config file (whose name appears in `.env.example`, docs, or scripts)
-
-**Required checks** before opening the PR:
-
-```bash
-# Substitute <removed-name> with the deleted package/symbol/route
-NAME=<removed-name>
-
-# Docs + diagrams + READMEs
-git grep -nE "\\b${NAME}\\b" -- '*.md' '*.mmd' '*.rst' || true
-
-# CI path filters + workflow refs
-git grep -nE "\\b${NAME}\\b" -- '.github/workflows/' || true
-
-# Helm values + manifests + Compose
-git grep -nE "\\b${NAME}\\b" -- 'helm/' 'k8s/' 'manifests/' '*.yaml' '*.yml' 'docker-compose*' || true
-
-# Package manifests (project-specific names: pyproject.toml, package.json, Cargo.toml)
-git grep -nE "\\b${NAME}\\b" -- '*.toml' '*.json' || true
-```
-
-Every hit must be:
-- **Removed** if it was the only thing the doc/filter described.
-- **Updated** if it referenced the replacement (link / name).
-- **Escalated** to the user if ambiguous (e.g., a diagram that includes the old + new side-by-side).
-
-Add a final check to the PR description: `Cross-reference scrub: ran for <NAME>; N hits, all resolved.`
-
-This is the rule that catches "the package was deleted but README/architecture-diagram/CI-filter still mentions it" — the same pattern that produced 5 stale docs + 1 workflow filter + 1 manifest description in a recent cycle.
-
----
+- **3A UI evidence is MANDATORY for any PR touching components, styles, pages or themes.** Never skip it. Minimum: default-state screenshot (REQUIRED), both themes if dark mode exists, key interaction states if interactive; recording recommended for complex flows. Procedure and the ephemeral commit recipe: [EVIDENCE_UI.md](EVIDENCE_UI.md).
+- **3B backend evidence is MANDATORY for backend code, config, schema or integration changes.** Run the test suite and capture pass/fail counts, failed test names, coverage and error messages. Logs go to `/tmp/` and are pasted into the PR body, never committed. Commands per stack: [EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md).
+- **3C cross-reference scrub** when a package, public symbol, endpoint or config file is deleted: grep docs, diagrams, CI filters, manifests for the old name; every hit is removed, updated or escalated, and the PR states `Cross-reference scrub: ran for <NAME>; N hits, all resolved.` Commands: [DOC_XREF_SCRUB.md](DOC_XREF_SCRUB.md).
 
 ## Phase 4: Create PR
 
@@ -377,41 +130,8 @@ Checklist:
 - [ ] 4.5 Return the PR URL
 ```
 
-### PR creation
-
-```bash
-gh pr create --title "<type>(<scope>): <summary>" --body "$(cat <<'EOF'
-## Summary
-
-<1-3 bullet points explaining WHAT changed and WHY>
-
-## Changes
-
-<grouped list of file changes by category>
-
-## Evidence
-
-### UI Validation
-<screenshots, recordings, or manual validation steps>
-
-### Test Results
-```
-<paste from /tmp/test-results.txt>
-```
-
-### Coverage
-```
-<paste from /tmp/coverage.txt>
-```
-
-## Test Plan
-
-- [ ] <specific thing to verify>
-- [ ] <specific thing to verify>
-
-EOF
-)"
-```
+Title: `<type>(<scope>): <summary>`. Body sections: `## Summary` (1-3 bullets: what and why), `## Changes`, `## Evidence` (UI Validation, Test Results, Coverage), `## Test Plan`.
+Full `gh pr create` template and how to edit the body after creation: [PR_BODY.md](PR_BODY.md).
 
 <!-- pattern: not-doing-callout -->
 ### "Not Doing" callout in PR body
@@ -423,25 +143,6 @@ Include a `## Not Doing` section in every non-trivial PR. Lists what was deliber
 - Follow-up tickets created instead of inlined fixes
 
 Reviewers stop asking "why didn't you also..." when they can see what was deferred and why.
-
-### Editing PR body after creation (for attaching evidence)
-
-If you need to create the PR first then add evidence:
-
-```bash
-# Create PR first
-gh pr create --title "..." --body "## Summary\n\n..."
-
-# Collect evidence...
-
-# Then update the body
-gh pr edit <PR_NUMBER> --body "$(cat <<'EOF'
-<full updated body with evidence>
-EOF
-)"
-```
-
----
 
 ## Conditional Paths
 
@@ -463,14 +164,13 @@ EOF
 **Draft PR requested:**
 Add `--draft` flag to `gh pr create`.
 
----
+## Companion files
 
-## Safety Rules
+Read only when the situation matches:
 
-- NEVER force-push to main/master
-- NEVER commit .env, credentials, or secret files
-- NEVER skip the secrets check (Phase 1.5)
-- NEVER use `git push --force` unless explicitly asked
-- NEVER amend commits that have been pushed to remote
-- NEVER leave evidence files (.evidence/) in the final branch HEAD — always remove them after capturing the commit SHA
-- Always verify `git status` shows clean after commit before pushing
+- [GIT_PREP.md](GIT_PREP.md): creating the branch, writing the commit, pushing
+- [EVIDENCE_UI.md](EVIDENCE_UI.md): the PR touches UI; also the ephemeral commit recipe for any evidence
+- [EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md): the PR touches backend code
+- [DOC_XREF_SCRUB.md](DOC_XREF_SCRUB.md): the PR deletes or renames a package, symbol, route or config
+- [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md): the PR ships to production
+- [PR_BODY.md](PR_BODY.md): drafting or editing the PR body
