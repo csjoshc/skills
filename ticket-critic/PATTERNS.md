@@ -830,8 +830,8 @@ full review on:
   "adapted", "alternative", or "skipped"
 
 **Reviewer protocol:** see
-[`~/.skills/evidence-reviewer/SKILL.md`](~/.skills/evidence-reviewer/SKILL.md)
-for the full evidence-reviewer skill, which is the canonical
+[`~/.skills/todo/references/evidence-reviewer.md`](~/.skills/todo/references/evidence-reviewer.md)
+for the full evidence-reviewer procedure, which is the canonical
 implementation of this pattern.
 
 **Block template:**
@@ -845,7 +845,7 @@ final report contains <signal: "SKIPPED N ACs" | "deviated from
 spec at X" | "files modified outside scope" | etc.>.
 
 Required before next ticket starts:
-- [ ] Invoke `/evidence-reviewer` on ticket <ID>, providing:
+- [ ] Invoke the evidence-reviewer procedure on ticket <ID>, providing:
       git diff vs prior checkpoint, the subagent's final report,
       artifact file paths, ticket ACs.
 - [ ] Reviewer must return VERIFIED. If DRIFT-DETECTED or

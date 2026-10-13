@@ -7,6 +7,10 @@ description: Creates and reconciles project agent-instruction files across tools
 
 Target the **project root** the user is onboarding (usually workspace root). **Default:** write `AGENTS.md`, `.cursorignore`, and `.cursorrules` at that root even when markers live only in subfolders (monorepo), so one workspace sees one set of rules—unless the user asks to onboard a subfolder as its own root.
 
+**Refuse these targets.** Do not onboard `~` or `~/.skills`, or write `AGENTS.md`, `.cursorrules` or `STANDARDS.md` there.
+`~/AGENTS.md` is the single global memory file; the other tools' global files are symlinks to it, and project templates must never overwrite it.
+If the resolved root equals `$HOME` or sits under `~/.skills`, stop and ask for a real project path.
+
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
@@ -288,6 +292,7 @@ context exclusions, and operational rules.
 
 ## 6. Verification
 
+- [ ] Target root is not `~` or under `~/.skills`; `~/AGENTS.md` untouched.
 - [ ] Stack detection recorded (npm / python / both / neither), including **nested** paths and **Python-without-manifest** when applicable.
 - [ ] Global STANDARDS.md checked (`~/.skills/STANDARDS.md`)
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created

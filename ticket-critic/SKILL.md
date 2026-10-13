@@ -118,7 +118,7 @@ Do not skip any pattern.
   environment (binary availability, path math, version flags)
 - Pattern 17: operator entry-point smoke gate (AP-26 gatekeeper)
 - Pattern 18: subagent claims need adversarial evidence review
-  (delegates to `/evidence-reviewer` skill)
+  (delegates to `todo/references/evidence-reviewer.md`)
 
 ### Scale: delegate per-ticket audits to subagents when N > 5
 

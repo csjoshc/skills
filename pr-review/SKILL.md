@@ -105,7 +105,7 @@ Fixed phase sequence is documented in
 
 Use alongside the specialist lenses in `reference/review-lenses.md`. Apply only when relevant to the diff.
 
-Operate as `Mode: Reviewer`: hunt **EO&D** (errors, omissions, discrepancies) from the diff and on-disk artifacts — not from author narrative or checkbox status. Same vocabulary as `evidence-reviewer`.
+Operate as `Mode: Reviewer`: hunt **EO&D** (errors, omissions, discrepancies) from the diff and on-disk artifacts — not from author narrative or checkbox status. Same vocabulary as `todo/references/evidence-reviewer.md`.
 
 ### Five-Axis rubric
 

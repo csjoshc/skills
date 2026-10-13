@@ -1,7 +1,7 @@
 # Hook & Skill Principles
 
 Canonical reference for when to invoke each enforcement skill and when
-to promote it to a hook. Referenced by `hook-sync`, `project-onboarding`,
+to promote it to a hook. Referenced by `project-onboarding`,
 and any agent that asks "should this be a hook?"
 
 ## Why hooks backfire
@@ -33,7 +33,6 @@ If any criterion fails, keep it as a skill invoked on demand.
 | Skill / companion | Best trigger | Avoid when | Hook? |
 |---|---|---|---|
 | `verify-claim` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
-| `hook-sync` | After editing `~/.hooks/*` | Every session | No — manual |
 | `caveman` | Context > 50%, bulk reports | First reply, specs, errors | **Conditional** on SessionStart |
 | `cleanup/WRITE_TIME_GUARD.md` | New file or new export in mature repo | Tests, generated, prototypes | No — call from workflow |
 | `cleanup/LAYER_ENFORCEMENT.md` | Import added AND layer map exists | No layer map | **Advisory** PostToolUse |

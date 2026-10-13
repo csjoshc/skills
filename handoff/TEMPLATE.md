@@ -66,7 +66,7 @@ When handing off, optionally include which skill cluster the recipient should dr
 | **Frontend UI** | `make-ui`, `test-ui`, `chrome-devtools` |
 | **Backend Tests** | `tdd` |
 | **Git/PR Work** | `create-pr`, `pr-review`, `pr-fix` |
-| **Infrastructure** | `skill-sync`, `mcp-sync`, `confluence-diagrams` |
+| **Infrastructure** | `agent-sync`, `confluence-diagrams` |
 | **Planning/Specs** | `spec-writer`, `ticket-critic`, `tdd` |
 | **CLI/Tooling** | `cmd-cli` |
 | **Onboarding** | `project-onboarding` |

@@ -85,7 +85,7 @@ When entering `ready-for-build`:
    - The build subagent's final report (verbatim)
    - The artifact directory path
    - The ticket's ACs (source of truth)
-   See `~/.skills/evidence-reviewer/SKILL.md` if present, else
+   See `~/.skills/todo/references/evidence-reviewer.md` if present, else
    inline the audit checklist (scope-check via git diff, per-AC
    re-verification, artifact existence + size sanity,
    subagent-deviation audit, wrapper-target re-verification, Stage

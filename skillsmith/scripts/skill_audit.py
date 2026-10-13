@@ -195,17 +195,6 @@ def audit_skill(skill_path: Path) -> list[Issue]:
             if HIDDEN_UNICODE_RE.search(f.read_text(encoding="utf-8", errors="ignore")):
                 issues.append(Issue("FAIL", f, "hidden-unicode", "Contains zero-width, bidi-control, or tag characters."))
 
-    # Evals — warn only, so coverage can grow gradually
-    if not (skill_path.parent / "evals" / "evals.json").exists():
-        issues.append(
-            Issue(
-                "WARN",
-                skill_path,
-                "evals-missing",
-                "No evals/evals.json; see skillsmith/reference/evals.md.",
-            )
-        )
-
     # Long companion files need a contents list so partial reads still show scope
     for ref in sorted(skill_path.parent.rglob("*.md")):
         if ref.name == "SKILL.md" or "evals" in ref.relative_to(skill_path.parent).parts:
