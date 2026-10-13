@@ -35,22 +35,6 @@
       }
     },
     {
-      "id": "mcp-block-after-principles",
-      "type": "behavior",
-      "prompt": "Onboard this repo for agents. We use codebase-memory-mcp here, so include its instructions.",
-      "files": [
-        "files/package.json"
-      ],
-      "expected_behavior": [
-        "AGENTS.md includes a Codebase-Memory-MCP section",
-        "The Codebase-Memory-MCP section appears after the Engineering principles section"
-      ],
-      "check": {
-        "cmd": "awk '/^# Engineering principles/{c=NR} /^## Codebase-Memory-MCP/{m=NR} END{exit !(c&&m&&c<m)}' AGENTS.md",
-        "expect_exit": 0
-      }
-    },
-    {
       "id": "old-karpathy-not-reintroduced",
       "type": "behavior",
       "prompt": "Onboard the repo in legacy/ for agents; its AGENTS.md exists already, so merge into it.",

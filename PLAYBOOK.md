@@ -8,7 +8,7 @@ verbs; listed below in order of the flow.
 
 | You're about to... | Invoke in order | Why |
 |---|---|---|
-| Open a new repo for the first time | `project-onboarding` | Writes AGENTS.md, installs pre-commit hooks, sets up STANDARDS.md, wires RTK/caveman. Loads `WORKFLOW_GATES.md` for session orchestration. |
+| Open a new repo for the first time | `project-onboarding` | Writes AGENTS.md, installs pre-commit hooks, sets up STANDARDS.md, wires caveman. Loads `WORKFLOW_GATES.md` for session orchestration. |
 | Start a session in an existing repo | (nothing explicit — `workflow-gates-session` hook dumps AGENTS.md + STANDARDS.md as the SessionStart digest) | Grounds the agent in your rules. |
 | Turn a vague idea into a ticket | `spec-writer`, then `ticket-critic` | Produces Given/When/Then ACs and the mandatory AC→Test table. Blocks `Stage: BUILD` until each AC names its test. |
 | Stress-test a plan before building | `antiplan` | Adversarial interrogation; 14 anti-patterns including "never reinvent" and "YAGNI is law". |
@@ -26,7 +26,6 @@ verbs; listed below in order of the flow.
 | Sync skills across tools | `agent-sync` (skills mode) | Propagates `~/.skills` → Claude Code, Cursor, Codex, Gemini, etc. |
 | Sync MCPs | `agent-sync` (MCP mode) | `~/.secrets/mcp.json` → target-specific settings files. |
 | Hit a long session | caveman auto-activates above 50% context (via hook) | Compresses agent prose; code/paths untouched. |
-| Notice CLI noise eating budget | verify RTK is installed: `rtk status` | Compresses shell output before it enters context. |
 | Try to do the same thing again next month | re-read `shared/HOOK_PRINCIPLES.md` before adding hooks | Decision rule + minimal safe catalogue. |
 
 ## The three canonical flows
@@ -81,8 +80,6 @@ circular tests).
   checking the 5 criteria.
 - Do not run `verify-claim` inside a TDD red-green loop — the red
   test failing IS the evidence. Run it at phase boundaries.
-- Do not bypass RTK just because output "looks weird" — test with
-  `rtk bypass <cmd>` once to confirm, then trust the proxy.
 - Do not invoke all skills "just in case." Each one has a trigger;
   miss-triggering trains you and the agent to ignore them.
 
@@ -102,7 +99,7 @@ invoke it.
 Companion files (`MOCKING.md`, `MOCK_CONTRACT.md`, `MUTATION.md`,
 `WORKFLOW.md`, `INTERFACE_DESIGN.md`, `LAYER_ENFORCEMENT.md`,
 `WRITE_TIME_GUARD.md`, `WORKFLOW_GATES.md`, `HOOK_PRINCIPLES.md`,
-`TOKEN_BUDGET.md`, `CONTEXT_HYGIENE.md`) are loaded by their parent
+`CONTEXT_HYGIENE.md`) are loaded by their parent
 skill at the appropriate phase — you don't invoke them directly.
 
 ## One-liners for Claude Code

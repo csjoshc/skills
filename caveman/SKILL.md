@@ -12,11 +12,6 @@ sentences shortened, redundancy removed — while code blocks, paths,
 commands, URLs, and identifiers pass through byte-for-byte. Technical
 fidelity stays; budget shrinks.
 
-**Pairs with RTK (Rust Token Killer)** on the input side. RTK compresses
-CLI command output before it enters the agent's context; caveman
-compresses the agent's prose before it leaves. See
-`shared/TOKEN_BUDGET.md` for the joint strategy and measurement data.
-
 ## Contents
 
 - Activation / Deactivation

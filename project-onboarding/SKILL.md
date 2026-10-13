@@ -17,7 +17,6 @@ Companion files:
 - Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy (`gh stack` workflow, cascading rebases, AGENTS.md block to merge on request).
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
 - Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase, plus the SessionStart digest. Load when setting up the agent loop for a repo, not for file-level onboarding.
-- Token budget strategy: [shared/TOKEN_BUDGET.md](../shared/TOKEN_BUDGET.md) — install RTK (input-side CLI proxy) during onboarding; caveman (output-side) activates automatically above 50% context usage if hooks are installed.
 - Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
 ---
@@ -151,7 +150,7 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 
 **Onboarding actions (do these; this block is unconditional, not stack-dependent):**
 
-1. Merge the **Git workflow block** (see section 1) into `AGENTS.md`, inserted after the stack preamble and before the optional MCP block; dedupe if an equivalent rule already exists.
+1. Merge the **Git workflow block** (see section 1) into `AGENTS.md`, inserted after the stack preamble; dedupe if an equivalent rule already exists.
 2. The rule holds even when a direct push would technically succeed (branch protection may not be configured to block it) — that is not permission to use it.
 
 ---
@@ -166,18 +165,14 @@ Create **`AGENTS.md`** at the project root using the appropriate stack template 
 
 The **Git workflow block** and **Code comments block** (below) are unconditional — always merge them into every project's `AGENTS.md`, regardless of stack.
 
-If the project uses **`codebase-memory-mcp`** (explicitly requested by user, present in existing instructions, or available in current agent tooling), insert the **Codebase-Memory-MCP block** immediately after the Engineering principles block.
-If none of those signals are present, do **not** add the MCP block.
-
 Insertion order is mandatory:
 1. stack preamble
 2. Git workflow block (always)
 3. Code comments block (always)
 4. Engineering principles block (always)
-5. optional MCP block (only when MCP is in use)
-6. Tokenify block (optional; only on request)
+5. Tokenify block (optional; only on request)
 
-When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it, then exactly one Engineering principles block. If MCP is in use, ensure exactly one MCP block, placed immediately after the Engineering principles block.
+When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it, then exactly one Engineering principles block.
 
 ### Stack-specific preamble (pick one)
 
@@ -196,22 +191,20 @@ Place immediately after the stack preamble in every project, regardless of stack
 
 ### Code comments block (always add — copy verbatim, stack-agnostic)
 
-Place immediately after the Git workflow block in every project, regardless of stack:
+The base comment style (plain English, 1-2 lines, why not what) lives in the global `~/AGENTS.md`. Do not restate it here. Add only the project delta, immediately after the Git workflow block, regardless of stack:
 
 ```markdown
 ## Code comments
 
-Plain English, no AI-slop. 1–2 lines (≤100 chars), next to the code. Say why, not what. Only real footguns earn more. History behind odd code earns a comment too, with an issue or file pointer.
+Same style as the global rules. History behind odd code earns a comment too, with an issue or file pointer.
 ```
 
-### Codebase-Memory-MCP block (add when project uses it)
-
-Verbatim block lives in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md); read it only when MCP is in use. Place it right after the Engineering principles block, before any other behavior or style sections.
+Cursor and Copilot have no global file. If the user targets those tools, tell them the base style will not reach them.
 
 ### Verbatim blocks (Engineering principles, Tokenify, graphify, MCP Tools)
 
 Copy the matching blocks from `AGENTS_BLOCKS.md` verbatim. Engineering principles (always) goes right
-after Code comments, then the optional MCP block, then Tokenify (optional), graphify (if present),
+after Code comments, then Tokenify (optional), graphify (if present),
 MCP Tools (optional).
 
 ## 2. Core agent behavior rule (Cursor-specific)
@@ -282,11 +275,11 @@ context exclusions, and operational rules.
 `~/.skills` is the single authoritative store; tool-specific paths map to it.
 
 - **Claude Code CLI:** the global symlink `~/.claude/skills -> ~/.skills` covers it. No project-level action.
-- **Claude Desktop:** sandboxed, cannot follow external symlinks. Use a recursive copy and re-run it (or `skill-sync`) when the master store changes:
+- **Claude Desktop:** sandboxed, cannot follow external symlinks. Use a recursive copy and re-run it (or `agent-sync`) when the master store changes:
   `rm -rf /path/to/project/.claude/skills && cp -r ~/.skills /path/to/project/.claude/skills`
 - **Everything else:** audit and establish links per [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) before completing onboarding. Link, don't copy.
 - Add project-level skill folders (`.skills/`, `.gemini/skills/`, `.claude/skills/`, etc.) to `.gitignore`.
-- Use `skill-sync` to audit and fix broken links and stale copies.
+- Use `agent-sync` to audit and fix broken links and stale copies.
 
 ---
 
@@ -298,10 +291,8 @@ context exclusions, and operational rules.
 - [ ] Project-specific STANDARDS.md merged (if exists) or section created
 - [ ] Static analysis enforced via git commit hooks (use existing hook framework if present; otherwise `pre-commit` for Python and/or `husky` for npm). “Run everything” commands documented.
 - [ ] `AGENTS.md` stays at or under 200 lines, with no README duplicates or uncited claims.
-- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow -> Code comments -> Engineering principles -> (optional) MCP block -> (optional) Tokenify.
+- [ ] `AGENTS.md` exists with the correct stack preamble, exclusion paths, STANDARDS.md reference, and section order: stack preamble -> Git workflow -> Code comments -> Engineering principles -> (optional) Tokenify.
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
-- [ ] MCP conditional inclusion enforced: include MCP block only when MCP is in use (explicit request, existing instructions, or active tooling); otherwise omit it.
-- [ ] If included, MCP block appears exactly once, immediately after the Engineering principles block, with mandatory discovery order, fallback boundaries, and completion self-check.
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
 - [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
