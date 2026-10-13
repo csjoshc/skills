@@ -23,9 +23,8 @@ verbs; listed below in order of the flow.
 | Audit existing code (not a PR) | `cleanup` — Phase 0 mechanical pass first, then subjective rubric | Prevents the LLM from rationalizing away mechanical issues. |
 | Present findings to execs / engineers | `reframe exec` or `reframe architect` or `reframe engineer` | Audience-appropriate restructuring, no fabrication. |
 | Produce a deck from the reframe | pipe into a slide-building skill | Consumes the YAML frontmatter + `## Slide:` contract. |
-| Sync skills across tools | `skill-sync` | Propagates `~/.skills` → Claude Code, Cursor, Codex, Gemini, etc. |
-| Sync MCPs | `mcp-sync` | `~/.secrets/mcp.json` → target-specific settings files. |
-| Sync hooks | `hook-sync` | `~/.hooks/*.json` → Claude Code settings.json + Cursor + Codex + Gemini. |
+| Sync skills across tools | `agent-sync` (skills mode) | Propagates `~/.skills` → Claude Code, Cursor, Codex, Gemini, etc. |
+| Sync MCPs | `agent-sync` (MCP mode) | `~/.secrets/mcp.json` → target-specific settings files. |
 | Hit a long session | caveman auto-activates above 50% context (via hook) | Compresses agent prose; code/paths untouched. |
 | Notice CLI noise eating budget | verify RTK is installed: `rtk status` | Compresses shell output before it enters context. |
 | Try to do the same thing again next month | re-read `shared/HOOK_PRINCIPLES.md` before adding hooks | Decision rule + minimal safe catalogue. |
@@ -91,7 +90,7 @@ circular tests).
 
 For rules-file authoring, context-packing strategies, and confusion-management patterns across any session, see `~/.skills/shared/CONTEXT_HYGIENE.md` (includes the Read→Analyze→Explain→Propose→Edit→Halt turn loop).
 
-During BUILD: one primary source file per task/cycle (`tdd/WORKFLOW.md`); halt and propose if scope expands. Reviewer passes use EO&D via `evidence-reviewer`, not checkbox trust.
+During BUILD: one primary source file per task/cycle (`tdd/WORKFLOW.md`); halt and propose if scope expands. Reviewer passes use EO&D via `todo/references/evidence-reviewer.md`, not checkbox trust.
 
 ## Discovering skills (and avoiding fabrication)
 

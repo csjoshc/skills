@@ -40,7 +40,7 @@ Always emit `type` explicitly; newer tools require it.
 { "type": "sse", "url": "https://...", "headers": { "..." : "..." } }
 ```
 
-Do NOT emit: `enabled`, `allowedTools`, or any other field not in the tool's public schema. These are mcp-sync extensions and live only in the master store.
+Do NOT emit: `enabled`, `allowedTools`, or any other field not in the tool's public schema. These are agent-sync MCP extensions and live only in the master store.
 
 ## Claude Code specifics
 

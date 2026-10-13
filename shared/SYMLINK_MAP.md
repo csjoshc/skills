@@ -1,6 +1,6 @@
 # Symlink Map
 
-Authoritative symlink mapping for all AI coding agents. Used by `project-onboarding`, `skill-sync`, `mcp-sync`, and `hook-sync`.
+Authoritative symlink mapping for all AI coding agents. Used by `project-onboarding` and `agent-sync`.
 
 ## Global Symlinks
 
@@ -11,7 +11,6 @@ All paths symlink to the master store at `~/.skills`.
 | **Master Store** | `~/.skills` | (Authoritative) |
 | **Codex** | `~/.codex/skills/<name>` | `~/.skills/<name>` (per-skill, see note) |
 | **Cursor (Skills)** | `~/.cursor/skills` | `~/.skills` |
-| **Cursor (Rules)** | `~/.cursor/rules/master` | `~/.skills` |
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
 | **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
 | **Gemini CLI** | `~/.gemini/skills` | `~/.skills` |
@@ -47,21 +46,19 @@ find ~/.codex/skills -maxdepth 1 -type l ! -exec test -e {} \; -print
 
 This is forward-compatible: as new master skills are added, run the discovery loop to add symlinks. Codex-only skills are untouched.
 
-## Global Hook Paths
+## Global Memory File
 
-All paths are managed by `hook-sync` using `~/.hooks/` as the master store of hook definitions. Hooks are JSON files per definition; some targets embed hooks in a settings file (surgical write required), others accept a directory (symlink-compatible).
+`~/AGENTS.md` is the single source. Every harness reads it through a symlink or import.
 
-| Tool / Platform | Hook Path | Method |
+| Tool / Platform | Path | Method |
 | :--- | :--- | :--- |
-| **Master Store** | `~/.hooks/` | (Authoritative, JSON files) |
-| **Claude Code (user)** | `~/.claude/settings.json` → `hooks` | Surgical `jq` merge |
-| **Claude Code (project)** | `.claude/settings.json` → `hooks` | Surgical `jq` merge |
-| **Cursor** | `~/.cursor/hooks/` | Symlink to `~/.hooks/` |
-| **Codex CLI** | `~/.codex/hooks.yaml` | Transform (`yq` write) |
-| **Gemini CLI** | `~/.gemini/hooks.json` | JSON rewrite |
-| **Antigravity** | `~/.gemini/antigravity/hooks.json` | JSON rewrite |
-
-**Note:** Embedded-hook targets (Claude Code) must NEVER be fully overwritten — other user settings share the file. `hook-sync` merges by hook `name` only.
+| **Master** | `~/AGENTS.md` | (Authoritative, real file) |
+| **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude ignores AGENTS.md) |
+| **Codex** | `~/.codex/AGENTS.md` | Symlink |
+| **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
+| **Gemini CLI** | `~/.gemini/GEMINI.md` | Symlink |
+| **Antigravity** | `~/.gemini/antigravity/AGENTS.md` | Symlink |
+| **Cursor / Copilot** | (none) | No global file; use project `AGENTS.md` |
 
 ## Project-Level Symlinks
 

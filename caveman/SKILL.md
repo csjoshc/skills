@@ -160,26 +160,8 @@ the pre-compression version on request.
 
 ## Auto-activation via hook
 
-When `hook-sync` is installed, register a `SessionStart` hook that turns
-caveman on when either is true:
-
-- Estimated session budget > 50% consumed
-- User toggles `caveman on` explicitly
-
-Hook file at `~/.hooks/caveman-compression.json`:
-
-```json
-{
-  "name": "caveman-compression",
-  "events": [
-    { "event": "SessionStart" },
-    { "event": "PreToolUse", "tool": "Stop" }
-  ],
-  "action": { "type": "skill", "skill": "caveman" },
-  "trigger_on": "context_usage > 0.5",
-  "platforms": ["claude-code", "cursor", "codex", "gemini"]
-}
-```
+The live hook is `hooks/caveman-budget-auto.sh`. It turns caveman on when the session budget passes 50%.
+The user can also toggle it with `caveman on`.
 
 ## Upstream Sync
 

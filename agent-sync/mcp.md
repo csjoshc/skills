@@ -1,16 +1,19 @@
----
-name: mcp-sync
-description: >-
-  Synchronizes and audits Model Context Protocol (MCP) configurations across multiple
-  IDEs, CLI agents, and desktop apps. Uses ~/.secrets/mcp.json as the master store.
-  Supports global syncing, project-specific MCP enabling, and toggling specific
-  MCP servers across all platforms. Use when standardizing MCP configs, enabling
-  or disabling MCP servers, or onboarding MCP settings in new projects.
----
 
-# MCP Sync & Toggle
+# MCP sync & toggle
 
 **Version:** 2.0.0
+
+## Contents
+
+- Master store schema
+- Critical rules
+- Claude Code scope model
+- Standard workflows (full sync, toggle, project onboarding)
+- Target-specific transforms
+- Verification
+- Common failure modes
+- Secret hygiene
+- Verification checklist
 
 ## Context
 MCP configurations are fragmented across different tools. This skill unifies them using `~/.secrets/mcp.json` as the authoritative source, then projects entries into each tool's native format — **not a blind copy**. Tool-specific schemas, file locations, and validation rules must be respected or the tool will silently reject the whole config.
@@ -27,14 +30,14 @@ MCP configurations are fragmented across different tools. This skill unifies the
       "command": "...",           // stdio only
       "args": [ ... ],            // stdio only
       "env": { ... },             // stdio only
-      "enabled": true | false,    // mcp-sync extension — NOT synced to targets
-      "allowedTools": [ ... ]     // mcp-sync extension — NOT synced to targets
+      "enabled": true | false,    // agent-sync MCP extension — NOT synced to targets
+      "allowedTools": [ ... ]     // agent-sync MCP extension — NOT synced to targets
     }
   }
 }
 ```
 
-`enabled` and `allowedTools` are **mcp-sync extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
+`enabled` and `allowedTools` are **agent-sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
 
 ## Critical rules (learned the hard way)
 
@@ -42,7 +45,7 @@ MCP configurations are fragmented across different tools. This skill unifies the
 
 2. **Always include an explicit `type` field on target entries.** `stdio`/`http`/`sse`. Newer Claude Code versions require it; older ones tolerate its absence for stdio but not for URL transports.
 
-3. **Strip mcp-sync extensions (`enabled`, `allowedTools`) when writing to any target.** These are not part of the standard MCP server schema. Keep them only in the master store.
+3. **Strip agent-sync MCP extensions (`enabled`, `allowedTools`) when writing to any target.** These are not part of the standard MCP server schema. Keep them only in the master store.
 
 4. **A disabled server (`enabled: false` in master) means "omit from target entirely."** Do not emit `{"enabled": false}` into a target's config.
 
