@@ -54,12 +54,6 @@ the TOQ assembly buffer.
    - Rust: `use crate::X`, `use X::`
    - Java/Kotlin: `import pkg.X`
 
-3. **Dependency graph (MCP layer, preferred)**
-   Call `mcp__codebase-memory-mcp__trace_path` from each touched symbol to
-   find transitive callers/callees. Use `query_graph` for 1-hop neighbourhood
-   when `trace_path` is overkill. Fall back to the grep layer if MCP is
-   unavailable or the project is not indexed.
-
 4. **Churn**
    `git log --since=90.days --name-only --pretty=format: <touched_files>` →
    count per file. Capped at 10 for scoring.

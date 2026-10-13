@@ -59,10 +59,6 @@ grep -rEn "(def|function|const|class|export)\s+${SYMBOL}\b" \
 python3 -c "import difflib,sys; print(difflib.get_close_matches('${SYMBOL}', sys.stdin.read().split(), n=10, cutoff=0.75))" < <(cat all_symbols.txt)
 ```
 
-Query `codebase-memory-mcp` if available:
-mcp**codebase-memory-mcp**search_code: "${SYMBOL}"
-mcp**codebase-memory-mcp**search_graph: semantic match on purpose
-
 ---
 
 ## Phase 2 — File-Level Similarity

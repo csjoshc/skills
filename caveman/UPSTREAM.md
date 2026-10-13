@@ -48,7 +48,7 @@ are not relevant to this fork.
 ## Local-only content — never overwrite
 
 **In `SKILL.md`:**
-- Intro paragraph (RTK pairing, TOKEN_BUDGET.md reference)
+- Intro paragraph
 - `## Contents` header
 - `## Subcommands` (defines `/caveman compress` and `/caveman uncompress`)
 - `## When to use` / `## When NOT to use`
