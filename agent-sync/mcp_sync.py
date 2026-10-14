@@ -10,7 +10,7 @@ servers and unrelated keys stay. Writes are temp file + atomic rename with a .ba
 Values are never printed.
 
 Usage: mcp_sync.py [--dry-run] [--strict] [--targets a,b] [--master PATH] [--npx PATH]
-Targets: claude, opencode, cursor, desktop, pi, pi-gateway
+Targets: claude, opencode, cursor, vscode, desktop, pi, pi-gateway
 """
 import argparse, json, os, re, shlex, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
@@ -206,6 +206,14 @@ def to_cursor(name, s, ctx):
     return out
 
 
+def to_vscode(name, s, ctx):
+    # Same wrappers as Cursor; VS Code's own schema wants an explicit type on url servers too.
+    out = to_cursor(name, s, ctx)
+    if out is not None and "type" not in out:
+        out = {"type": s["kind"], **out}
+    return out
+
+
 def to_desktop(name, s, ctx):
     # Claude Desktop only speaks stdio, so every url server goes through mcp-remote.
     if s["kind"] == "stdio":
@@ -269,6 +277,7 @@ def default_targets():
         Target("opencode", HOME / ".config" / "opencode" / "opencode.json", "mcp", to_opencode,
                keep=("enabled", "timeout", "oauth"), soft_off=True),
         Target("cursor", HOME / ".cursor" / "mcp.json", "mcpServers", to_cursor, app="Cursor"),
+        Target("vscode", app / "Code" / "User" / "mcp.json", "servers", to_vscode, app="Code"),
         Target("desktop", app / "Claude" / "claude_desktop_config.json", "mcpServers",
                to_desktop, app="Claude"),
         Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),

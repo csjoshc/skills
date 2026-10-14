@@ -34,6 +34,7 @@ class Base(unittest.TestCase):
             "claude": self.home / ".claude.json",
             "opencode": self.home / ".config/opencode/opencode.json",
             "cursor": self.home / ".cursor/mcp.json",
+            "vscode": self.home / "Library/Application Support/Code/User/mcp.json",
             "desktop": self.home / "Library/Application Support/Claude/claude_desktop_config.json",
             "pi": self.home / ".pi/agent/mcp.json",
             "pi-gateway": self.home / ".gateway-pi/mcp.json",
@@ -112,6 +113,28 @@ class Translation(Base):
                     'set -a; . "$HOME/.config/secrets/work.env"; '))
         self.assertEqual(self.get("cursor")["mcpServers"]["github"]["type"], "stdio")
         self.assertNotIn("type", self.get("desktop")["mcpServers"]["github"])
+
+    def test_vscode_uses_servers_root_and_typed_entries(self):
+        self.put("vscode", {"inputs": [], "servers": {"mine": {"type": "stdio", "command": "x"}}})
+        self.run_sync("--targets", "vscode")
+        doc = self.get("vscode")
+        s = doc["servers"]
+        self.assertEqual(doc["inputs"], [])
+        self.assertIn("mine", s)
+        self.assertEqual(s["plain"], {"command": NPX, "args": ["-y", "chrome-devtools-mcp@latest"],
+                                      "env": {"PATH": "/opt/node/bin:/usr/bin"}, "type": "stdio"})
+        self.assertEqual(s["github"]["type"], "stdio")
+        self.assertEqual(s["remote"]["type"], "stdio")  # header needs a variable, so mcp-remote
+        self.assertIn("mcp-remote", s["remote"]["args"][1])
+        self.assertNotIn(FAKE, self.paths["vscode"].read_text())
+
+    def test_vscode_plain_url_server_keeps_http_type(self):
+        m = json.loads(json.dumps(MASTER))
+        m["mcpServers"]["remote"]["headers"] = {"X-Static": "1"}
+        self.set_master(m)
+        self.run_sync("--targets", "vscode")
+        self.assertEqual(self.get("vscode")["servers"]["remote"],
+                         {"type": "http", "url": "https://mcp.example/mcp", "headers": {"X-Static": "1"}})
 
     def test_inherited_secret_dropped_but_renamed_one_is_exported(self):
         self.run_sync("--targets", "cursor")
@@ -224,7 +247,7 @@ class Safety(Base):
         self.literal_master()
         r = self.run_sync()
         self.assertEqual(r.returncode, 0, "non-strict still exits 0")
-        self.assertEqual(r.stdout.count("refused"), 12)  # 2 fields x 6 targets
+        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 targets
         for t, p in self.paths.items():
             text = p.read_text()
             self.assertNotIn(FAKE, text, t)
@@ -306,6 +329,17 @@ class Safety(Base):
         self.assertFalse(self.paths["cursor"].exists())
         self.assertTrue(self.paths["desktop"].exists())
         self.assertIn("Cursor is running", r.stdout)
+
+    def test_running_vscode_is_not_written(self):
+        bin_ = self.home / "fakebin"
+        bin_.mkdir()
+        (bin_ / "pgrep").write_text("#!/bin/sh\n[ \"$2\" = Code ]\n")
+        os.chmod(bin_ / "pgrep", 0o755)
+        env = {"HOME": str(self.home), "PATH": f"{bin_}:/usr/bin:/bin"}
+        r = subprocess.run([sys.executable, "-I", str(SCRIPT), "--master", str(self.master),
+                            "--npx", NPX, "--targets", "vscode"], capture_output=True, text=True, env=env)
+        self.assertFalse(self.paths["vscode"].exists())
+        self.assertIn("Code is running", r.stdout)
 
     def test_settings_json_mcpservers_pruned(self):
         s = self.home / ".claude/settings.json"
