@@ -21,7 +21,7 @@ Always invoke before:
 - Reporting "task complete" to the user
 - Running `pr-create`
 - Closing out a `ticket-critic` or `spec-writer` cycle
-- Writing the "Changes" section of a PR description
+- Writing the `## Evidence` section of a PR description
 - Checking off an AC
 
 Skip only for:
@@ -112,7 +112,7 @@ The `verify-claim-gate` hook blocks `git commit` and `gh pr create` while it exi
 - **Evidence produced:** re-run this skill; a clean pass deletes the marker.
 - **Claim downgraded:** drop that row; delete the marker once no rows remain.
 - **User override:** only on the user's own `override: <reason>`. Delete the
-  marker and record the reason in the PR body or final report. Never
+  marker and record the reason in the PR body's `## Evidence` section or the final report. Never
   override on your own judgment.
 
 The marker catches shipping past a failed check. It cannot catch a check
@@ -126,11 +126,17 @@ For any diff that a commit message or PR describes as a "fix":
 2. Run the new test(s) — they MUST fail. If they pass on the broken state,
    the test does not exercise the bug.
 3. Return to HEAD, run again — they MUST pass.
-4. Record both outputs in the evidence section of the PR body.
+4. Record both outputs as the Before and After in the PR body's `## Evidence` section.
 
-If no new test is in the diff, the fix is not verified. Ask the user to
-add one or explicitly acknowledge they want to ship without regression
-coverage.
+The test must sit at a correct seam: one that exercises the real bug pattern as it occurs at the call site.
+A test at a seam too shallow to reproduce the bug (one caller when the bug needs several, a unit test that skips the triggering chain) gives false confidence.
+
+If no correct seam exists, that is the finding.
+Record it as a gap row and in the PR body's `## Evidence` section: the fix is unverified because the architecture blocks a regression test, and name the seam that would be needed.
+The user can ship it with an `override: <reason>`; the missing seam is a candidate for `cleanup` or a follow-up ticket.
+(Seam rule adapted from Matt Pocock's `diagnosing-bugs` skill, MIT.)
+
+If a correct seam exists and no new test is in the diff, the fix is not verified.
 
 ## Interaction with other skills
 
