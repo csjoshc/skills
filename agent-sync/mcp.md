@@ -6,6 +6,7 @@
 ## Contents
 
 - Master store schema
+- New machine: the template and drop-ins
 - Critical rules
 - Claude Code scope model
 - Standard workflows (full sync, toggle, project onboarding)
@@ -33,13 +34,30 @@ MCP configurations are fragmented across different tools. This skill unifies the
       "args": [ ... ],            // stdio only
       "env": { ... },             // stdio only
       "enabled": true | false,    // agent-sync MCP extension — NOT synced to targets
-      "allowedTools": [ ... ]     // agent-sync MCP extension — NOT synced to targets
+      "allowedTools": [ ... ],    // agent-sync MCP extension — NOT synced to targets
+      "personal": true            // agent-sync MCP extension: opts the server in to Codex (personal only)
     }
   }
 }
 ```
 
-`enabled` and `allowedTools` are **agent-sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
+`enabled`, `allowedTools` and `personal` are **agent-sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
+
+## New machine: the template and drop-ins
+
+`~/.secrets/mcp.json` is local only, because it holds work URLs and an email address.
+The repo tracks a clean copy, [references/mcp.example.json](references/mcp.example.json), with only `${VAR}` placeholders.
+
+1. `mkdir -p ~/.secrets && chmod 700 ~/.secrets`, then `cp ~/.skills/agent-sync/references/mcp.example.json ~/.secrets/mcp.json && chmod 600 ~/.secrets/mcp.json`.
+2. Keep the servers you use, set `enabled`, and replace the example URL.
+3. Every `${VAR}` needs a line in `~/.config/secrets/work.env`. Run `./bootstrap.sh --secrets` in `~/bootstrap` to create that file from its template.
+4. `python3 ~/.skills/agent-sync/mcp_sync.py --dry-run`, then without `--dry-run`.
+
+Servers that belong to another repo do not go in the master.
+Put them in `~/.secrets/mcp.d/*.json`, which has the same schema and is read after the master in file-name order.
+A server with the same name as one in the master replaces it.
+For example, `ln -s ~/path/to/private-repo/mcp.work.json ~/.secrets/mcp.d/work.json` adds a private repo's server file without copying it.
+Drop-ins go through the same refusal of literal secrets as the master, and a drop-in that is not valid JSON stops the run before anything is written.
 
 ## Critical rules (learned the hard way)
 
@@ -105,6 +123,24 @@ Mutation check: `python3 -I ~/.skills/agent-sync/mutants_mcp_sync.py`.
 
 - Entries keep `${VAR}` references as they are; Claude Code expands them from the shell env at start.
 - `mcp-atlassian` gets its `allowedTools` as `--enabled-tools a,b,c` in `args` (Claude Code only).
+
+### Codex (`~/.codex/config.toml`)
+- **Personal only.** Codex gets a server only when the master marks it `"personal": true`. The default is that nothing reaches it, so a new work server can never leak in by being added to the master.
+- A server that needs `work.env` (any `${VAR}` in its command, args, url, env or headers) is never written to Codex, even if it is marked personal. The run says so and skips it.
+  A server in the master that is not marked personal but already sits in Codex's file is left alone and flagged in the output, so you can remove it by hand.
+- Mark only servers with no secret, such as a browser-automation server. Work servers stay out.
+- The Codex app, CLI and IDE extension share this file. Servers are `[mcp_servers.<name>]` tables, with `[mcp_servers.<name>.env]` for env.
+- The file also holds `model`, project trust and servers Codex manages itself, so sync edits only the tables of servers whose projected value changed.
+  Everything else stays byte for byte, including comments and hand formatting.
+  A changed server is rewritten where its first table was, and a new one goes at the end.
+- Before writing, the result is parsed back and must equal the planned config exactly. If it does not, nothing is written, for any target, and the run exits 1.
+  An unreadable `config.toml` stops the run the same way.
+  With no personal server to write, no file is created.
+- Codex has no `type` field, and a url server's headers are `http_headers`.
+- Per-server Codex keys such as `startup_timeout_sec`, `tool_timeout_sec`, `enabled_tools` and `tools.*` are kept when the server is updated.
+- `allowedTools` is not written to Codex, as for every target. Codex can enforce a list with `enabled_tools` if you want it later.
+- Codex is not skipped while running, because its app does not rewrite this file on exit. Restart Codex after a sync.
+- Fresh files are created with mode 600, and an existing file keeps its mode. A `.bak.<ts>` copy is saved before any change.
 
 ### Claude Desktop, Cursor and VS Code
 - GUI apps launched from the Dock do not inherit the shell env, so a server that uses a `${VAR}` becomes a wrapper: `command: /bin/zsh`, `args: ["-c", "set -a; . \"$HOME/.config/secrets/work.env\"; exec <command and args, shell-quoted>"]`.
@@ -198,6 +234,7 @@ Every target holds a reference to the variable, never the value, so no config ne
 
 | Tool | How it gets the value | What to do after rotating |
 |---|---|---|
+| Codex | Not used: Codex holds no `work.env` secrets by design | Nothing to rotate. |
 | Claude Code | `${VAR}` expanded from its own environment at startup | Exit and relaunch from a fresh shell. |
 | opencode | `{env:VAR}` expanded by the shared service | Run `opencode service restart` from a fresh shell. |
 | pi, gateway-pi | `$ENV:VAR` expanded when the server starts | Quit and relaunch pi. The trust record is unchanged, because it fingerprints the reference, not the value. |
@@ -223,7 +260,7 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | pi, gateway-pi | yes | yes |
 | VS Code | no | yes (the `vscode` target) |
 | Claude Desktop | no | yes (the `desktop` target) |
-| Codex | yes | no: its `[mcp_servers.*]` entries in `~/.codex/config.toml` are its own and hold no master secrets |
+| Codex | yes | yes, personal only (servers marked `"personal": true`, no secrets; edits `~/.codex/config.toml` in place) |
 | Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
 | Copilot | yes | no |
 
@@ -238,6 +275,7 @@ If a tool in the "no" column needs a master server, add a target in `mcp_sync.py
 - [ ] `~/.secrets/mcp.json` is valid JSON and follows the master schema.
 - [ ] `~/.claude/settings.json` does NOT contain an `mcpServers` key.
 - [ ] `mcp_sync.py --dry-run` lists no key-path changes.
+- [ ] `~/.codex/config.toml` still parses (`python3 -c 'import tomllib,sys;tomllib.load(open(sys.argv[1],"rb"))' ~/.codex/config.toml`).
 - [ ] No target file contains a literal secret value (grep each `work.env` value, expect 0 hits).
 - [ ] `claude mcp list` shows each enabled server as "✓ Connected".
 - [ ] Subprocess E2E test on at least one server returns a real tool result.

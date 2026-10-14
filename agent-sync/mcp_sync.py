@@ -10,9 +10,12 @@ servers and unrelated keys stay. Writes are temp file + atomic rename with a .ba
 Values are never printed.
 
 Usage: mcp_sync.py [--dry-run] [--strict] [--targets a,b] [--master PATH] [--npx PATH]
-Targets: claude, opencode, cursor, vscode, desktop, pi, pi-gateway
+Targets: claude, opencode, cursor, vscode, desktop, codex, pi, pi-gateway
+codex is personal only: it receives just the servers marked "personal": true, never a ${VAR} one.
+Servers from other repos can sit in <master dir>/mcp.d/*.json (same schema, applied in name
+order after the master, same name wins).
 """
-import argparse, json, os, re, shlex, shutil, subprocess, sys, tempfile, time
+import argparse, copy, json, os, re, shlex, shutil, subprocess, sys, tempfile, time, tomllib
 from pathlib import Path
 
 HOME = Path.home()
@@ -21,7 +24,7 @@ REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 WHOLE_REF = re.compile(r"^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$")
 SECRET_NAME = re.compile(r"token|secret|key|password|passwd|auth|credential|cookie", re.I)
 SOURCE_ENV = 'set -a; . "$HOME/.config/secrets/work.env"; '
-EXTENSIONS = ("enabled", "allowedTools")  # agent-sync only, never written to a target
+EXTENSIONS = ("enabled", "allowedTools", "personal")  # agent-sync only, never written to a target
 
 
 # ---- master parsing -------------------------------------------------------------------------
@@ -262,12 +265,29 @@ def to_pi(name, s, ctx):
     return out
 
 
+def to_codex(name, s, ctx):
+    # Codex is personal only: it never gets work.env, so a server that needs a secret is not
+    # written at all. Its tables have no `type`, and url headers are called http_headers.
+    if mentions_ref(s):
+        ctx.report.warn(f"{name}: skipped, it needs work.env secrets and Codex is personal only")
+        return None
+    out = to_cursor(name, s, ctx)
+    if out is None:
+        return None
+    out.pop("type", None)
+    if "headers" in out:
+        out["http_headers"] = out.pop("headers")
+    return out
+
+
 # ---- targets --------------------------------------------------------------------------------
 
 class Target:
     def __init__(self, name, path, root, convert, keep=(), mode=None, app=None, soft_off=False,
-                 alias=None):
+                 alias=None, toml=False, personal_only=False):
         self.name, self.path, self.root, self.convert = name, Path(path), root, convert
+        self.toml = toml  # config.toml: edited as text, only the tables this script owns
+        self.personal_only = personal_only  # only servers marked "personal": true are written
         self.keep, self.mode, self.app, self.soft_off = tuple(keep), mode, app, soft_off
         self.alias = dict(alias or {})  # master name -> the name this tool already uses
 
@@ -292,6 +312,11 @@ def default_targets():
                alias=VSCODE_ALIAS),
         Target("desktop", app / "Claude" / "claude_desktop_config.json", "mcpServers",
                to_desktop, app="Claude"),
+        # The Codex app, CLI and IDE share this file. Its own per-server tuning stays untouched.
+        Target("codex", HOME / ".codex" / "config.toml", "mcp_servers", to_codex, toml=True,
+               personal_only=True,
+               keep=("startup_timeout_sec", "tool_timeout_sec", "enabled", "enabled_tools",
+                     "disabled_tools", "default_tools_approval_mode", "required", "tools")),
         Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),
         Target("pi-gateway", HOME / ".gateway-pi" / "mcp.json", "mcpServers", to_pi, mode=0o600),
     ]
@@ -312,13 +337,19 @@ def find_npx(master):
 
 def project(master, target, existing, npx, report):
     """Returns (new doc, {name: action})."""
-    doc = json.loads(json.dumps(existing))
+    doc = copy.deepcopy(existing)  # not a JSON round trip: TOML can hold dates
     servers = doc.setdefault(target.root, {})
     ctx = Ctx(report, npx)
     allow = (lambda v: v.startswith(("$ENV:", "$CMD:"))) if target.convert is to_pi else None
     actions = {}
     for name, entry in master.get("mcpServers", {}).items():
         key = target_name(target, name)
+        if target.personal_only and entry.get("personal") is not True:
+            # Opt-in, so a new work server can never reach this tool by default.
+            actions[name] = "not personal"
+            if key in servers:
+                report.warn(f"{name}: is in {target.name} but not marked personal; remove it by hand")
+            continue
         if entry.get("enabled") is False and target.soft_off:
             # opencode has its own enabled flag, so an existing entry is switched off, not removed.
             old = servers.get(key)
@@ -349,6 +380,8 @@ def project(master, target, existing, npx, report):
         else:
             actions[name] = "updated" if old is not None else "added"
             servers[key] = new
+    if target.toml and not servers and target.root not in existing:
+        del doc[target.root]  # nothing to write, so do not create an empty table or a file
     return doc, actions
 
 
@@ -366,6 +399,126 @@ def diff_paths(old, new, prefix=""):
                 out += diff_paths(old[k], new[k], p)
         return out
     return [] if old == new else [f"~{prefix}"]
+
+
+# ---- TOML (Codex) ---------------------------------------------------------------------------
+# There is no TOML writer in the standard library, and rewriting the whole file would drop the
+# comments and the tables Codex manages itself. So only the [mcp_servers.<name>...] blocks of
+# servers that changed are cut out and re-emitted, and the result must parse back to exactly the
+# projected document or nothing is written.
+
+class TomlError(Exception):
+    pass
+
+
+BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def toml_key(k):
+    return k if BARE_KEY.match(k) else toml_value(k)
+
+
+def toml_value(v):
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return repr(v)
+    if isinstance(v, str):
+        return json.dumps(v, ensure_ascii=False).replace("\x7f", "\\u007f")
+    if isinstance(v, list):
+        return "[" + ", ".join(toml_value(x) for x in v) + "]"
+    raise TomlError(f"cannot write a {type(v).__name__} value")
+
+
+def toml_tables(path, d):
+    scalars = [(k, v) for k, v in d.items() if not isinstance(v, dict)]
+    out = ["[" + ".".join(toml_key(p) for p in path) + "]\n"
+           + "".join(f"{toml_key(k)} = {toml_value(v)}\n" for k, v in scalars)]
+    for k, v in d.items():
+        if isinstance(v, dict):
+            out += toml_tables(path + [k], v)
+    return out
+
+
+def header_path(line):
+    """Key path of a [table] or [[table]] header line, else None."""
+    m = re.match(r"^\s*\[\[?\s*(.*?)\s*\]\]?\s*(?:#.*)?$", line.rstrip("\n"))
+    if not m or line.lstrip().startswith("#"):
+        return None
+    parts, i, text = [], 0, m.group(1)
+    while i < len(text):
+        c = text[i]
+        if c in " \t.":
+            i += 1
+        elif c in "\"'":
+            j = i + 1
+            while j < len(text) and text[j] != c:
+                j += 2 if c == '"' and text[j] == "\\" else 1
+            raw = text[i:j + 1]
+            parts.append(json.loads(raw) if c == '"' else raw[1:-1])
+            i = j + 1
+        else:
+            j = i
+            while j < len(text) and text[j] not in " \t.":
+                j += 1
+            parts.append(text[i:j])
+            i = j
+    return parts or None
+
+
+def toml_blocks(lines):
+    """[(path, first line, last content line + 1)]; trailing blanks and comments stay outside."""
+    blocks, in_ml = [], None
+    for n, line in enumerate(lines):
+        if in_ml is None:
+            path = header_path(line)
+            if path:
+                blocks.append([path, n, n + 1])
+            elif blocks and line.strip() and not line.lstrip().startswith("#"):
+                blocks[-1][2] = n + 1
+        elif blocks:
+            blocks[-1][2] = n + 1
+        for q in ('"""', "'''"):
+            if line.count(q) % 2:
+                in_ml = None if in_ml == q else (in_ml or q)
+    return blocks
+
+
+def render_toml(orig, existing, doc, root):
+    old, new = existing.get(root, {}), doc.get(root, {})
+    changed = sorted(k for k in set(old) | set(new) if old.get(k) != new.get(k))
+    if not changed:
+        return orig
+    lines = (orig or "").splitlines(keepends=True)
+    drop, first = set(), {}
+    for path, a, b in toml_blocks(lines):
+        if len(path) > 1 and path[0] == root and path[1] in changed:
+            drop.update(range(a, b))
+            first.setdefault(path[1], a)
+    chunks = {k: "\n".join(toml_tables([root, k], new[k])) for k in changed if k in new}
+    out = []
+    for n, line in enumerate(lines):
+        # A rewritten server goes where its first table was, so the file keeps its order.
+        for k in [k for k, a in first.items() if a == n and k in chunks]:
+            out.append(chunks.pop(k))
+        if n not in drop:
+            out.append(line)
+    text = "".join(out)
+    if chunks:
+        sep = "" if not text else ("" if text.endswith("\n") else "\n") + "\n"
+        text += sep + "\n".join(chunks[k] for k in changed if k in chunks)
+    if "\n\n\n" not in (orig or ""):
+        text = re.sub(r"\n{3,}", "\n\n", text)  # cut-out blocks leave blank runs behind
+    return text
+
+
+def check_toml(text, doc):
+    try:
+        got = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as e:
+        raise TomlError(f"the result is not valid TOML ({e})")
+    if got != doc:
+        raise TomlError("the result does not parse back to the planned servers")
 
 
 # ---- file writing ---------------------------------------------------------------------------
@@ -419,17 +572,30 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
     for t in targets:
         report = Report()
         text = t.path.read_text(encoding="utf-8") if t.path.exists() else None
-        existing = json.loads(text) if text else {}
+        try:
+            existing = (tomllib.loads(text) if t.toml else json.loads(text)) if text else {}
+        except (tomllib.TOMLDecodeError, ValueError) as e:
+            out(f"{t.name}: cannot read {t.path} ({e}); nothing written")
+            return 1
         doc, actions = project(master, t, existing, npx, report)
-        plan.append((t, text, existing, doc, actions, report))
+        new_text = None
+        if doc != existing:
+            try:
+                new_text = render_toml(text, existing, doc, t.root) if t.toml else render(doc, text)
+                if t.toml:
+                    check_toml(new_text, doc)
+            except TomlError as e:
+                out(f"{t.name}: refusing to write {t.path}: {e}; nothing written")
+                return 1
+        plan.append((t, text, existing, doc, actions, report, new_text))
     refused = sum(len(p[5].refusals) for p in plan)
     if strict and refused:
-        for t, *_, report in plan:
+        for t, *_, report, _new in plan:
             for w in report.warnings:
                 out(f"{t.name}: warning: {w}")
         out(f"strict: {refused} literal secret field(s) refused; nothing written")
         return 1
-    for t, text, existing, doc, actions, report in plan:
+    for t, text, existing, doc, actions, report, new_text in plan:
         changed = doc != existing
         busy = changed and not dry and check_apps and t.app and app_running(t.app)
         tag = " (dry run)" if dry else ""
@@ -440,7 +606,7 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
             out(f"  skipped: {t.app} is running, quit it and re-run")
         elif changed and not dry:
             mode = t.mode or (t.path.stat().st_mode & 0o777 if t.path.exists() else 0o600)
-            write_atomic(t.path, render(doc, text), mode)
+            write_atomic(t.path, new_text, mode)
         elif not dry and t.mode and t.path.exists():
             os.chmod(t.path, t.mode)
         owned = {target_name(t, n) for n in master.get("mcpServers", {})}
@@ -454,6 +620,21 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
     if any(t.convert is to_pi for t in targets):
         out("New or changed pi servers start untrusted: run /mcp trust <name> once for each.")
     return 0
+
+
+def load_master(path, out=print):
+    """The master plus <its dir>/mcp.d/*.json, so another repo can ship its own servers."""
+    master = json.loads(path.read_text())
+    drop = path.parent / "mcp.d"
+    for f in sorted(drop.glob("*.json")) if drop.is_dir() else []:
+        try:
+            extra = json.loads(f.read_text())
+        except ValueError as e:
+            raise SystemExit(f"{f}: not valid JSON ({e}); nothing written")
+        servers = extra.get("mcpServers", {})
+        master.setdefault("mcpServers", {}).update(servers)
+        out(f"drop-in {f}: {', '.join(servers) or 'no servers'}")
+    return master
 
 
 def main(argv=None):
@@ -471,7 +652,7 @@ def main(argv=None):
     if bad:
         ap.error("unknown target(s): " + ", ".join(bad))
     targets = [t for t in default_targets() if t.name in wanted]
-    master = json.loads(args.master.read_text())
+    master = load_master(args.master)
     return sync(master, targets, args.dry_run, args.strict, args.npx, not args.ignore_running)
 
 

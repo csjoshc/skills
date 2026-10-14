@@ -1,6 +1,6 @@
 """Run: python3 -I ~/.skills/agent-sync/test_mcp_sync.py
 Every case uses a temp HOME and fake values; no real config is read or written."""
-import json, os, stat, subprocess, sys, tempfile, unittest
+import json, os, re, stat, subprocess, sys, tempfile, tomllib, unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -20,7 +20,7 @@ MASTER = {"mcpServers": {
                   "env": {"JIRA_URL": "https://j.example/", "JIRA_API_TOKEN": "${JIRA_API_TOKEN}",
                           "CONFLUENCE_API_TOKEN": "${JIRA_API_TOKEN}"}},
     "plain": {"type": "stdio", "command": NPX, "args": ["-y", "chrome-devtools-mcp@latest"],
-              "env": {"PATH": "/opt/node/bin:/usr/bin"}, "enabled": True},
+              "env": {"PATH": "/opt/node/bin:/usr/bin"}, "enabled": True, "personal": True},
     "off": {"type": "stdio", "command": "c", "enabled": False},
 }}
 
@@ -30,6 +30,7 @@ class Base(unittest.TestCase):
         self.home = Path(tempfile.mkdtemp())
         self.master = self.home / "master.json"
         self.set_master(MASTER)
+        self.codex = self.home / ".codex/config.toml"
         self.paths = {
             "claude": self.home / ".claude.json",
             "opencode": self.home / ".config/opencode/opencode.json",
@@ -294,12 +295,13 @@ class Safety(Base):
         self.literal_master()
         r = self.run_sync()
         self.assertEqual(r.returncode, 0, "non-strict still exits 0")
-        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 targets
+        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 targets; codex skips both servers
         for t, p in self.paths.items():
             text = p.read_text()
             self.assertNotIn(FAKE, text, t)
             self.assertNotIn("Authorization", json.dumps(
                 {k: v for k, v in json.loads(text).items()}.get("mcpServers", {}).get("remote", {})), t)
+        self.assertNotIn(FAKE, self.codex.read_text())
         self.assertNotIn(FAKE, r.stdout + r.stderr)
 
     def test_strict_exits_nonzero_and_writes_nothing(self):
@@ -317,6 +319,7 @@ class Safety(Base):
         nb = {t: len(self.backups(t)) for t in self.paths}
         inodes = {t: p.stat().st_ino for t, p in self.paths.items()}
         r = self.run_sync()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         # An atomic rewrite swaps the inode, so an unchanged inode proves the file was not touched.
         self.assertEqual(inodes, {t: p.stat().st_ino for t, p in self.paths.items()})
         self.assertEqual(before, {t: p.read_text() for t, p in self.paths.items()})
@@ -394,6 +397,245 @@ class Safety(Base):
         s.write_text(json.dumps({"model": "m", "mcpServers": {"x": {}}}))
         self.run_sync("--targets", "claude")
         self.assertEqual(json.loads(s.read_text()), {"model": "m"})
+
+
+class Codex(Base):
+    """Codex keeps MCP servers in ~/.codex/config.toml next to model, project trust and its own
+    app-managed servers, so sync edits only the tables it owns and leaves every other byte.
+    It is personal only: just servers marked "personal": true are written, and never a secret."""
+
+    EXISTING = (
+        '# my codex settings\n'
+        'model = "m1"\n\n'
+        '[mcp_servers.mempalace]\ncommand = "python"\nargs = ["-m", "mempalace"]\n\n'
+        '[mcp_servers.plain]\ncommand = "old"\nstartup_timeout_sec = 90\n\n'
+        '[mcp_servers.plain.env]\nSTALE = "1"\n\n'
+        '[projects."/Users/u/code"]\ntrust_level = "trusted"\n'
+    )
+
+    def load(self):
+        return tomllib.loads(self.codex.read_text())
+
+    def servers(self):
+        return self.load().get("mcp_servers", {}) if self.codex.exists() else {}
+
+    def put_codex(self, text, mode=0o644):
+        self.codex.parent.mkdir(parents=True, exist_ok=True)
+        self.codex.write_text(text)
+        os.chmod(self.codex, mode)
+
+    def personal(self, **servers):
+        self.set_master({"mcpServers": {n: {"personal": True, "enabled": True, **e}
+                                        for n, e in servers.items()}})
+
+    def test_target_is_listed_and_first_class(self):
+        r = subprocess.run([sys.executable, "-I", str(SCRIPT), "--help"], capture_output=True, text=True)
+        self.assertIn("codex", r.stdout)
+
+    def test_translation_has_no_type_and_no_extensions(self):
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        s = self.load()["mcp_servers"]
+        self.assertEqual(s["plain"], {"command": NPX, "args": ["-y", "chrome-devtools-mcp@latest"],
+                                      "env": {"PATH": "/opt/node/bin:/usr/bin"}})
+        for entry in s.values():
+            for bad in ("type", "enabled", "allowedTools", "headers", "personal"):
+                self.assertNotIn(bad, entry)
+
+    def test_only_personal_servers_reach_codex(self):
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(set(self.load()["mcp_servers"]), {"plain"})
+        text = self.codex.read_text()
+        for work in ("github", "atlassian", "work.env", "/bin/zsh", "mcp-remote", "TOKEN"):
+            self.assertNotIn(work, text)
+        self.assertIn("github=not personal", r.stdout)
+
+    def test_unmarked_server_is_not_written_even_with_no_secret(self):
+        self.set_master({"mcpServers": {"x": {"type": "stdio", "command": "x", "enabled": True}}})
+        self.run_sync("--targets", "codex")
+        self.assertEqual(self.servers(), {})
+        self.assertFalse(self.codex.exists(), "nothing to write, so no file is created")
+
+    def test_personal_server_that_needs_a_secret_is_refused(self):
+        self.personal(t={"type": "stdio", "command": "t", "env": {"K": "${WORK_TOKEN}"}},
+                      u={"type": "http", "url": "https://u.example", "headers": {"Authorization": "${A}"}})
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(self.servers(), {})
+        self.assertIn("Codex is personal only", r.stdout)
+        self.assertFalse(self.codex.exists())
+
+    def test_unmarked_server_already_in_codex_is_flagged_not_deleted(self):
+        self.put_codex('[mcp_servers.github]\ncommand = "mine"\n')
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(self.load()["mcp_servers"]["github"], {"command": "mine"})
+        self.assertIn("not marked personal", r.stdout)
+
+    def test_literal_url_server_keeps_native_http_with_http_headers(self):
+        self.personal(docs={"type": "http", "url": "https://d.example/mcp", "headers": {"X-Region": "us"}})
+        self.run_sync("--targets", "codex")
+        self.assertEqual(self.load()["mcp_servers"]["docs"],
+                         {"url": "https://d.example/mcp", "http_headers": {"X-Region": "us"}})
+
+    def test_other_content_is_preserved_byte_for_byte(self):
+        self.put_codex(self.EXISTING)
+        self.run_sync("--targets", "codex")
+        text, got = self.codex.read_text(), self.load()
+        self.assertTrue(text.startswith('# my codex settings\nmodel = "m1"\n\n'))
+        self.assertIn('[mcp_servers.mempalace]\ncommand = "python"\nargs = ["-m", "mempalace"]\n', text)
+        self.assertIn('[projects."/Users/u/code"]\ntrust_level = "trusted"\n', text)
+        self.assertEqual(got["mcp_servers"]["mempalace"], {"command": "python", "args": ["-m", "mempalace"]})
+        self.assertEqual(got["projects"], {"/Users/u/code": {"trust_level": "trusted"}})
+        self.assertEqual(got["model"], "m1")
+
+    def test_unchanged_servers_keep_their_hand_formatting(self):
+        # `plain` already equals what sync would write, `mine` is not in the master at all.
+        text = ('[mcp_servers.mine]  # my own server\ncommand   = \'tool\'\n\n'
+                '[mcp_servers.plain]\n# pinned by hand\ncommand = "%s"  # keep\n'
+                'args = [\n  "-y",\n  "chrome-devtools-mcp@latest",\n]\n\n'
+                '[mcp_servers.plain.env]\nPATH = "/opt/node/bin:/usr/bin"\n' % NPX)
+        self.put_codex(text)
+        self.run_sync("--targets", "codex")
+        out = self.codex.read_text()
+        self.assertIn("[mcp_servers.mine]  # my own server\ncommand   = 'tool'\n", out)
+        self.assertIn('# pinned by hand\ncommand = "%s"  # keep\nargs = [\n  "-y",' % NPX, out)
+        self.assertEqual(self.load()["mcp_servers"]["plain"]["args"], ["-y", "chrome-devtools-mcp@latest"])
+
+    def test_managed_server_is_replaced_in_place_and_keeps_codex_only_keys(self):
+        self.put_codex(self.EXISTING)
+        self.run_sync("--targets", "codex")
+        p = self.load()["mcp_servers"]["plain"]
+        self.assertEqual(p["command"], NPX)
+        self.assertEqual(p["startup_timeout_sec"], 90)
+        self.assertNotIn("STALE", p.get("env", {}))
+        text = self.codex.read_text()
+        self.assertLess(text.index("mcp_servers.mempalace"), text.index("mcp_servers.plain"))
+        self.assertLess(text.index("mcp_servers.plain"), text.index("[projects."))
+
+    def test_disabled_master_server_is_removed_with_its_subtables(self):
+        self.put_codex(self.EXISTING)
+        self.personal(plain={"type": "stdio", "command": "x", "enabled": False})
+        self.run_sync("--targets", "codex")
+        got = self.load()
+        self.assertNotIn("plain", got["mcp_servers"])
+        self.assertIn("mempalace", got["mcp_servers"])
+        self.assertNotIn("STALE", self.codex.read_text())
+
+    def test_idempotent_second_run_does_not_touch_the_file(self):
+        self.put_codex(self.EXISTING)
+        self.run_sync("--targets", "codex")
+        before, ino = self.codex.read_text(), self.codex.stat().st_ino
+        nb = len(list(self.codex.parent.glob("config.toml.bak.*")))
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(before, self.codex.read_text())
+        self.assertEqual(ino, self.codex.stat().st_ino)
+        self.assertEqual(nb, len(list(self.codex.parent.glob("config.toml.bak.*"))))
+        self.assertNotIn("\n  +", r.stdout)
+        self.assertNotIn("\n  ~", r.stdout)
+
+    def test_backup_made_before_change_and_mode_kept(self):
+        self.put_codex(self.EXISTING, mode=0o640)
+        self.run_sync("--targets", "codex")
+        baks = list(self.codex.parent.glob("config.toml.bak.*"))
+        self.assertEqual(len(baks), 1)
+        self.assertEqual(baks[0].read_text(), self.EXISTING)
+        self.assertEqual(stat.S_IMODE(self.codex.stat().st_mode), 0o640)
+
+    def test_missing_file_is_created_private(self):
+        self.run_sync("--targets", "codex")
+        self.assertEqual(stat.S_IMODE(self.codex.stat().st_mode), 0o600)
+        self.assertIn("plain", self.load()["mcp_servers"])
+
+    def test_dry_run_writes_nothing_and_lists_key_paths(self):
+        self.put_codex(self.EXISTING)
+        r = self.run_sync("--targets", "codex", "--dry-run")
+        self.assertEqual(self.codex.read_text(), self.EXISTING)
+        self.assertEqual(list(self.codex.parent.glob("config.toml.bak.*")), [])
+        self.assertIn("~mcp_servers.plain.command", r.stdout)
+
+    def test_awkward_values_round_trip(self):
+        nasty = ['say "hi"', "back\\slash", "tab\there", "line\nbreak", "unicode \u00e9 \u2713", "'single'", ""]
+        self.personal(t={"type": "stdio", "command": "/bin/echo", "args": nasty,
+                         "env": {"K E Y": "v.1", "dotted.name": "x"}})
+        self.run_sync("--targets", "codex")
+        t = self.load()["mcp_servers"]["t"]
+        self.assertEqual(t["args"], nasty)
+        self.assertEqual(t["env"], {"K E Y": "v.1", "dotted.name": "x"})
+
+    def test_literal_secret_in_a_personal_server_is_refused(self):
+        self.personal(t={"type": "stdio", "command": "t", "env": {"MY_TOKEN": "ghp_literal_" + FAKE}})
+        r = self.run_sync("--targets", "codex")
+        self.assertNotIn(FAKE, self.codex.read_text())
+        self.assertNotIn(FAKE, r.stdout + r.stderr)
+        self.assertIn("refused", r.stdout)
+
+    def test_unparseable_result_aborts_and_leaves_the_file_alone(self):
+        # An inline mcp_servers table cannot be extended by appending a [mcp_servers.x] table.
+        text = 'model = "m"\nmcp_servers = { keep = { command = "k" } }\n'
+        self.put_codex(text)
+        r = self.run_sync("--targets", "codex")
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(self.codex.read_text(), text)
+        self.assertEqual(list(self.codex.parent.glob("config.toml.bak.*")), [])
+        self.assertIn("codex", r.stdout + r.stderr)
+
+
+class DropIns(Base):
+    """Servers that belong to another repo live in <master dir>/mcp.d/*.json."""
+
+    def drop(self, name, doc):
+        d = self.master.parent / "mcp.d"
+        d.mkdir(exist_ok=True)
+        (d / name).write_text(doc if isinstance(doc, str) else json.dumps(doc))
+
+    def test_drop_in_servers_are_merged_in(self):
+        self.drop("extra.json", {"mcpServers": {"extra": {"type": "stdio", "command": "e"}}})
+        self.run_sync("--targets", "claude")
+        s = self.get("claude")["mcpServers"]
+        self.assertEqual(s["extra"], {"type": "stdio", "command": "e"})
+        self.assertIn("remote", s)
+
+    def test_drop_in_wins_over_the_master_for_the_same_name(self):
+        self.drop("work.json", {"mcpServers": {"remote": {"type": "http", "url": "https://override.example"}}})
+        self.run_sync("--targets", "claude")
+        self.assertEqual(self.get("claude")["mcpServers"]["remote"]["url"], "https://override.example")
+
+    def test_drop_ins_apply_in_filename_order(self):
+        self.drop("20-b.json", {"mcpServers": {"x": {"type": "stdio", "command": "b"}}})
+        self.drop("10-a.json", {"mcpServers": {"x": {"type": "stdio", "command": "a"}}})
+        self.run_sync("--targets", "claude")
+        self.assertEqual(self.get("claude")["mcpServers"]["x"]["command"], "b")
+
+    def test_a_broken_drop_in_stops_the_run_and_names_the_file(self):
+        self.drop("bad.json", "{ not json")
+        r = self.run_sync("--targets", "claude")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("bad.json", r.stdout + r.stderr)
+        self.assertFalse(self.paths["claude"].exists())
+
+    def test_drop_in_literal_secret_is_refused_like_the_master(self):
+        self.drop("work.json", {"mcpServers": {"remote": {"type": "http", "url": "https://u.example",
+                                                    "headers": {"Authorization": "Prefix " + FAKE}}}})
+        r = self.run_sync("--targets", "claude", "--strict")
+        self.assertEqual(r.returncode, 1)
+        self.assertNotIn(FAKE, r.stdout + r.stderr)
+
+
+class Template(Base):
+    EXAMPLE = HERE / "references" / "mcp.example.json"
+
+    def test_example_master_is_valid_and_strict_clean(self):
+        self.master = self.EXAMPLE
+        r = self.run_sync("--strict", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("refused", r.stdout)
+
+    def test_example_holds_only_placeholders_and_no_employer_data(self):
+        text = self.EXAMPLE.read_text()
+        for needle in ("atlassian.net", "ghp_", "Bearer "):
+            self.assertNotIn(needle, text)
+        self.assertIsNone(re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", text), "an email address")
+        self.assertIn("${", text)
 
 
 if __name__ == "__main__":
