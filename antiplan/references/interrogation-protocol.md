@@ -471,18 +471,10 @@ All of the following must be true:
 
 ## Interrogation Style Guide
 
-### Batch Size
-Ask 3-5 questions per response, grouped by theme. State what you understand,
-what's ambiguous, and what you need.
-
-### Recommended Answers
-Alongside each question, state your best guess at the answer. Users correct
-a proposed answer faster than they construct one from scratch:
-
-> "Given your schema, I'd expect X. Is that right, or does your use case differ?"
-
-When the decision is genuinely open (no clearly better option), present
-2–3 concrete options with tradeoffs instead of a single recommendation.
+### Rounds
+Build and ask question rounds by `~/.skills/shared/GRILLING.md`: the design-tree frontier, up to 5 numbered questions per round, each with a recommended answer worded so "yes" accepts it.
+Look facts up yourself; put only decisions to the user.
+State what you understand and what is ambiguous before the questions.
 
 ### Forced Choices
 When the answer space is bounded (e.g., "REST vs gRPC", "SSR vs SPA",
@@ -555,7 +547,7 @@ request a focused re-interrogation on a specific area (e.g., security,
 performance, error handling, data model). This adds depth without restarting:
 
 1. Agent identifies the focus area from Contested or low-confidence items
-2. Ask 3-5 targeted questions on that area only
+2. Ask a round on that area only (rules in `~/.skills/shared/GRILLING.md`)
 3. New resolutions add to the Convergence Ledger without resetting it
 4. Repeat for additional focus areas as needed
 
