@@ -30,16 +30,14 @@ mmdc -i diagram.mmd -o diagram.svg -b transparent
 
 ### 2. Upload as attachment via REST API
 
-The API token comes from the environment only: `CONFLUENCE_API_TOKEN` in `~/.config/secrets/work.env` (loaded by every new shell).
-If it is missing, run `./bootstrap.sh --secrets` in `~/bootstrap` and fill in the file.
-`CONFLUENCE_URL` and `CONFLUENCE_USERNAME` are read from the environment first, then from the non-secret entries in `~/.config/mcp/mcp_servers.json`.
-The helper below checks all three and stops with a clear message if one is missing.
+The token, URL and username come from the environment only: `CONFLUENCE_API_TOKEN`, `CONFLUENCE_URL` (Cloud, ends in `/wiki`) and `CONFLUENCE_USERNAME` in `~/.config/secrets/work.env` (loaded by every new shell).
+If one is missing, run `./bootstrap.sh --secrets` in `~/bootstrap` and fill in the file.
+The helper below checks all three, stops with a clear message if one is missing, and defines `confluence_curl`, which passes the credentials to curl on a pipe so the token never shows in `ps`.
 
 ```bash
 . ~/.skills/confluence-diagrams/scripts/confluence_env.sh || exit 1
 
-curl -s -u "$CONFLUENCE_USERNAME:$CONFLUENCE_API_TOKEN" \
-  -X PUT \
+confluence_curl -X PUT \
   -H "X-Atlassian-Token: nocheck" \
   -F "file=@diagram.svg" \
   -F "comment=Diagram" \
@@ -48,18 +46,15 @@ curl -s -u "$CONFLUENCE_USERNAME:$CONFLUENCE_API_TOKEN" \
 
 ### 3. Embed inline
 
-Fetch the page in storage format, then update with explicit width:
+Fetch the page in storage format, edit the body, then PUT it back with the version bumped by one:
 
 ```bash
-# Fetch current page
-mcp-cli call atlassian confluence_get_page \
-  '{"page_id": "<page_id>", "include_metadata": false, "convert_to_markdown": false}'
-
-# mcp-cli expands ${VAR} in ~/.config/mcp/mcp_servers.json from the shell env.
-# Then update via mcp-cli with content_format: "storage":
+confluence_curl "$CONFLUENCE_URL/rest/api/content/<page_id>?expand=body.storage,version" > page.json
+# Edit the storage body into body.html, adding:
 # <ac:image ac:align="center" ac:layout="center" ac:width="750">
 #   <ri:attachment ri:filename="diagram.svg" />
 # </ac:image>
+confluence_put_storage <page_id> body.html   # keeps the title, sets version = current + 1
 ```
 
 ## Width Guidelines

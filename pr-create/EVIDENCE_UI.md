@@ -103,7 +103,7 @@ EOF
 
 ```bash
 # Start a recording session with Chrome DevTools Protocol
-# Or use mcp-cli to interact with browser tools
+# Or use the harness's chrome-devtools MCP tools
 # CRITICAL: Do NOT skip this step - start dev server if needed
 # Save screenshots to /tmp/, then use the ephemeral commit pattern above.
 ```

@@ -84,12 +84,9 @@ Add any Model Context Protocol tools available in your workflow:
 ```markdown
 ## Available MCP Tools
 
-- **mcp-cli** - CLI facade for accessing MCP servers dynamically
 - **[your-mcp-name-1]** - [brief description of what it does]
 - **[your-mcp-name-2]** - [brief description]
 ```
-
-If you use mcp-cli, include it so agents know to use `mcp-cli <server> <command>` for tasks involving those tools.
 
 
 ---
