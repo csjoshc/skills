@@ -52,12 +52,19 @@ On each tick, the auto-driver runs the same state detection as bare
 | `critic-failed` | Invoke spec-writer in fix mode for failing tickets only |
 | `ready-for-build` | Enter the **build loop** (see below) |
 | `slice-gate-pending` | Invoke gate review (per `/todo gate` template) |
-| `mid-build-resume` | Resume in-flight ticket via the mid-build-resume template; spawn a subagent that picks up where prior session left off |
+| `mid-build-resume` | Resume in-flight ticket via the mid-build-resume template; spawn a subagent that picks up where prior session left off. That subagent runs any reviewer roles inline (`run: inline`), per `~/.skills/shared/SUBAGENTS.md` |
 | `all-complete` | Emit final-status summary and **HALT — pipeline done** |
 
 ### The build loop
 
 When entering `ready-for-build` or `lite-ready`:
+
+Optional, before the first wave: when tickets need shared codebase or
+external-doc exploration, spawn one exploration subagent. It writes
+markdown notes to a directory outside the repo (for example the session
+scratchpad), and each BUILD prompt in step 3 gets that path, so
+implementers build instead of re-exploring.
+Exploration pattern adapted from Matt Pocock's `implement-spec` (MIT).
 
 1. **Identify the next wave.** Read the DAG (`.plan/task-sequence.md`)
    to find all tickets whose `Depends-On` chain is fully satisfied
@@ -75,7 +82,8 @@ When entering `ready-for-build` or `lite-ready`:
    `subagent_type: general-purpose`) in a single message — multiple
    `Agent` calls in one turn run concurrently. Each subagent's
    prompt is the `build-ticket-manual` template plus the ticket's
-   absolute path. Use `run_in_background: true` so the auto-driver
+   absolute path (and the exploration notes path, if any): pointers,
+   not pasted content. Use `run_in_background: true` so the auto-driver
    continues to monitor without blocking on any single agent.
 4. **Wait for all wave subagents to complete.** Notifications arrive
    as each finishes. After ALL have returned:

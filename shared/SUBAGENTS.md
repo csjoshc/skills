@@ -12,6 +12,11 @@ The output contract and any validator are the same either way.
 
 If none apply, run the role inline.
 
+## Depth and briefs
+
+- Only the top-level session spawns subagents. A skill running inside a subagent runs its roles inline and marks `run: inline`.
+- Brief subagents with pointers (paths to spec, tickets, notes), not pasted content.
+
 ## Running a role inline
 
 1. Load the role's prompt from the skill and follow it as written.
