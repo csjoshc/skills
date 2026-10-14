@@ -30,12 +30,13 @@ mmdc -i diagram.mmd -o diagram.svg -b transparent
 
 ### 2. Upload as attachment via REST API
 
-Credentials live in `~/.config/mcp/mcp_servers.json`:
+The API token comes from the environment only: `CONFLUENCE_API_TOKEN` in `~/.config/secrets/work.env` (loaded by every new shell).
+If it is missing, run `./bootstrap.sh --secrets` in `~/bootstrap` and fill in the file.
+`CONFLUENCE_URL` and `CONFLUENCE_USERNAME` are read from the environment first, then from the non-secret entries in `~/.config/mcp/mcp_servers.json`.
+The helper below checks all three and stops with a clear message if one is missing.
 
 ```bash
-CONFLUENCE_URL=$(python3 -c "import json; print(json.load(open('$HOME/.config/mcp/mcp_servers.json'))['mcpServers']['atlassian']['env']['CONFLUENCE_URL'])")
-CONFLUENCE_USERNAME=$(python3 -c "import json; print(json.load(open('$HOME/.config/mcp/mcp_servers.json'))['mcpServers']['atlassian']['env']['CONFLUENCE_USERNAME'])")
-CONFLUENCE_API_TOKEN=$(python3 -c "import json; print(json.load(open('$HOME/.config/mcp/mcp_servers.json'))['mcpServers']['atlassian']['env']['CONFLUENCE_API_TOKEN'])")
+. ~/.skills/confluence-diagrams/scripts/confluence_env.sh || exit 1
 
 curl -s -u "$CONFLUENCE_USERNAME:$CONFLUENCE_API_TOKEN" \
   -X PUT \
@@ -54,6 +55,7 @@ Fetch the page in storage format, then update with explicit width:
 mcp-cli call atlassian confluence_get_page \
   '{"page_id": "<page_id>", "include_metadata": false, "convert_to_markdown": false}'
 
+# mcp-cli expands ${VAR} in ~/.config/mcp/mcp_servers.json from the shell env.
 # Then update via mcp-cli with content_format: "storage":
 # <ac:image ac:align="center" ac:layout="center" ac:width="750">
 #   <ri:attachment ri:filename="diagram.svg" />
@@ -76,3 +78,5 @@ mcp-cli call atlassian confluence_get_page \
 - **Only `<ac:image>` with `<ri:attachment>`** renders attached SVGs inline.
 - **SVG MIME type** may be `application/octet-stream` — this is fine.
 - **Re-uploading** the same filename auto-creates a new version.
+
+Test the helper: `bash ~/.skills/confluence-diagrams/scripts/test_confluence_env.sh`.
