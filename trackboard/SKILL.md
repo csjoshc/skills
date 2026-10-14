@@ -100,7 +100,7 @@ Add `refresh --check` to CI or a pre-commit hook to catch a board that lags its 
 |---|---|---|
 | Cursor | `cursor` | `~/.cursor/projects/<workspace>/canvases/<name>.canvas.tsx` |
 | Claude.ai, ChatGPT canvas | `artifact` | Paste the file as a React artifact |
-| Claude Code, Codex CLI, Gemini CLI, other terminals | `html` and `md` | `.plan/board/board.html`, opened with the OS opener |
+| Claude Code, Codex CLI, other terminals | `html` and `md` | `.plan/board/board.html`, opened with the OS opener |
 | Chat only | `md` | Print the file |
 
 Detection order, escaping, and capabilities not yet verified: [references/harness-adapters.md](references/harness-adapters.md).

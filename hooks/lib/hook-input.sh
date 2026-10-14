@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared stdin parser for skill hooks. Source it, then call: hook_field command|file_path
-# Harnesses nest fields differently (Claude/Gemini: tool_input.*, Cursor: top level), so try all.
+# Harnesses nest fields differently (Claude: tool_input.*, Cursor: top level), so try all.
 
 HOOK_INPUT=$(cat)
 HOOK_PY=$(command -v python3 || command -v python)
@@ -27,10 +27,10 @@ for scope in (d.get("tool_input"), d.get("toolInput"), d.get("input"), d):
 
 # Per-project kill switch, independent of which harness runs the hook.
 hooks_disabled() {
-  local root="${CLAUDE_PROJECT_DIR:-${CURSOR_PROJECT_DIR:-${GEMINI_PROJECT_DIR:-$PWD}}}"
+  local root="${CLAUDE_PROJECT_DIR:-${CURSOR_PROJECT_DIR:-$PWD}}"
   [ -f "$root/.claude/hooks-disabled" ] || [ -f "$root/.hooks-disabled" ]
 }
 
 hook_project_root() {
-  printf '%s' "${CLAUDE_PROJECT_DIR:-${CURSOR_PROJECT_DIR:-${GEMINI_PROJECT_DIR:-$PWD}}}"
+  printf '%s' "${CLAUDE_PROJECT_DIR:-${CURSOR_PROJECT_DIR:-$PWD}}"
 }

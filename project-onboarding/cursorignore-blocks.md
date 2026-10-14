@@ -25,7 +25,6 @@ Thumbs.db
 
 # Local skill shims (symlinks to ~/.skills)
 .skills/
-.gemini/skills/
 ```
 
 ## Block B — npm / Node (if stack detected)

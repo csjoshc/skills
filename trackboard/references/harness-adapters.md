@@ -17,7 +17,7 @@ Pick the first match:
 
 1. A Cursor workspace: `~/.cursor/projects/<workspace>/canvases/` exists, or the session lists a canvas skill. Export `cursor`, then also `html` for the tracked copy.
 2. A chat surface that renders React artifacts (Claude.ai, ChatGPT canvas). Export `artifact` and paste the file content as the artifact body.
-3. Anything else with a file system (Claude Code, Codex CLI, Gemini CLI, other terminal agents). Export `html` and `md`.
+3. Anything else with a file system (Claude Code, Codex CLI, other terminal agents). Export `html` and `md`.
 4. Chat only, no file system: print the `md` export.
 
 When unsure, export `html` plus `md`. Both work in any browser or chat window.
@@ -44,7 +44,7 @@ ChatGPT canvas can preview React code. Paste the same `artifact.tsx`. Codex (clo
 
 ## Terminal agents
 
-Claude Code, Codex CLI, Gemini CLI, and similar agents:
+Claude Code, Codex CLI, and similar agents:
 
 ```bash
 S=~/.skills/trackboard/scripts/board_refresh.py
@@ -63,5 +63,5 @@ open .plan/board/board.html        # macOS; xdg-open on Linux, start on Windows
 
 - ChatGPT canvas React preview: this skill's author did not run `artifact.tsx` in it. OpenAI may change which imports the preview allows.
 - Claude.ai artifacts: not run in the live product; `artifact.tsx` passes `tsc --strict` against `@types/react@18`.
-- Gemini CLI and Codex CLI: no inline renderer known, so they use the HTML path.
+- Codex CLI: no inline renderer known, so they use the HTML path.
 - Cursor canvas detection by folder presence is a heuristic. A workspace folder may exist while the session runs elsewhere.

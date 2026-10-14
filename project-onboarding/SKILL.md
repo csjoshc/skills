@@ -156,7 +156,7 @@ context exclusions, and operational rules.
 ```
 
 - **Cursor**: `.cursorrules` (Note: older `.cursorrules` with full Tokenify/stack blocks should be replaced with this shim).
-- **Gemini CLI**: `GEMINI.md`
+- **Antigravity**: `GEMINI.md`
 - **Windsurf**: `.windsurfrules`
 - **Cline**: `.clinerules`
 
@@ -178,7 +178,7 @@ context exclusions, and operational rules.
 - **Claude Code CLI:** the global symlink `~/.claude/skills -> ~/.skills` covers it. No project-level action.
 - **Claude Desktop:** sandboxed, cannot follow external symlinks. Use the filtered `rsync` copy in [agent-sync/skills.md](../agent-sync/skills.md) (about 2 MB; never a plain `cp -r ~/.skills`) and re-run it when the master store changes.
 - **Everything else:** audit and establish links per [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) before completing onboarding. Link, don't copy.
-- Add project-level skill folders (`.skills/`, `.gemini/skills/`, `.claude/skills/`, etc.) to `.gitignore`.
+- Add project-level skill folders (`.skills/`, `.claude/skills/`, etc.) to `.gitignore`.
 - Use `agent-sync` to audit and fix broken links and stale copies.
 
 ---
@@ -209,7 +209,7 @@ context exclusions, and operational rules.
 - Future stacks (Rust, Go, Java, etc.) become new labeled blocks in [STACK_PREAMBLES.md](STACK_PREAMBLES.md), not ad hoc edits.
 - Exact patterns live in this skill and its companions; copy blocks verbatim. The `AGENTS.md` exclusion list is a soft ignore for tools without an ignore file.
 - Never replace a user's `AGENTS.md` / `.cursorignore` / `.cursorrules` / `STANDARDS.md` wholesale; merge and dedupe.
-- When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Gemini CLI), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use `/todo` for `.tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
+- When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Codex), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use `/todo` for `.tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
 - **Nested layouts:** Do not conclude "npm only" just because the workspace root lacks `package.json`; nested `package.json` still means npm. Same for Python manifests or backend `.py` trees under a subfolder.
 - **STANDARDS.md lifecycle:**
   - Global index and topic files live in `~/.skills`; they are not recreated per project
