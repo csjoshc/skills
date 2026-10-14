@@ -227,6 +227,10 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
 | Copilot | yes | no |
 
+`gateway-opencode` needs no target of its own.
+It runs a private opencode server that loads `~/.config/opencode` (servers, plugins, skills) and then layers `~/.gateway-opencode/opencode.json`, which only adds the `nexus` provider.
+`gateway-pi` is different: it has its own agent directory, so it has its own `pi-gateway` target.
+
 If a tool in the "no" column needs a master server, add a target in `mcp_sync.py` rather than copying values by hand.
 
 ## Verification checklist
