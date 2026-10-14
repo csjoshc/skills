@@ -4,8 +4,10 @@
 
 - Purpose
 - Vocabulary
-- Deletion test
-- Key principles
+- Principles
+- Deepening by dependency category
+- Replace, don't layer
+- Design it twice
 - How to apply
 
 ---
@@ -17,53 +19,83 @@ design or architectural structure questions. Adds an "architectural depth"
 perspective not covered by the standard four lenses (Layer & Dependency,
 Redundancy & Modularity, Error Handling & State, Data & Security).
 
-Source: [improve-codebase-architecture](https://github.com/mattpocock/skills)
-by Matt Pocock.
+Source: [codebase-design](https://github.com/mattpocock/skills) by Matt Pocock (MIT).
 
 ---
 
 ## Vocabulary
 
-Use these terms precisely. Do not substitute "component," "service," "API,"
-or "boundary."
+Use these terms exactly.
+Say module, interface, seam or adapter rather than "component", "service", "API" or "boundary".
 
 | Term | Definition |
 |------|-----------|
-| **Module** | Anything with an interface and an implementation (function, class, package, slice) |
-| **Interface** | Everything a caller must know: types, invariants, error modes, ordering, config — not just the type signature |
-| **Implementation** | The code inside |
-| **Depth** | Leverage at the interface: a lot of behavior behind a small interface. Deep = high leverage. Shallow = interface nearly as complex as the implementation |
-| **Seam** | Where an interface lives; a place behavior can be altered without editing in place |
-| **Adapter** | A concrete thing satisfying an interface at a seam |
-| **Leverage** | What callers get from depth |
-| **Locality** | What maintainers get from depth: change, bugs, knowledge concentrated in one place |
+| **Module** | Anything with an interface and an implementation, at any scale: function, class, package, tier-spanning slice |
+| **Interface** | Everything a caller must know to use the module correctly: type signature, invariants, ordering, error modes, required config, performance |
+| **Implementation** | The code inside the module. Distinct from adapter: a small adapter can have a large implementation, and the reverse |
+| **Depth** | Leverage at the interface: behaviour a caller or test can exercise per unit of interface learned. Deep = lots behind a small interface. Shallow = interface nearly as complex as the implementation |
+| **Seam** | Where an interface lives; a place behaviour can be altered without editing in place (Feathers) |
+| **Adapter** | A concrete thing satisfying an interface at a seam. Names a role, not a substance |
+| **Leverage** | What callers get from depth: one implementation pays back across N call sites and M tests |
+| **Locality** | What maintainers get from depth: change, bugs, knowledge and verification concentrate in one place |
+
+Depth is measured as leverage, not as a ratio of implementation lines to interface lines, which would reward padding.
 
 ---
 
-## Deletion test
+## Principles
 
-The primary diagnostic for shallow modules:
-
-> "Imagine deleting this module entirely. Does complexity vanish (the module
-> was earning its keep), or does it reappear scattered across N callers
-> (it was a pass-through)?"
-
-- Complexity vanishes → module is **deep**, keep it
-- Complexity reappears in callers → module is **shallow**, candidate for
-  merging or deepening
+- **Depth is a property of the interface, not the implementation.**
+  A deep module can be built from small swappable parts, as long as they stay out of the interface.
+- **The deletion test.**
+  Imagine deleting the module.
+  If complexity vanishes, it was a pass-through.
+  If complexity reappears across N callers, it was earning its keep.
+- **The interface is the test surface.**
+  Callers and tests cross the same seam.
+  Wanting to test past the interface means the module is the wrong shape.
+- **One adapter means a hypothetical seam, two adapters means a real one.**
+  Introduce a seam only when something actually varies across it, typically production plus test.
+- **Internal vs external seams.**
+  A deep module can have internal seams used by its own tests.
+  Keep them private rather than exposing them through the interface.
 
 ---
 
-## Key principles
+## Deepening by dependency category
 
-- **The interface is the test surface.** If the interface can't be tested
-  directly, the seam is in the wrong place.
-- **One adapter = hypothetical seam. Two adapters = real seam.** Don't
-  invest in the abstraction until there are two genuine implementations.
-- Shallow modules: interface is nearly as complex as the implementation.
-  They add indirection without reducing callers' cognitive load.
-- Pure functions extracted only for testability (with the real bugs hiding
-  in calling code) fail the locality test.
+Classify a candidate's dependencies first; the category decides how the deepened module is tested across its seam.
+
+1. **In-process** - pure computation or in-memory state, no I/O.
+   Always deepenable: merge the modules and test through the new interface directly, no adapter needed.
+2. **Local-substitutable** - has a local stand-in (PGLite for Postgres, in-memory filesystem).
+   Deepenable if the stand-in exists; tests run against it, and the seam stays internal.
+3. **Remote but owned (ports and adapters)** - your own services across a network.
+   Define a port at the seam, keep the logic in one deep module, and inject the transport: an in-memory adapter for tests, HTTP/gRPC/queue in production.
+4. **True external (mock)** - third-party services you do not control (Stripe, Twilio).
+   The deepened module takes the dependency as an injected port; tests supply a mock adapter.
+
+---
+
+## Replace, don't layer
+
+- Once tests exist at the deepened module's interface, delete the old unit tests on the shallow modules it replaced.
+- Assert on observable outcomes through the interface, not internal state.
+- Tests should survive internal refactors.
+  A test that must change when the implementation changes is testing past the interface.
+
+---
+
+## Design it twice
+
+For a chosen candidate, the first interface idea is rarely the best (Ousterhout).
+Use this only when the user wants to explore alternatives; cleanup itself stays read-only.
+
+1. Frame the problem: constraints the new interface must meet, its dependencies and their category, and a rough sketch to make the constraints concrete.
+2. Produce three or more radically different interfaces, in parallel sub-agents where available, each under one constraint: minimal (1-3 entry points), maximally flexible, trivial for the most common caller, or ports and adapters.
+3. For each, give the interface (including invariants and error modes), a usage example, what hides behind the seam, the dependency strategy, and trade-offs.
+4. Compare on depth, locality and seam placement, then recommend one, or a hybrid.
+   Be opinionated rather than offering a menu.
 
 ---
 
@@ -83,8 +115,8 @@ When running this lens during Phase 1 of cleanup, look for:
 
 For each candidate, report (using vocabulary above):
 
-- **Files** — which modules are involved
-- **Problem** — why the current structure causes friction
-- **Opportunity** — what deepening would look like (plain English, no code)
-- **Test improvement** — what test is currently impossible that would
+- **Files** - which modules are involved
+- **Problem** - why the current structure causes friction
+- **Opportunity** - what deepening would look like (plain English, no code)
+- **Test improvement** - what test is currently impossible that would
   become possible after deepening

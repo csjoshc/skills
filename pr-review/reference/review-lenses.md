@@ -89,12 +89,17 @@ For each finding, quote the exact rule code and text from
 - Unbounded queries
 - Required tests for new public functions
 
+**Smell baseline:** the code smells in [`tdd/REFACTORING.md`](../../tdd/REFACTORING.md) apply even when the repo documents nothing.
+Report a smell as a judgement call labelled "possible <smell>" (for example "possible Feature Envy") and quote the hunk.
+Smell findings never block and skip the checklist below.
+A documented repo rule overrides the baseline: where the repo endorses a pattern, suppress the smell.
+
 **Do not flag:**
 
 - Subjective preferences
 - Pre-existing violations
 - Linter-catchable issues
-- Rules not documented anywhere
+- Undocumented rules as hard violations; outside the smell baseline, leave them out
 
 **Checklist — report only if 4 of 4 are YES:**
 
@@ -194,6 +199,7 @@ For each finding, quote the exact rule code and text from
 - Scope creep outside ticket intent
 - Missing claim verification
 - Any layer BLOCK finding
+- Requirements that look implemented but where the implementation is wrong; quote the spec line
 
 **Do not flag:**
 
