@@ -183,8 +183,8 @@ def test_order_sends_confirmation_email(): ...
 
 ## Decision Checklist
 
-| Question | Threshold | Action |
-|----------|-----------|--------|
+| Question | Action |
+|----------|--------|
 | Test file > 300 lines? | Split by feature |
 | Same test in 2+ places? | Consolidate |
 | Test has no assertions? | Add or delete |
@@ -194,7 +194,7 @@ def test_order_sends_confirmation_email(): ...
 | One test > 50 lines? | Split |
 | Test setup > 20 lines? | Extract fixture |
 | Tests share mutable state? | Use fresh fixtures |
-| Test always uses dry-run? | No GPU/CI constraint | Use real backend |
+| Test always uses dry-run, with no GPU/CI constraint? | Use real backend |
 
 ---
 
