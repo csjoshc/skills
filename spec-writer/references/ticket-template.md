@@ -6,7 +6,7 @@ Read this when drafting or revising a ticket body. The Stage header contract sta
 
 - SECTION 1: SPEC (incl. success-criteria reframing)
 - SECTION 2: PLAN (Test Obligation Profile, test paths, failure paths)
-- SECTION 3: TASKS (task format, dependency graph, sizing)
+- SECTION 3: TASKS (task format, vertical slices, expand-contract, sizing)
 
 ### SECTION 1: SPEC
 
@@ -108,7 +108,7 @@ swallowed. Format:
 - **Boundary:** [name] — **On failure:** [what the user sees + what gets logged]
 
 **Architecture decisions (optional)**
-For non-trivial choices, add **ADR-NN** entries (see Operating principles). Trivial patterns can stay prose-only.
+Add an **ADR-NN** entry only for a decision that is hard to reverse, surprising without context, and a real trade-off (test in `../PDCA_T.md`). Everything else stays prose.
 
 **Design alternatives (if upstream analysis exists)**
 If antiplan or prior design discussion surfaced alternatives or rejected options, include a short subsection explaining why the recommended approach was chosen and what tradeoffs were considered. Reference upstream analysis to avoid re-debating settled decisions.
@@ -154,17 +154,27 @@ applies to it.
 
 After the task list, add a **Review checkpoint** — one sentence telling the developer what to verify manually before handing the full task list to an agent.
 
-#### Dependency graph + task sizing
+#### Vertical slices + task sizing
 
-<!-- merged from addyosmani/agent-skills planning-and-task-breakdown -->
+<!-- vertical-slice rules adapted from mattpocock/skills to-tickets (MIT) -->
 
-Order tasks by the dependency graph (foundations first), then slice **vertically** so each slice ships working end-to-end functionality.
+Slice the work into **tracer bullets**: each slice is a narrow but complete path through every layer it needs (schema, API, UI, tests).
 
-```
-schema -> models/types -> endpoints -> client -> UI
-```
+- A finished slice is demoable or verifiable on its own and leaves the system working.
+- Each slice fits in one fresh context window.
+- Prefactoring comes first: make the change easy, then make the easy change.
+- Order slices by real blocking edges only; a slice with no blockers can start immediately.
 
-Bad: build all DB, then all API, then all UI. Good: registration slice (schema + API + UI) -> login slice -> next slice. Each leaves the system working.
+Example: registration slice (schema + API + UI + test), then login slice, then the next slice.
+Inside a slice, order tasks producers-before-consumers (`schema -> models/types -> endpoints -> client -> UI`).
+
+**Wide refactors use expand-contract.**
+A wide refactor is one mechanical change (rename a column, retype a shared symbol) whose blast radius breaks many call sites at once, so no vertical slice can land green.
+Sequence it in three steps.
+Expand: add the new form beside the old so nothing breaks.
+Migrate: move call sites in batches sized by blast radius (per package or directory), each batch its own ticket blocked by the expand, with CI green between batches because the old form still exists.
+Contract: delete the old form in a ticket blocked by every migrate batch.
+When even the batches cannot stay green alone, let them share an integration branch that blocks a final integrate-and-verify ticket; green is promised only there.
 
 **Sizing**
 

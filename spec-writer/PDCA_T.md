@@ -18,12 +18,27 @@ Use PDCA-T as the mental model for every spec; mirror it in the three sections:
 |----------------|-------------------------------|
 | **1 — Planning** | One-line purpose; explicit **IN scope / OUT of scope**; external dependencies; acceptance criteria agreed in writing (block vague objectives — flag with `[ASSUMPTION]` until clarified). |
 | **2 — Requirements analysis** | Optional but recommended for complex work: **FR-NN** / **NFR-NN** / **RISK-NN** blocks (see below) in addition to plain Requirements / edge cases. |
-| **3 — Architecture design** | PLAN: non-trivial decisions as **ADR-NN**; API/contracts sketched before tasks; module or layer layout if it reduces ambiguity. |
+| **3 — Architecture design** | PLAN: decisions that pass the ADR test below as **ADR-NN**; API/contracts sketched before tasks; module or layer layout if it reduces ambiguity. |
 | **4 — Micro-task cycle** | TASKS: small increments; note **≤ ~50 lines of production code per micro-task** when using strict PDCA-T (excluding tests/docs — per METHOD). Sub-task checklist: context/skills → contract exists → **test categories** (happy, error, edge, security, performance where relevant) → implement → review → run tests. |
 | **5 — Integral validation** | PLAN **Testing strategy** + TASK criteria should enable full validation later (security, coverage targets, architecture checks) — state expectations if the user's METHOD.md workflow applies. |
 | **6 — Technical debt** | Known gaps: register as **DEBT-NN** (or defer to assumptions) instead of silent TODOs in "done" work. |
 | **7 — Refinement** | Loop until agreed targets (e.g. coverage, failing tests) — specify targets in PLAN when user requires METHOD-grade gates. |
 | **8 — Delivery** | Out of scope for spec-writer output unless the user asks: then add a short **Delivery evidence** stub (what to attach: test run, coverage, decisions, debt list). |
+
+## When an ADR Is Warranted
+
+<!-- adapted from mattpocock/skills domain-modeling ADR-FORMAT (MIT) -->
+
+Write an **ADR-NN** only when all three are true:
+
+1. **Hard to reverse**: changing your mind later costs real time or money.
+2. **Surprising without context**: a future reader would look at the code and ask why it was done this way.
+3. **A real trade-off**: there were genuine alternatives and one was picked for specific reasons.
+
+If a decision is easy to reverse, obvious, or had no real alternative, keep it as a line of PLAN prose instead.
+Typical qualifiers: architectural shape, integration patterns between contexts, technology choices with lock-in, boundary and ownership decisions, deliberate deviations from the obvious path, constraints not visible in the code, and rejections a reader would otherwise re-propose.
+An ADR can be one paragraph: context, decision, why.
+Add Alternatives and Consequences only when they carry information.
 
 ## Optional Formats
 
