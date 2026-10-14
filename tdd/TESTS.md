@@ -52,6 +52,7 @@ Red flags:
 - Test breaks when refactoring without behavior change
 - Test name describes HOW not WHAT
 - Verifying through external means instead of interface
+- Expected value computed the same way the code computes it (tautological)
 
 ```typescript
 // BAD: Bypasses interface to verify
@@ -68,6 +69,24 @@ test("createUser makes user retrievable", async () => {
   expect(retrieved.name).toBe("Alice");
 });
 ```
+
+**Tautological tests:** the expected value restates the implementation, so the test passes by construction.
+
+```typescript
+// BAD: Expected value is recomputed the way the code computes it
+test("calculateTotal sums line items", () => {
+  const items = [{ price: 10 }, { price: 5 }];
+  const expected = items.reduce((sum, i) => sum + i.price, 0);
+  expect(calculateTotal(items)).toBe(expected);
+});
+
+// GOOD: Expected value is an independent, known literal
+test("calculateTotal sums line items", () => {
+  expect(calculateTotal([{ price: 10 }, { price: 5 }])).toBe(15);
+});
+```
+
+Good/bad sections adapted from mattpocock/skills `tdd/tests.md` (MIT).
 
 ## Test Naming
 

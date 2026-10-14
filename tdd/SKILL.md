@@ -5,15 +5,28 @@ description: Test-driven development with red-green-refactor loop. Use when user
 
 # Test-Driven Development (TDD)
 
-**Core principle**: tests verify behavior through public interfaces, not implementation details. Code can change entirely; tests shouldn't.
-A test that breaks on a refactor with no behavior change was testing implementation.
-Examples and the good/bad split: [PHILOSOPHY.md](PHILOSOPHY.md), [TESTS.md](TESTS.md).
+## What a good test is
 
-## Hard rules
+A good test checks behavior through a public interface and survives any refactor that keeps that behavior.
+It reads like a spec: "user can checkout with valid cart" names a capability, not a mechanism.
+Examples: [TESTS.md](TESTS.md).
 
-- **Vertical slices only.** One test, one implementation, repeat. Never write all tests first, then all code.
-- **Never refactor while RED.** Get to GREEN first.
-- **Only enough code to pass the current test.** No speculative features.
+## Anti-patterns
+
+- **Implementation-coupled:** mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of the interface). The tell: a refactor with no behavior change breaks it.
+- **Tautological:** the expected value is recomputed the way the code computes it (`expect(add(a, b)).toBe(a + b)`), so it passes by construction. Take expected values from an independent source: a known literal, a worked example, the spec.
+- **Horizontal slicing:** all tests first, then all code. Bulk tests check imagined behavior and the shape of things, and you commit to test structure before you understand the code. Work in vertical slices: each test is a tracer bullet shaped by what the last cycle taught you.
+
+More: [shared/TEST_ANTIPATTERNS.md](../shared/TEST_ANTIPATTERNS.md).
+
+## Rules of the loop
+
+- **Red before green.** Write the failing test first, then only enough code to pass it, with no speculative features.
+- **One slice at a time.** One seam, one test, one minimal implementation per cycle.
+- **Refactor only on green**, as its own phase after the slices pass, running tests after each step.
+
+## Test paths, dry-run, commits
+
 - **Write the test to its permanent path immediately.** Never use `tests/tickets/` (deprecated staging area). The ticket's AC→Test table names the path; otherwise follow the repo's existing test layout.
 - **Dry-run is not completion proof.** Tests default to non-dry-run; see [DRY_RUN.md](DRY_RUN.md).
 - **Commit only when the user asks**, at proven call-stack boundaries; see [COMMIT_DISCIPLINE.md](COMMIT_DISCIPLINE.md).
@@ -47,16 +60,6 @@ One source file per cycle (plus its support set). If a cycle needs a second sour
 
 **Bug fixes:** write a test that reproduces the bug through the public interface. It MUST fail first; a passing reproduction is not a reproduction. Then fix, re-run, run the relevant suite. Steps: [WORKFLOW.md](WORKFLOW.md) (Prove-It pattern).
 
-## Checklist per cycle
-
-```
-[ ] Test describes behavior, not implementation
-[ ] Test uses public interface only
-[ ] Test would survive internal refactor
-[ ] Code is minimal for this test
-[ ] No speculative features added
-```
-
 <!-- pattern: common-rationalizations -->
 ## Common Rationalizations
 
@@ -73,8 +76,7 @@ Read only when the situation matches:
 
 - [SCOPING.md](SCOPING.md): Phase 0 for ticket builds, builds the TOQ
 - [WORKFLOW.md](WORKFLOW.md): phase detail, one-file cycles, discovery halt, bug fixes
-- [PHILOSOPHY.md](PHILOSOPHY.md): deciding what makes a good test; why vertical slices
-- [TESTS.md](TESTS.md): concrete good/bad examples, frontend and async/streaming patterns
+- [TESTS.md](TESTS.md): good/bad examples, red flags, naming, frontend and async/streaming patterns
 - [TEST_CRAFT.md](TEST_CRAFT.md): FIRST, flaky tests, smells, coverage, doubles, integration/e2e, black-box techniques, pyramid
 - [INTERFACE_DESIGN.md](INTERFACE_DESIGN.md): testable surfaces, interaction specs, Deps/Params/Payload, fractal companions
 - [MOCKING.md](MOCKING.md) / [MOCK_CONTRACT.md](MOCK_CONTRACT.md): boundary mocks and canonical doubles; MOCK_CONTRACT is required when the red-step test introduces an external boundary mock
@@ -83,3 +85,5 @@ Read only when the situation matches:
 - [CI_CD.md](CI_CD.md): running tests locally or in CI
 - [DRY_RUN.md](DRY_RUN.md): a test or run uses dry-run mode
 - [COMMIT_DISCIPLINE.md](COMMIT_DISCIPLINE.md): committing finished work
+
+Good-test, anti-pattern and loop rules adapted from mattpocock/skills (MIT).
