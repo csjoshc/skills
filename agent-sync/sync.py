@@ -68,10 +68,9 @@ def windows_path(path: Path) -> str:
 class PlatformConfig:
     name: str
     skills_symlink: Path
-    permission_type: str  # "external_directory", "filesystem", "policy", "trust"
+    permission_type: str  # "external_directory", "trust", "unmanaged"
     config_path: Optional[Path] = None
-    config_parser: Optional[str] = None  # "json", "toml"
-    template_name: Optional[str] = None
+    permission_note: str = ""  # shown for "unmanaged" platforms
     platform_key: str = ""  # Set during PLATFORMS construction
 
 
@@ -81,25 +80,20 @@ PLATFORMS = {
         skills_symlink=HOME / ".config" / "opencode" / "skills",
         permission_type="external_directory",
         config_path=HOME / ".config" / "opencode" / "opencode.json",
-        config_parser="json",
-        template_name="opencode.json",
         platform_key="opencode",
     ),
     "codex": PlatformConfig(
         name="Codex",
         skills_symlink=HOME / ".codex" / "skills",
-        permission_type="filesystem",
-        config_path=HOME / ".codex" / "config.toml",
-        config_parser="toml",
-        template_name="codex-permissions.toml",
+        permission_type="unmanaged",
+        permission_note="no managed config; sandbox reads outside the workspace not confirmed",
         platform_key="codex",
     ),
     "antigravity": PlatformConfig(
         name="Antigravity",
         skills_symlink=HOME / ".gemini" / "antigravity" / "skills",
-        permission_type="policy",
-        config_path=HOME / ".gemini" / "policies" / "skills.toml",
-        template_name="gemini-policy.toml",
+        permission_type="unmanaged",
+        permission_note="no managed config; no known setting for reads outside the workspace",
         platform_key="antigravity",
     ),
     "cursor": PlatformConfig(
@@ -146,6 +140,7 @@ class Status(Enum):
     WRONG_TARGET = "❌ Wrong Target"
     NOT_INSTALLED = "➖ Not Installed"
     PERMISSION_OK = "✅ OK"
+    PERMISSION_UNMANAGED = "➖ Unmanaged"
     PERMISSION_MISSING = "❌ Missing"
     PERMISSION_BROKEN = "❌ Broken"
 
@@ -431,6 +426,26 @@ def sync_codex_per_skill_links(logger: Logger) -> bool:
 # ─── Permission Config Audit ────────────────────────────────────────────────
 
 
+# opencode v2 reads a `permissions` rule array. `*` also matches `/`, so one rule covers the tree.
+OPENCODE_SKILLS_RULES = [
+    {"action": "external_directory", "resource": "~/.skills/*", "effect": "allow"},
+    {"action": "read", "resource": "~/.skills/*", "effect": "allow"},
+]
+
+
+def opencode_allows_skills(data: dict) -> bool:
+    """True if the config allows ~/.skills, as a v2 rule array or the older v1 object."""
+    for rule in data.get("permissions") or []:
+        if (
+            rule.get("action") == "external_directory"
+            and rule.get("effect") == "allow"
+            and ".skills" in rule.get("resource", "")
+        ):
+            return True
+    v1 = (data.get("permission") or {}).get("external_directory")
+    return isinstance(v1, dict) and any(".skills" in k and v == "allow" for k, v in v1.items())
+
+
 def audit_permissions(config: PlatformConfig, logger: Logger) -> AuditResult:
     """Audit permission configuration for a platform."""
     result = AuditResult(
@@ -444,84 +459,56 @@ def audit_permissions(config: PlatformConfig, logger: Logger) -> AuditResult:
         result.permission_details = "Workspace trust (no config needed)"
         return result
 
-    if not config.config_path:
-        result.permission_status = Status.PERMISSION_MISSING
-        result.permission_details = "No config path defined"
+    if config.permission_type == "unmanaged":
+        result.permission_status = Status.PERMISSION_UNMANAGED
+        result.permission_details = config.permission_note
         return result
 
-    if not config.config_path.exists():
+    if not config.config_path or not config.config_path.exists():
         result.permission_status = Status.PERMISSION_MISSING
         result.permission_details = f"Config file missing: {config.config_path}"
         logger.warn(f"{config.name}: Permission config missing")
         return result
 
     try:
-        content = config.config_path.read_text()
-
-        if config.config_parser == "json":
-            data = json.loads(content)
-            if config.platform_key == "opencode":
-                perm = data.get("permission", {}).get("external_directory", {})
-                if any(".skills" in k for k in perm):
-                    result.permission_status = Status.PERMISSION_OK
-                    result.permission_details = "external_directory configured"
-                else:
-                    result.permission_status = Status.PERMISSION_MISSING
-                    result.permission_details = "No external_directory for .skills"
-        elif config.config_parser == "toml":
-            if ".skills" in content:
-                result.permission_status = Status.PERMISSION_OK
-                result.permission_details = "filesystem permission configured"
-            else:
-                result.permission_status = Status.PERMISSION_MISSING
-                result.permission_details = "No .skills permission in config"
-        elif config.permission_type == "policy":
-            if ".skills" in content:
-                result.permission_status = Status.PERMISSION_OK
-                result.permission_details = "policy rules configured"
-            else:
-                result.permission_status = Status.PERMISSION_MISSING
-                result.permission_details = "No .skills policy rules"
-
-    except Exception as e:
+        data = json.loads(config.config_path.read_text())
+    except (OSError, json.JSONDecodeError) as e:
         result.permission_status = Status.PERMISSION_BROKEN
         result.permission_details = f"Parse error: {e}"
         logger.error(f"{config.name}: Permission config parse error: {e}")
+        return result
 
+    if opencode_allows_skills(data):
+        result.permission_status = Status.PERMISSION_OK
+        result.permission_details = "~/.skills allowed"
+    else:
+        result.permission_status = Status.PERMISSION_MISSING
+        result.permission_details = "No allow rule for ~/.skills"
     return result
 
 
 def repair_permissions(config: PlatformConfig, logger: Logger) -> bool:
-    """Repair permission config from template."""
-    if not config.template_name:
-        logger.warn(f"No template available for {config.name}")
+    """Add the ~/.skills allow rules to opencode's config, keeping every other key and the mode."""
+    path = config.config_path
+    try:
+        data = json.loads(path.read_text()) if path.exists() else {}
+    except (OSError, json.JSONDecodeError) as e:
+        # Never overwrite a file we cannot parse.
+        logger.error(f"  Not touching {path}: {e}")
         return False
 
-    template_path = SKILLS_DIR / "configs" / config.template_name
-    if not template_path.exists():
-        logger.error(f"Template missing: {template_path}")
-        return False
+    rules = list(data.get("permissions") or [])
+    rules += [r for r in OPENCODE_SKILLS_RULES if r not in rules]
+    data["permissions"] = rules
 
-    config.config_path.parent.mkdir(parents=True, exist_ok=True)
-
-    template_content = template_path.read_text()
-
-    if config.config_parser == "json" and config.config_path.exists():
-        try:
-            existing = json.loads(config.config_path.read_text())
-            template_data = json.loads(template_content)
-            existing.update(template_data)
-            config.config_path.write_text(json.dumps(existing, indent=2))
-            logger.info(f"  Merged permissions into {config.config_path}")
-            return True
-        except json.JSONDecodeError:
-            config.config_path.write_text(template_content)
-            logger.info(f"  Replaced {config.config_path} with template")
-            return True
-    else:
-        config.config_path.write_text(template_content)
-        logger.info(f"  Wrote {config.config_path} from template")
-        return True
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
+    tmp = path.with_name(path.name + ".tmp-sync")
+    tmp.write_text(json.dumps(data, indent=2) + "\n")
+    os.chmod(tmp, mode)
+    os.replace(tmp, path)
+    logger.info(f"  Added ~/.skills allow rules to {path}")
+    return True
 
 
 # ─── Project-Level Symlinks ─────────────────────────────────────────────────
@@ -634,11 +621,11 @@ def full_audit(
                 Status.PERMISSION_MISSING,
                 Status.PERMISSION_BROKEN,
             ):
-                if config.template_name:
+                if config.permission_type == "external_directory":
                     repaired = repair_permissions(config, logger)
                     if repaired:
                         combined.permission_status = Status.PERMISSION_OK
-                        combined.permission_details = "Restored from template"
+                        combined.permission_details = "~/.skills allowed (repaired)"
 
         results.append(combined)
 

@@ -109,6 +109,29 @@ Always provide a **Sync Status Report** table with the following structure:
 
 Add a **Stale/Broken Links** section below if any removals are required to propagate state from the master store.
 
+## Permissions column
+
+The audit's Permissions column says whether a tool can read `~/.skills` without asking.
+
+| Value | Meaning |
+|---|---|
+| OK | Nothing to configure (workspace trust), or the allow rule is present. |
+| Missing | opencode only: no allow rule for `~/.skills`. A repair run adds one. |
+| Unmanaged | Codex and Antigravity: no managed config exists. Nothing is written, and it is not a failure. |
+
+opencode v2 takes a `permissions` rule array in `~/.config/opencode/opencode.json`.
+The repair adds two rules and leaves every other key and the file mode alone:
+
+```json
+{ "action": "external_directory", "resource": "~/.skills/*", "effect": "allow" }
+{ "action": "read", "resource": "~/.skills/*", "effect": "allow" }
+```
+
+`*` also matches `/`, so one rule covers the whole tree.
+The older `permission.external_directory` object is still recognised by the audit.
+Without the rules, an `ask` default rejects the read in a non-interactive `opencode run`, which was seen in a test.
+`test_sync_permissions.py` covers the audit and repair.
+
 ## Quick Reference
 
 For detailed setup instructions and platform-specific paths:
