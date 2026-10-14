@@ -10,41 +10,44 @@ description: >-
 
 # Session handoff
 
-When the user wants to **hand off** work to another agent (new chat, teammate, or async continuation), produce **one block of text they can copy and paste as the sole initial message** to that agent. Assume the recipient has **zero** conversation history and **no** implicit project knowledge beyond what you put in the prompt.
+When the user wants to **hand off** work (new chat, new harness, new directory, a teammate, or async continuation), produce **one block of text they can paste as the sole first message** to the next agent.
+Assume the recipient has **zero** conversation history and knows only what the prompt tells it.
+If the user said what the next session is for, tailor the prompt to that focus.
+
+Artifact and redaction rules adapted from Matt Pocock's `handoff` skill (MIT).
 
 ## Output contract
 
-1. **Primary deliverable**: A single markdown section titled **Handoff prompt** (or similar) containing the full paste-ready text. The handoff must be **sufficient and necessary** to continue the task—not a dump of everything said, but everything a competent agent needs to succeed without guessing.
+1. **Handoff prompt** (always): one markdown section holding the full paste-ready text, wrapped in a `markdown` code block so it copies in one click.
+   It is **sufficient and necessary**: everything a competent agent needs to continue without guessing, and nothing it can read for itself.
+2. **Plan file** (conditional): when the remaining work is non-trivial (see below), also write `.handoff/plan-<slug>.md` and reference it by absolute path in the prompt.
 
-   **⚠️ Critical**: Wrap the entire handoff prompt in a markdown code block (triple backticks with "markdown" language tag) so the user can copy it with one click.
+Build the prompt from [TEMPLATE.md](TEMPLATE.md).
 
-2. **Secondary deliverable** (conditional): If the remaining work is **complex or non-trivial** (see threshold below), also write a **plan file** and reference it by absolute path in the handoff prompt.
+## What to summarize
 
----
-
-## What to summarize (always)
-
-From the current conversation and any open or referenced files, extract and state clearly:
+From the conversation and any open or referenced files, state clearly:
 
 | Area | Include |
 |------|---------|
-| **Goal** | What “done” looks like; user constraints (stack, style, deadlines). |
+| **Goal** | What "done" looks like; user constraints (stack, style, deadlines). |
 | **Current state** | What exists now (branches, key files, deployed vs local). |
-| **Task for the next agent** | Imperative, ordered list of what to do next—not a recap of the past. |
+| **Task for the next agent** | Imperative, ordered list of what to do next, not a recap of the past. |
 | **Repo / workspace** | Root path if known (e.g. `/Users/.../project`). |
-| **Relevant paths** | Every file or directory the next agent must read or edit, with **full absolute paths**. |
+| **Relevant paths** | Every file or directory the next agent must read or edit, as **full absolute paths**. |
+| **Suggested skills** | Which skills the next agent should invoke, and for which step. |
 
-### Helper and context files (mandatory when applicable)
+### Point at artifacts instead of copying them
 
-If the work depends on standards, trackers, specs, or scripts **outside** the main code path, **name each with its full path** and one line on why it matters:
+Specs, plans, ADRs, tickets, issues, commits and diffs already hold their content.
+Reference each by absolute path, URL or commit sha with one line on why it matters, and let the next agent read it.
+Treat standards, trackers and config the next agent must respect the same way (testing standards, `.plan/`, `.tickets/`, `.env.example`, `docker-compose.yml`).
+If nothing beyond normal source files applies, say so in one line and name the README or AGENTS.md to follow.
 
-- Testing standards, skill files, team conventions  
-- Progress trackers, TODO files, ADRs, specs (`METHOD.md`, `FR/NFR`, etc.)  
-- Env or config the next agent must not ignore (e.g. `.env.example`, `docker-compose.yml`)
+### Redact
 
-If nothing beyond normal source files applies, say so briefly (“No separate tracker or standards file; follow repo conventions in `README` at `…`”).
-
----
+Leave out API keys, tokens, passwords and personal data.
+Name where a secret lives (env var, secrets file path) instead of its value.
 
 ## Plan file (conditional)
 
@@ -52,132 +55,28 @@ If nothing beyond normal source files applies, say so briefly (“No separate tr
 
 Write a plan file when **any** of these hold:
 
-- The change is **not** a quick local edit (rule of thumb: **more than ~10 lines of substantive code in a single file**, or touch **multiple** files/modules).
+- The change is more than a quick local edit: roughly **more than ~10 lines of substantive code in one file**, or it touches **multiple** files or modules.
 - There are **non-obvious ordering constraints** (migrations before code, API before UI).
 - Steps should be **incrementally verifiable** (tests, manual checks, build targets).
 
-**Do not** write a plan file for trivial one-off edits (single small change, obvious verification).
+For a trivial one-off edit with obvious verification, the prompt alone is enough.
 
 ### Where to put it
 
-- Path: **`<workspace-root>/.handoff/plan-<slug>.md`**
-- `<slug>`: short kebab-case topic, e.g. `plan-auth-refactor.md`, `plan-flight-price-api.md`. If multiple parallel tracks exist, use distinct slugs or a numeric suffix (`plan-02.md`).
-- Create `.handoff/` if missing (in the **workspace root** the user is working in).
+- Path: **`<workspace-root>/.handoff/plan-<slug>.md`**, creating `.handoff/` in the workspace root if missing.
+- `<slug>`: short kebab-case topic, e.g. `plan-auth-refactor.md`. Parallel tracks get distinct slugs or a numeric suffix (`plan-02.md`).
 
 ### Plan file content
 
-Each plan must be:
+- **Narrowly scoped**: one coherent deliverable or milestone per file; split if huge.
+- **Stepwise**: ordered steps, each with **how to verify** it (test command, expected outcome, or manual check).
+- **Stable**: file paths, API names and decisions stated explicitly, so a cold agent never depends on chat tone.
 
-- **Narrowly scoped** — one coherent deliverable or milestone per file (split if huge).
-- **Stepwise** — ordered steps with **how to verify** each step (test command, expected outcome, or manual check).
-- **Stable** — file paths, API names, and decisions stated explicitly so a cold agent does not depend on chat tone.
-
-### Referencing the plan in the handoff prompt
-
-In the paste-ready prompt, include a line such as:
-
-- `Follow the incremental plan at: /absolute/path/to/workspace/.handoff/plan-<slug>.md`
-
-The next agent should be instructed to **read that file first** (or immediately after the repo README if required).
-
----
-
-## Handoff prompt template
-
-Use this structure inside the **Handoff prompt** block (adapt sections; omit empty ones).
-
-**⚠️ Important**: Wrap your entire output in a markdown code block so it can be copied with one click:
-
-````markdown
-```markdown
-## Context
-- Workspace: `<absolute path>`
-- Stack / runtime (if known): …
-
-## Goal
-<What success means>
-
-## Current state
-<What is already done vs not done>
-
-## Constraints
-<Non-negotiables: compatibility, no new deps, style, etc.>
-
-## Key files (read these)
-- `<absolute path>` — <role>
-- …
-
-## Related standards / trackers (if any)
-- `<absolute path>` — <purpose>
-
-## Your task
-1. …
-2. …
-
-## Plan (if applicable)
-Execute the steps in: `<absolute path>/.handoff/plan-<slug>.md`
-
-## Verification
-<How to confirm completion: tests, commands, acceptance criteria>
-
-## Open questions / risks (if any)
-- …
-```
-```
-
-Tone: **direct instructions** to the receiving agent (“Implement…”, “Read…”, “Do not…”).
-
----
-
-## Anti-patterns
-
-- **Chat transcript** — Do not paste long back-and-forth. Distill to decisions and facts.
-- **Vague paths** — Never “the tests folder”; always absolute paths when known.
-- **Missing verification** — Always say how the next agent proves correctness.
-- **Plan in chat only** — For complex work, put the step list in `.handoff/plan-*.md` and only **summarize** in the prompt.
-
----
-
-## Skill Clusters (Reference)
-
-When handing off, optionally include which skill cluster the recipient should draw from. This is guidance — the agent picks, but you're pointing it in the right direction.
-
-| Task Type | Skills to consider |
-|----------|-------------------|
-| **Frontend UI** | `make-ui`, `test-ui`, `chrome-devtools` |
-| **Backend Tests** | `tdd` |
-| **Git/PR Work** | `create-pr`, `pr-review`, `pr-fix` |
-| **Infrastructure** | `agent-sync`, `confluence-diagrams` |
-| **Planning/Specs** | `spec-writer`, `ticket-critic`, `tdd` |
-| **CLI/Tooling** | `cmd-cli` |
-| **Onboarding** | `project-onboarding` |
-
-### In handoff prompt
-
-Add an optional line under "Constraints" or "Context":
-
-```markdown
-## Recommended skills
-- Cluster: <task type from table above>
-- Specifically: make-ui, test-ui (example)
-```
-
----
-
-## Quick checklist before sending
-
-- [ ] Paste-ready block is wrapped in a markdown code block for one-click copying
-- [ ] Paste-ready block is self-contained for a **new** agent.
-- [ ] Task, goal, and **next actions** are explicit.
-- [ ] All critical files use **full paths**.
-- [ ] Standards/trackers/specs mentioned with paths if relevant.
-- [ ] Complex work has `.handoff/plan-<slug>.md` and that path is in the prompt.
-- [ ] Verification / acceptance criteria included.
-- [ ] Skill cluster guidance included if applicable (see "Skill Clusters" section)
-- [ ] Handoff prompt prose passes `/stop-slop` to remove AI writing patterns.
+In the prompt, add a line such as `Follow the incremental plan at: /absolute/path/.handoff/plan-<slug>.md` and tell the next agent to read it first.
+Keep the step list in the plan file and only summarize it in the prompt.
 
 ## Companion files
 
 Read only when the situation matches:
 
-- [TEMPLATE.md](TEMPLATE.md): writing the handoff prompt block and its anti-patterns
+- [TEMPLATE.md](TEMPLATE.md): writing the handoff prompt block, suggested skills, and the pre-send checklist
