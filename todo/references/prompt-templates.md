@@ -31,10 +31,25 @@ Invoke the /antiplan skill for this feature:
 **Working directory:** <pwd>
 **Artifact output dir:** .plan/
 
-Follow antiplan's phases end to end. Write brownfield-context.md, PRD.md,
-and task-sequence.md into .plan/. Do not emit fleshed ticket bodies —
-those are downstream (spec-writer). Stop at the end of antiplan's Phase 3
-after writing task-sequence.md.
+Let antiplan pick its mode (Fast Mode by default). If it escalates to a
+phased mode, write brownfield-context.md, PRD.md and task-sequence.md into
+.plan/ and stop after Phase 3. Do not emit fleshed ticket bodies; those are
+downstream (spec-writer).
+```
+
+### Template: spec-writer-direct (for `/todo spec <feature>`, Lite mode)
+
+```
+Invoke the spec-writer skill for this defined feature (no antiplan PRD):
+
+**Feature:** <feature description from user>
+**Working directory:** <pwd>
+
+Write one fleshed ticket per independently testable slice to
+.tickets/NNN-slug.md (next free numeric prefix). Each ticket needs YAML
+frontmatter with `Stage: NEW`, Scope, >=3 grep-verifiable ACs including
+>=1 failure-path AC, an AC->Test table, and a Verify command. Note any
+dependency on another ticket in a `Dependencies:` line. Do not write .plan/.
 ```
 
 ### Template: antiplan-resume (Phase 0 or 1 incomplete)
@@ -63,14 +78,14 @@ DAG is already written; do NOT regenerate it.
 **Task — run only the missing audits:**
 
 1. If .plan/challenger-report.md is missing OR older than task-sequence.md:
-   Launch the Challenger subagent per references/subagent-prompts.md.
+   Run the Challenger per references/subagent-prompts.md (subagent suggested).
    Pass it ~/.skills/antiplan/rubric.yaml as the AP source of truth.
    Save its full output (per-AP audit table + per-finding entries +
    summary with VERDICT line) to .plan/challenger-report.md.
 
 2. If classification is Standard or Heavy AND .plan/coverage-audit.md is
    missing OR older than PRD.md / task-sequence.md:
-   Launch the Coverage Auditor subagent per references/coverage-auditor.md.
+   Run the Coverage Auditor per references/coverage-auditor.md (subagent suggested).
    It re-derives R/D/C/I sets from the interrogation transcript and diffs
    them against PRD.md + task-sequence.md. Save its output to
    .plan/coverage-audit.md.
@@ -79,7 +94,7 @@ DAG is already written; do NOT regenerate it.
 
 3. Run validate.py against both reports and confirm exit 0 before halt:
    ```
-   python ~/.skills/antiplan/validate.py \
+   python3 ~/.skills/antiplan/validate.py \
      --project-dir . \
      --tickets .plan/task-sequence.md \
      --prd .plan/PRD.md \
@@ -190,7 +205,7 @@ receiving agent doesn't re-fetch):
    silently proceed.
 4. Run validate.py against the new reports:
    ```
-   python ~/.skills/antiplan/validate.py \
+   python3 ~/.skills/antiplan/validate.py \
      --project-dir . \
      --tickets .plan/task-sequence.md \
      --prd .plan/PRD.md \
@@ -256,7 +271,7 @@ Invoke the /ticket-critic skill.
 
 **Inputs:**
 - .tickets/*.md (excluding .plan/)
-- Ticket Contract: .plan/task-sequence.md §3
+- Ticket Contract: .plan/task-sequence.md §3 if it exists, else ticket-critic's own defaults
 
 **Task:** Validate every ticket against the Ticket Contract. Emit a report
 at .plan/critic-report.md with one line per ticket: `PASS <id>` or

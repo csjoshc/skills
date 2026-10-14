@@ -2,28 +2,46 @@
 
 ## Contents
 
-- 1. Planning
+- 0. Scoping (deterministic, ticket builds only)
+- 1. Planning, one source file per cycle, discovery halt
 - 2. Tracer Bullet
 - 3. Incremental Loop
 - 4. Refactor
-- Applying to Bug Fixes
+- Applying to Bug Fixes (Prove-It pattern)
 
+Slicing patterns and risk-first ordering: [references/slicing.md](references/slicing.md).
+
+## 0. Scoping (deterministic) - ticket builds only
+
+Skip for bug fixes and ad-hoc work with no ticket (see SKILL.md). Otherwise run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
+ranked Test Obligation Queue at `.tickets/tdd/toq-<ticket-id>.yaml`.
+
+Inputs are pulled from the ticket runner envelope (ticket path, diff base, registry
+path) or discovered from the working tree. Signal collection (diff, blast radius,
+MCP dependency graph, churn, failure history, existing tests, risk tier) is
+deterministic — no LLM inference. The model only **ranks and shapes** candidates
+via the pattern catalog in SCOPING.md.
+
+If the TOQ already exists and is fresh (mtime ≥ ticket mtime AND diff_base
+unchanged), reuse it. Otherwise regenerate.
 
 ## 1. Planning
 
-Before writing any code:
+Present the TOQ to the user. Ask:
 
-- [ ] Confirm with user what interface changes are needed
-- [ ] Confirm with user which behaviors to test (prioritize)
+> "Here is the ranked Test Obligation Queue derived from diff + risk-registry +
+> dependency graph. Confirm, reprioritize, or reject entries before we start the
+> RED loop."
+
+- [ ] User confirms the top-N queue
+- [ ] User may promote deferred entries or demote top entries (record reason)
 - [ ] Identify opportunities for deep modules (small interface, deep implementation)
-- [ ] Design interfaces for testability
-- [ ] List the behaviors to test (not implementation steps)
-- [ ] Identify async/await requirements (pytest-asyncio, httpx for streaming)
-- [ ] Get user approval on the plan
+- [ ] Design interfaces for testability for the confirmed TOQ targets
+- [ ] Identify async/await requirements (pytest-asyncio, httpx for streaming) for confirmed targets
 
-Ask: "What should the public interface look like? Which behaviors are most important to test?"
-
-**You can't test everything.** Confirm with the user exactly which behaviors matter most. Focus testing effort on critical paths and complex logic, not every possible edge case.
+**You can't test everything.** The TOQ caps (top 5 unit / 3 integration / 1
+e2e per ticket) enforce this. Anything outside the caps is deferred, not
+discarded — it stays in the YAML for future reconsideration.
 
 ### One source file per cycle (support set included)
 
@@ -58,10 +76,11 @@ If completing the current cycle requires editing a **second source file** (or an
 
 ## 2. Tracer Bullet
 
-Write ONE test that confirms ONE thing about the system:
+Pull the **top non-deferred entry** from the TOQ. Write ONE test for its
+`done_when` condition:
 
 ```
-RED:   Write test for first behavior → test fails
+RED:   Write test for TOQ[0].done_when → test fails
 GREEN: Write minimal code to pass → test passes
 ```
 
@@ -69,18 +88,23 @@ This is your tracer bullet - proves the path works end-to-end.
 
 ## 3. Incremental Loop
 
-For each remaining behavior:
+For each remaining TOQ entry (in score order):
 
 ```
-RED:   Write next test → fails
+RED:   Write test for TOQ[i].done_when → fails
 GREEN: Minimal code to pass → passes
 ```
 
 Rules:
-- One test at a time
+
+- One TOQ entry at a time
 - Only enough code to pass current test
 - Don't anticipate future tests
-- Keep tests focused on observable behavior
+- Keep tests focused on the entry's `done_when` (observable behavior)
+- **Test-run scope**: when you run tests during the cycle, restrict the runner
+  to `TOQ[i].target` + its `existing_tests` mapping. Do not run the full suite.
+  This is what prevents unrelated tests from firing and polluting context.
+  Run the full suite only at end-of-ticket, before marking Stage COMPLETE.
 
 ## 4. Refactor
 
@@ -112,3 +136,18 @@ RED:   Write test that fails due to bug → test fails
 GREEN: Fix bug → test passes
 REFACTOR: Clean up if needed
 ```
+
+### Prove-It Pattern (6 steps)
+
+<!-- merged from addyosmani/agent-skills test-driven-development -->
+
+Do not start by trying to fix the bug. Start by proving it.
+
+1. Read the bug report; restate the expected vs observed behavior in one line.
+2. Write a test that exercises the failing scenario through the public interface.
+3. Run it — it MUST fail. A passing reproduction test is not a reproduction.
+4. Implement the minimal fix.
+5. Re-run the test — it passes.
+6. Run the full relevant suite to confirm no regressions; commit test + fix together.
+
+If step 3 doesn't fail, the test isn't testing the bug — fix the test first.

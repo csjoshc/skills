@@ -1,8 +1,8 @@
 ---
 name: antiplan
 description: >-
-  Adversarial PRD interrogation. Blocks unjustified choices, forces assumption
-  tracking before tickets exist. Use when stakes are high or after
+  Adversarial PRD interrogation. Defaults to a 4-question Fast Mode; escalates
+  to a phased PRD + ticket DAG only for large or risky work. Use when stakes are high or after
   plan-rebuild loops. Not for fuzzy ideas (use make-prd) or defined features
   (use spec-writer).
   In: rough requirements + stated approach.
@@ -18,13 +18,23 @@ You conduct rigorous interrogation to prevent speculative decisions, but you do 
 
 ---
 
-## First Response Contract (MANDATORY)
+## Mode selection (do this first)
 
-On invocation, your first response MUST begin with this numbered checklist,
-each item marked ✓ or ✗ with reason. Missing items = malformed response.
+Default to **Fast Mode** (below) unless one of these holds:
+
+- the user asks for the full flow, a PRD, or a ticket DAG;
+- the work is clearly more than 5 tickets, greenfield, or touches novel integrations;
+- Fast Mode answers surface unresolved architectural questions.
+
+State the chosen mode in one line, with the reason. The user can switch modes at any time.
+
+## First Response Contract (phased modes only)
+
+When entering Light, Standard or Heavy mode, the first response begins with this
+numbered checklist, each item marked ✓ or ✗ with reason. Fast Mode skips it.
 
 ```
-1. [✓/✗] Requirement-drift gate active (AP-21: any override / overlay file in scope triggers re-interrogation of the base file; idle components / apologetic comments will be named)
+1. [✓/✗] Requirement-drift gate active (override or overlay files in scope trigger re-interrogation of the base file)
 2. [✓/✗] Brownfield scan run (✗ reason: greenfield | no codebase detected)
 3. [✓/✗] Research artifact written to file (BROWNFIELD-CONTEXT block present)
 4. [✓/✗] Constitution requested (3–5 principles)
@@ -40,7 +50,7 @@ Then emit the YAML ledger (see Output Contracts below), then the
 
 ## Output Contracts (structural, not prose)
 
-Every antiplan response is malformed-on-sight if these are missing.
+In phased modes, every response is malformed-on-sight if these are missing.
 Full schemas in `~/.skills/shared/PRD_TEMPLATES.md` and
 `references/convergence-engine.md`.
 
@@ -57,21 +67,18 @@ Full schemas in `~/.skills/shared/PRD_TEMPLATES.md` and
 **Ledger confidence gate:** Phase 3 cannot begin until
 `confidence: HIGH`, `contested: 0`, `unresolved: 0` (or all Unresolved items
 are explicitly Deferred with named validation tickets).
-A user request to skip the questions does not lift this gate. Do not write
-`.plan/PRD.md` or `.plan/task-sequence.md`. List the unresolved assumptions,
-state what is needed to close each, and stop. Offer Fast Mode only if the
-change is already scoped and small.
+If the user asks to skip the remaining questions, push back once: list the
+unresolved assumptions, what closes each, and the concrete risk of proceeding.
+If they still want to proceed, comply. Record each open item in the ledger as
+`Deferred (user override)` with a named validation ticket, and repeat the list
+at the top of `.plan/PRD.md` so downstream skills see it.
 
 ---
 
 ## Decision Tree
 
-1. Is the request >3 tickets of scope?
-   - No, single already-scoped change → run **Fast Mode** below, then hand to
-     `spec-writer` or `tdd`
-   - No, scope unclear → use `spec-writer` directly
-   - Yes → continue
-2. **Scale classification:**
+1. Fast Mode is the default (see Mode selection). Leave it only on a listed trigger.
+2. **Scale classification** (phased modes only):
    - **Light** (3–5 tickets, brownfield, known domain): compress Phases 1+2
      into a single Speed Interrogation round. Skip subagent orchestration.
    - **Standard** (6–10 tickets, some unknowns): full flow.
@@ -89,8 +96,8 @@ change is already scoped and small.
 
 ## Fast Mode
 
-_One prompt. No phases. For single, already-scoped changes where you want the
-interrogation reflex without the planning apparatus._
+_One prompt. No phases. The default: the interrogation reflex without the
+planning apparatus._
 
 Answer against the proposed change:
 
@@ -101,8 +108,8 @@ Answer against the proposed change:
 > 4. What **signal** will tell us whether to keep, rollback, or revise it?
 
 **Output:** each sub-question ≤3 sentences; name any anti-pattern hit
-(AP-1 through AP-23 — see `references/anti-patterns.md` for the full
-catalog) inline; end with `→ spec-writer` or `→ tdd`. If any answer
+(see `references/anti-patterns.md` for the full catalog) inline; end with
+`→ spec-writer`, `→ tdd`, or `→ escalate to Light` if planning is warranted. If any answer
 triggers the Assumption Approval Gate, stop and surface the gate.
 
 **Do not** produce a PRD, ticket DAG, or research artifact in Fast Mode.

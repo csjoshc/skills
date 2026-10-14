@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before /clear or /compact. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
+description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Antiplan is optional; /todo spec starts a Lite pipeline straight from spec-writer. Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before clearing or compacting context. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
 ---
 
 # /todo — Pipeline Coordinator
@@ -26,7 +26,12 @@ tdd          → runs inside each build session for red-green-refactor on ONE ti
              → writes .tickets/tdd/toq-<ticket-id>.yaml (ranked Test Obligation Queue, Phase 0)
 ```
 
+Antiplan is optional. In **Lite mode** (tickets with no `.plan/task-sequence.md`),
+the pipeline is spec-writer → (optional ticket-critic) → build.
+
 Each skill runs in its own session. Artifacts on disk are the handoff medium.
+"Subagent" below means an agent in a separate context; if the harness has none,
+use a fresh session instead.
 Your job is to tell the user exactly what prompt to paste next, never to do
 the pipeline work yourself.
 
@@ -52,12 +57,14 @@ Dispatch based on the user's argument:
 - `/todo` (no args) → **Status + next step.** Detect pipeline state, print a
   one-screen summary, recommend the next action with the prompt to use.
 - `/todo start <feature description>` → **Emit antiplan-start prompt.**
-  User is beginning a new planning cycle.
+  User is beginning a new planning cycle for risky or large work.
+- `/todo spec <feature description>` → **Emit spec-writer-direct prompt.**
+  Lite mode: defined feature, no antiplan.
 - `/todo next` → **Emit the next-stage prompt.** Detect state and output
   only the prompt (no status summary). Same recommendation as bare `/todo`
   but terse.
 - `/todo handoff` → **Emit a cold-start resume prompt.** For when the user
-  is about to run `/clear` or `/compact`. Output a prompt that reopens the
+  is about to clear or compact context. Output a prompt that reopens the
   current stage in a fresh session.
 - `/todo status` → **Detailed state dump.** Every artifact path, modified
   time, per-ticket `Stage:` value, staleness warnings.
@@ -67,7 +74,7 @@ Dispatch based on the user's argument:
 - `/todo build <ticket-id>` → Same but for a specific ticket file. Skips
   the DAG-readiness check (assumes user knows what they're doing).
 - `/todo gate <slice-id>` → **Emit slice-gate review prompt** with a
-  subagent-validated review of all tickets in the slice plus the gate
+  independent review (subagent suggested) of all tickets in the slice plus the gate
   artifact. Use when every non-gate ticket in a slice is `Stage: COMPLETE`
   and the gate ticket is `Stage: NEW`.
 - `/todo resume` → **Emit mid-build resume prompt.** For continuing a
@@ -79,141 +86,33 @@ Dispatch based on the user's argument:
 If the user passes an unrecognized argument, default to the bare `/todo`
 behavior and note that the argument was ignored.
 
-## State Detection
+## State Detection and Routing
 
-Scan the repo root (from the current working directory) for these paths:
+Scan the repo root with the harness's file-search and read tools (paths, plus frontmatter `Stage:` lines only); avoid shell loops.
+Artifact map, full inference rules and staleness warnings: [references/state-detection.md](references/state-detection.md). Read it before detecting state.
 
-| Path | Meaning |
-| --- | --- |
-| `.plan/brownfield-context.md` | antiplan Phase 0 done (brownfield) |
-| `.plan/PRD.md` | antiplan Phases 1–2 done |
-| `.plan/task-sequence.md` | antiplan Phase 3 done |
-| `.plan/challenger-report.md` | antiplan Phase 3 Challenger subagent ran (per-AP audit table; option-3 evidence) |
-| `.plan/coverage-audit.md` | antiplan Phase 3.5 Coverage Auditor ran (transcript-vs-PRD diff; option-4 evidence) |
-| `.tickets/*.md` | spec-writer has run |
-| `.plan/critic-report.md` | ticket-critic has run |
-| Any `.tickets/*.md` frontmatter with `Stage: BUILD` | a ticket build has started |
-| Any `.tickets/*.md` frontmatter with `Stage: COMPLETE` | a ticket build has finished |
-| `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
+| Stage | Condition (summary) | Recommend | Template |
+| --- | --- | --- | --- |
+| fresh | no `.plan/` or `.tickets/` artifacts | by size: implement directly, `/todo spec`, or `/todo start` | spec-writer-direct / antiplan-start |
+| lite-ready | tickets, no `task-sequence.md`, `Stage: NEW` remain | `/todo build` (ticket-critic optional) | build-ticket-manual |
+| phase-0-done | only `brownfield-context.md` | resume antiplan Phase 1 | antiplan-resume |
+| prd-done-no-dag | `PRD.md`, no `task-sequence.md` | resume antiplan Phase 3 | antiplan-resume |
+| dag-done-no-audits | DAG present, `challenger-report.md` (or `coverage-audit.md` for Standard/Heavy) missing | resume antiplan Phase 3 / 3.5; plan NOT ready for spec-writer | antiplan-audit-resume |
+| audit findings | Challenger BLOCK or Coverage GAP/INVERTED | fix the finding | audit-fix-resume |
+| dag-done | DAG + audits present, no tickets | **gate:** run `antiplan/validate.py` with all evidence flags first (command in state-detection.md); exit 0 then spec-writer, non-zero then antiplan resume | spec-writer-next |
+| tickets-written-uncriticized | Full mode: tickets exist, no or stale `critic-report.md` | ticket-critic | ticket-critic-next |
+| critic-failed | `critic-report.md` contains `FAIL` | back to spec-writer for failing tickets | spec-writer-fix |
+| ready-for-build / partial-build | critic passes; `Stage: NEW` tickets remain | `/todo build` (manual) or `/todo run` (auto-driver) | build-ticket-manual |
+| slice-gate-pending | all non-gate tickets in a slice `COMPLETE`, gate ticket `NEW` | `/todo gate <slice-id>` | slice-gate-review |
+| mid-build-resume | exactly one ticket `Stage: BUILD`, no active session | `/todo resume` | build-ticket-resume |
+| build-unscoped | `Stage: BUILD` ticket without `.tickets/tdd/toq-<id>.yaml` | run `/tdd` Phase 0 first | (none) |
+| all-complete | every ticket `COMPLETE` | announce pipeline done | (none) |
 
-Use `Glob` for path discovery and `Read` (or `Grep` on `Stage:`) for
-frontmatter inspection. Do **not** use Bash for this — Glob/Grep are faster
-and quieter.
-
-### Stage inference rules
-
-- **fresh** — none of the above paths exist → recommend `/todo start`
-- **phase-0-done** — only `brownfield-context.md` exists → recommend
-  resuming antiplan into Phase 1
-- **prd-done-no-dag** — `PRD.md` exists but no `task-sequence.md` → recommend
-  resuming antiplan into Phase 3
-- **dag-done-no-audits** — `task-sequence.md` exists but
-  `.plan/challenger-report.md` is missing OR (Standard/Heavy run)
-  `.plan/coverage-audit.md` is missing → recommend resuming antiplan to
-  run Phase 3 Challenger and/or Phase 3.5 Coverage Auditor. The plan is
-  NOT ready for spec-writer — the per-AP audit + transcript-vs-PRD diff
-  are the final pass. Light-mode plans may skip coverage-audit.md if the
-  task-sequence.md transcript explicitly emits
-  `COVERAGE-AUDIT: skipped — Light classification`.
-- **dag-done** — `task-sequence.md` + `challenger-report.md` (+
-  `coverage-audit.md` for Standard/Heavy) all present; no `.tickets/*.md` →
-  **first** ask the user to run antiplan's pre-flight validator with all
-  evidence flags:
-  ```
-  python ~/.skills/antiplan/validate.py \
-    --project-dir . \
-    --tickets .plan/task-sequence.md \
-    --prd .plan/PRD.md \
-    --challenger-report .plan/challenger-report.md \
-    --coverage-report .plan/coverage-audit.md
-  ```
-  Drop `--coverage-report` only if the task-sequence/transcript declared
-  `COVERAGE-AUDIT: skipped — Light classification`.
-  - exit 0 → recommend spec-writer session (emit spec-writer-next template)
-  - non-zero → recommend antiplan-resume instead; the plan is not ready
-    for fan-out. Common failures: missing AP rows in challenger-report,
-    short evidence on a BLOCK row, GAP/INVERTED in coverage-audit, or
-    `RE_DERIVED < 5` (Coverage Auditor likely skimmed the transcript).
-- **tickets-written-uncriticized** — `.tickets/*.md` exist; no
-  `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
-  recommend ticket-critic session
-- **critic-failed** — critic-report.md contains the literal string `FAIL` →
-  recommend fix-cycle: return to spec-writer for failing tickets
-- **ready-for-build** — critic-report.md passes; some tickets still
-  `Stage: NEW` → recommend `/todo build` (manual, one ticket per
-  session) or `/todo run` (auto-driver) for the next `NEW` ticket. Bare `/todo` may
-  ask which mode the user prefers if it's the first build session.
-- **slice-gate-pending** — within a slice, every non-gate ticket is
-  `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
-  ticket with `gate: true` in frontmatter) is `Stage: NEW` → recommend
-  `/todo gate <slice-id>` (subagent-validated review) before flipping
-  the gate to BUILD/COMPLETE.
-- **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
-  active session is running it (heuristic: invoked from a fresh /todo
-  call with no in-conversation evidence of the build). Recommend
-  `/todo resume` to pick up where the prior session left off.
-- **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → recommend
-  continuing with `/todo build` or `/todo run` for remaining `NEW` tickets
-- **build-unscoped** — a ticket is `Stage: BUILD` but no matching
-  `.tickets/tdd/toq-<id>.yaml` exists → recommend invoking `/tdd` Phase 0
-  before continuing the cycle (this catches BUILD sessions that were
-  started before TOQ scoping was adopted)
-- **all-complete** — every ticket `Stage: COMPLETE` → announce the
-  pipeline is done
-
-To show ticket state over days or sprints, run `/trackboard refresh`.
-
-### Staleness warnings (non-blocking)
-
-- `PRD.md` modified after `task-sequence.md` → warn: DAG may be stale vs PRD
-- `task-sequence.md` modified after any `.tickets/*.md` → warn:
-  fleshed tickets may be stale vs DAG
-- Any `.tickets/*.md` modified after `critic-report.md` → warn:
-  critic report is stale
-- `task-sequence.md` modified after `challenger-report.md` → warn:
-  Challenger audit is stale vs the DAG; re-run the Challenger before
-  spec-writer
-- `PRD.md` or `task-sequence.md` modified after `coverage-audit.md` →
-  warn: Coverage Auditor diff is stale vs the current PRD/DAG; re-run
-  the Coverage Auditor before spec-writer
-- Orphan tickets (`.tickets/*.md` whose ID is not in `task-sequence.md`) →
-  warn: orphan ticket present, possibly from a prior planning cycle
-- Any `.tickets/*.md` modified after its `.tickets/tdd/toq-<id>.yaml` →
-  warn: TOQ is stale vs ticket — /tdd Phase 0 should re-run before the
-  next RED cycle
-- Current `HEAD` has advanced past the `diff_base` recorded in a
-  BUILD ticket's TOQ → warn: TOQ diff_base is stale; re-scope before
-  continuing
-- If an antiplan session transcript is available alongside
-  `.plan/task-sequence.md`, optionally run
-  `python ~/.skills/antiplan/validate.py --transcript <path> ...`
-  and surface any `confidence: LOW`, `unresolved > 0`, or
-  `Proceeding: no` hits as soft warnings. Do not block on these — they are
-  advisory alongside the hard-gate `dag-done` validator run.
-- `.plan/brownfield-context.md` has a non-empty `open_questions` list →
-  warn: unresolved research questions; confirm they are answered or ticketed.
+Staleness and orphan warnings are non-blocking and listed in state-detection.md. To show ticket state over time, run `/trackboard refresh`.
 
 ## Prompt Templates
 
-When emitting a prompt for the next session, inline the matching template body from
-`references/prompt-templates.md`, filling slots from detected state. Each prompt is
-stand-alone. Templates:
-
-- antiplan-start (for `/todo start <feature>`)
-- antiplan-resume (Phase 0 or 1 incomplete)
-- antiplan-audit-resume (dag-done-no-audits)
-- audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
-- Challenger BLOCK <AP-ID> (<ticket-IDs>): <one-line summary>
-- Coverage <VERDICT>-<N> (<requirement-id>): <one-line summary>
-- spec-writer-next (dag-done)
-- ticket-critic-next (tickets-written-uncriticized)
-- spec-writer-fix (critic-failed)
-- build-ticket-manual (ready-for-build / partial-build)
-- build-ticket-resume (mid-build-resume)
-- slice-gate-review (slice-gate-pending)
-- handoff (generic cold-start prompt for current stage)
-
-Example: see the `antiplan-start` template for the expected shape.
+Inline the matching template body from [references/prompt-templates.md](references/prompt-templates.md), filling slots from detected state; build, resume and gate prompts are in [references/execution-templates.md](references/execution-templates.md). Each prompt is stand-alone. The `handoff` template is the generic cold-start prompt for the current stage.
 
 ## Output Format
 
@@ -243,8 +142,8 @@ Prompt to paste into your next session:
 <pre-filled template>
 ─────────────────────────────────────────
 
-After pasting, run /clear or /compact in THIS session if you want to free
-context before the next stage begins.
+After pasting, clear or compact THIS session if you want to free context
+before the next stage begins.
 ```
 
 For `/todo next`:
@@ -271,9 +170,11 @@ Paste this into a new antiplan session:
 ─────────────────────────────────────────
 ```
 
+For `/todo spec <feature>`: same shape, with the spec-writer-direct template.
+
 ## Things NOT to do
 
-- Do **not** invoke other skills via the Skill tool. /todo is a
+- Do **not** invoke other skills yourself. /todo is a
   coordinator that outputs text; the user invokes the next skill.
 - Do **not** read the full contents of PRD.md, task-sequence.md, or any
   individual ticket file. Only read frontmatter (`Stage:`, `id:`) and
@@ -292,7 +193,6 @@ in a fresh repo is still valid — you'll print Stage: fresh and recommend
 `/todo start <feature>`. Do not auto-create `.plan/`; antiplan
 creates it on first write.
 
-
 ## Auto-driver: `/todo run`
 
 `/todo run` is the only sub-command that is not advise-only. It is an explicit opt-in: it
@@ -307,4 +207,8 @@ Full spec (invocation, state machine, build loop, halt conditions, forbidden act
 
 Read only when the situation matches:
 
+- [references/state-detection.md](references/state-detection.md): detecting pipeline state, inference rules, staleness warnings
+- [references/prompt-templates.md](references/prompt-templates.md): emitting any antiplan, spec-writer, ticket-critic or handoff prompt
 - [references/execution-templates.md](references/execution-templates.md): emitting build-ticket-manual, build-ticket-resume or slice-gate-review prompts
+- [references/auto-driver.md](references/auto-driver.md): running `/todo run`
+- [references/evidence-reviewer.md](references/evidence-reviewer.md): reviewing a BUILD subagent's ticket claims (used by `/todo run` and ticket-critic Pattern 18)

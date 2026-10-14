@@ -17,13 +17,17 @@
 - Pattern 12: `readOnlyRootFilesystem: true` without entrypoint-write-path audit
 - Pattern 13: NetworkPolicy `namespaceSelector` keyed on a non-auto-applied label
 - Pattern 14: Non-root + `drop: ALL` + privileged port (<1024) antipattern
+- Pattern 15: Source-prose hygiene (naming, identifiers, leaked planning metadata)
+- Pattern 16: AC shell commands must be runnable in the target environment
+- Pattern 17: Operator entry point requires end-to-end smoke gate
+- Pattern 18: Subagent claims require adversarial evidence review
 
 ## Pattern Scoring Rubric
 
 For each pattern, assign one of:
 
 - `PASS`: No blocker found.
-- `AUTO-RESOLVED`: Question was answered by `~/.skills/STANDARDS.md` or local `./STANDARDS.md`.
+- `AUTO-RESOLVED`: Question was answered by a topic file in `~/.skills/standards/` (via the `~/.skills/STANDARDS.md` index) or the local `./STANDARDS.md`.
 - `BLOCKER`: Must be resolved before `Stage: BUILD` execution starts.
 
 Every `BLOCKER` finding must include evidence.
@@ -830,8 +834,8 @@ full review on:
   "adapted", "alternative", or "skipped"
 
 **Reviewer protocol:** see
-[`~/.skills/evidence-reviewer/SKILL.md`](~/.skills/evidence-reviewer/SKILL.md)
-for the full evidence-reviewer skill, which is the canonical
+[`~/.skills/todo/references/evidence-reviewer.md`](~/.skills/todo/references/evidence-reviewer.md)
+for the full evidence-reviewer procedure, which is the canonical
 implementation of this pattern.
 
 **Block template:**
@@ -845,7 +849,7 @@ final report contains <signal: "SKIPPED N ACs" | "deviated from
 spec at X" | "files modified outside scope" | etc.>.
 
 Required before next ticket starts:
-- [ ] Invoke `/evidence-reviewer` on ticket <ID>, providing:
+- [ ] Invoke the evidence-reviewer procedure on ticket <ID>, providing:
       git diff vs prior checkpoint, the subagent's final report,
       artifact file paths, ticket ACs.
 - [ ] Reviewer must return VERIFIED. If DRIFT-DETECTED or

@@ -307,9 +307,11 @@ def phase_0_resolved_before_proceeding(t: Transcript) -> list[str]:
     if t.skill != "cleanup":
         return []
     errors = []
+    # LOW/MEDIUM rows are reported as data; only HIGH/CRITICAL must be closed first.
     open_rows = [
         r for r in t.phase_0_rows
         if (r.get("status") or "").upper() == "OPEN"
+        and (r.get("severity") or "").upper() in {"HIGH", "CRITICAL"}
     ]
     if not open_rows:
         return errors
@@ -318,7 +320,7 @@ def phase_0_resolved_before_proceeding(t: Transcript) -> list[str]:
         if "phase-0" in lower and "proceeding: yes" in lower:
             errors.append(
                 f"Phase 0 → Phase 1 gate marked 'Proceeding: yes' with "
-                f"{len(open_rows)} OPEN row(s) in REVIEW-PHASE-0"
+                f"{len(open_rows)} OPEN HIGH/CRITICAL row(s) in REVIEW-PHASE-0"
             )
             break
     return errors

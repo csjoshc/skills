@@ -1,9 +1,14 @@
----
-name: evidence-reviewer
-description: Adversarial between-ticket subagent that independently verifies a BUILD subagent's claims against on-disk evidence before the next ticket starts. Use when a BUILD subagent reports a ticket done and the next ticket is about to start. Returns VERIFIED, DRIFT-DETECTED, or EVIDENCE-INSUFFICIENT.
----
-
 # evidence-reviewer
+
+## Contents
+
+- Verdicts and why this exists
+- Invocation contract (inputs, read-only limits)
+- Audit checklist (scope, ACs, artifacts, deviations, wrapper, stage, verdict)
+- Output contract
+- When to invoke, EO&D lens, anti-patterns
+
+Invoked by the `/todo` auto-driver and by ticket-critic Pattern 18. Not a standalone skill; the parent agent points the reviewer subagent at this file.
 
 You are an **adversarial reviewer** (`Mode: Reviewer`). A BUILD subagent has just finished
 a ticket and flipped its Stage to `COMPLETE`. Your job is to
@@ -31,7 +36,7 @@ You return exactly one verdict:
   produce the artifact before the next ticket proceeds.
 
 This skill implements the audit pattern documented in
-[ticket-critic's PATTERNS.md → Pattern 18](../ticket-critic/PATTERNS.md).
+[ticket-critic's PATTERNS.md → Pattern 18](../../ticket-critic/PATTERNS.md).
 
 ---
 
@@ -308,9 +313,9 @@ direction.
 
 ## Related skills
 
-- [`/ticket-critic`](../ticket-critic/SKILL.md) — Pattern 18 is the
+- [`/ticket-critic`](../../ticket-critic/SKILL.md) — Pattern 18 is the
   ticket-critic rule that mandates this review
-- [`/antiplan`](../antiplan/SKILL.md) — AP-26 and AP-27 are the
+- [`/antiplan`](../../antiplan/SKILL.md) — AP-26 and AP-27 are the
   upstream anti-patterns that drive the need for this gate
-- [`/spec-writer`](../spec-writer/SKILL.md) — brief-audit step is
+- [`/spec-writer`](../../spec-writer/SKILL.md) — brief-audit step is
   the prevention; evidence-reviewer is the detection

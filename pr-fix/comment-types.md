@@ -22,7 +22,7 @@ Add the log statement in the catch/error block. Do not restructure the try-catch
 
 ## "Add tests"
 
-See Step 4 in [workflow.md](~/.skills/pr-fix/workflow.md). Create a new test file following project conventions. Do not modify the source file unless the comment explicitly asks for a source change to improve testability.
+See Step 4 in [workflow.md](workflow.md). Create a new test file following project conventions. Do not modify the source file unless the comment explicitly asks for a source change to improve testability.
 
 ## "Fix type error / add type"
 
@@ -35,3 +35,19 @@ Rename across all usages in the changed files. Use the editor's rename functiona
 ## "This could crash / null check"
 
 Add the null/undefined guard. Do not refactor the surrounding logic. Match the existing defensive coding style in the file.
+
+## "Add a docstring" / "Comment this"
+Write prose that explains *why*. The reader can see *what* from the
+signature. If the original code is load-bearing because of a design
+decision recorded in `docs/ADR-*.md`, include the rationale inline
+and add `Background: docs/ADR-XXX.md` as a trailing reference.
+Never ship `"""ADR-XXX: ..."""` alone — the bare label is the
+canonical failure mode `pr-review`'s DC-004 fires on.
+
+## "Rename / strip cycle slug" / "Path coupled to gate"
+The reviewer is asking you to remove a planning-system token (gate
+slug, ticket ID, cycle name) from a long-lived path or identifier.
+Rename to a feature- or scope-based name. For test-artifact roots,
+make the path env-overridable (`PROOF_DIR` env with a stable default).
+Update every referrer in the same commit; `git grep -nE` is your
+friend.

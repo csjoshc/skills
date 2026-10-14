@@ -12,11 +12,6 @@ sentences shortened, redundancy removed — while code blocks, paths,
 commands, URLs, and identifiers pass through byte-for-byte. Technical
 fidelity stays; budget shrinks.
 
-**Pairs with RTK (Rust Token Killer)** on the input side. RTK compresses
-CLI command output before it enters the agent's context; caveman
-compresses the agent's prose before it leaves. See
-`shared/TOKEN_BUDGET.md` for the joint strategy and measurement data.
-
 ## Contents
 
 - Activation / Deactivation
@@ -158,28 +153,10 @@ If any check fails: roll back to the original segment.
 Deliver the compressed text. If the user asks for the long form, emit
 the pre-compression version on request.
 
-## Auto-activation via hook
+## Activation
 
-When `hook-sync` is installed, register a `SessionStart` hook that turns
-caveman on when either is true:
-
-- Estimated session budget > 50% consumed
-- User toggles `caveman on` explicitly
-
-Hook file at `~/.hooks/caveman-compression.json`:
-
-```json
-{
-  "name": "caveman-compression",
-  "events": [
-    { "event": "SessionStart" },
-    { "event": "PreToolUse", "tool": "Stop" }
-  ],
-  "action": { "type": "skill", "skill": "caveman" },
-  "trigger_on": "context_usage > 0.5",
-  "platforms": ["claude-code", "cursor", "codex", "gemini"]
-}
-```
+On demand: the user toggles it with `caveman on`, or the agent invokes it for long reports.
+There is no auto-activation hook; agents cannot measure their own context usage.
 
 ## Upstream Sync
 

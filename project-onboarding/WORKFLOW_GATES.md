@@ -16,7 +16,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 ## When to invoke
 
-- Automatically on `SessionStart` (via hook if hook-sync is installed)
+- At session start, via a link from the project AGENTS.md (every harness loads it)
 - At the start of any new task, before any tool use
 - At every detected phase transition (see Phase map below)
 
@@ -31,7 +31,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 | "Add mocks / factories for X" | `tdd` → `MOCKING.md` / `mock-contract` | Canonical producer-owned doubles; boundary mocks contract-linked |
 | "Write tests for X" | `tdd`, `mock-contract` (if boundary mock) | Tests fail red then green |
 | "Integrate / wire producer→consumer" | `tdd` (integration step of cycle) | Real chain within boundary; mocks only at external edge |
-| "Review / EO&D / compliance check" | `evidence-reviewer` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
+| "Review / EO&D / compliance check" | `todo/references/evidence-reviewer.md` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
 | "I'm done / complete / fixed X" | `verify-claim` | `CLAIM_UNVERIFIED.md` absent |
 | "Open / create PR" | `pr-review` self-pass, `create-pr` | No BLOCK from 5 agents |
 | "Fix review comments" | `pr-fix` | Staleness check green |
@@ -39,7 +39,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 ## Workflow
 
-### SessionStart digest
+### Session-start digest
 
 ```bash
 # Read project context
@@ -72,8 +72,8 @@ assume the user is in the same phase across turns.
 
 ## Interaction with hooks
 
-When `hook-sync` is present, workflow-guard registers itself as a
-`SessionStart` hook and a `PreToolUse` hook on `Write`/`Edit` so phase
+Hooks are edited in place in each tool's settings, not synced. Where workflow-guard is registered as a
+`SessionStart` hook and a `PreToolUse` hook on `Write`/`Edit`, phase
 transitions fire deterministically rather than relying on the agent to
 remember.
 

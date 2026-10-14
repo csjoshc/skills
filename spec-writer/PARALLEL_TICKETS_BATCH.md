@@ -156,4 +156,4 @@ Global-Constraints:
 ## Canonical copy of this file
 
 Master store: `~/.skills/spec-writer/PARALLEL_TICKETS_BATCH.md`.  
-**Skill sync:** `~/.cursor/skills` should symlink to `~/.skills` (see skill-sync). Repos may add `project/.cursor/skills/spec-writer` → `../../../../.skills/spec-writer` so agents in the repo resolve the same companion as the global skill.
+**Skill sync:** `~/.cursor/skills` should symlink to `~/.skills` (see agent-sync). Repos may add `project/.cursor/skills/spec-writer` → `../../../../.skills/spec-writer` so agents in the repo resolve the same companion as the global skill.

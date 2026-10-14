@@ -1,16 +1,16 @@
----
-name: skill-sync
-description: >-
-  Synchronizes and audits AI skills across multiple IDEs and CLI agents using ~/.skills
-  as the authoritative store. Use when the user asks to sync skills, audit skill symlinks,
-  ingest new skills into the master folder, or unify skills across Cursor, Claude Code,
-  Gemini/Antigravity, OpenCode, Codex, VS Code (global and project-level), or ChatGPT. Handles 
-  propagation of removals from master store.
----
 
-# Skill Sync
+# Skills sync
 
 **Version:** 1.1.0
+
+## Contents
+
+- Context
+- Objectives
+- Companion Files
+- Execution Steps (discovery, master sync, symlink verification, project-level setup)
+- Output Format
+- Quick Reference
 
 ## Context
 
@@ -57,7 +57,7 @@ For each path:
 
 **Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills under `.system/` (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.). Do NOT replace it with a single symlink to `~/.skills` — that shadows `.system` and `sync.py` must never `rmtree` it.
 
-`skill-sync/sync.py` handles Codex specially: audit expects a real directory; repair calls `sync_codex_per_skill_links()` (add/fix per-skill links, remove broken links, preserve `.system/`). Manual equivalent:
+`agent-sync/sync.py` handles Codex specially: audit expects a real directory; repair calls `sync_codex_per_skill_links()` (add/fix per-skill links, remove broken links, preserve `.system/`). Manual equivalent:
 
 ```bash
 # Add per-skill symlinks for any master skill missing from codex
@@ -81,7 +81,13 @@ Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 - Which symlinks to create (Gemini and VS Code are recommended; others are optional)
 - How to handle project-specific (non-synced) skills vs. master-synced skills
 
-**Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use `cp -r ~/.skills .claude/skills` instead of a symlink. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+**Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use the filtered copy below instead of a symlink (about 2 MB; a plain `cp -r` drags in `.git`, eval runs and mirrors, over 30 MB).
+
+```bash
+rsync -a --delete --exclude='.git' --exclude='.backup' --exclude='synced' --exclude='.trash' --exclude='__pycache__' --exclude='evals/runs' --exclude='*.log' --exclude='/master' ~/.skills/ .claude/skills/
+```
+
+Run it from the project root. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
 
 For VS Code workspaces specifically:
 - Global skills are available via `~/.vscode/skills`

@@ -16,7 +16,7 @@ Trackboard shows how tickets moved across days and cycles. It reads ticket state
 
 ## Hard constraints
 
-1. **Never edit ticket stage.** Leave `.tickets/*.md`, `.plan/task-sequence.md` and `.plan/PRD.md` untouched. `/todo build`, `/orchestrate` and `/antiplan` own them.
+1. **Never edit ticket stage.** Leave `.tickets/*.md`, `.plan/task-sequence.md` and `.plan/PRD.md` untouched. `/todo build` and `/antiplan` own them.
 2. **Read sources; write only under `.plan/board/`** plus the export path the user names. The script writes `board.json` and `history.jsonl`; the agent writes `brief.md`.
 3. **History is append-only.** `refresh` adds lines to `history.jsonl` and never rewrites or deletes one. To correct a bad line, append a new event.
 4. **Report drift; do not resolve it.** When sources disagree on a stage, show the drift entry and name the files. The user fixes the source.
@@ -26,7 +26,7 @@ Trackboard shows how tickets moved across days and cycles. It reads ticket state
 ## Use when / Skip when
 
 - **Use when:** "show ticket state", "progress board", "how did this sprint go", "burn by cycle", "which gates have evidence", "export the board for the PR".
-- **Skip when:** the user wants the next prompt or ticket to run (`/todo`), wants to plan or split work (`/antiplan`), or wants a claim verified (`/evidence-reviewer`).
+- **Skip when:** the user wants the next prompt or ticket to run (`/todo`), wants to plan or split work (`/antiplan`), or wants a claim verified (`/verify-claim`).
 
 ## Boundaries
 
@@ -34,8 +34,8 @@ Trackboard shows how tickets moved across days and cycles. It reads ticket state
 |---|---|---|
 | `/todo` | Pipeline routing, next-step prompts | Reads the same `Stage:` values; never routes |
 | `/antiplan` | `.plan/PRD.md`, `.plan/task-sequence.md`, gates | Reads the task-sequence table when no tickets exist |
-| `/todo build`, `/orchestrate` | `Stage:` edits in `.tickets/*.md` | Records each edit as one history line on the next refresh |
-| `/evidence-reviewer` | VERIFIED or REJECTED verdicts | On VERIFIED, `refresh --evidence` stores the link; the reviewer skill stays unchanged |
+| `/todo build` | `Stage:` edits in `.tickets/*.md` | Records each edit as one history line on the next refresh |
+| `todo/references/evidence-reviewer.md` | VERIFIED, DRIFT-DETECTED or EVIDENCE-INSUFFICIENT verdicts | On VERIFIED, `refresh --evidence` stores the link; the reviewer procedure stays unchanged |
 | `/handoff` | Session resume prompts | A handoff may link `board.md`; trackboard writes no prompts |
 | `trackboard` | `.plan/board/*` and export files | Read-only projection of the above |
 

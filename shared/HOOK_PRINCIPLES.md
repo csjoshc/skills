@@ -1,7 +1,7 @@
 # Hook & Skill Principles
 
 Canonical reference for when to invoke each enforcement skill and when
-to promote it to a hook. Referenced by `hook-sync`, `project-onboarding`,
+to promote it to a hook. Referenced by `project-onboarding`,
 and any agent that asks "should this be a hook?"
 
 ## Why hooks backfire
@@ -33,15 +33,14 @@ If any criterion fails, keep it as a skill invoked on demand.
 | Skill / companion | Best trigger | Avoid when | Hook? |
 |---|---|---|---|
 | `verify-claim` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
-| `hook-sync` | After editing `~/.hooks/*` | Every session | No — manual |
-| `caveman` | Context > 50%, bulk reports | First reply, specs, errors | **Conditional** on SessionStart |
+| `caveman` | Context > 50%, bulk reports | First reply, specs, errors | No - the agent cannot measure its own context; invoke on demand |
 | `cleanup/WRITE_TIME_GUARD.md` | New file or new export in mature repo | Tests, generated, prototypes | No — call from workflow |
 | `cleanup/LAYER_ENFORCEMENT.md` | Import added AND layer map exists | No layer map | **Advisory** PostToolUse |
 | `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | **Advisory** on test file writes |
 | `tdd/MUTATION.md` | End of TDD cycle, pre-PR audit | Every save (too slow) | No — on demand |
-| `project-onboarding/WORKFLOW_GATES.md` | First turn of a session | Every prompt | **Yes — halt on missing context** |
-| `pr-review` (5 agents) | Before `gh pr create` | Draft PRs | **Yes — advisory** |
-| `ticket-critic` AC→Test table | Ticket promoting to `Stage: BUILD` | NEW/SPEC tickets | **Advisory** on ticket edits |
+| `project-onboarding/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
+| Self code review | Before `gh pr create` | Draft PRs | No - `pr-create` Phase 0 runs it |
+| `ticket-critic` AC→Test table | Ticket promoting to `Stage: BUILD` | NEW/SPEC tickets | No - `/todo` state detection routes to it |
 | `pr-fix` staleness | After each review-comment fix | No PR open | No — internal |
 | `cleanup` Phase 0 | On-demand audit, pre-PR self-review | After every edit | No |
 
@@ -71,18 +70,27 @@ Everything else is `advisory` — the hook posts a report; the agent or
 user decides. Advisory hooks degrade gracefully; blocking hooks must
 earn their block with a concrete, cheap alternative.
 
-## Minimal safe hook catalogue
+## Hook catalogue
 
-Start with these five and nothing more. Add a sixth only when a real
-failure mode points to it.
+One hook. Add another only when a real failure mode points to it.
 
 | Hook | Event | Mode | Timeout |
 |---|---|---|---|
-| `verify-claim-gate` | `PreToolUse: Bash(gh pr create*\|git commit*)` | halt | 5s |
-| `pr-review-self-check` | `PreToolUse: Bash(gh pr create*)` | advisory | 30s |
-| `workflow-gates-session` | `SessionStart` | setup-only (no block) | 1s |
-| `ticket-critic-build-gate` | `PostToolUse: Edit(.tickets/*.md)` with `Stage: BUILD` in diff | advisory | 3s |
-| `caveman-budget-auto` | `SessionStart` with `context_usage > 0.5` | setup-only | 500ms |
+| `verify-claim-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
+
+It only catches an agent that ran verify-claim, recorded a failure, and
+tried to ship anyway. It cannot catch an agent that never ran the check;
+that rule lives in AGENTS.md and `pr-create` Phase 0.
+
+Removed hooks and where their intent lives now:
+
+- PR self-review reminder → `pr-create` Phase 0.
+- Ticket BUILD reminder → `/todo` state detection.
+- Workflow-gates notice → a link from the project AGENTS.md.
+- Caveman context reminder → on demand; no hook can see context usage.
+
+Advisory hooks that only print and exit 0 are not shown to the model on
+some harnesses. Don't add one; make it block, or make it a skill step.
 
 Anti-examples (do NOT add these):
 
@@ -94,19 +102,20 @@ Anti-examples (do NOT add these):
 
 ## Override protocol
 
-All hooks must accept a bypass in one of two forms:
+Hooks accept two bypasses:
 
-1. `override: <reason>` typed by the user — recorded to
-   `.claude/hook-overrides.log` with timestamp and reason.
-2. Presence of `.claude/hooks-disabled` at repo root — hooks skip
-   silently until removed. Used for spikes and prototypes.
+1. Resolve the cause (for `verify-claim-gate`: produce the evidence, or
+   the user says `override: <reason>` and the agent deletes the marker
+   and records the reason in the PR body).
+2. `.hooks-disabled` (or `.claude/hooks-disabled`) at repo root - hooks
+   skip silently until removed. Used for spikes and prototypes.
 
 Agents MUST NOT override hooks on their own reasoning. "I think this
 is fine" is not an override.
 
 ## Escalation for new hooks
 
-Before adding a sixth hook, write down:
+Before adding another hook, write down:
 
 1. What failure mode does this catch that existing hooks miss?
 2. How often will it fire (per session, per week)?
