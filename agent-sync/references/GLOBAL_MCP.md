@@ -11,17 +11,32 @@ Authoritative target list for sync. Master store: `~/.secrets/mcp.json` (never e
 | **Claude Code (CLI)** — local scope | `~/.claude.json` | `projects["<abs-path>"].mcpServers` | stdio, http, sse | Remove entry |
 | **Claude Code (CLI)** — project scope | `<repo>/.mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; commit to VCS |
 | **Claude Code — settings file** | `~/.claude/settings.json` | **NEVER `mcpServers`** | N/A | Prune this key defensively — schema violation |
-| **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` | `mcpServers` | stdio only | Remove entry (skip URL-based servers entirely) |
+| **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` | `mcpServers` | stdio only (http via `mcp-remote`) | Remove entry |
 | **Cursor** | `~/.cursor/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry or set `"enabled": false` |
 | **Cline (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Roo Code (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Zed Editor** | `~/.config/zed/settings.json` | `context_servers` | stdio | Remove entry |
 | **OpenCode** | `~/.config/opencode/opencode.json` | `mcp` | stdio, http | `"enabled": false` supported; `command` is an **array** |
-| **Gemini CLI** | `~/.gemini/mcp_config.json` | `mcpServers` | stdio, http, sse | Remove entry |
+| **pi** (`pi_agent_rust`) | `~/.pi/agent/mcp.json` and `~/.gateway-pi/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; run `mcp_sync.py` (see mcp.md) |
+
+## Secret references per target
+
+The master holds `${VAR}` placeholders only. `mcp_sync.py` writes each target's own reference form.
+The values live in `~/.config/secrets/work.env` (mode 600), never in a tool config.
+
+| Target | Form written | Where the value comes from |
+| :--- | :--- | :--- |
+| Claude Code | `${VAR}` | Shell env of the process that starts `claude` |
+| OpenCode | `{env:VAR}` | Shell env of the opencode process or service |
+| pi | `$ENV:VAR` (whole value only) | Shell env of the process that starts pi |
+| Cursor, Claude Desktop | `/bin/zsh -c 'set -a; . "$HOME/.config/secrets/work.env"; exec ...'` | The wrapper sources `work.env`, because Dock-launched apps do not inherit shell env |
+
+A header that needs a prefix, such as `Prefix <token>`, is built once in `work.env` (`REMOTE_MCP_AUTH`) so every target can use a whole-value reference.
+A literal in a secret-named field is refused, never written.
 
 ## Transport whitelist per tool
 
-- **Claude Desktop**: skip servers with `url` field (HTTP/SSE unsupported).
+- **Claude Desktop**: stdio only, so a `url` server is proxied through `npx mcp-remote`.
 - **Zed**: stdio only; skip URL servers.
 - **All others**: full stdio + http + sse.
 
@@ -71,7 +86,7 @@ Successful output has `"subtype":"success"` and a non-empty `"result"`.
 
 ## Safety checklist before every sync
 
-1. Backup: `cp ~/.claude.json ~/.claude.json.bak.$(date +%Y%m%d-%H%M%S)`.
+1. Dry run: `python3 ~/.skills/agent-sync/mcp_sync.py --dry-run` (lists key paths, no values). Real runs write a `.bak.<ts>` copy first.
 2. Validate master: `jq empty ~/.secrets/mcp.json`.
 3. Confirm no `mcpServers` key will leak into `~/.claude/settings.json`.
 4. After sync: `claude mcp list` and at least one subprocess E2E test.

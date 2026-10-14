@@ -78,7 +78,7 @@ If `.system/` is missing, open Codex Desktop or run the Codex CLI once — it re
 
 Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 - Whether the current project requires project-level symlinks
-- Which symlinks to create (Gemini and VS Code are recommended; others are optional)
+- Which symlinks to create (VS Code is recommended; others are optional)
 - How to handle project-specific (non-synced) skills vs. master-synced skills
 
 **Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use the filtered copy below instead of a symlink (about 2 MB; a plain `cp -r` drags in `.git`, eval runs and mirrors, over 30 MB).
@@ -104,7 +104,6 @@ Always provide a **Sync Status Report** table with the following structure:
 | Claude Code | Synced / Out of Sync / Missing | Setup / Stale / Missing / N/A | Project-level uses `cp -r` (not symlink) |
 | Codex | Synced / Out of Sync / Missing | N/A | Global `~/.codex/skills` symlink required |
 | Antigravity | Synced / Out of Sync / Missing | N/A | Path: ~/.gemini/antigravity/skills |
-| Gemini CLI | Synced / Out of Sync / Missing | Setup / Missing / N/A | Path: ~/.gemini/skills |
 | VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
 | *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See shared/SYMLINK_MAP.md |
 

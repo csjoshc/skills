@@ -2,8 +2,9 @@
 name: agent-sync
 description: >-
   Keeps AI agent setups in sync from one master store. Skills mode audits and repairs symlinks
-  from ~/.skills into Claude Code, Cursor, Codex, Gemini, OpenCode and others. MCP mode projects
-  ~/.secrets/mcp.json into each tool's native config and toggles servers. Use when syncing or
+  from ~/.skills into Claude Code, Cursor, Codex, Antigravity, OpenCode and others. MCP mode projects
+  ~/.secrets/mcp.json into each tool's native config (env-var references, never literal secrets)
+  and toggles servers. Use when syncing or
   auditing skills, ingesting a new skill, fixing broken skill links, or enabling, disabling or
   standardizing MCP servers across tools.
 ---

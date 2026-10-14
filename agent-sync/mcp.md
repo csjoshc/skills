@@ -1,7 +1,7 @@
 
 # MCP sync & toggle
 
-**Version:** 2.0.0
+**Version:** 3.0.0
 
 ## Contents
 
@@ -69,14 +69,16 @@ Precedence when the same name appears in multiple scopes: **Local → Project �
 
 ### 1. Full sync (master → all targets)
 
-1. Read `~/.secrets/mcp.json`.
-2. Filter: keep only entries where `enabled != false`.
-3. For each entry, produce a clean copy without `enabled` / `allowedTools`, and ensure `type` is explicit.
-4. For each target in [GLOBAL_MCP.md](references/GLOBAL_MCP.md):
-   - Read current target JSON (preserve unrelated keys).
-   - Apply target-specific transform (root key, transport whitelist, etc.).
-   - Write back surgically using `jq` or equivalent — never overwrite the whole file.
-5. Run verification commands (§Verification).
+1. `python3 ~/.skills/agent-sync/mcp_sync.py --dry-run` and read the key paths it lists.
+2. Run it again without `--dry-run`. Use `--targets claude,opencode,...` to limit it and `--strict` to fail on any literal secret.
+3. Run the verification commands (§Verification).
+
+The script reads the master, drops `enabled: false` servers, strips `enabled` and `allowedTools`, sets an explicit `type`, and merges into each target.
+It keeps tool-only servers and unrelated keys, writes through a temp file and atomic rename, keeps the file's mode, and saves `<file>.bak.<ts>` (mode 600) before changing anything.
+It also removes a stray `mcpServers` from `~/.claude/settings.json`.
+Cursor and Claude Desktop are skipped with a message while the app is running, because the app rewrites its own file on exit (`--ignore-running` overrides).
+Tests: `python3 -I ~/.skills/agent-sync/test_mcp_sync.py`.
+Mutation check: `python3 -I ~/.skills/agent-sync/mutants_mcp_sync.py`.
 
 ### 2. Toggle a server
 
@@ -88,8 +90,8 @@ Precedence when the same name appears in multiple scopes: **Local → Project �
 
 - If the repo needs a committed MCP config, create `.mcp.json` at the project root (user must approve once per project via Claude Code's trust dialog).
 - If it needs a personal-only MCP for this repo, add under `~/.claude.json → projects["<abs-path>"].mcpServers`.
-- For non-Claude tools (Gemini CLI, OpenCode), see target-specific paths in [GLOBAL_MCP.md](references/GLOBAL_MCP.md).
-- Add project-local personal configs (`.claude/settings.local.json`, `.gemini/mcp_config.json`) to `.gitignore`.
+- For non-Claude tools (OpenCode, Cursor), see target-specific paths in [GLOBAL_MCP.md](references/GLOBAL_MCP.md).
+- Add project-local personal configs (`.claude/settings.local.json`) to `.gitignore`.
 
 ## Target-specific transforms
 
@@ -99,44 +101,43 @@ Precedence when the same name appears in multiple scopes: **Local → Project �
 - Strip: `enabled`, `allowedTools`
 - Also: ensure `~/.claude/settings.json` has NO `mcpServers` key (schema violation).
 
-Example jq sync snippet (safe pattern):
+- Entries keep `${VAR}` references as they are; Claude Code expands them from the shell env at start.
+- `mcp-atlassian` gets its `allowedTools` as `--enabled-tools a,b,c` in `args` (Claude Code only).
 
-```bash
-jq '
-  .mcpServers as $m |
-  [ $m | to_entries[] | select(.value.enabled != false) |
-    { key: .key,
-      value: (.value
-        | del(.enabled, .allowedTools)
-        | if has("url") then
-            (if has("type") then . else . + {"type":"http"} end)
-          elif has("command") then
-            (if has("type") then . else . + {"type":"stdio"} end)
-          else . end) }
-  ] | from_entries
-' ~/.secrets/mcp.json > /tmp/clean_mcp.json
+### Claude Desktop and Cursor
+- GUI apps launched from the Dock do not inherit the shell env, so a server that uses a `${VAR}` becomes a wrapper: `command: /bin/zsh`, `args: ["-c", "set -a; . \"$HOME/.config/secrets/work.env\"; exec <command and args, shell-quoted>"]`.
+- A secret env entry whose name equals the variable is dropped from `env` because the sourced file exports it.
+  A renamed one is assigned inside the script.
+- Desktop is stdio-only: a `url` server runs as `npx -y mcp-remote <url> --header "Name:$VAR"`, with the node bin dir put on `PATH`.
+  Cursor does the same only when the header needs a variable.
+  The npx path is taken from the master (`--npx` overrides).
+- Files: `~/Library/Application Support/Claude/claude_desktop_config.json` (no `type`) and `~/.cursor/mcp.json` (`type: stdio`). Root key `mcpServers`.
+- Quit and reopen the app after a sync.
 
-jq --slurpfile clean /tmp/clean_mcp.json \
-  '.mcpServers = $clean[0]' ~/.claude.json > ~/.claude.json.tmp \
-  && mv ~/.claude.json.tmp ~/.claude.json
+### Cline, Roo
+- Root key `mcpServers`. Not synced by `mcp_sync.py`; check tool docs per major-version change.
 
-# Belt-and-braces: ensure settings.json never holds mcpServers
-jq 'del(.mcpServers)' ~/.claude/settings.json > ~/.claude/settings.json.tmp \
-  && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
-```
-
-### Claude Desktop
-- Stdio-only. Skip any server with `url` (http/sse not supported).
-- File: `~/Library/Application Support/Claude/claude_desktop_config.json`, root key `mcpServers`.
-
-### Cursor, Cline, Roo, Gemini CLI
-- Root key `mcpServers`. Stdio + URL generally supported; check tool docs per major-version change.
+### pi (`pi_agent_rust`)
+- Files: `~/.pi/agent/mcp.json` and `~/.gateway-pi/mcp.json` (the gateway-pi wrapper sets `PI_CODING_AGENT_DIR`). Root key `mcpServers`.
+- Run `python3 ~/.skills/agent-sync/mcp_sync.py --targets pi,pi-gateway` (`--dry-run` first).
+  `mcp_pi.py` is a thin entry point that does the same.
+  Tests: `test_mcp_sync.py` and `test_mcp_pi.py`.
+- Merge only: servers named in the master are added, updated or (when disabled) removed.
+  Other servers, such as the pi-only `claude` one, and other keys stay.
+  Writes are mode 600 with a timestamped `.bak.<ts>` copy when something changed.
+- pi rejects `http` with `args`/`env`, `stdio` with `headers`, `command` with `url`, and `type` `local`/`remote`. The script emits only the fields each type allows.
+- Secrets: pi expands a whole value `$ENV:NAME`, so a master `${NAME}` becomes `$ENV:NAME`.
+  A `${NAME}` inside a longer value is dropped with a warning, and a literal in a secret-named field is refused.
+  Build any prefixed value once in `work.env` (such as `REMOTE_MCP_AUTH`) and keep the master value a bare `${NAME}`.
+  The variable must be exported in the shell that starts pi.
+- Trust: pi runs a server only after `/mcp trust <name>`, per file and per definition. Any change to a server re-pends it. `$ENV:` refs keep a token rotation from re-pending.
 
 ### Zed
 - Root key `context_servers` (different!).
 
 ### OpenCode
-- Root key `mcp`. Uses `"type": "local"` + `"command": ["..."]` (array, not string).
+- Root key `mcp`. Uses `"type": "local"` + `"command": ["..."]` (array, not string), `environment` for env, and `{env:VAR}` references.
+- It has its own `enabled` flag: an existing entry keeps it, and a master-disabled server is switched off in place instead of removed.
 
 ## Verification
 
@@ -165,14 +166,19 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 
 ## Secret hygiene
 
-- Never inline secrets into the skill or committed files.
-- `~/.secrets/mcp.json` is the only place tokens live. It must be outside any repo (`~/.secrets/` is user-only).
-- Do not echo full tokens in logs; redact in any diagnostic output.
+- The master holds `${VAR}` placeholders only.
+  Values live in `~/.config/secrets/work.env` (dir 700, file 600), outside every repo.
+- To add a secret: add `NAME=` to the repo template `secrets/work.env.example` in `~/bootstrap`, set it in `work.env`, put `${NAME}` in the master, then run `mcp_sync.py`.
+- To rotate: edit the value in `work.env`, then restart each tool from a fresh shell (Cursor and Claude Desktop re-read the file when they spawn the server).
+- A literal in a secret-named env/header field is refused by every target.
+  Use `--strict` to make that a failure.
+- The script never prints values; its warnings name the server and field only.
 
 ## Verification checklist
 
 - [ ] `~/.secrets/mcp.json` is valid JSON and follows the master schema.
 - [ ] `~/.claude/settings.json` does NOT contain an `mcpServers` key.
-- [ ] `~/.claude.json → mcpServers` matches `~/.secrets/mcp.json` filtered by `enabled != false`, stripped of custom keys, with `type` set.
+- [ ] `mcp_sync.py --dry-run` lists no key-path changes.
+- [ ] No target file contains a literal secret value (grep each `work.env` value, expect 0 hits).
 - [ ] `claude mcp list` shows each enabled server as "✓ Connected".
 - [ ] Subprocess E2E test on at least one server returns a real tool result.

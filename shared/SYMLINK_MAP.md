@@ -13,12 +13,14 @@ All paths symlink to the master store at `~/.skills`.
 | **Cursor (Skills)** | `~/.cursor/skills` | `~/.skills` |
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
 | **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
-| **Gemini CLI** | `~/.gemini/skills` | `~/.skills` |
 | **OpenCode** | `~/.config/opencode/skills` | `~/.skills` |
-| **Qwen Code** | `~/.qwen/skills` | `~/.skills` |
+| **pi** (`pi_agent_rust`) | `~/.pi/agent/skills` | `~/.skills` |
+| **pi, gateway profile** | `~/.gateway-pi/skills` | `~/.skills` |
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
+
+**pi note:** pi warns once per start about files it cannot treat as skills: the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`) and a few unknown frontmatter fields. It still loads every skill. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
 
 ### Codex exception: per-skill symlinks
 
@@ -56,7 +58,6 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude ignores AGENTS.md) |
 | **Codex** | `~/.codex/AGENTS.md` | Symlink |
 | **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
-| **Gemini CLI** | `~/.gemini/GEMINI.md` | Symlink |
 | **Antigravity** | `~/.gemini/antigravity/AGENTS.md` | Symlink |
 | **Cursor / Copilot** | (none) | No global file; use project `AGENTS.md` |
 
@@ -66,14 +67,13 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | :--- | :--- | :--- | :--- | :--- |
 | **Universal Shim** | `.skills/` | Granular links to `~/.skills/` | Symlink | General discovery (primary onboarding output) |
 | **Claude Code** | `.claude/skills` | `~/.skills` | **Copy** (`cp -r`) | Claude Code resolves relative to project root |
-| **Gemini CLI** | `.gemini/skills` | `~/.skills` | Symlink | Native discovery |
 | **Cursor** | `.cursor/rules/master` | `~/.skills` | Symlink | .mdc indexing |
 | **VS Code / Copilot** | `.vscode/skills` | `~/.skills` | Symlink | Copilot workspace settings |
 | **Aider** | `.aider.conf.yml` | (Refers to AGENTS.md) | Config | Config-based |
 | **Windsurf** | `.windsurfrules` | (Refers to AGENTS.md) | Shim file | Shim file |
 | **Cline** | `.clinerules` | (Refers to AGENTS.md) | Shim file | Shim file |
 
-**Note:** All project-level skill folders (`.skills/`, `.gemini/skills/`, `.claude/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`. Claude Code uses `cp -r` at the project level because Claude Desktop is sandboxed and cannot follow symlinks outside the workspace — re-copy when master store changes. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+**Note:** All project-level skill folders (`.skills/`, `.claude/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`. Claude Code uses `cp -r` at the project level because Claude Desktop is sandboxed and cannot follow symlinks outside the workspace — re-copy when master store changes. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
 
 ## Setup: Local `.skills` Granular Loop
 

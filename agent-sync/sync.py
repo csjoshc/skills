@@ -68,7 +68,7 @@ def windows_path(path: Path) -> str:
 class PlatformConfig:
     name: str
     skills_symlink: Path
-    permission_type: str  # "external_directory", "filesystem", "policy", "include_directories", "trust"
+    permission_type: str  # "external_directory", "filesystem", "policy", "trust"
     config_path: Optional[Path] = None
     config_parser: Optional[str] = None  # "json", "toml"
     template_name: Optional[str] = None
@@ -102,14 +102,6 @@ PLATFORMS = {
         template_name="gemini-policy.toml",
         platform_key="antigravity",
     ),
-    "gemini": PlatformConfig(
-        name="Gemini CLI",
-        skills_symlink=HOME / ".gemini" / "skills",
-        permission_type="policy",
-        config_path=HOME / ".gemini" / "policies" / "skills.toml",
-        template_name="gemini-policy.toml",
-        platform_key="gemini",
-    ),
     "cursor": PlatformConfig(
         name="Cursor",
         skills_symlink=HOME / ".cursor" / "skills",
@@ -122,14 +114,18 @@ PLATFORMS = {
         permission_type="trust",
         platform_key="claude",
     ),
-    "qwen": PlatformConfig(
-        name="Qwen",
-        skills_symlink=HOME / ".qwen" / "skills",
-        permission_type="include_directories",
-        config_path=HOME / ".qwen" / "settings.json",
-        config_parser="json",
-        template_name="qwen-settings.json",
-        platform_key="qwen",
+    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; gateway-pi sets that to ~/.gateway-pi.
+    "pi": PlatformConfig(
+        name="pi",
+        skills_symlink=HOME / ".pi" / "agent" / "skills",
+        permission_type="trust",
+        platform_key="pi",
+    ),
+    "pi-gateway": PlatformConfig(
+        name="pi (gateway)",
+        skills_symlink=HOME / ".gateway-pi" / "skills",
+        permission_type="trust",
+        platform_key="pi-gateway",
     ),
     "copilot": PlatformConfig(
         name="Copilot",
@@ -472,14 +468,6 @@ def audit_permissions(config: PlatformConfig, logger: Logger) -> AuditResult:
                 else:
                     result.permission_status = Status.PERMISSION_MISSING
                     result.permission_details = "No external_directory for .skills"
-            elif config.platform_key == "qwen":
-                include_dirs = data.get("context", {}).get("includeDirectories", [])
-                if any(".skills" in str(d) for d in include_dirs):
-                    result.permission_status = Status.PERMISSION_OK
-                    result.permission_details = "includeDirectories configured"
-                else:
-                    result.permission_status = Status.PERMISSION_MISSING
-                    result.permission_details = "No includeDirectories for .skills"
         elif config.config_parser == "toml":
             if ".skills" in content:
                 result.permission_status = Status.PERMISSION_OK
