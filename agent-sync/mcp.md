@@ -203,6 +203,11 @@ Every target holds a reference to the variable, never the value, so no config ne
 | pi, gateway-pi | `$ENV:VAR` expanded when the server starts | Quit and relaunch pi. The trust record is unchanged, because it fingerprints the reference, not the value. |
 | Cursor, Claude Desktop, VS Code | A `/bin/zsh -c` wrapper sources `work.env` when the server spawns | Reload the MCP server or restart the app. No shell is needed. |
 
+The model gateway token is a separate secret from the MCP tokens.
+It lives in `~/.config/gateway-claude/env` (mode 600), not in `work.env`, and is sourced per launch by `gateway-claude`, `gateway-pi` and `gateway-opencode`.
+To rotate it, edit that file and relaunch the wrapper; running sessions keep the old value until they exit.
+`./bootstrap.sh --secrets` does not create this file, because the wrappers live in the work-only zsh file and not in the repo.
+
 Check afterwards with `python3 -I mcp_sync.py --dry-run`: every target should report `unchanged`.
 A new variable is a different job: follow "To add a secret" above.
 
