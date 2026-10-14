@@ -1,6 +1,6 @@
 ---
 name: make-design-md
-description: Authors a Stitch-format DESIGN.md plus preview-ui/ HTML swatches for any frontend project. Runs a three-phase workflow (audit → decide → emit) with an explicit approval gate before the spec is written. Use when starting a new project, defining a brand for an existing UI, or producing a portable design spec other agents can read.
+description: "Authors a Stitch-format DESIGN.md plus preview swatches through audit, decide and emit phases. Use when defining a project's visual design spec."
 ---
 
 # Make Design.md — Author a Portable Design Spec

@@ -1,13 +1,6 @@
 ---
 name: antiplan
-description: >-
-  Adversarial PRD interrogation. Defaults to a 4-question Fast Mode; escalates
-  to a phased PRD + ticket DAG only for large or risky work. Use when stakes are high or after
-  plan-rebuild loops. Not for fuzzy ideas (use make-prd) or defined features
-  (use spec-writer).
-  In: rough requirements + stated approach.
-  Process: challenge choices, name anti-patterns, gate side effects.
-  Out: .plan/PRD.md + .plan/task-sequence.md.
+description: "Adversarial interrogation of a plan before building: challenges choices, names anti-patterns, writes .plan/PRD.md and task-sequence.md. Fast Mode by default, escalating for large or risky work. Use when stakes are high, requirements are contested, or plans keep getting rebuilt."
 ---
 
 # Antiplan

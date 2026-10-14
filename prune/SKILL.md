@@ -1,6 +1,6 @@
 ---
 name: prune
-description: Strips inherited-but-unused packages and modules from a template-derived monorepo down to load-bearing code. Use when a repo was forked or scaffolded from a base template and carries packages the live app never uses, or to reduce repo surface for an AI agent. Covers load-bearing detection, strip ordering, and coupling checks (workspace manifests, lockfiles, CI matrices, tsconfig refs, string-path loaders). Not for general code-health cleanup (use cleanup).
+description: "Strips inherited, unused packages from a template-derived repo down to load-bearing code. Use when a forked or scaffolded repo carries packages the live app never uses."
 ---
 
 # prune

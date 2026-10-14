@@ -1,11 +1,6 @@
 ---
 name: pr-create
-description: >-
-  Creates GitHub PRs from local changes with proper branch management, evidence collection,
-  and rich descriptions. Handles branch creation from dirty main, UI recording attachments
-  via browser tools, and backend test/coverage log attachments. Use when the user says
-  "create PR", "open PR", "push and PR", "submit changes", or wants to finalize work
-  for review.
+description: "Opens a GitHub PR from local changes: branch prep, evidence, and a body with a summary visual, before/after evidence and merge danger. Use when asked to create, open or submit a PR."
 ---
 
 # Create PR

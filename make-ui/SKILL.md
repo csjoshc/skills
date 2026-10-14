@@ -1,6 +1,6 @@
 ---
 name: make-ui
-description: Builds, applies, or audits frontend UI against a design spec. Three modes — Vibe (build now from a quick aesthetic pick), Apply (conform a repo to an existing DESIGN.md), Audit (diff a repo against DESIGN.md and emit a drift report). Use when implementing UI, restyling components, polishing visuals, or checking conformance. For authoring a DESIGN.md, redirect to /make-design-md.
+description: "Builds or restyles frontend UI against a design spec, or audits a repo against DESIGN.md. Use when implementing or polishing UI or checking it against DESIGN.md."
 ---
 
 # Make UI — Apply, Audit, or Vibe-Build a Frontend

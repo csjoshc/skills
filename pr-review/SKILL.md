@@ -1,11 +1,6 @@
 ---
 name: pr-review
-description: >-
-  Reviews pull requests using specialist lenses for bugs, standards, error
-  handling, tests, and scope traceability. Use when reviewing pull requests,
-  preparing review feedback, or posting GitHub PR comments. Applies
-  deterministic pre-flight checks, criteria-based issue filters, and
-  evidence-backed findings rather than subjective scoring.
+description: "Reviews a pull request with specialist lenses (bugs, standards, errors, tests, scope) and posts evidence-backed findings. Use when reviewing a PR or posting review comments."
 ---
 
 # pr-review

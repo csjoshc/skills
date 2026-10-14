@@ -1,11 +1,6 @@
 ---
 name: verify-claim
-description: >-
-  Evidence gate that blocks any "task complete" / "done" / "fixed" claim without
-  corroborating proof. Requires passing test output, a screenshot + URL for UI
-  changes, a regression test for bug fixes, or a curl response for API changes.
-  Use when the agent is about to report completion, when opening a PR, or whenever
-  the agent is about to claim success.
+description: "Blocks done or fixed claims without proof: passing tests, a regression test for bugs, screenshots for UI, a curl for APIs. Use when about to report completion or open a PR."
 ---
 
 # verify-claim

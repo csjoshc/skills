@@ -1,6 +1,6 @@
 ---
 name: skillsmith
-description: Audits, creates, and refactors skills to meet context hygiene, specialized review, and Claude skill authoring standards. Use when creating a new skill, reviewing skill quality, or remediating non-compliant SKILL.md and companion files.
+description: "Audits, creates and refactors skills against ~/.skills conventions. Use when creating a skill, reviewing skill quality, or fixing a non-compliant SKILL.md."
 ---
 
 # Skillsmith

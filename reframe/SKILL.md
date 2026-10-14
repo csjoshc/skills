@@ -1,13 +1,6 @@
 ---
 name: reframe
-description: >-
-  Rewrites source material (docs, code, specs, existing decks) for a specific
-  audience—exec, architect, or engineer—restructuring narrative, emphasis, and
-  detail level. Produces structured markdown with YAML frontmatter that
-  downstream skills (like ppt-make) can consume for presentation generation.
-  Optionally generates Mermaid diagrams. Use when preparing briefings,
-  structuring content for presentations, or when the same material must serve
-  multiple audiences with different concerns.
+description: "Rewrites source material for an exec, architect or engineer audience as structured markdown that ppt-make and others consume. Use when the same material must serve a different audience."
 ---
 
 # reframe

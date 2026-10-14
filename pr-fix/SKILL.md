@@ -1,9 +1,6 @@
 ---
 name: pr-fix
-description: >-
-  Systematically addresses PR review comments one at a time with verification
-  gates between each fix. Use when the user wants to fix PR comments, address
-  review feedback, resolve PR review issues, or respond to code review.
+description: "Works through PR review comments one at a time with a verification gate after each fix. Use when addressing PR review feedback."
 ---
 
 # PR Fix

@@ -1,12 +1,7 @@
 ---
 name: make-prd
-description: >-
-  Interactive PRD drafting via fan-out dialogue with human checkpoints. Use when
-  the idea is fuzzy and needs collaborative exploration. Not for adversarial
-  pushback (use antiplan) or defined features (use spec-writer).
-  In: rough idea.
-  Process: fan-out questions, human checkpoints, synthesize.
-  Out: .plan/PRD.md + .plan/task-sequence.md.
+description: "Draft a PRD for a fuzzy idea through collaborative question rounds."
+disable-model-invocation: true
 metadata:
   short-description: Interactive PRD + ticket planner
 ---
