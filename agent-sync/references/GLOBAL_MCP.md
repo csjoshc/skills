@@ -1,6 +1,7 @@
 # Global MCP Configuration Map
 
-Authoritative target list for sync. Master store: `~/.secrets/mcp.json` (never edited by downstream tools).
+Authoritative target list for sync. Master store: `~/.secrets/mcp.json` (never edited by downstream tools), plus any `~/.secrets/mcp.d/*.json` drop-ins.
+Start a new master from [mcp.example.json](mcp.example.json).
 
 ## Target table
 
@@ -16,6 +17,7 @@ Authoritative target list for sync. Master store: `~/.secrets/mcp.json` (never e
 | **Cline (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Roo Code (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Zed Editor** | `~/.config/zed/settings.json` | `context_servers` | stdio | Remove entry |
+| **Codex** (app, CLI, IDE), personal only | `~/.codex/config.toml` | `mcp_servers` (TOML tables) | stdio, http | Only servers marked `"personal": true` and with no `${VAR}`; no `type`, headers are `http_headers` |
 | **OpenCode** | `~/.config/opencode/opencode.json` | `mcp` | stdio, http | `"enabled": false` supported; `command` is an **array** |
 | **pi** (`pi_agent_rust`) | `~/.pi/agent/mcp.json` and `~/.gateway-pi/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; run `mcp_sync.py` (see mcp.md) |
 
@@ -30,6 +32,8 @@ The values live in `~/.config/secrets/work.env` (mode 600), never in a tool conf
 | OpenCode | `{env:VAR}` | Shell env of the opencode process or service |
 | pi | `$ENV:VAR` (whole value only) | Shell env of the process that starts pi |
 | Cursor, Claude Desktop | `/bin/zsh -c 'set -a; . "$HOME/.config/secrets/work.env"; exec ...'` | The wrapper sources `work.env`, because Dock-launched apps do not inherit shell env |
+
+Codex is not in this table: it never receives a secret reference.
 
 A header that needs a prefix, such as `Prefix <token>`, is built once in `work.env` (`REMOTE_MCP_AUTH`) so every target can use a whole-value reference.
 A literal in a secret-named field is refused, never written.

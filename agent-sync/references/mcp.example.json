@@ -1,0 +1,33 @@
+{
+  "_readme": "Template for ~/.secrets/mcp.json. Copy it there, keep only the servers you use, and never put a literal token in it: every secret is a ${VAR} placeholder whose value lives in ~/.config/secrets/work.env. enabled, allowedTools and personal stay in this file and are never written to a tool. Only servers with personal set to true and no ${VAR} are written to Codex, which is personal only. Servers that belong to another repo go in ~/.secrets/mcp.d/*.json instead. See mcp.md.",
+  "mcpServers": {
+    "github": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}" },
+      "enabled": true
+    },
+    "example-http": {
+      "type": "http",
+      "url": "https://mcp.example.com/mcp",
+      "headers": { "Authorization": "${EXAMPLE_MCP_AUTH}" },
+      "allowedTools": ["search_docs"],
+      "enabled": false
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated=true"],
+      "personal": true,
+      "enabled": true
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "personal": true,
+      "enabled": false
+    }
+  }
+}
