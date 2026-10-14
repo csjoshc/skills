@@ -1,85 +1,77 @@
 # Skill Conventions
 
-This file defines the enforceable baseline for skills in `~/.skills`.
+The enforceable baseline for skills in `~/.skills`.
+`skillsmith/scripts/skill_audit.py` checks the mechanical parts.
 
-## Source Baseline
-
-These conventions are grounded in:
-
-- Context Hygiene Principle: `https://jdforsythe.github.io/10-principles/principles/context-hygiene/`
-- Specialized Review Principle: `https://jdforsythe.github.io/10-principles/principles/specialized-review/`
+Sources:
 - Claude skill authoring best practices: `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices`
+- Context hygiene and specialized review: `https://jdforsythe.github.io/10-principles/`
+- Matt Pocock, `writing-for-agents` and `.agents/invocation.md` (MIT): `https://github.com/mattpocock/skills`
 
-## Core Rule
+## Frontmatter
 
-Keep always-loaded context lean and high-signal. Push details into companion files and load only when needed.
+- `name`: max 64 chars, lowercase letters, numbers and hyphens, matches the folder name, no `anthropic` or `claude`.
+- `description`: non-empty, max 1024 chars, third person.
 
-## Required Structure (All SKILL.md Files)
+## Invocation
 
-1. Include YAML frontmatter with:
-- `name`
-- `description`
+Every skill is one of two kinds:
 
-2. Frontmatter validation:
-- `name` must be lowercase letters, numbers, hyphens only.
-- `name` must not contain reserved words like `anthropic` or `claude`.
-- `description` must be third-person (avoid `I`, `you`, `we`).
-- `description` must state what the skill does and when to use it.
+- **Model-invoked** (the default): the agent or the user can fire it, and other skills can call it.
+  Its description is model-facing and always loaded, so it carries the trigger branches ("Use when ...").
+- **User-invoked**: add `disable-model-invocation: true`.
+  Only a human typing its name can fire it, and no other skill can call it.
+  Its description is one human-facing line with no trigger list. The audit skips the "use when" and minimum-length checks for these.
 
-3. Size limit:
-- Keep SKILL.md body under 500 lines.
-- If near the limit, split into companion files.
+Pick model-invoked only when the agent must reach the skill on its own, or another skill must call it.
+Before flipping a skill to user-invoked, grep for skills that call it.
+Harnesses that ignore the flag (Codex, some others) still auto-invoke it, so the short description is what pays off everywhere.
 
-4. Progressive disclosure:
-- Keep SKILL.md as overview, decision logic, and routing.
-- Move large templates, examples, references, and checklists to companion files.
-- SKILL.md must link to those companions directly.
+## Descriptions are context pointers
 
-5. Reference depth:
-- Keep references one level deep from SKILL.md.
-- Avoid SKILL.md -> file A -> file B dependency chains for required instructions.
+The description sits in every session's context, so every word costs on every turn.
 
-6. Companion navigation:
-- Any companion/reference file longer than 100 lines should include `## Contents` near the top.
+- Front-load the leading word: the term the user actually types.
+- One trigger per distinct branch. Synonyms for one branch are one trigger.
+- Cut identity the body already carries.
+- "Not for X (use Y)" routing earns its place only when mis-triggering is observed.
 
-## Context Hygiene Rules
+## Calling other skills
 
-1. Store durable state in files, not chat history.
-2. Remove stale instructions quickly (context poisoning is worse than context bloat).
-3. Put high-priority identity and hard constraints near the beginning of SKILL.md.
-4. Put execution checklists and retrieval anchors near the end of SKILL.md.
-5. Do not include discoverable repo facts the agent can read directly.
+- To run another skill, write "Call the Skill tool with `<name>`", one call per skill.
+- Material two or more skills need lives in `shared/` (or `standards/`, `reviews/`), not inside one skill's folder.
+- A user-invoked skill can only be suggested to the human ("tell the user to run `/todo`"), never called.
 
-## Specialized Review Rules (Review Skills)
+## Structure
 
-If a skill performs review/audit/critique, it must:
+- SKILL.md body under 500 lines. It holds steps and decision logic.
+- Inline what every branch needs; put what only some branches reach in a companion file linked directly from SKILL.md.
+- References one level deep: no SKILL.md -> A -> B chains for required instructions.
+- Companion files over 100 lines start with `## Contents`.
 
-1. Prefer specialist lenses over generic "review everything" instructions.
-2. Run deterministic checks before LLM judgment when applicable (build/lint/test/static checks).
-3. Require evidence for each finding (file/line/trace, not bare claims).
-4. Keep reviewer responsibility separate from code-generation responsibility.
-5. Use domain vocabulary and named anti-patterns for each review lens.
+## Writing
 
-## Shared vs Local Content
+- Every step ends on a completion criterion the agent can check.
+- State the target behaviour, not the prohibition. Use a "don't" only for a hard guardrail, paired with the positive.
+- Delete no-ops: sentences the model already obeys by default.
+- Leave one-command lookups to the environment (`package.json`, config, `--help`). Record what the agent can't look up: conventions, reasons, gotchas.
+- One meaning, one place. Prune stale lines; they cost more than missing ones.
 
-Move content to `shared/` when it is reused by 2+ skills.
+## Review skills
 
-Keep in skill-local companions when content is:
-- Domain-specific
-- Workflow-specific
-- Not broadly reused across skills
+A skill that reviews, audits or critiques:
+
+1. Uses specialist lenses, not "review everything".
+2. Runs deterministic checks (build, lint, test) before judgement.
+3. Requires evidence per finding (file, line, trace).
+4. Keeps review separate from code generation.
 
 ## Evals
 
-Each public skill carries `evals/evals.json` (3+ behavior cases, 2+ trigger cases). Format and runner: `skillsmith/reference/evals.md`. `skill_audit.py` warns when a skill has none.
+Public skills should carry `evals/evals.json` (3+ behavior cases, 2+ trigger cases). Format and runner: `skillsmith/reference/evals.md`.
 
-## Maintenance
-
-- Review and prune skill instructions on a regular cadence.
-- Update this file only when rules are changed for all skills.
-- Validate before commit:
+## Validate before commit
 
 ```bash
 python3 ~/.skills/skillsmith/scripts/skill_audit.py ~/.skills
 ```
-
