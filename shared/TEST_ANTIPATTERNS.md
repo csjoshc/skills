@@ -51,35 +51,18 @@ def test_something():
 
 ---
 
-### Over-Mocked Tests
-**Definition:** Mocking internal collaborators instead of testing through public interfaces.
-
-```python
-# BAD - mocks internals
-def test_checkout():
-    mock_payment = Mock()
-    order = Order()
-    checkout(order, mock_payment)
-    mock_payment.charge.assert_called_once()
-
-# GOOD - tests behavior
-def test_checkout():
-    order = Order()
-    result = checkout(order, valid_payment)
-    assert result.status == "confirmed"
-```
+### Over-Mocked, Implementation-Coupled and Tautological Tests
+Mocking internal collaborators, asserting on call order, verifying through a side channel, or recomputing the expected value the way the code does.
+Examples and the full red-flag list live in one place: [tdd/TESTS.md](../tdd/TESTS.md) (Bad Tests).
+Fix: test through the public interface and take expected values from an independent source (a known literal, a worked example, the spec).
 
 ---
 
 ## Test Naming Antipatterns
 
 ### Test Name Describes HOW
-**Definition:** Test name tells you how the code works, not what it does.
-
-| Bad | Good |
-|-----|------|
-| `test_checkout_calls_payment_gateway` | `test_checkout_succeeds_with_valid_card` |
-| `test_user_validation_regex` | `test_rejects_invalid_email_format` |
+Name the behavior, not the mechanism.
+Bad/good naming table: [tdd/TESTS.md](../tdd/TESTS.md) (Test Naming).
 
 ---
 
@@ -206,6 +189,7 @@ def test_order_sends_confirmation_email(): ...
 | Same test in 2+ places? | Consolidate |
 | Test has no assertions? | Add or delete |
 | Mocking internal classes? | Test via public API |
+| Expected value derived the way the code derives it? | Replace with a known literal |
 | Test name has "how"? | Rename to "what" |
 | One test > 50 lines? | Split |
 | Test setup > 20 lines? | Extract fixture |
@@ -222,6 +206,7 @@ def test_order_sends_confirmation_email(): ...
 | Duplicate Suites | Same tests in 2 dirs | Consolidate |
 | No Assertions | assert missing | Add meaningful assertions |
 | Over-Mocking | Mocking internal classes | Test through public API |
+| Tautological | Expected value recomputed like the code | Use an independent known value |
 | Generic Names | "test_1", "test_func" | Name describe behavior |
 | Multi-Behavior | > 3 assertions | Split into separate tests |
 | Fat Fixtures | Excessive setup | Create focused fixtures |
