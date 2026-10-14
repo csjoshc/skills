@@ -1,6 +1,6 @@
 ---
 name: brief-docs
-description: Author and refactor internal technical documentation with brevity—summary-first, progressive disclosure, hub-and-spoke navigation, minimal diagrams. Use when writing or tightening wiki pages, repo docs under docs/, onboarding overviews, or short internal "overview" pages (scannable summary, optional follow-up detail, canonical facts in one place). Not for diagram render/embed workflows (use confluence-diagrams); not for full PRDs or ticket specs (use spec-writer).
+description: "Writes and tightens internal technical docs summary-first with hub-and-spoke navigation. Use when writing or trimming wiki pages, docs/ pages, or onboarding overviews."
 ---
 
 # brief-docs

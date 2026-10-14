@@ -1,13 +1,6 @@
 ---
 name: spec-writer
-description: >-
-  Defined feature -> spec, ADR, micro-tasks (PDCA-T, FR/NFR/RISK). Use when
-  requirements are clear and an engineering breakdown is needed for a coding
-  agent. Not for fuzzy ideas (use make-prd) or contested requirements
-  (use antiplan).
-  In: .plan/PRD.md + .plan/task-sequence.md, or a single defined feature request.
-  Process: expand each placeholder via FR/NFR/RISK + ADR.
-  Out: .tickets/NN-<slug>.md files.
+description: "Turns a defined feature or .plan/PRD.md into vertical-slice tickets under .tickets/ with ACs, ADRs and test obligations. Use when requirements are clear and need an engineering breakdown."
 ---
 
 # spec-writer

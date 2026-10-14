@@ -1,11 +1,6 @@
 ---
 name: stop-slop
-description: >-
-  Removes AI writing patterns from prose. Use when asked to strip the AI tells,
-  de-slop, or make text sound less like AI/ChatGPT, even for a short inline
-  intro, email, or doc snippet; detect mode audits without rewriting; also for
-  explaining scoped technical work in plain vernacular (what/why/evidence,
-  tests vs live proof) to readers unfamiliar with the codebase.
+description: "Removes AI writing patterns from prose, or audits without rewriting. Use when asked to de-slop text or explain technical work in plain language."
 metadata:
   trigger: >-
     Writing prose, editing drafts, reviewing content for AI patterns;

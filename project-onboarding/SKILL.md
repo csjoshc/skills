@@ -1,6 +1,6 @@
 ---
 name: project-onboarding
-description: Creates and reconciles project agent-instruction files across tools, including AGENTS.md, Cursor rules, stack-specific ignore patterns, and parallel git-worktree conventions. Use when onboarding a repository, standardizing agent behavior files, syncing multi-tool project setup, or establishing isolated branches for concurrent agent sessions.
+description: "Sets up or reconciles agent instruction files (AGENTS.md, Cursor rules, ignore patterns, worktree conventions) for a repo. Use when onboarding a repo to agents or standardizing its agent setup."
 ---
 
 # Project Onboarding (Multi-Tool)

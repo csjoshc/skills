@@ -1,6 +1,6 @@
 ---
 name: ticket-critic
-description: Performs pre-implementation ticket audits to block high-risk work before build starts. Use when evaluating ticket readiness, validating Stage headers, or identifying dependency, security, and scope blockers before spec or code execution.
+description: "Audits .tickets/ before build for dependency, security and scope blockers. Use when checking ticket readiness before implementation."
 ---
 
 # Ticket Critic

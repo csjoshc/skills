@@ -1,13 +1,6 @@
 ---
 name: trackboard
-description: >-
-  Builds a dated progress board from ticket state that other skills own. In: .tickets/*.md
-  frontmatter, .plan/task-sequence.md, or a manual stages file. Process: rebuilds
-  .plan/board/board.json, appends stage changes to history.jsonl, reports drift between
-  sources. Out: a Cursor canvas, a React artifact, a static HTML page, or a markdown summary.
-  Use when the user asks for ticket state over time, a progress board or dashboard, sprint or
-  cycle progress, burn by cycle, or gate evidence. Skip for deciding what to work on next
-  (/todo) and for planning or ticket breakdown (/antiplan).
+description: "Builds a dated progress board from ticket state (.tickets/, task-sequence) and reports drift. Use when asked for a progress board, burn by cycle, or ticket state over time."
 ---
 
 # Trackboard

@@ -1,6 +1,6 @@
 ---
 name: make-mmd
-description: "Authors and renders Mermaid diagrams to SVG with a consistent light/dark palette (rgba-tinted rect highlights, mode-aware theme configs). Use when creating or updating .mmd files, rendering sequence or flowchart diagrams to SVG, or when diagrams must read on both light and dark backgrounds (GitHub wiki, README, Confluence, static docs). For Confluence upload, see the confluence-diagrams skill."
+description: "Authors Mermaid diagrams and renders them to SVG that reads in light and dark mode. Use when creating or updating .mmd files or diagram SVGs."
 ---
 
 # make-mmd — Mermaid Authoring + Rendering

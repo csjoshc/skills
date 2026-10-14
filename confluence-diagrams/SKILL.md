@@ -1,6 +1,6 @@
 ---
 name: confluence-diagrams
-description: "Upload and embed Mermaid or PlantUML diagrams in Confluence pages with size control. Use when SVG diagrams are ready and must be attached to Confluence."
+description: "Uploads and embeds rendered Mermaid or PlantUML SVGs in Confluence pages with size control. Use when diagrams must be attached to Confluence."
 ---
 
 # Confluence Diagram Workflow

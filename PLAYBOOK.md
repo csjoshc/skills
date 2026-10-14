@@ -2,6 +2,7 @@
 
 Which skill to reach for.
 Skills also trigger from their `description:`; this is the human-readable map.
+Skills marked *(typed)* are user-invoked: they fire only when you type their name, and no other skill can call them.
 Each skill's SKILL.md is authoritative; this file only routes.
 Before stating what a skill does or advising that a step be skipped, read that skill's SKILL.md; the notes here are for orientation only.
 
@@ -9,10 +10,10 @@ Before stating what a skill does or advising that a step be skipped, read that s
 |---|---|---|
 | Make a small, scoped change | implement directly, `tdd` if you want test-first | No pipeline needed. |
 | Fix a bug | `tdd` (Prove-It path) | Reproduce with a failing test first. |
-| Build a defined feature (a few tickets) | `/todo spec <feature>` | Lite pipeline: spec-writer, optional ticket-critic, `/todo build`. |
-| Build something risky, contested or large | `/todo start <feature>` | antiplan runs Fast Mode first and escalates only if needed. |
-| Explore a fuzzy idea | `make-prd` | Collaborative, not adversarial. |
-| Resume or hand off mid-pipeline | `/todo`, `/todo handoff` | Reads state from `.plan/` and `.tickets/`. |
+| Build a defined feature (a few tickets) | `/todo spec <feature>` *(typed)* | Lite pipeline: spec-writer, optional ticket-critic, `/todo build`. |
+| Build something risky, contested or large | `/todo start <feature>` *(typed)* | antiplan runs Fast Mode first and escalates only if needed. |
+| Explore a fuzzy idea | `/make-prd` *(typed)* | Collaborative, not adversarial. |
+| Resume or hand off mid-pipeline | `/todo`, `/todo handoff` *(typed)* | Reads state from `.plan/` and `.tickets/`. |
 | Move work to a new harness, directory or colleague | `handoff` | Writes a portable prompt, plus `.handoff/plan-*.md` for complex work. |
 | Claim "done" | `verify-claim` | Inside a red-green loop the failing test is the evidence; use it at the end. |
 | Open a PR | `pr-create` | |
@@ -21,8 +22,11 @@ Before stating what a skill does or advising that a step be skipped, read that s
 | Address review comments | `pr-fix` | One comment at a time. |
 | Audit a repo, package or directory | `cleanup` | For whole trees; branch diffs go to code review. |
 | Strip unused template packages | `prune` | Run before `cleanup`. |
-| Sync skills or MCP servers across tools | `agent-sync` | |
-| Look back after a pass or a session that went sideways | `/retro` | Turns mistakes into hooks, lint or standards. Run it before clearing. |
+| Migrate an app to remote, or make a repo agent-legible | `private-skill` *(typed)* | Run `prune` first. |
+| Document a fork | `/fork-audit` *(typed)* | |
+| Build a deck | `/ppt-make` *(typed)* | Feed it `reframe` output. |
+| Sync skills or MCP servers across tools | `/agent-sync` *(typed)* | |
+| Look back after a pass or a session that went sideways | `/retro` *(typed)* | Turns mistakes into hooks, lint or standards. Run it before clearing. |
 
 ## Phase boundaries
 

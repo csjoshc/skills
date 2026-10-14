@@ -1,6 +1,7 @@
 ---
 name: todo
-description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Antiplan is optional; /todo spec starts a Lite pipeline straight from spec-writer. Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before clearing or compacting context. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
+description: "Route the planning-to-build pipeline and emit the next session's prompt."
+disable-model-invocation: true
 ---
 
 # /todo — Pipeline Coordinator

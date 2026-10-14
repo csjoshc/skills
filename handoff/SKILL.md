@@ -1,11 +1,6 @@
 ---
 name: handoff
-description: >-
-  Produces a copy-pasteable handoff prompt for a new agent with no prior context,
-  summarizing the task or project, linked artifacts with full paths, and optional
-  incremental plan files under .handoff/. Use when the user asks for a handoff,
-  session handoff, context transfer, cold-start prompt, or to continue work in a
-  new chat.
+description: "Writes a copy-pasteable cold-start prompt for a new session, linking artifacts by path, with optional plan files under .handoff/. Use when asked for a handoff or to continue in a new chat."
 ---
 
 # Session handoff

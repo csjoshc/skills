@@ -1,11 +1,6 @@
 ---
 name: cleanup
-description: >-
-  Reviews existing source code and codebases against a quality rubric covering
-  mechanical checks, subjective dimensions, anti-patterns, and layering. Use
-  for whole-repo, package, or directory code-health audits. Not for reviewing
-  a branch diff before a PR (use the harness's code review or pr-review). Does NOT post GitHub comments or edit tickets — use pr-review for
-  live PR feedback and ticket-critic for .tickets/.
+description: "Audits an existing repo, package or directory against a code-health rubric (mechanical checks, anti-patterns, layering, depth). Use when asked for a code-health or architecture audit of existing code rather than a branch diff."
 ---
 
 # cleanup

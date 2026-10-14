@@ -1,6 +1,7 @@
 ---
 name: fork-audit
-description: Audits and documents a forked or divergent codebase: layered docs (exec / architect / engineer), topic breakouts, and a code-grounded Q&A loop under a gitignored .docs/ folder, synthesized into one Confluence design page. Use when documenting a fork, understanding what changed vs upstream, decomposing squashed PRs, or publishing a fork's mental model. Not for forward-looking design (use spec-writer/make-prd), PR review (use pr-review), or repo onboarding (use brief-docs).
+description: "Document a forked codebase in layered docs and a Confluence design page."
+disable-model-invocation: true
 ---
 
 # fork-audit
