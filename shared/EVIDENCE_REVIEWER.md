@@ -36,7 +36,7 @@ You return exactly one verdict:
   produce the artifact before the next ticket proceeds.
 
 This skill implements the audit pattern documented in
-[ticket-critic's PATTERNS.md → Pattern 18](../../ticket-critic/PATTERNS.md).
+[ticket-critic's PATTERNS.md → Pattern 18](../ticket-critic/PATTERNS.md).
 
 ---
 
@@ -313,9 +313,9 @@ direction.
 
 ## Related skills
 
-- [`/ticket-critic`](../../ticket-critic/SKILL.md) — Pattern 18 is the
+- [`/ticket-critic`](../ticket-critic/SKILL.md) — Pattern 18 is the
   ticket-critic rule that mandates this review
-- [`/antiplan`](../../antiplan/SKILL.md) — AP-26 and AP-27 are the
+- [`/antiplan`](../antiplan/SKILL.md) — AP-26 and AP-27 are the
   upstream anti-patterns that drive the need for this gate
-- [`/spec-writer`](../../spec-writer/SKILL.md) — brief-audit step is
+- [`/spec-writer`](../spec-writer/SKILL.md) — brief-audit step is
   the prevention; evidence-reviewer is the detection

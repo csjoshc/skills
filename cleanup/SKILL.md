@@ -173,7 +173,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 | [`PHASE1_LENSES.md`](PHASE1_LENSES.md) | Lens table, thresholds, dedupe and ordering | Before launching Phase 1 lenses |
 | [`redundancy-watcher.md`](redundancy-watcher.md)       | Blocks duplicate implementations at write time           | Before any new file or export |
 | [`layer-boundary-critic.md`](layer-boundary-critic.md) | Enforces downward-only imports from AGENTS.md layer cake | Phase 0 when imports change   |
-| [`ARCHITECTURE_DEPTH.md`](ARCHITECTURE_DEPTH.md)       | Architectural depth lens (module/seam/depth/deletion test) | Phase 1 when scope includes multi-module design |
+| [`ARCHITECTURE_DEPTH.md`](ARCHITECTURE_DEPTH.md)       | Architectural depth lens (module, seam, depth, dependency categories, design-it-twice) | Phase 1 when scope includes multi-module design |
 | [`~/.skills/shared/SKILL_NOISE_TERMS.md`](~/.skills/shared/SKILL_NOISE_TERMS.md) | Skill-internal terms that must not appear in committed artifacts — flag as `scope-leak` | Every Phase 0 (mechanical pass) — scope covers comments, docstrings, path literals, identifiers, config filenames, CI YAML, Makefile, docs |
 
 ---

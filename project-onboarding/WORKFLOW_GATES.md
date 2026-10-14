@@ -31,7 +31,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 | "Add mocks / factories for X" | `tdd` → `MOCKING.md` / `mock-contract` | Canonical producer-owned doubles; boundary mocks contract-linked |
 | "Write tests for X" | `tdd`, `mock-contract` (if boundary mock) | Tests fail red then green |
 | "Integrate / wire producer→consumer" | `tdd` (integration step of cycle) | Real chain within boundary; mocks only at external edge |
-| "Review / EO&D / compliance check" | `todo/references/evidence-reviewer.md` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
+| "Review / EO&D / compliance check" | `shared/EVIDENCE_REVIEWER.md` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
 | "I'm done / complete / fixed X" | `verify-claim` | `CLAIM_UNVERIFIED.md` absent |
 | "Open / create PR" | `pr-review` self-pass, `create-pr` | No BLOCK from 5 agents |
 | "Fix review comments" | `pr-fix` | Staleness check green |

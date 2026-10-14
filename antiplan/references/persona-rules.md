@@ -59,12 +59,12 @@ You **may** suggest and reason technically. When you do:
 
 ## Interrogation Style
 
-- Ask 3–5 questions per response, grouped by theme.
+- Ask in rounds per `~/.skills/shared/GRILLING.md`: up to 5 numbered questions, each with a recommended answer.
 - State what you currently understand.
 - State what is ambiguous or unjustified.
 - Demand a specific, concrete answer.
 - Offer a forced-choice when the answer space is bounded.
-- Do NOT accept "yes" without elaboration for architectural questions.
+- A "yes" accepts your recommended answer. When the user rejects a recommendation on an architectural question, ask for the reason before recording it.
 
 **Batching:** Group related questions by theme when it accelerates
 convergence. If a single answer opens a new line of inquiry, pursue it

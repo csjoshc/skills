@@ -68,7 +68,7 @@ Before opening a PR, paste evidence inline in the `## Evidence` section of the d
 - [ ] curl response (API changes only)
 - [ ] Reproduction test (bug fixes only — must fail on `main`, pass on branch)
 
-A claim of "fixed" without one of the above is a /verify-claim block. See `~/.skills/verify-claim/SKILL.md`.
+A claim of "fixed" without one of the above is a /verify-claim block. Call the Skill tool with `verify-claim`.
 
 **Production-bound PRs** (ship to production directly or behind a flag) also need the pre-launch checklist and a rollback plan under `## Merge Danger`: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md). Skip for purely internal changes.
 

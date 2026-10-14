@@ -91,8 +91,8 @@ Parallel tickets must have **zero file overlap** in their primary edit targets:
 | Parallelizable | Sequential |
 |---|---|
 | Different modules (`auth/` vs `billing/`) | Same module (`api/users.py` for 3 features) |
-| Different layers (backend vs frontend) | Same layer (3 API endpoints sharing middleware) |
-| Orthogonal concerns (feature + tests + docs) | Interleaved concerns (feature A needs feature B's types) |
+| Slices touching disjoint files end to end | Slices that share a file (3 endpoints in one router) |
+| Independent features, each with its own tests | Interleaved features (feature A needs feature B's types) |
 
 ### Pattern 3: The Dependency Graph Rule
 
