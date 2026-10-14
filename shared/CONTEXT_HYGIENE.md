@@ -10,7 +10,7 @@ Curate what the agent sees. Too little → hallucination. Too much → loss of f
 
 - When to Use
 - Context Hierarchy
-- Tech Stack / Commands / Code Conventions / Boundaries / Patterns
+- Rules file template (Boundaries, Gotchas)
 - Packing Strategies
 - Authentication / Tasks / MCP Integrations (worked examples)
 - Confusion Management
@@ -42,37 +42,22 @@ Curate what the agent sees. Too little → hallucination. Too much → loss of f
 
 ### Level 1 — Rules Files (highest leverage)
 
+Record only what the agent can't look up.
+Stack, versions and commands already live in `package.json`, config and `--help`; a copy of them goes stale.
+
 CLAUDE.md template:
 
 ```markdown
 # Project: [Name]
 
-## Tech Stack
-- React 18, TypeScript 5, Vite, Tailwind CSS 4
-- Node.js 22, Express, PostgreSQL, Prisma
-
-## Commands
-- Build: `npm run build`
-- Test: `npm test`
-- Lint: `npm run lint --fix`
-- Dev: `npm run dev`
-- Type check: `npx tsc --noEmit`
-
-## Code Conventions
-- Functional components with hooks
-- Named exports
-- Colocate tests next to source
-- Use `cn()` for conditional classNames
-- Error boundaries at route level
-
 ## Boundaries
-- Never commit .env or secrets
-- Never add deps without bundle-size check
-- Ask before modifying DB schema
-- Always run tests before committing
+- Ask before modifying the DB schema
+- Add a dependency only after a bundle-size check
+- Keep .env and secrets out of commits
 
-## Patterns
-[One short example of a well-written component]
+## Gotchas
+- [Unwritten convention, the reason behind it, or a trap no config shows]
+- e.g. `npm test` skips integration tests; run `npm run test:int` before touching src/db/
 ```
 
 | Tool | File |
@@ -257,7 +242,7 @@ Instruction priority when they conflict: **user's explicit instruction for this 
 
 ## Verification
 
-- [ ] Rules file covers stack, commands, conventions, boundaries
+- [ ] Rules file covers boundaries and gotchas, and leaves stack and commands to the environment
 - [ ] Output follows the patterns shown
 - [ ] References real project files/APIs
 - [ ] Context refreshed between major tasks
