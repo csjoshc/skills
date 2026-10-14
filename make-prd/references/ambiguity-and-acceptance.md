@@ -11,9 +11,9 @@ Track each ambiguity as:
 
 ## Clarification Round Rules
 
-1. Ask at most 3 high-impact questions per round.
-2. Provide recommendation first.
-3. If user defers, record explicit assumption and continue.
+Build and ask rounds by `~/.skills/shared/GRILLING.md`: the design-tree frontier, up to 5 numbered questions per round, each with a recommended answer worded so "yes" accepts it.
+Look facts up yourself; put only decisions to the user.
+If the user defers, record the `default_assumption` in the Ambiguity Ledger and continue.
 
 ## Acceptance Criteria Rubric
 

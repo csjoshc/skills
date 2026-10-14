@@ -35,5 +35,4 @@ This maps the original pipeline intent to an interactive skill flow.
 ## Interaction Model
 
 - Prefer one context, not repeated fresh sessions.
-- Batch clarification prompts.
-- Keep question rounds intentionally small.
+- Clarification rounds follow `~/.skills/shared/GRILLING.md` (frontier per round, up to 5 questions).
