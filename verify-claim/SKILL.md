@@ -117,10 +117,10 @@ that never ran; the "always invoke" rule above covers that.
 
 For any diff that a commit message or PR describes as a "fix":
 
-1. Checkout the state before the fix: `git stash` or `git worktree add`
-2. Run the new test(s) — they MUST fail. If they pass on the broken state,
-   the test does not exercise the bug.
-3. Return to HEAD, run again — they MUST pass.
+1. Check out the state before the fix in a separate worktree, not with `git stash` (the stash is shared by every worktree of the repo, so another session can pop it):
+   `pre=$(mktemp -d) && git worktree add --detach "$pre" HEAD~1`, then copy the new test file(s) into `$pre`.
+2. Run the new test(s) in `$pre`. They MUST fail. If they pass on the broken state, the test does not exercise the bug.
+3. Run them again on HEAD. They MUST pass. Then `git worktree remove "$pre"`.
 4. Record both outputs as the Before and After in the PR body's `## Evidence` section.
 
 The test must sit at a correct seam: one that exercises the real bug pattern as it occurs at the call site.

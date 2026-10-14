@@ -155,7 +155,7 @@ Read and follow AGENTS.md in this directory for project conventions,
 context exclusions, and operational rules.
 ```
 
-- **Cursor**: `.cursorrules` (Note: older `.cursorrules` with full Tokenify/stack blocks should be replaced with this shim).
+- **Cursor**: `.cursorrules` (Note: older `.cursorrules` that copy stack or rules blocks should be replaced with this shim).
 - **Antigravity**: `GEMINI.md`
 - **Windsurf**: `.windsurfrules`
 - **Cline**: `.clinerules`
@@ -195,7 +195,7 @@ context exclusions, and operational rules.
 - [ ] Git workflow block present exactly once, immediately after the stack preamble (never-push-to-protected-branch rule, no quick-fix exception).
 - [ ] `core-agent-behavior.mdc` exists with `alwaysApply: true`.
 - [ ] `.cursorignore` contains Universal + every block for a detected stack; Python-only includes `dist/` and `build/`. If the tool cannot write `.cursorignore`, paste the missing block(s) for the user to add manually.
-- [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no duplicated Tokenify).
+- [ ] `.cursorrules` is a thin shim referencing `AGENTS.md` (no blocks copied from `AGENTS.md`).
 - [ ] Cross-tool shims (`GEMINI.md`, `.cursorrules`, etc.) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a filtered copy of `~/.skills` for Claude Desktop (the `rsync` command in agent-sync/skills.md, run from the project root). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).

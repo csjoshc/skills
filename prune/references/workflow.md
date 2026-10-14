@@ -65,11 +65,11 @@ Grep is the coarse pass. For rigor, run the ecosystem's **static analyzer**
 (knip / vulture+grimp / cargo-machete) to compute **reachability from the full
 entrypoint set** and nominate dead packages **and dead files within kept
 packages**. This proves what grep only guesses. See:
-[references/static-analysis.md](references/static-analysis.md).
+[static-analysis.md](static-analysis.md).
 
 ## 3. Coupling scan (the part that prevents broken deletes)
 
-Run every check in **[references/coupling-checklist.md](references/coupling-checklist.md)**
+Run every check in **[coupling-checklist.md](coupling-checklist.md)**
 for each strip candidate. This is where rules 2–5 of the load-bearing test get
 verified: manifest deps, lockfiles, tsconfig/project references, CI
 job-matrices and hardcoded package-name loops, container/compose/helm wiring,
@@ -78,7 +78,7 @@ fixtures. Do not skip — this is the difference between a clean strip and a red
 
 ## 4. Classify and order
 
-Produce the plan in **[templates/prune-plan.md](templates/prune-plan.md)**. For
+Produce the plan in **[../templates/prune-plan.md](../templates/prune-plan.md)**. For
 each candidate record: verdict (STRIP / KEEP / KEEP-because-coupled), the evidence,
 and every co-file that must change with it (manifests, CI, lockfile, infra).
 
@@ -94,7 +94,7 @@ dead file/module inside a kept package. Assign each candidate a **confidence
 tier** (High = statically-proven-unreachable / Medium = no-grep-hits only / Low =
 reachable only via dynamic load) — only High proceeds to delete; promote Medium
 by running the analyzer first, treat Low as KEEP-because-coupled until runtime
-evidence clears it. See: [references/static-analysis.md](references/static-analysis.md).
+evidence clears it. See: [static-analysis.md](static-analysis.md).
 
 Run the **delete-and-prove loop** per target: snapshot → delete one → **fast
 static gate (G1.5)** → only if clean run tests (G6) → commit, else `git revert`.
@@ -110,7 +110,7 @@ For a **package** target:
    reader, human or agent). Remove lines that described only the stripped target;
    update lines that named it alongside survivors. Exception: *generated* docs
    (docs-gen output) regenerate — don't hand-edit them. Use the
-   sweep in `references/coupling-checklist.md` (doc and diagram debris) for the file-type list.
+   sweep in `coupling-checklist.md` (doc and diagram debris) for the file-type list.
 4. Regenerate the lockfile (`uv lock`, `pnpm install`, `cargo update -p`).
 5. Run the full gate sequence (G1-G7 in SKILL.md).
 6. Commit only when gates pass green.
