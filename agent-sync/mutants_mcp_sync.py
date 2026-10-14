@@ -19,6 +19,9 @@ MUTANTS = [
     ("pi keeps ${VAR} unexpanded", 'kept[k] = f"$ENV:{m.group(1)}"', "kept[k] = v"),
     ("running apps are written anyway", "busy = changed and not dry and check_apps and t.app and app_running(t.app)",
      "busy = False"),
+    ("vscode alias is ignored", "return target.alias.get(name, name)", "return name"),
+    ("alias entry is looked up by the master name", "old = servers.get(key)\n        for k in",
+     "old = servers.get(name)\n        for k in"),
     ("disabled servers stay in claude", 'if entry.get("enabled") is False:\n            actions[name] = "removed"',
      'if False:\n            actions[name] = "removed"'),
 ]

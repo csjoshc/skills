@@ -265,9 +265,20 @@ def to_pi(name, s, ctx):
 # ---- targets --------------------------------------------------------------------------------
 
 class Target:
-    def __init__(self, name, path, root, convert, keep=(), mode=None, app=None, soft_off=False):
+    def __init__(self, name, path, root, convert, keep=(), mode=None, app=None, soft_off=False,
+                 alias=None):
         self.name, self.path, self.root, self.convert = name, Path(path), root, convert
         self.keep, self.mode, self.app, self.soft_off = tuple(keep), mode, app, soft_off
+        self.alias = dict(alias or {})  # master name -> the name this tool already uses
+
+
+def target_name(target, name):
+    return target.alias.get(name, name)
+
+
+# VS Code already has the remote server as "Aliased-Name"; renaming the master would break Claude Code
+# permissions and tool prefixes that use "remote", so only this target is mapped.
+VSCODE_ALIAS = {"remote": "Aliased-Name"}
 
 
 def default_targets():
@@ -277,7 +288,8 @@ def default_targets():
         Target("opencode", HOME / ".config" / "opencode" / "opencode.json", "mcp", to_opencode,
                keep=("enabled", "timeout", "oauth"), soft_off=True),
         Target("cursor", HOME / ".cursor" / "mcp.json", "mcpServers", to_cursor, app="Cursor"),
-        Target("vscode", app / "Code" / "User" / "mcp.json", "servers", to_vscode, app="Code"),
+        Target("vscode", app / "Code" / "User" / "mcp.json", "servers", to_vscode, app="Code",
+               alias=VSCODE_ALIAS),
         Target("desktop", app / "Claude" / "claude_desktop_config.json", "mcpServers",
                to_desktop, app="Claude"),
         Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),
@@ -306,9 +318,10 @@ def project(master, target, existing, npx, report):
     allow = (lambda v: v.startswith(("$ENV:", "$CMD:"))) if target.convert is to_pi else None
     actions = {}
     for name, entry in master.get("mcpServers", {}).items():
+        key = target_name(target, name)
         if entry.get("enabled") is False and target.soft_off:
             # opencode has its own enabled flag, so an existing entry is switched off, not removed.
-            old = servers.get(name)
+            old = servers.get(key)
             if isinstance(old, dict) and old.get("enabled") is not False:
                 old["enabled"] = False
                 actions[name] = "disabled in place"
@@ -316,7 +329,7 @@ def project(master, target, existing, npx, report):
                 actions[name] = "disabled"
             continue
         if entry.get("enabled") is False:
-            actions[name] = "removed" if servers.pop(name, None) is not None else "disabled"
+            actions[name] = "removed" if servers.pop(key, None) is not None else "disabled"
             continue
         s = clean_server(name, entry, report, allow=allow or (lambda v: False))
         if s["kind"] not in ("stdio", "http", "sse"):
@@ -327,7 +340,7 @@ def project(master, target, existing, npx, report):
         if new is None:
             actions[name] = "skipped"
             continue
-        old = servers.get(name)
+        old = servers.get(key)
         for k in target.keep:
             if isinstance(old, dict) and k in old and k not in new:
                 new[k] = old[k]
@@ -335,7 +348,7 @@ def project(master, target, existing, npx, report):
             actions[name] = "unchanged"
         else:
             actions[name] = "updated" if old is not None else "added"
-            servers[name] = new
+            servers[key] = new
     return doc, actions
 
 
@@ -430,7 +443,8 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
             write_atomic(t.path, render(doc, text), mode)
         elif not dry and t.mode and t.path.exists():
             os.chmod(t.path, t.mode)
-        kept = sorted(set(doc.get(t.root, {})) - set(master.get("mcpServers", {})))
+        owned = {target_name(t, n) for n in master.get("mcpServers", {})}
+        kept = sorted(set(doc.get(t.root, {})) - owned)
         out("  tool-only servers kept: " + (", ".join(kept) or "none"))
         for w in report.warnings:
             out("  warning: " + w)

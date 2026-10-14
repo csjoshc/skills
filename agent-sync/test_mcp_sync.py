@@ -124,8 +124,8 @@ class Translation(Base):
         self.assertEqual(s["plain"], {"command": NPX, "args": ["-y", "chrome-devtools-mcp@latest"],
                                       "env": {"PATH": "/opt/node/bin:/usr/bin"}, "type": "stdio"})
         self.assertEqual(s["github"]["type"], "stdio")
-        self.assertEqual(s["remote"]["type"], "stdio")  # header needs a variable, so mcp-remote
-        self.assertIn("mcp-remote", s["remote"]["args"][1])
+        self.assertEqual(s["Aliased-Name"]["type"], "stdio")  # header needs a variable, so mcp-remote
+        self.assertIn("mcp-remote", s["Aliased-Name"]["args"][1])
         self.assertNotIn(FAKE, self.paths["vscode"].read_text())
 
     def test_vscode_plain_url_server_keeps_http_type(self):
@@ -133,7 +133,7 @@ class Translation(Base):
         m["mcpServers"]["remote"]["headers"] = {"X-Static": "1"}
         self.set_master(m)
         self.run_sync("--targets", "vscode")
-        self.assertEqual(self.get("vscode")["servers"]["remote"],
+        self.assertEqual(self.get("vscode")["servers"]["Aliased-Name"],
                          {"type": "http", "url": "https://mcp.example/mcp", "headers": {"X-Static": "1"}})
 
     def test_inherited_secret_dropped_but_renamed_one_is_exported(self):
@@ -149,6 +149,53 @@ class Translation(Base):
         self.run_sync("--targets", "claude,opencode")
         self.assertNotIn("off", self.get("claude")["mcpServers"])
         self.assertIs(self.get("opencode")["mcp"]["off"]["enabled"], False)
+
+
+class Alias(Base):
+    def test_vscode_writes_remote_as_alias_and_not_duplicate(self):
+        self.run_sync("--targets", "vscode")
+        s = self.get("vscode")["servers"]
+        self.assertIn("Aliased-Name", s)
+        self.assertNotIn("remote", s)
+
+    def test_existing_alias_entry_is_updated_in_place(self):
+        self.put("vscode", {"servers": {"Aliased-Name": {"command": "old", "type": "stdio"},
+                                        "Notes": {"url": "https://n.example", "type": "http"}}})
+        r = self.run_sync("--targets", "vscode")
+        s = self.get("vscode")["servers"]
+        self.assertEqual(list(s).count("Aliased-Name"), 1)
+        self.assertNotIn("remote", s)
+        self.assertIn("Notes", s)
+        self.assertIn("remote=updated", r.stdout)
+        self.assertNotIn("tool-only servers kept: Aliased-Name", r.stdout)
+        self.assertIn("Notes", r.stdout.split("tool-only servers kept:")[1])
+
+    def test_second_run_is_a_noop(self):
+        self.put("vscode", {"servers": {"Aliased-Name": {"command": "old", "type": "stdio"}}})
+        self.run_sync("--targets", "vscode")
+        before = self.paths["vscode"].read_text()
+        n = len(self.backups("vscode"))
+        r = self.run_sync("--targets", "vscode")
+        self.assertEqual(self.paths["vscode"].read_text(), before)
+        self.assertEqual(len(self.backups("vscode")), n)
+        self.assertIn("remote=unchanged", r.stdout)
+
+    def test_other_targets_keep_the_master_name(self):
+        self.run_sync("--targets", "claude,cursor")
+        self.assertIn("remote", self.get("claude")["mcpServers"])
+        self.assertIn("remote", self.get("cursor")["mcpServers"])
+        self.assertNotIn("Aliased-Name", self.get("cursor")["mcpServers"])
+
+    def test_disabled_master_server_removes_the_alias_entry(self):
+        doc = json.loads(json.dumps(MASTER))
+        doc["mcpServers"]["remote"]["enabled"] = False
+        self.set_master(doc)
+        self.put("vscode", {"servers": {"Aliased-Name": {"command": "old", "type": "stdio"},
+                                        "Mine": {"command": "m", "type": "stdio"}}})
+        self.run_sync("--targets", "vscode")
+        s = self.get("vscode")["servers"]
+        self.assertNotIn("Aliased-Name", s)
+        self.assertIn("Mine", s)
 
 
 class Wrappers(Base):
