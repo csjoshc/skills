@@ -108,6 +108,8 @@ def audit_skill(skill_path: Path) -> list[Issue]:
     else:
         name = frontmatter.get("name", "")
         description = frontmatter.get("description", "")
+        # User-invoked skills carry a one-line human-facing description, so discovery checks don't apply.
+        user_invoked = frontmatter.get("disable-model-invocation", "").lower() == "true"
 
         if not name:
             issues.append(Issue("FAIL", skill_path, "name", "Frontmatter missing `name`."))
@@ -138,7 +140,7 @@ def audit_skill(skill_path: Path) -> list[Issue]:
                 issues.append(
                     Issue("FAIL", skill_path, "description-length", "`description` exceeds 1024 characters.")
                 )
-            if len(description) < DESC_MIN_CHARS:
+            if not user_invoked and len(description) < DESC_MIN_CHARS:
                 issues.append(
                     Issue(
                         "WARN",
@@ -156,7 +158,7 @@ def audit_skill(skill_path: Path) -> list[Issue]:
                         "`description` should be third-person (avoid I/you/we).",
                     )
                 )
-            if not WHEN_RE.search(description):
+            if not user_invoked and not WHEN_RE.search(description):
                 issues.append(
                     Issue(
                         "FAIL",

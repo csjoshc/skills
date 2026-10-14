@@ -28,7 +28,7 @@ Use the report template: [templates/compliance-report.md](templates/compliance-r
 
 - Context hygiene rules: [reference/context-hygiene.md](reference/context-hygiene.md)
 - Specialized review rules: [reference/specialized-review.md](reference/specialized-review.md)
-- Claude best-practice requirements: [reference/claude-skill-best-practices.md](reference/claude-skill-best-practices.md)
+- Claude best-practice requirements: [../shared/SKILL_CONVENTIONS.md](../shared/SKILL_CONVENTIONS.md)
 
 ## Decision Tree
 
