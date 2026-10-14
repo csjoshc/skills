@@ -581,25 +581,34 @@ Rules:
 
 ### PRD Template (Concise)
 *Use this when the user wants a lighter-weight PRD.*
+*Adapted from mattpocock/skills to-spec (MIT).*
 
-1. Title
-2. Problem
-3. Goals / Non-goals
-4. Users and key flows
-5. Functional requirements
-6. Non-functional requirements
-7. Dependencies and constraints
-8. Risks and mitigations
-9. Success metrics
-10. Open questions + assumptions
+Before writing, sketch the seams the feature will be tested at.
+Prefer existing seams to new ones, and use the highest seam possible.
+If a new seam is needed, propose it at the highest point you can.
+Fewer seams is better; the ideal is one.
+Confirm the seams with the user.
+
+1. **Problem Statement**: the problem from the user's perspective.
+2. **Solution**: the solution from the user's perspective.
+3. **User Stories**: a long numbered list covering every aspect of the feature, each as "As an <actor>, I want <feature>, so that <benefit>".
+4. **Implementation Decisions**: modules built or changed and their interfaces, architectural decisions, schema changes, API contracts, notable interactions.
+   Use the project's domain vocabulary and respect existing ADRs.
+   Leave out file paths and code snippets, which go stale fast.
+   Exception: a prototype snippet that pins a decision better than prose (state machine, reducer, schema, type shape), trimmed to the decision-rich part and marked as from a prototype.
+5. **Testing Decisions**: the chosen test seams, which modules get tested, prior art in the codebase, and what makes a good test here (external behaviour, not implementation details).
+6. **Out of Scope**: what this spec deliberately leaves out.
+7. **Further Notes**: anything else a builder needs.
 
 ### Ticket Template
 
+Each ticket is a vertical slice: a narrow but complete path through every layer it needs, demoable or verifiable on its own, sized for one fresh context window.
+
 1. Title
-2. Why
-3. Scope
-4. Out of scope
-5. Dependencies
+2. **What to build**: the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer list
+3. `Depends-On:` the tickets that genuinely gate this one, or `[]`
+4. `Files:` the primary edit targets (parallel tickets keep these disjoint)
+5. Out of scope
 6. Acceptance criteria
 7. Verification
 8. Risks / rollback
