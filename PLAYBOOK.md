@@ -22,9 +22,7 @@ Before stating what a skill does or advising that a step be skipped, read that s
 | Address review comments | `pr-fix` | One comment at a time. |
 | Audit a repo, package or directory | `cleanup` | For whole trees; branch diffs go to code review. |
 | Strip unused template packages | `prune` | Run before `cleanup`. |
-| Migrate an app to remote, or make a repo agent-legible | `private-skill` *(typed)* | Run `prune` first. |
 | Document a fork | `/fork-audit` *(typed)* | |
-| Build a deck | `/ppt-make` *(typed)* | Feed it `reframe` output. |
 | Sync skills or MCP servers across tools | `/agent-sync` *(typed)* | |
 | Look back after a pass or a session that went sideways | `/retro` *(typed)* | Turns mistakes into hooks, lint or standards. Run it before clearing. |
 

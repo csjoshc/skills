@@ -68,7 +68,7 @@ Pick from this map, or from `~/.skills/PLAYBOOK.md`; read a skill's SKILL.md bef
 | Task type | Skills to consider |
 |----------|-------------------|
 | **Frontend UI** | `make-ui`, `test-ui`, `chrome-devtools` |
-| **Tests / bug fix** | `tdd`, `private-skill` (backend) |
+| **Tests / bug fix** | `tdd` |
 | **Git / PR work** | `pr-create`, `pr-review`, `pr-fix`, `verify-claim` |
 | **Planning / specs** | `todo`, `antiplan`, `spec-writer`, `ticket-critic` |
 | **Infrastructure** | `agent-sync`, `confluence-diagrams` |

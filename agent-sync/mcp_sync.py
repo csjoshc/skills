@@ -24,7 +24,7 @@ REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 WHOLE_REF = re.compile(r"^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$")
 SECRET_NAME = re.compile(r"token|secret|key|password|passwd|auth|credential|cookie", re.I)
 SOURCE_ENV = 'set -a; . "$HOME/.config/secrets/work.env"; '
-EXTENSIONS = ("enabled", "allowedTools", "personal")  # agent-sync only, never written to a target
+EXTENSIONS = ("enabled", "allowedTools", "personal", "names")  # agent-sync only, never written to a target
 
 
 # ---- master parsing -------------------------------------------------------------------------
@@ -284,21 +284,16 @@ def to_codex(name, s, ctx):
 
 class Target:
     def __init__(self, name, path, root, convert, keep=(), mode=None, app=None, soft_off=False,
-                 alias=None, toml=False, personal_only=False):
+                 toml=False, personal_only=False):
         self.name, self.path, self.root, self.convert = name, Path(path), root, convert
         self.toml = toml  # config.toml: edited as text, only the tables this script owns
         self.personal_only = personal_only  # only servers marked "personal": true are written
         self.keep, self.mode, self.app, self.soft_off = tuple(keep), mode, app, soft_off
-        self.alias = dict(alias or {})  # master name -> the name this tool already uses
 
 
-def target_name(target, name):
-    return target.alias.get(name, name)
-
-
-# VS Code already has the remote server as "Aliased-Name"; renaming the master would break Claude Code
-# permissions and tool prefixes that use "remote", so only this target is mapped.
-VSCODE_ALIAS = {"remote": "Aliased-Name"}
+def target_name(target, name, entry):
+    """A tool may already keep a server under another name; "names" in the master maps it."""
+    return ((entry or {}).get("names") or {}).get(target.name, name)
 
 
 def default_targets():
@@ -308,8 +303,7 @@ def default_targets():
         Target("opencode", HOME / ".config" / "opencode" / "opencode.json", "mcp", to_opencode,
                keep=("enabled", "timeout", "oauth"), soft_off=True),
         Target("cursor", HOME / ".cursor" / "mcp.json", "mcpServers", to_cursor, app="Cursor"),
-        Target("vscode", app / "Code" / "User" / "mcp.json", "servers", to_vscode, app="Code",
-               alias=VSCODE_ALIAS),
+        Target("vscode", app / "Code" / "User" / "mcp.json", "servers", to_vscode, app="Code"),
         Target("desktop", app / "Claude" / "claude_desktop_config.json", "mcpServers",
                to_desktop, app="Claude"),
         # The Codex app, CLI and IDE share this file. Its own per-server tuning stays untouched.
@@ -343,7 +337,7 @@ def project(master, target, existing, npx, report):
     allow = (lambda v: v.startswith(("$ENV:", "$CMD:"))) if target.convert is to_pi else None
     actions = {}
     for name, entry in master.get("mcpServers", {}).items():
-        key = target_name(target, name)
+        key = target_name(target, name, entry)
         if target.personal_only and entry.get("personal") is not True:
             # Opt-in, so a new work server can never reach this tool by default.
             actions[name] = "not personal"
@@ -609,7 +603,7 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
             write_atomic(t.path, new_text, mode)
         elif not dry and t.mode and t.path.exists():
             os.chmod(t.path, t.mode)
-        owned = {target_name(t, n) for n in master.get("mcpServers", {})}
+        owned = {target_name(t, n, e) for n, e in master.get("mcpServers", {}).items()}
         kept = sorted(set(doc.get(t.root, {})) - owned)
         out("  tool-only servers kept: " + (", ".join(kept) or "none"))
         for w in report.warnings:

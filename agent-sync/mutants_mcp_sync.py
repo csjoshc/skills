@@ -19,7 +19,7 @@ MUTANTS = [
     ("pi keeps ${VAR} unexpanded", 'kept[k] = f"$ENV:{m.group(1)}"', "kept[k] = v"),
     ("running apps are written anyway", "busy = changed and not dry and check_apps and t.app and app_running(t.app)",
      "busy = False"),
-    ("vscode alias is ignored", "return target.alias.get(name, name)", "return name"),
+    ("vscode alias is ignored", 'return ((entry or {}).get("names") or {}).get(target.name, name)', "return name"),
     ("alias entry is looked up by the master name", "old = servers.get(key)\n        for k in",
      "old = servers.get(name)\n        for k in"),
     ("codex gets servers that are not marked personal", 'if target.personal_only and entry.get("personal") is not True:', "if False:"),
