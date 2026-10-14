@@ -13,6 +13,8 @@
 - Verification
 - Common failure modes
 - Secret hygiene
+- Rotating a token
+- Harness coverage
 - Verification checklist
 
 ## Context
@@ -122,7 +124,7 @@ Mutation check: `python3 -I ~/.skills/agent-sync/mutants_mcp_sync.py`.
 - Sync writes master `remote` as `Aliased-Name` and finds an existing `Aliased-Name` entry, so it is updated in place, never duplicated, and not listed as tool-only.
 - The master and the other tools keep `remote`, since Claude Code permissions and tool prefixes depend on it.
 - A disabled master server (`enabled: false`) is removed from VS Code like in the other targets, under its alias if it has one.
-  Servers that exist only in VS Code (Figma, codebase-memory-mcp) are left alone.
+  Servers that exist only in VS Code are left alone.
 
 ### Cline, Roo
 - Root key `mcpServers`. Not synced by `mcp_sync.py`; check tool docs per major-version change.
@@ -179,10 +181,48 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 - The master holds `${VAR}` placeholders only.
   Values live in `~/.config/secrets/work.env` (dir 700, file 600), outside every repo.
 - To add a secret: add `NAME=` to the repo template `secrets/work.env.example` in `~/bootstrap`, set it in `work.env`, put `${NAME}` in the master, then run `mcp_sync.py`.
-- To rotate: edit the value in `work.env`, then restart each tool from a fresh shell (Cursor and Claude Desktop re-read the file when they spawn the server).
+- To rotate, see [Rotating a token](#rotating-a-token).
 - A literal in a secret-named env/header field is refused by every target.
   Use `--strict` to make that a failure.
 - The script never prints values; its warnings name the server and field only.
+
+## Rotating a token
+
+Rotation touches one file.
+Every target holds a reference to the variable, never the value, so no config needs editing and `mcp_sync.py` does not need to run.
+
+1. Issue the new token in the provider (GitHub, Atlassian, remote) and revoke the old one.
+2. Edit the value in `~/.config/secrets/work.env`. Keep the file at mode 600.
+   `REMOTE_MCP_AUTH` is derived from `REMOTE_MCP_TOKEN`, so only the token line changes.
+3. Restart each tool so it re-reads the value, starting it from a shell that sourced `work.env`.
+
+| Tool | How it gets the value | What to do after rotating |
+|---|---|---|
+| Claude Code | `${VAR}` expanded from its own environment at startup | Exit and relaunch from a fresh shell. |
+| opencode | `{env:VAR}` expanded by the shared service | Run `opencode service restart` from a fresh shell. |
+| pi, gateway-pi | `$ENV:VAR` expanded when the server starts | Quit and relaunch pi. The trust record is unchanged, because it fingerprints the reference, not the value. |
+| Cursor, Claude Desktop, VS Code | A `/bin/zsh -c` wrapper sources `work.env` when the server spawns | Reload the MCP server or restart the app. No shell is needed. |
+
+Check afterwards with `python3 -I mcp_sync.py --dry-run`: every target should report `unchanged`.
+A new variable is a different job: follow "To add a secret" above.
+
+## Harness coverage
+
+Skills and MCP servers sync to different sets of tools, because each tool reads them from different places.
+
+| Tool | Skills (`sync.py`) | MCP servers (`mcp_sync.py`) |
+|---|---|---|
+| Claude Code | yes | yes |
+| opencode | yes | yes |
+| Cursor | yes | yes |
+| pi, gateway-pi | yes | yes |
+| VS Code | no | yes (the `vscode` target) |
+| Claude Desktop | no | yes (the `desktop` target) |
+| Codex | yes | no: its `[mcp_servers.*]` entries in `~/.codex/config.toml` are its own and hold no master secrets |
+| Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
+| Copilot | yes | no |
+
+If a tool in the "no" column needs a master server, add a target in `mcp_sync.py` rather than copying values by hand.
 
 ## Verification checklist
 
