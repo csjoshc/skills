@@ -35,13 +35,14 @@ MCP configurations are fragmented across different tools. This skill unifies the
       "env": { ... },             // stdio only
       "enabled": true | false,    // agent-sync MCP extension — NOT synced to targets
       "allowedTools": [ ... ],    // agent-sync MCP extension — NOT synced to targets
-      "personal": true            // agent-sync MCP extension: opts the server in to Codex (personal only)
+      "personal": true,           // agent-sync MCP extension: opts the server in to Codex (personal only)
+      "names": { "<target>": "<name>" }  // agent-sync MCP extension: name this tool already uses for the server
     }
   }
 }
 ```
 
-`enabled`, `allowedTools` and `personal` are **agent-sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
+`enabled`, `allowedTools`, `personal` and `names` are **agent-sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
 
 ## New machine: the template and drop-ins
 
@@ -155,12 +156,12 @@ Mutation check: `python3 -I ~/.skills/agent-sync/mutants_mcp_sync.py`.
 - Quit and reopen the app after a sync.
 
 ### Per-target server names
-- A target can use a different name for a master server: `Target(alias={master name: target name})`.
-  Today only VS Code has one, `VSCODE_ALIAS = {"remote": "Aliased-Name"}`, because the user already keeps the remote server there under that name.
-- Sync writes master `remote` as `Aliased-Name` and finds an existing `Aliased-Name` entry, so it is updated in place, never duplicated, and not listed as tool-only.
-- The master and the other tools keep `remote`, since Claude Code permissions and tool prefixes depend on it.
-- A disabled master server (`enabled: false`) is removed from VS Code like in the other targets, under its alias if it has one.
-  Servers that exist only in VS Code are left alone.
+- A tool may already keep a server under another name. Set `"names": {"<target>": "<name>"}` on the master entry, for example `"names": {"vscode": "Docs-Server"}`.
+- Sync writes that server under the mapped name in that target only, and finds an existing entry with that name, so it is updated in place, never duplicated, and not listed as tool-only.
+- The master and the other targets keep the master name, since Claude Code permissions and tool prefixes depend on it.
+- A disabled master server (`enabled: false`) is removed from the target like in the other targets, under its mapped name if it has one.
+  Servers that exist only in that tool are left alone.
+- `names` is an agent-sync extension and is never written to a tool.
 
 ### Cline, Roo
 - Root key `mcpServers`. Not synced by `mcp_sync.py`; check tool docs per major-version change.
@@ -227,9 +228,9 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 Rotation touches one file.
 Every target holds a reference to the variable, never the value, so no config needs editing and `mcp_sync.py` does not need to run.
 
-1. Issue the new token in the provider (GitHub, Atlassian, remote) and revoke the old one.
+1. Issue the new token in the provider (GitHub, Atlassian, your MCP provider) and revoke the old one.
 2. Edit the value in `~/.config/secrets/work.env`. Keep the file at mode 600.
-   `REMOTE_MCP_AUTH` is derived from `REMOTE_MCP_TOKEN`, so only the token line changes.
+   A derived line such as `REMOTE_MCP_AUTH="Prefix ${REMOTE_MCP_TOKEN}"` follows the token, so only the token line changes.
 3. Restart each tool so it re-reads the value, starting it from a shell that sourced `work.env`.
 
 | Tool | How it gets the value | What to do after rotating |

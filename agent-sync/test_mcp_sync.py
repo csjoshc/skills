@@ -10,6 +10,7 @@ FAKE = "fake-value-1234"
 
 MASTER = {"mcpServers": {
     "remote": {"type": "http", "url": "https://mcp.example/mcp", "enabled": True, "allowedTools": ["a"],
+               "names": {"vscode": "Aliased-Name"},
            "headers": {"Authorization": "${REMOTE_MCP_AUTH}"}},
     "github": {"type": "stdio", "command": "/usr/local/bin/docker", "enabled": True,
                "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/x/y"],

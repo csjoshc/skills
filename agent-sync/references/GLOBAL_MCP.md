@@ -35,7 +35,7 @@ The values live in `~/.config/secrets/work.env` (mode 600), never in a tool conf
 
 Codex is not in this table: it never receives a secret reference.
 
-A header that needs a prefix, such as `Prefix <token>`, is built once in `work.env` (`REMOTE_MCP_AUTH`) so every target can use a whole-value reference.
+A header that needs a prefix, such as `Bearer <token>`, is built once in `work.env` (for example `REMOTE_MCP_AUTH`) so every target can use a whole-value reference.
 A literal in a secret-named field is refused, never written.
 
 ## Transport whitelist per tool
