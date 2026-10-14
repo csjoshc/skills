@@ -22,8 +22,8 @@ and `arch-violations/` files it owns.
 
 ### Lens execution
 
-Launch each lens as a sub-agent in parallel (one message, multiple
-`Agent` tool calls). Each lens receives:
+When running parallel lenses, launch each as a subagent at once (where the
+harness supports it; otherwise run them in sequence). Each lens receives:
 
 - The files in scope (Phase 0 may have narrowed the set).
 - Its owning rubric codes from [`~/.skills/shared/QUALITY_RUBRIC.md`](~/.skills/shared/QUALITY_RUBRIC.md).

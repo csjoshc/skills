@@ -51,17 +51,19 @@ On each tick, the auto-driver runs the same state detection as bare
 | `tickets-written-uncriticized` | Invoke ticket-critic (per-ticket subagent delegation if N > 5, per ticket-critic SKILL.md) |
 | `critic-failed` | Invoke spec-writer in fix mode for failing tickets only |
 | `ready-for-build` | Enter the **build loop** (see below) |
-| `slice-gate-pending` | Invoke gate review (subagent-validated per `/todo gate` template) |
+| `slice-gate-pending` | Invoke gate review (per `/todo gate` template) |
 | `mid-build-resume` | Resume in-flight ticket via the mid-build-resume template; spawn a subagent that picks up where prior session left off |
 | `all-complete` | Emit final-status summary and **HALT — pipeline done** |
 
 ### The build loop
 
-When entering `ready-for-build`:
+When entering `ready-for-build` or `lite-ready`:
 
 1. **Identify the next wave.** Read the DAG (`.plan/task-sequence.md`)
    to find all tickets whose `Depends-On` chain is fully satisfied
    (every dep ticket is `Stage: COMPLETE`).
+   In Lite mode (no task-sequence), use the dependency rule in
+   state-detection.md and build one ticket at a time.
 2. **Filter for parallel-safety.** Within the wave, group tickets
    whose `Files:` lists are fully disjoint AND whose risk tags
    permit parallel build. Tickets tagged `Risk: medium` or higher,
@@ -176,17 +178,20 @@ the pipeline stopped and what the next action is.
   (skipping defeats the structural fix that AP-26/27 + Pattern 18
   add to the pipeline)
 
-### Tools the auto-driver uses
+### Capabilities the auto-driver uses
 
-- `Glob` / `Read` / `Grep` — state detection
-- `Bash` — git commands (status, log, diff, add, commit; never push
+Names vary by harness; use the closest equivalent.
+
+- File search and read - state detection
+- Shell - git commands (status, log, diff, add, commit; never push
   without explicit auth), validate.py invocation
-- `Skill` — invoke antiplan, spec-writer, ticket-critic when the
+- Skill invocation - antiplan, spec-writer, ticket-critic when the
   state machine routes there
-- `Agent` (`subagent_type: general-purpose`, `run_in_background:
-  true`) — spawn BUILD subagents, evidence-reviewer subagents
-- `TodoWrite` — track wave progress visibly
-- `Edit` / `Write` — only on `.plan/critic-report.md` to materialize
+- Background subagents - BUILD subagents, evidence-reviewer subagents.
+  If the harness has none, halt after each ticket and emit the next
+  build-ticket-manual prompt instead.
+- Task list, if available - track wave progress visibly
+- File edit - only on `.plan/critic-report.md` to materialize
   ticket-critic verdicts when the skill itself doesn't persist them;
   NEVER on PRD.md, task-sequence.md, or `.tickets/*.md` directly
 

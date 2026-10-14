@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
-# PreToolUse: Bash — halt if CLAIM_UNVERIFIED.md exists before git commit or gh pr create
-# Mode: halt (exit 2)
-INPUT=$(cat)
-CMD=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('command',''))" 2>/dev/null || echo "")
+# PreToolUse (shell): halt git commit / gh pr create while CLAIM_UNVERIFIED.md exists at repo root
+# Mode: halt (exit 2; harnesses relay stderr to the agent)
+. "$(dirname "$0")/lib/hook-input.sh"
+CMD=$(hook_field command)
 
-# Only gate on commit / pr create
-case "$CMD" in
-  *"git commit"*|*"gh pr create"*) ;;
-  *) exit 0 ;;
-esac
+# Match real invocations (incl. `git -C dir commit`), not `git commit-tree` or quoted text.
+GIT_COMMIT='(^|[;&|(]|[[:space:]])git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+commit([[:space:]]|$)'
+GH_PR='(^|[;&|(]|[[:space:]])gh[[:space:]]+pr[[:space:]]+create([[:space:]]|$)'
+printf '%s' "$CMD" | grep -Eq "$GIT_COMMIT|$GH_PR" || exit 0
 
-# Bypass
-[ -f ".claude/hooks-disabled" ] && exit 0
+hooks_disabled && exit 0
 
-CLAIM=$(find "${CLAUDE_PROJECT_DIR:-.}" -name "CLAIM_UNVERIFIED.md" -maxdepth 4 2>/dev/null | head -1)
-if [ -n "$CLAIM" ]; then
-  echo "BLOCKED [verify-claim-gate]: CLAIM_UNVERIFIED.md found at $CLAIM"
-  echo "Run /verify-claim to clear it. Type 'override: <reason>' to bypass."
+ROOT=$(git -C "$(hook_project_root)" rev-parse --show-toplevel 2>/dev/null || hook_project_root)
+CLAIM="$ROOT/CLAIM_UNVERIFIED.md"
+if [ -f "$CLAIM" ]; then
+  echo "BLOCKED [verify-claim-gate]: $CLAIM exists (a verify-claim run found unproven claims)." >&2
+  echo "Produce the evidence and re-run verify-claim, or ask the user for 'override: <reason>'." >&2
   exit 2
 fi
 exit 0

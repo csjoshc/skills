@@ -15,9 +15,11 @@
 Loaded during Phase 3 (Convergence Synthesis). Defines the prompts for the
 Planner and Challenger subagents that construct and validate the ticket DAG.
 
-The main agent orchestrates these subagents using the Task tool with
-`subagent_type: "generalPurpose"`. The user does NOT interact with the
-subagents directly — only escalated decision points surface to the user.
+Each role (Planner, Challenger, Coverage Auditor) is suggested as a
+subagent, not required; see `~/.skills/shared/SUBAGENTS.md`. Inline runs use the same prompts and
+output format, with `run: inline` in the report header. The Challenger and
+Coverage Auditor gain the most from a separate context. The user does NOT
+interact with the roles directly; only escalated decision points surface.
 
 ---
 
@@ -54,7 +56,7 @@ but limit to 2 rounds maximum to avoid infinite loops.
 
 ## Context Compression
 
-Before launching subagents, the main agent must distill the Phase 1-2
+Before handing work to a subagent, the main agent must distill the Phase 1-2
 interrogation into a structured summary. Do NOT pass the full chat log.
 
 **Compression protocol:**

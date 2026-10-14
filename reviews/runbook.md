@@ -40,7 +40,8 @@ antiplan's phase-gate pattern — the sequence is not negotiable; only the
   review.
 
 Exit gate: `REVIEW-GATE: phase-0 → phase-1`. `Proceeding: no` if any
-`status: OPEN` row remains without override.
+HIGH or CRITICAL row is still `status: OPEN`. LOW/MEDIUM rows may stay OPEN;
+they are reported, not gated.
 
 ### Phase 1 — lens or rubric application
 
@@ -82,7 +83,7 @@ on the assembled output. Only post if exit code is 0. Emit final
 
 | Gate | Must verify | Fails if |
 | --- | --- | --- |
-| phase-0 → phase-1 | No OPEN rows in REVIEW-PHASE-0 | Any OPEN without override |
+| phase-0 → phase-1 | No OPEN HIGH/CRITICAL rows in REVIEW-PHASE-0 | Any OPEN HIGH/CRITICAL without override |
 | phase-1 → report | Every finding validated independently | Any VALIDATED without evidence |
 | report → post | Validator exit 0 | Ledger malformed, missing proof, wrong block order |
 

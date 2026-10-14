@@ -37,6 +37,8 @@ Columns:
 - `file`, `line` — location.
 - `severity` — LOW | MEDIUM | HIGH | CRITICAL.
 - `status` — OPEN | RESOLVED | OVERRIDDEN (with justification in the text below the block).
+  Only HIGH/CRITICAL rows must leave OPEN before the phase-0 gate.
+- LOW/MEDIUM hits may be aggregated: one row per `tool` + `rule`, `file` as a count (e.g. `37 files`), `line` as `-`.
 
 ---
 

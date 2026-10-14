@@ -16,7 +16,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 ## When to invoke
 
-- Automatically on `SessionStart` (via the `workflow-gates-session` hook)
+- At session start, via a link from the project AGENTS.md (every harness loads it)
 - At the start of any new task, before any tool use
 - At every detected phase transition (see Phase map below)
 
@@ -39,7 +39,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 ## Workflow
 
-### SessionStart digest
+### Session-start digest
 
 ```bash
 # Read project context

@@ -153,10 +153,10 @@ If any check fails: roll back to the original segment.
 Deliver the compressed text. If the user asks for the long form, emit
 the pre-compression version on request.
 
-## Auto-activation via hook
+## Activation
 
-The live hook is `hooks/caveman-budget-auto.sh`. It turns caveman on when the session budget passes 50%.
-The user can also toggle it with `caveman on`.
+On demand: the user toggles it with `caveman on`, or the agent invokes it for long reports.
+There is no auto-activation hook; agents cannot measure their own context usage.
 
 ## Upstream Sync
 

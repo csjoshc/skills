@@ -16,7 +16,7 @@ Companion files:
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
 - Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy (`gh stack` workflow, cascading rebases, AGENTS.md block to merge on request).
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
-- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase, plus the SessionStart digest. Load when setting up the agent loop for a repo, not for file-level onboarding.
+- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase. Link it from the project AGENTS.md. Load when setting up the agent loop for a repo, not for file-level onboarding.
 - Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: todo
-description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before /clear or /compact. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
+description: Routes the multi-session planning-to-implementation pipeline (antiplan → spec-writer → ticket-critic → build via /todo build or /todo run, with tdd). Antiplan is optional; /todo spec starts a Lite pipeline straight from spec-writer. Detects pipeline state from artifacts on disk and emits copy-pasteable prompts for the next session or cold-start handoffs before clearing or compacting context. Advise-only. Use when starting a non-trivial feature, resuming mid-pipeline, or about to compact context. Skip for implementation-only tasks (PR fix, UI tweak, review).
 ---
 
 # /todo — Pipeline Coordinator
@@ -26,7 +26,12 @@ tdd          → runs inside each build session for red-green-refactor on ONE ti
              → writes .tickets/tdd/toq-<ticket-id>.yaml (ranked Test Obligation Queue, Phase 0)
 ```
 
+Antiplan is optional. In **Lite mode** (tickets with no `.plan/task-sequence.md`),
+the pipeline is spec-writer → (optional ticket-critic) → build.
+
 Each skill runs in its own session. Artifacts on disk are the handoff medium.
+"Subagent" below means an agent in a separate context; if the harness has none,
+use a fresh session instead.
 Your job is to tell the user exactly what prompt to paste next, never to do
 the pipeline work yourself.
 
@@ -52,12 +57,14 @@ Dispatch based on the user's argument:
 - `/todo` (no args) → **Status + next step.** Detect pipeline state, print a
   one-screen summary, recommend the next action with the prompt to use.
 - `/todo start <feature description>` → **Emit antiplan-start prompt.**
-  User is beginning a new planning cycle.
+  User is beginning a new planning cycle for risky or large work.
+- `/todo spec <feature description>` → **Emit spec-writer-direct prompt.**
+  Lite mode: defined feature, no antiplan.
 - `/todo next` → **Emit the next-stage prompt.** Detect state and output
   only the prompt (no status summary). Same recommendation as bare `/todo`
   but terse.
 - `/todo handoff` → **Emit a cold-start resume prompt.** For when the user
-  is about to run `/clear` or `/compact`. Output a prompt that reopens the
+  is about to clear or compact context. Output a prompt that reopens the
   current stage in a fresh session.
 - `/todo status` → **Detailed state dump.** Every artifact path, modified
   time, per-ticket `Stage:` value, staleness warnings.
@@ -67,7 +74,7 @@ Dispatch based on the user's argument:
 - `/todo build <ticket-id>` → Same but for a specific ticket file. Skips
   the DAG-readiness check (assumes user knows what they're doing).
 - `/todo gate <slice-id>` → **Emit slice-gate review prompt** with a
-  subagent-validated review of all tickets in the slice plus the gate
+  independent review (subagent suggested) of all tickets in the slice plus the gate
   artifact. Use when every non-gate ticket in a slice is `Stage: COMPLETE`
   and the gate ticket is `Stage: NEW`.
 - `/todo resume` → **Emit mid-build resume prompt.** For continuing a
@@ -81,18 +88,19 @@ behavior and note that the argument was ignored.
 
 ## State Detection and Routing
 
-Scan the repo root with `Glob` (paths) and `Grep`/`Read` (frontmatter `Stage:` only); do not use Bash.
+Scan the repo root with the harness's file-search and read tools (paths, plus frontmatter `Stage:` lines only); avoid shell loops.
 Artifact map, full inference rules and staleness warnings: [references/state-detection.md](references/state-detection.md). Read it before detecting state.
 
 | Stage | Condition (summary) | Recommend | Template |
 | --- | --- | --- | --- |
-| fresh | no `.plan/` or `.tickets/` artifacts | `/todo start` | antiplan-start |
+| fresh | no `.plan/` or `.tickets/` artifacts | by size: implement directly, `/todo spec`, or `/todo start` | spec-writer-direct / antiplan-start |
+| lite-ready | tickets, no `task-sequence.md`, `Stage: NEW` remain | `/todo build` (ticket-critic optional) | build-ticket-manual |
 | phase-0-done | only `brownfield-context.md` | resume antiplan Phase 1 | antiplan-resume |
 | prd-done-no-dag | `PRD.md`, no `task-sequence.md` | resume antiplan Phase 3 | antiplan-resume |
 | dag-done-no-audits | DAG present, `challenger-report.md` (or `coverage-audit.md` for Standard/Heavy) missing | resume antiplan Phase 3 / 3.5; plan NOT ready for spec-writer | antiplan-audit-resume |
 | audit findings | Challenger BLOCK or Coverage GAP/INVERTED | fix the finding | audit-fix-resume |
 | dag-done | DAG + audits present, no tickets | **gate:** run `antiplan/validate.py` with all evidence flags first (command in state-detection.md); exit 0 then spec-writer, non-zero then antiplan resume | spec-writer-next |
-| tickets-written-uncriticized | tickets exist, no or stale `critic-report.md` | ticket-critic | ticket-critic-next |
+| tickets-written-uncriticized | Full mode: tickets exist, no or stale `critic-report.md` | ticket-critic | ticket-critic-next |
 | critic-failed | `critic-report.md` contains `FAIL` | back to spec-writer for failing tickets | spec-writer-fix |
 | ready-for-build / partial-build | critic passes; `Stage: NEW` tickets remain | `/todo build` (manual) or `/todo run` (auto-driver) | build-ticket-manual |
 | slice-gate-pending | all non-gate tickets in a slice `COMPLETE`, gate ticket `NEW` | `/todo gate <slice-id>` | slice-gate-review |
@@ -134,8 +142,8 @@ Prompt to paste into your next session:
 <pre-filled template>
 ─────────────────────────────────────────
 
-After pasting, run /clear or /compact in THIS session if you want to free
-context before the next stage begins.
+After pasting, clear or compact THIS session if you want to free context
+before the next stage begins.
 ```
 
 For `/todo next`:
@@ -162,9 +170,11 @@ Paste this into a new antiplan session:
 ─────────────────────────────────────────
 ```
 
+For `/todo spec <feature>`: same shape, with the spec-writer-direct template.
+
 ## Things NOT to do
 
-- Do **not** invoke other skills via the Skill tool. /todo is a
+- Do **not** invoke other skills yourself. /todo is a
   coordinator that outputs text; the user invokes the next skill.
 - Do **not** read the full contents of PRD.md, task-sequence.md, or any
   individual ticket file. Only read frontmatter (`Stage:`, `id:`) and
