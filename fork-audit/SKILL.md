@@ -115,6 +115,7 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 | File | Use when |
 |---|---|
 | [templates/confluence-design-page.md](templates/confluence-design-page.md) | Synthesizing the final Confluence page (Phase 7) |
+| [../shared/CONFLUENCE_EDITING.md](../shared/CONFLUENCE_EDITING.md) | Publishing onto a Confluence page that already has content (Phase 7) |
 | [templates/README.md](templates/README.md) | Writing the index page |
 | [templates/L0-executive-summary.md](templates/L0-executive-summary.md) | Writing the exec layer |
 | [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Feeding into `/reframe architect` |

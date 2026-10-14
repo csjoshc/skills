@@ -69,7 +69,7 @@ confluence_put_storage <page_id> body.html   # keeps the title, sets version = c
 
 ## Key Gotchas
 
-- **Use storage format** when embedding. Markdown format converts `<ac:image>` to `<img>` and loses width control.
+- **Use storage format** when embedding. Markdown format converts `<ac:image>` to `<img>`, loses width control, and wipes other macros and browser edits on a live page. Follow [../shared/CONFLUENCE_EDITING.md](../shared/CONFLUENCE_EDITING.md) for the fetch, edit, publish and read-back steps.
 - **Only `<ac:image>` with `<ri:attachment>`** renders attached SVGs inline.
 - **SVG MIME type** may be `application/octet-stream` — this is fine.
 - **Re-uploading** the same filename auto-creates a new version.
