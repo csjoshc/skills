@@ -1,16 +1,15 @@
-# Handoff — Prompt Template and Anti-patterns
+# Handoff: Prompt Template and Checklist
 
 ## Handoff prompt template
 
-Use this structure inside the **Handoff prompt** block (adapt sections; omit empty ones).
-
-**⚠️ Important**: Wrap your entire output in a markdown code block so it can be copied with one click:
+Use this structure inside the **Handoff prompt** block; adapt sections and omit empty ones.
+Wrap the whole prompt in a `markdown` code block so it copies in one click:
 
 ````markdown
 ```markdown
 ## Context
 - Workspace: `<absolute path>`
-- Stack / runtime (if known): …
+- Stack / runtime (if known): ...
 
 ## Goal
 <What success means>
@@ -22,74 +21,71 @@ Use this structure inside the **Handoff prompt** block (adapt sections; omit emp
 <Non-negotiables: compatibility, no new deps, style, etc.>
 
 ## Key files (read these)
-- `<absolute path>` — <role>
-- …
+- `<absolute path>` - <role>
+- ...
 
-## Related standards / trackers (if any)
-- `<absolute path>` — <purpose>
+## Related artifacts (authoritative, read these)
+- `<absolute path, URL or commit sha>` - <spec, ADR, ticket, tracker, standards file: why it matters>
 
 ## Your task
-1. …
-2. …
+1. ...
+2. ...
 
 ## Plan (if applicable)
 Execute the steps in: `<absolute path>/.handoff/plan-<slug>.md`
+
+## Suggested skills
+- `<skill>` - <which step it serves>
 
 ## Verification
 <How to confirm completion: tests, commands, acceptance criteria>
 
 ## Open questions / risks (if any)
-- …
-```
+- ...
 ```
 ````
 
-Tone: **direct instructions** to the receiving agent ("Implement…", "Read…", "Do not…").
+Tone: **direct instructions** to the receiving agent ("Implement...", "Read...", "Keep...").
 
 ---
 
-## Anti-patterns
+## Write it like this
 
-- **Chat transcript** — Do not paste long back-and-forth. Distill to decisions and facts.
-- **Vague paths** — Never "the tests folder"; always absolute paths when known.
-- **Missing verification** — Always say how the next agent proves correctness.
-- **Plan in chat only** — For complex work, put the step list in `.handoff/plan-*.md` and only **summarize** in the prompt.
+- **Decisions and facts**: distill the conversation to what was decided and why; leave the back-and-forth behind.
+- **Absolute paths**: name `/abs/path/to/tests/`, never "the tests folder".
+- **Pointers over copies**: link specs, ADRs, tickets and commits by path, URL or sha.
+- **Verification stated**: always say how the next agent proves it is done.
+- **Steps in the plan file**: for complex work, the step list lives in `.handoff/plan-*.md` and the prompt only summarizes it.
+- **Secrets by location**: name the env var or secrets file, never the value; leave out personal data.
 
 ---
 
-## Skill Clusters (Reference)
+## Suggested skills
 
-When handing off, optionally include which skill cluster the recipient should draw from.
+Name the skills the next agent should invoke, tied to the step each one serves.
+Pick from this map, or from `~/.skills/PLAYBOOK.md`; read a skill's SKILL.md before recommending it.
 
-| Task Type | Skills to consider |
+| Task type | Skills to consider |
 |----------|-------------------|
 | **Frontend UI** | `make-ui`, `test-ui`, `chrome-devtools` |
-| **Backend Tests** | `tdd` |
-| **Git/PR Work** | `create-pr`, `pr-review`, `pr-fix` |
+| **Tests / bug fix** | `tdd`, `private-skill` (backend) |
+| **Git / PR work** | `pr-create`, `pr-review`, `pr-fix`, `verify-claim` |
+| **Planning / specs** | `todo`, `antiplan`, `spec-writer`, `ticket-critic` |
 | **Infrastructure** | `agent-sync`, `confluence-diagrams` |
-| **Planning/Specs** | `spec-writer`, `ticket-critic`, `tdd` |
-| **CLI/Tooling** | `cmd-cli` |
+| **CLI / tooling** | `cmd-cli` |
 | **Onboarding** | `project-onboarding` |
-
-### In handoff prompt
-
-Add an optional line under "Constraints" or "Context":
-
-```markdown
-## Recommended skills
-- Cluster: <task type from table above>
-- Specifically: make-ui, test-ui (example)
-```
 
 ---
 
 ## Quick checklist before sending
 
-- [ ] Paste-ready block is wrapped in a markdown code block for one-click copying
+- [ ] Paste-ready block is wrapped in a markdown code block for one-click copying.
 - [ ] Paste-ready block is self-contained for a **new** agent.
 - [ ] Task, goal, and **next actions** are explicit.
 - [ ] All critical files use **full paths**.
-- [ ] Standards/trackers/specs mentioned with paths if relevant.
+- [ ] Specs, ADRs, tickets and commits are referenced by path, URL or sha, not pasted.
+- [ ] Secrets and personal data are redacted.
 - [ ] Complex work has `.handoff/plan-<slug>.md` and that path is in the prompt.
 - [ ] Verification / acceptance criteria included.
-- [ ] Skill cluster guidance included if applicable (see "Skill Clusters" section)
+- [ ] Suggested skills section names a skill per step where one applies.
+- [ ] Handoff prompt prose passes `/stop-slop` to remove AI writing patterns.
