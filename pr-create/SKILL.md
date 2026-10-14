@@ -61,7 +61,7 @@ them costs far more in review cycles than it saves now.
 <!-- pattern: evidence-gate -->
 ### Evidence gate (Phase 0 mandatory)
 
-Before opening a PR, paste evidence inline in the description. No PR ships without:
+Before opening a PR, paste evidence inline in the `## Evidence` section of the description. No PR ships without:
 
 - [ ] Test output (command + last 20 lines, exit 0)
 - [ ] Screenshot or recording (UI changes only)
@@ -70,7 +70,7 @@ Before opening a PR, paste evidence inline in the description. No PR ships witho
 
 A claim of "fixed" without one of the above is a /verify-claim block. See `~/.skills/verify-claim/SKILL.md`.
 
-**Production-bound PRs** (ship to production directly or behind a flag) also need the pre-launch checklist and a rollback plan in the description: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md). Skip for purely internal changes.
+**Production-bound PRs** (ship to production directly or behind a flag) also need the pre-launch checklist and a rollback plan under `## Merge Danger`: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md). Skip for purely internal changes.
 
 ## Phase 1: Git Preparation
 
@@ -129,8 +129,13 @@ Checklist:
 - [ ] 4.5 Return the PR URL
 ```
 
-Title: `<type>(<scope>): <summary>`. Body sections: `## Summary` (1-3 bullets: what and why), `## Changes`, `## Evidence` (UI Validation, Test Results, Coverage), `## Test Plan`.
-Full `gh pr create` template and how to edit the body after creation: [PR_BODY.md](PR_BODY.md).
+Title: `<type>(<scope>): <summary>`. Body sections:
+- `## Summary`: why in a line or two, then the smallest visual (diagram, diff-sketch or tree).
+- `## Evidence`: before and after, then the `Test Results` and `Coverage` pastes.
+- `## Merge Danger`: one-way or two-way door, plus blast radius.
+- `## Not Doing` and `## Test Plan`.
+
+Full `gh pr create` template, guidance per section, and how to edit the body after creation: [PR_BODY.md](PR_BODY.md).
 
 <!-- pattern: not-doing-callout -->
 ### "Not Doing" callout in PR body
@@ -172,4 +177,4 @@ Read only when the situation matches:
 - [EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md): the PR touches backend code
 - [DOC_XREF_SCRUB.md](DOC_XREF_SCRUB.md): the PR deletes or renames a package, symbol, route or config
 - [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md): the PR ships to production
-- [PR_BODY.md](PR_BODY.md): drafting or editing the PR body
+- [PR_BODY.md](PR_BODY.md): drafting or editing the PR body (Summary, Evidence, Merge Danger)
