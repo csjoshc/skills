@@ -19,7 +19,7 @@ this skill blocks the claim and emits a specific list of what's missing.
 Always invoke before:
 
 - Reporting "task complete" to the user
-- Running `create-pr`
+- Running `pr-create`
 - Closing out a `ticket-critic` or `spec-writer` cycle
 - Writing the "Changes" section of a PR description
 - Checking off an AC
@@ -86,7 +86,7 @@ For every claim with no evidence, add an entry to the gap table:
 
 ### Phase 4: Block or pass
 
-If the gap table is empty → pass. Agent may proceed with the claim.
+If the gap table is empty → pass. Delete `CLAIM_UNVERIFIED.md` if it exists. Agent may proceed with the claim.
 
 If non-empty → emit:
 
@@ -100,11 +100,23 @@ The following claims lack evidence:
 Options:
 1. Generate the missing evidence now (recommended)
 2. Downgrade the claim ("attempted" / "likely works" / "needs verification")
-3. Explicit user override: user types "override" to bypass
+3. Explicit user override: user types "override: <reason>"
 ```
 
-Write the block to `CLAIM_UNVERIFIED.md` at the repo root. `create-pr` and
-`pr-review` should refuse to run while this file exists.
+Write the block to `CLAIM_UNVERIFIED.md` at the repo root (only there), and
+add `CLAIM_UNVERIFIED.md` to `.git/info/exclude` so it is never committed.
+The `verify-claim-gate` hook blocks `git commit` and `gh pr create` while it exists.
+
+### Marker lifecycle
+
+- **Evidence produced:** re-run this skill; a clean pass deletes the marker.
+- **Claim downgraded:** drop that row; delete the marker once no rows remain.
+- **User override:** only on the user's own `override: <reason>`. Delete the
+  marker and record the reason in the PR body or final report. Never
+  override on your own judgment.
+
+The marker catches shipping past a failed check. It cannot catch a check
+that never ran; the "always invoke" rule above covers that.
 
 ## Regression test requirement (bug fixes)
 
@@ -122,11 +134,11 @@ coverage.
 
 ## Interaction with other skills
 
-- `create-pr`: refuses to run if `CLAIM_UNVERIFIED.md` exists at repo root.
-- `pr-review`: the 5th Spec-Traceability Auditor reads the same gap table.
+- `pr-create`: refuses to run if `CLAIM_UNVERIFIED.md` exists at repo root.
+- `pr-review`: the Spec-Traceability lens reads the same gap table.
 - `pr-fix`: after each fix, reruns verify-claim for that specific comment's
   scope before moving to the next.
-- `workflow-guard`: injects verify-claim at phase transitions.
+- `project-onboarding/WORKFLOW_GATES.md`: lists verify-claim at phase transitions.
 
 <!-- pattern: common-rationalizations -->
 ## Common Rationalizations

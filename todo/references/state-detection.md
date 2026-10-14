@@ -25,13 +25,26 @@ Scan the repo root (from the current working directory) for these paths:
 | Any `.tickets/*.md` frontmatter with `Stage: COMPLETE` | a ticket build has finished |
 | `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
 
-Use `Glob` for path discovery and `Read` (or `Grep` on `Stage:`) for
-frontmatter inspection. Do **not** use Bash for this — Glob/Grep are faster
-and quieter.
+Use the harness's file-search and read tools for path discovery and
+frontmatter inspection (search for `Stage:` lines rather than reading
+whole files). Avoid shell loops for this; they are slower and noisier.
+
+## Pipeline modes
+
+- **Full** - `.plan/task-sequence.md` exists. Every rule below applies.
+- **Lite** - `.tickets/*.md` exist but `.plan/task-sequence.md` does not
+  (tickets came from spec-writer directly or were hand-written). Skip the
+  antiplan, validator, Challenger, Coverage and orphan-ticket rules. DAG
+  readiness uses any dependency the ticket declares (frontmatter field or a
+  `Dependencies:` line), else numeric filename order. ticket-critic is recommended once but is not a
+  build gate; `/todo build` may proceed without `critic-report.md`.
 
 ## Stage inference rules
 
-- **fresh** — none of the above paths exist → recommend `/todo start`
+- **fresh** - none of the above paths exist → recommend by size:
+  - small, already-scoped change → skip /todo; use `tdd` or just implement
+  - defined feature, a few tickets → `/todo spec <feature>` (spec-writer direct, Lite mode)
+  - risky, contested or large → `/todo start <feature>` (antiplan; Fast Mode by default)
 - **phase-0-done** — only `brownfield-context.md` exists → recommend
   resuming antiplan into Phase 1
 - **prd-done-no-dag** — `PRD.md` exists but no `task-sequence.md` → recommend
@@ -49,7 +62,7 @@ and quieter.
   **first** ask the user to run antiplan's pre-flight validator with all
   evidence flags:
   ```
-  python ~/.skills/antiplan/validate.py \
+  python3 ~/.skills/antiplan/validate.py \
     --project-dir . \
     --tickets .plan/task-sequence.md \
     --prd .plan/PRD.md \
@@ -63,7 +76,9 @@ and quieter.
     for fan-out. Common failures: missing AP rows in challenger-report,
     short evidence on a BLOCK row, GAP/INVERTED in coverage-audit, or
     `RE_DERIVED < 5` (Coverage Auditor likely skimmed the transcript).
-- **tickets-written-uncriticized** — `.tickets/*.md` exist; no
+- **lite-ready** - Lite mode and some tickets `Stage: NEW` → recommend
+  `/todo build`; mention ticket-critic if `critic-report.md` is missing
+- **tickets-written-uncriticized** (Full mode) — `.tickets/*.md` exist; no
   `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
   recommend ticket-critic session
 - **critic-failed** — critic-report.md contains the literal string `FAIL` →
@@ -75,7 +90,7 @@ and quieter.
 - **slice-gate-pending** — within a slice, every non-gate ticket is
   `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
   ticket with `gate: true` in frontmatter) is `Stage: NEW` → recommend
-  `/todo gate <slice-id>` (subagent-validated review) before flipping
+  `/todo gate <slice-id>` (independent review) before flipping
   the gate to BUILD/COMPLETE.
 - **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
   active session is running it (heuristic: invoked from a fresh /todo
@@ -105,7 +120,7 @@ To show ticket state over days or sprints, run `/trackboard refresh`.
 - `PRD.md` or `task-sequence.md` modified after `coverage-audit.md` →
   warn: Coverage Auditor diff is stale vs the current PRD/DAG; re-run
   the Coverage Auditor before spec-writer
-- Orphan tickets (`.tickets/*.md` whose ID is not in `task-sequence.md`) →
+- (Full mode only) Orphan tickets (`.tickets/*.md` whose ID is not in `task-sequence.md`) →
   warn: orphan ticket present, possibly from a prior planning cycle
 - Any `.tickets/*.md` modified after its `.tickets/tdd/toq-<id>.yaml` →
   warn: TOQ is stale vs ticket — /tdd Phase 0 should re-run before the
@@ -115,7 +130,7 @@ To show ticket state over days or sprints, run `/trackboard refresh`.
   continuing
 - If an antiplan session transcript is available alongside
   `.plan/task-sequence.md`, optionally run
-  `python ~/.skills/antiplan/validate.py --transcript <path> ...`
+  `python3 ~/.skills/antiplan/validate.py --transcript <path> ...`
   and surface any `confidence: LOW`, `unresolved > 0`, or
   `Proceeding: no` hits as soft warnings. Do not block on these — they are
   advisory alongside the hard-gate `dag-done` validator run.

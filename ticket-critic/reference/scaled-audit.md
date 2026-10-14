@@ -8,12 +8,13 @@
 ## Delegating per-ticket audits when N > 5
 
 A single-context audit of 18 patterns × N tickets has context-rot
-cost above ~5 tickets. For ticket sets larger than 5, **delegate**:
+cost above ~5 tickets. For ticket sets larger than 5, delegating is
+suggested (policy: `~/.skills/shared/SUBAGENTS.md`). Inline, audit in batches of about 5 with the
+same verdict format. When delegating:
 
 ```
 For each ticket (in parallel where possible):
-  Spawn an `Agent(subagent_type="general-purpose", ...)` whose
-  prompt contains:
+  Spawn a general-purpose subagent whose prompt contains:
     - The ticket file (absolute path)
     - The relevant PATTERNS.md subset (patterns whose detection
       signals match the ticket's surface — see "Pattern

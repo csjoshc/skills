@@ -44,10 +44,9 @@ Checklist:
         writes CLAIM_UNVERIFIED.md at the repo root, halt and surface
         the gap table to the user. Do not proceed without evidence or
         an explicit `override: <reason>`.
-- [ ] 0.2 Run `pr-review` self-check in advisory mode against the
-        pending diff. Report BLOCKs from the 5 sub-agents (Bug Hunter,
-        Standards Compliance, Error Handling, Test Analyzer, Spec-
-        Traceability Auditor). Fix or acknowledge before continuing.
+- [ ] 0.2 Self-review the pending diff with the harness's built-in code
+        review if it has one; otherwise run `pr-review` in advisory mode
+        (no posting). Fix or acknowledge findings before continuing.
 - [ ] 0.3 If the changed files touch backend production code, run
         `tdd/MUTATION.md` in single-mutant mode on the touched
         functions. Survivors → user decides whether to strengthen the

@@ -719,20 +719,20 @@ and to `validate.py --transcript`.
 
 ---
 
-## Phase 3 Guardrails (Subagent Orchestration)
+## Phase 3 Guardrails (Planner / Challenger roles)
 
 These are in addition to the Ordering Rules above. They govern the
 plan/challenge loop, not DAG shape.
 
-- Challenge step (Challenger subagent) cannot be skipped
+- Challenge step cannot be skipped (a subagent is suggested, not required; `~/.skills/shared/SUBAGENTS.md`)
 - Challenger cannot modify the DAG directly — only flag findings
 - "Evidence insufficient" or "depends on business preference" → escalate to
   the user, not the Planner
 - Full decision traceability: every challenge maps to accept/reject/escalate
-- Planner subagent must use `convergence-engine.md` ordering rules (this file)
-- Challenger subagent must use `anti-patterns.md` detection checklist
+- Planner must use `convergence-engine.md` ordering rules (this file)
+- Challenger must use `anti-patterns.md` detection checklist
 - **Heavy projects:** add Implementability Reviewer and User Advocate
-  subagents (see `subagent-prompts.md`)
+  passes (see `subagent-prompts.md`)
 - **Scope-boxing:** Maximum 10 feature tickets per epic DAG. If scope exceeds
   this, split into independent epics, each with its own integration gates.
 - **Forced re-justification:** After every 2 reconciliation rounds, pause
@@ -740,5 +740,5 @@ plan/challenge loop, not DAG shape.
   an approved Phase 1 feature?"
 - **WARN throttle:** Unreconciled Challenger WARNs auto-downgrade to NOTE
   after one round (see `subagent-prompts.md` → WARN Reconciliation Throttle)
-- **Plan Validation Gate:** After subagent work, run the DAG Readiness
+- **Plan Validation Gate:** After the Planner/Challenger rounds, run the DAG Readiness
   checklist above. Output must be READY before presenting to the user.

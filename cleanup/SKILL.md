@@ -3,8 +3,8 @@ name: cleanup
 description: >-
   Reviews existing source code and codebases against a quality rubric covering
   mechanical checks, subjective dimensions, anti-patterns, and layering. Use
-  when running code audits, holistic code-health checks, or preparing for PR
-  review. Does NOT post GitHub comments or edit tickets — use pr-review for
+  for whole-repo, package, or directory code-health audits. Not for reviewing
+  a branch diff before a PR (use the harness's code review or pr-review). Does NOT post GitHub comments or edit tickets — use pr-review for
   live PR feedback and ticket-critic for .tickets/.
 ---
 
@@ -26,7 +26,6 @@ Do not offer to post them yourself.
 ## When to Use
 
 - Code audits on a directory, package, or file set
-- Pre-PR prep (local audit before opening a PR)
 - Holistic code-health checks across a repo
 - Remediation planning after a quality gate failure
 
@@ -59,16 +58,17 @@ Load on demand:
 1. **Scope** — use paths, package, or PR diff the user named; default to
    project source per `AGENTS.md`.
 2. **Phase 0 — Mechanical pass** — deterministic first; emit a
-   `REVIEW-PHASE-0` block (schema in `~/.skills/reviews/schemas.md`). Do not
-   start subjective rubric mapping until every row is `RESOLVED` or
-   `OVERRIDDEN`.
+   `REVIEW-PHASE-0` block (schema in `~/.skills/reviews/schemas.md`).
+   Aggregate LOW/MEDIUM hits per tool + rule. Before subjective review, every
+   HIGH/CRITICAL row must be `RESOLVED` or `OVERRIDDEN`; LOW/MEDIUM rows may
+   stay `OPEN` and are reported as data.
 3. **Emit** `REVIEW-GATE: phase-0 → phase-1. Criteria: [...]. Proceeding: yes|no.`
    before continuing.
-4. **Phase 1 — Parallel specialist lenses** — launch 4 lenses as
-   sub-agents in parallel, each scoped to one architectural domain (see
+4. **Phase 1 — Specialist lenses** — default to one combined lens covering
+   all four domains. Run the 4 lenses as parallel subagents only for a
+   whole-repo audit or when the user asks (see
    [PHASE1_LENSES.md](PHASE1_LENSES.md)). Each lens emits its own
-   `REVIEW-FINDINGS` block. Skip parallel execution if the scope is ≤ 3
-   files; fall back to a single lens.
+   `REVIEW-FINDINGS` block.
 5. **Evidence** — every finding needs: `file`, `line`, `source` tag,
    `evidence`, `suggested_fix`. Structural findings also need `proof:` —
    triggered by `severity: CRITICAL` (any category), `category:
@@ -84,7 +84,7 @@ Load on demand:
 
 ## Phase 0 — Mechanical Pass
 
-Run deterministic checks before any LLM-driven reasoning. Every Phase 0 finding is non-negotiable; a later subjective judgment cannot dismiss it.
+Run deterministic checks before any LLM-driven reasoning. A later subjective judgment cannot dismiss a Phase 0 row; only an explicit OVERRIDDEN with justification can.
 The full tool table (unused imports and exports, file size, complexity, duplication, import cycles, layer boundaries, redundancy, dead branches, commented-out blocks, scope-leak vocabulary, cycle-coupled paths, runtime-coupled names, tracked-but-ignored files, inline lookup tables): [PHASE0_CHECKS.md](PHASE0_CHECKS.md). Read it before running the pass.
 Two rules to remember: every tracked-but-ignored path (`git ls-files -ci --exclude-standard`, plus `git ls-files .plan .tickets .handoff`) is HIGH, and scope-leak and cycle-coupled hits follow `~/.skills/shared/SKILL_NOISE_TERMS.md`.
 
@@ -99,21 +99,20 @@ Emit the output in the `REVIEW-PHASE-0` block (schema: [`~/.skills/reviews/schem
 ```
 ````
 
-Every row's `status` must be `RESOLVED` or `OVERRIDDEN` (with a written justification) before emitting the gate:
+Every HIGH/CRITICAL row's `status` must be `RESOLVED` or `OVERRIDDEN` (with a written justification) before emitting the gate:
 
 ```
-REVIEW-GATE: phase-0 → phase-1. Criteria: [all rows resolved: met]. Proceeding: yes.
+REVIEW-GATE: phase-0 → phase-1. Criteria: [HIGH/CRITICAL rows resolved: met]. Proceeding: yes.
 ```
 
-The validator rejects `Proceeding: yes` with any `OPEN` row.
+The validator rejects `Proceeding: yes` with any OPEN HIGH/CRITICAL row.
 
 ---
 
 ## Phase 1 — Parallel Specialist Lenses
 
-After the Phase 0 gate, run **4 lenses in parallel** as sub-agents (one message, multiple `Agent` calls), each scoped to one domain: Layer & Dependency, Redundancy & Modularity, Error Handling & State, Data & Security. Each lens emits its own `REVIEW-FINDINGS` block, possibly empty.
+After the Phase 0 gate, review four domains: Layer & Dependency, Redundancy & Modularity, Error Handling & State, Data & Security. By default one lens covers all four. For a whole-repo audit or on request, run them as 4 parallel subagents, one per domain. Each lens emits its own `REVIEW-FINDINGS` block, possibly empty.
 A finding that does not meet its lens's checklist threshold is dropped, not downgraded. Merge duplicates (same file + line + rule_code), prefer arch-violation findings over rubric ones, and sort Layer, Architectural Drift, Error Handling, Bug, Redundancy, Modularity, Standards, Test Gap.
-For a scope of 3 files or fewer, use a single lens instead.
 Lens table, rubric ownership, thresholds and execution details: [PHASE1_LENSES.md](PHASE1_LENSES.md). Read it before launching lenses.
 
 ---
@@ -184,7 +183,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 | In scope                    | Out of scope                                     |
 | --------------------------- | ------------------------------------------------ |
 | Source code audits          | Editing `.tickets/*.md` → ticket-critic          |
-| Pre-PR local prep           | Live PR comments on GitHub → pr-review           |
+| Package / directory audits  | Live PR comments on GitHub → pr-review           |
 | Architecture pattern checks | Visual UI validation → make-ui / chrome-devtools |
 
 ---
@@ -193,7 +192,6 @@ cross-cutting concern (logging, config, errors, file I/O).
 
 **What is the scope?**
 
-- PR diff → focus on changed files, M-patterns in diff
 - Full codebase → use AGENTS.md exclusions, scan systematically
 - Specific directory → scope to named path
 

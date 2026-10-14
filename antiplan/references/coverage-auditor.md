@@ -18,7 +18,7 @@ The Challenger (see `subagent-prompts.md`) audits the DAG against
 anti-patterns. The Coverage Auditor instead audits whether the artifacts
 faithfully represent **what the user actually said** during interrogation.
 
-These two subagents are complementary and BOTH must pass before
+These two passes (subagent or inline) are complementary and BOTH must pass before
 `SIGNOFF-APPROVALS` may emit.
 
 ---

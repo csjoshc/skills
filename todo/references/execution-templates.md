@@ -9,7 +9,7 @@ template into the user-facing output.
 
 - build-ticket-manual — per-ticket flow, one session per ticket
 - build-ticket-resume — pick up a Stage: BUILD ticket mid-flight
-- slice-gate-review — gate closure with subagent-validated review
+- slice-gate-review — gate closure with independent review
 
 ---
 
@@ -20,13 +20,12 @@ using `/tdd` for red-green-refactor and `/verify-claim` as the evidence
 gate before commit. Subagents are reserved for slice gates, not per-ticket.
 
 ```
-You are implementing one ticket from a planned multi-slice rebase. The
-ticket file is the source of truth; the PRD and task-sequence are
-read-only context.
+You are implementing one ticket. The ticket file is the source of truth;
+any PRD and task-sequence are read-only context.
 
 **Ticket file:** <absolute path to .tickets/<NNN-slug>.md>
-**PRD:** <absolute path to .plan/PRD.md>
-**Task-sequence (DAG + Reconciliation notes):** <absolute path to .plan/task-sequence.md>
+**PRD (if present):** <absolute path to .plan/PRD.md>
+**Task-sequence (if present):** <absolute path to .plan/task-sequence.md>
 **Brownfield context (if present):** <absolute path to .plan/brownfield-context.md>
 
 **Execution flow (do these in order, in THIS session):**
@@ -34,7 +33,7 @@ read-only context.
 1. Read the ticket file end to end. Read its `Read First` files. Read
    any `Exemplar Files` it points at.
 2. Set the ticket's frontmatter `Stage: BUILD` (edit the file directly).
-3. Invoke /tdd. Phase 0 writes the Test Obligation Queue at
+3. Invoke the tdd skill. Phase 0 writes the Test Obligation Queue at
    .tickets/tdd/toq-<ticket-id>.yaml. Phase 1 runs red-green-refactor
    against the ticket's ACs one at a time. Do NOT skip Phase 0.
 4. When all ACs are green per /tdd, invoke /verify-claim. It will
@@ -43,14 +42,14 @@ read-only context.
    /verify-claim passes.
 5. Run the project's lint + typecheck commands. Fix any issues.
 6. Stage and commit using the project's commit conventions (see
-   AGENTS.md / CLAUDE.md). Commit message references the ticket ID.
+   AGENTS.md). Commit message references the ticket ID.
 7. Set the ticket's frontmatter `Stage: COMPLETE`. Commit that change.
-8. STOP. Do not start the next ticket in this session — invoke /clear
-   first, then run /todo to get the next prompt.
+8. STOP. Do not start the next ticket in this session. Start a fresh
+   session (or clear context), then run /todo to get the next prompt.
 
 **Subagent escalation (exception, not default):** If the ticket touches
 adversarial-review-worthy code (audit logging, auth, transport plumbing,
-data-deletion flows), invoke /pr-review as a subagent BEFORE step 6.
+data-deletion flows), run pr-review (or the harness's own code review) in a separate context BEFORE step 6.
 Otherwise skip — per-ticket subagent review is not the default flow.
 
 **If /tdd or /verify-claim refuses to pass:** stop, do not commit, do
@@ -96,7 +95,7 @@ Do not re-derive the ticket scope or rewrite already-passing code.
 ## slice-gate-review
 
 For when every non-gate ticket in a slice is COMPLETE and the gate
-ticket itself is NEW. The gate is where subagent review earns its cost.
+ticket itself is NEW. The gate is where an independent review earns its cost.
 
 ```
 You are reviewing slice <slice-id> for integration-gate closure. Every
@@ -120,9 +119,10 @@ artifact (e.g., for Slice 1: MCP transcript + curl headers + audit log
 line). Save the artifact to a path referenced in the gate ticket
 (typically `.plan/gate-evidence/<slice-id>/`).
 
-### Pass 2 — Subagent: independent gate review
+### Pass 2 — Independent gate review
 
-Launch a /pr-review subagent (general-purpose) with this prompt:
+Suggested: run this in a subagent or a fresh session, since independence is
+the point. Inline is allowed; mark the verdict `run: inline`. Prompt:
 
   > You are an independent gate reviewer. You have NO context from prior
   > conversations. Read each path below cold:
@@ -144,9 +144,9 @@ Launch a /pr-review subagent (general-purpose) with this prompt:
 
 ### Pass 3 — Disposition
 
-- Subagent VERDICT: PASS → flip gate ticket Stage to COMPLETE, commit
+- VERDICT: PASS → flip gate ticket Stage to COMPLETE, commit
   evidence, advance to next slice.
-- Subagent VERDICT: FAIL → flip gate ticket back to a diagnostic state;
+- VERDICT: FAIL → flip gate ticket back to a diagnostic state;
   return failing ACs to the relevant slice tickets (re-open them as
   NEW with specific remediation notes); do NOT proceed to next slice.
 

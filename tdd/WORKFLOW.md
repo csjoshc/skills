@@ -2,7 +2,7 @@
 
 ## Contents
 
-- 0. Scoping (deterministic, required)
+- 0. Scoping (deterministic, ticket builds only)
 - 1. Planning, one source file per cycle, discovery halt
 - 2. Tracer Bullet
 - 3. Incremental Loop
@@ -11,9 +11,9 @@
 
 Slicing patterns and risk-first ordering: [references/slicing.md](references/slicing.md).
 
-## 0. Scoping (deterministic) — REQUIRED
+## 0. Scoping (deterministic) - ticket builds only
 
-Run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
+Skip for bug fixes and ad-hoc work with no ticket (see SKILL.md). Otherwise run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
 ranked Test Obligation Queue at `.tickets/tdd/toq-<ticket-id>.yaml`.
 
 Inputs are pulled from the ticket runner envelope (ticket path, diff base, registry
