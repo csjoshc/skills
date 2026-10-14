@@ -118,26 +118,7 @@ After all tests pass, look for refactor candidates:
 
 **Never refactor while RED.** Get to GREEN first.
 
-## Applying to Bug Fixes
-
-When fixing a bug, TDD still applies:
-
-1. **Write a failing test first** that reproduces the bug
-2. **Fix the bug** to make the test pass
-3. **Refactor** if needed
-
-This ensures:
-- The bug is actually reproduced (not just symptoms)
-- The fix actually works
-- The bug doesn't regress
-
-```
-RED:   Write test that fails due to bug → test fails
-GREEN: Fix bug → test passes
-REFACTOR: Clean up if needed
-```
-
-### Prove-It Pattern (6 steps)
+## Applying to Bug Fixes (Prove-It pattern)
 
 <!-- merged from addyosmani/agent-skills test-driven-development -->
 
@@ -145,9 +126,13 @@ Do not start by trying to fix the bug. Start by proving it.
 
 1. Read the bug report; restate the expected vs observed behavior in one line.
 2. Write a test that exercises the failing scenario through the public interface.
-3. Run it — it MUST fail. A passing reproduction test is not a reproduction.
+3. Run it; it must fail. A passing reproduction test is not a reproduction.
+   - Check the test sits at the correct seam: it exercises the real bug pattern as it happens at the call site. A seam too shallow to replay the triggering chain (one caller when the bug needs several) gives false confidence. If no correct seam exists, report that as the finding.
+   - If you forced the red by mutating code or a fixture, `diff` against a pristine copy to prove the mutation landed before you trust the failure.
 4. Implement the minimal fix.
-5. Re-run the test — it passes.
+5. Re-run the test; it passes.
 6. Run the full relevant suite to confirm no regressions; commit test + fix together.
 
-If step 3 doesn't fail, the test isn't testing the bug — fix the test first.
+If step 3 doesn't fail, the test isn't testing the bug; fix the test first.
+
+Seam and pristine-copy checks adapted from mattpocock/skills `diagnosing-bugs` (MIT).
