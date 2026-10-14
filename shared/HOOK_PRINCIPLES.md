@@ -58,6 +58,15 @@ Examples applied:
 - `redundancy-watcher` on every `Write` → moderate cost, cheap-ish
   check but FREQUENT event → **skill**, invoked from `workflow-guard`.
 
+## Mechanical rule or judgement call
+
+Sort a recurring mistake before choosing where its fix lives.
+A mechanical violation (fixed pattern, banned API, import shape, file location) gets a deterministic check: a lint rule, a commit hook or a CI job.
+A judgement call (consistency, fit with surrounding code) goes in the project's standards file, which review reads.
+The decision rule above then says whether that check also runs as an agent hook.
+
+Prove each new hook fires: trigger its event once (for a commit hook, make a commit through it) and see it run.
+
 ## Advisory vs. blocking
 
 Reserve `halt` for unambiguous, user-visible harms:
