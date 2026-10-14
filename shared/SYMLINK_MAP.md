@@ -20,6 +20,19 @@ All paths symlink to the master store at `~/.skills`.
 
 **Note:** If a path does not exist, create parent directories before symlinking.
 
+### Global memory file
+
+Not a skill, so `sync.py` does not manage it.
+The master is `agents/AGENTS.md` in the bootstrap repo, and `bootstrap.sh` links it to `~/AGENTS.md`.
+
+| Tool | Path | Points at |
+| :--- | :--- | :--- |
+| All | `~/AGENTS.md` | bootstrap repo `agents/AGENTS.md` |
+| Claude Code | `~/.claude/CLAUDE.md` | `@~/AGENTS.md` import (a one-line file) |
+| Codex | `~/.codex/AGENTS.md` | `~/AGENTS.md` |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `~/AGENTS.md` |
+| Antigravity / Gemini | `~/.gemini/GEMINI.md` | `~/AGENTS.md` |
+
 **pi note:** pi warns once per start about files it cannot treat as skills: the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`) and a few unknown frontmatter fields. It still loads every skill. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
 
 ### Codex exception: per-skill symlinks
