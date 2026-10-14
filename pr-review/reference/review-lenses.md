@@ -89,7 +89,7 @@ For each finding, quote the exact rule code and text from
 - Unbounded queries
 - Required tests for new public functions
 
-**Smell baseline:** the code smells in [`tdd/REFACTORING.md`](../../tdd/REFACTORING.md) apply even when the repo documents nothing.
+**Smell baseline:** the code smells in [`tdd/REFACTORING.md`](../../tdd/REFACTORING.md#code-smells) apply even when the repo documents nothing.
 Report a smell as a judgement call labelled "possible <smell>" (for example "possible Feature Envy") and quote the hunk.
 Smell findings never block and skip the checklist below.
 A documented repo rule overrides the baseline: where the repo endorses a pattern, suppress the smell.

@@ -62,7 +62,7 @@ The Risk Tier column feeds `/tdd` Phase 0 scoping and mirrors the ticket's Test 
 - Pattern 15: source-prose hygiene (naming, identifiers, leaked planning labels).
 - Pattern 16: AC shell commands must be runnable in the target environment.
 - Pattern 17: operator entry-point smoke gate (AP-26 gatekeeper).
-- Pattern 18: subagent claims need adversarial evidence review (delegates to `todo/references/evidence-reviewer.md`).
+- Pattern 18: subagent claims need adversarial evidence review (delegates to `shared/EVIDENCE_REVIEWER.md`).
 
 **More than 5 tickets:** subagents are suggested (see `~/.skills/shared/SUBAGENTS.md`); otherwise audit tickets in batches inline. When delegating, brief each with the ticket path, the relevant PATTERNS.md subset and the PRD/brownfield context, returning one verdict block per pattern. Aggregate into `.plan/critic-report.md`; any subagent BLOCKER halts the parent until the user resolves it. Brief contract and the pattern-relevance table by ticket surface: [reference/scaled-audit.md](reference/scaled-audit.md).
 

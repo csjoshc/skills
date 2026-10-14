@@ -95,7 +95,7 @@ Exploration pattern adapted from Matt Pocock's `implement-spec` (MIT).
    - The build subagent's final report (verbatim)
    - The artifact directory path
    - The ticket's ACs (source of truth)
-   See `~/.skills/todo/references/evidence-reviewer.md` if present, else
+   See `~/.skills/shared/EVIDENCE_REVIEWER.md` if present, else
    inline the audit checklist (scope-check via git diff, per-AC
    re-verification, artifact existence + size sanity,
    subagent-deviation audit, wrapper-target re-verification, Stage

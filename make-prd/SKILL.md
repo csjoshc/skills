@@ -59,7 +59,7 @@ Load companion files only when needed:
 ## Operating Rules
 
 1. Start with a short intake summary of what you understood.
-2. Ask only high-leverage questions; batch questions to reduce start/stop overhead.
+2. Ask only high-leverage questions, in rounds per `~/.skills/shared/GRILLING.md`.
 3. **If antiplan output exists**, reference its findings on counterarguments and ruled-out alternatives. Do not re-debate settled decisions.
 4. **If no prior analysis**, ask high-leverage questions to surface doubts and assumptions — avoid repeating antiplan's work.
 5. Keep a visible `Decision Ledger` with:
@@ -188,7 +188,7 @@ Plus session-only outputs:
 In the first response after invocation:
 1. Confirm objective and constraints in 3-6 bullets.
 2. Propose the immediate plan for this session.
-3. Ask the smallest set of clarification questions needed to start drafting.
+3. Ask the smallest set of clarification questions needed to start drafting, formatted per `~/.skills/shared/GRILLING.md`.
 
 ## Assumptions & Escalation
 

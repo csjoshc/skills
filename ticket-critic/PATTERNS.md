@@ -834,7 +834,7 @@ full review on:
   "adapted", "alternative", or "skipped"
 
 **Reviewer protocol:** see
-[`~/.skills/todo/references/evidence-reviewer.md`](~/.skills/todo/references/evidence-reviewer.md)
+[`~/.skills/shared/EVIDENCE_REVIEWER.md`](~/.skills/shared/EVIDENCE_REVIEWER.md)
 for the full evidence-reviewer procedure, which is the canonical
 implementation of this pattern.
 

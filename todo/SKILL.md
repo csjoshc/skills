@@ -211,4 +211,4 @@ Read only when the situation matches:
 - [references/prompt-templates.md](references/prompt-templates.md): emitting any antiplan, spec-writer, ticket-critic or handoff prompt
 - [references/execution-templates.md](references/execution-templates.md): emitting build-ticket-manual, build-ticket-resume or slice-gate-review prompts
 - [references/auto-driver.md](references/auto-driver.md): running `/todo run`
-- [references/evidence-reviewer.md](references/evidence-reviewer.md): reviewing a BUILD subagent's ticket claims (used by `/todo run` and ticket-critic Pattern 18)
+- [../shared/EVIDENCE_REVIEWER.md](../shared/EVIDENCE_REVIEWER.md): reviewing a BUILD subagent's ticket claims (used by `/todo run` and ticket-critic Pattern 18)

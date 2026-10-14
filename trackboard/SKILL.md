@@ -35,7 +35,7 @@ Trackboard shows how tickets moved across days and cycles. It reads ticket state
 | `/todo` | Pipeline routing, next-step prompts | Reads the same `Stage:` values; never routes |
 | `/antiplan` | `.plan/PRD.md`, `.plan/task-sequence.md`, gates | Reads the task-sequence table when no tickets exist |
 | `/todo build` | `Stage:` edits in `.tickets/*.md` | Records each edit as one history line on the next refresh |
-| `todo/references/evidence-reviewer.md` | VERIFIED, DRIFT-DETECTED or EVIDENCE-INSUFFICIENT verdicts | On VERIFIED, `refresh --evidence` stores the link; the reviewer procedure stays unchanged |
+| `shared/EVIDENCE_REVIEWER.md` | VERIFIED, DRIFT-DETECTED or EVIDENCE-INSUFFICIENT verdicts | On VERIFIED, `refresh --evidence` stores the link; the reviewer procedure stays unchanged |
 | `/handoff` | Session resume prompts | A handoff may link `board.md`; trackboard writes no prompts |
 | `trackboard` | `.plan/board/*` and export files | Read-only projection of the above |
 
