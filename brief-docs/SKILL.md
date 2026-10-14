@@ -77,6 +77,7 @@ A doc title "Local dev with Vendor A" for a runtime-agnostic stack is the canoni
 | [references/templates.md](references/templates.md) | Copy-paste Markdown stubs |
 | [references/accuracy-and-drift.md](references/accuracy-and-drift.md) | Verifying names and behavior against code |
 | [references/example-hub-page.md](references/example-hub-page.md) | Fictional hub + satellite shape (example) |
+| [../shared/CONFLUENCE_EDITING.md](../shared/CONFLUENCE_EDITING.md) | Publishing edits to a Confluence page that already has content |
 
 ## Quality bar
 
