@@ -138,7 +138,7 @@ as needed across phases:
 - `references/persona-rules.md` — alignment/reasoning gating
 - `~/.skills/shared/ASSUMPTION_TIERS.md` — every assumption, every phase (see `#assumption-register-format`)
 - `references/artifact-ingestion.md` — when user provides reference material
-- `references/domain-model.md` — Phase 2, when domain terminology, CONTEXT.md glossary, or ADR decisions arise
+- `references/domain-model.md` — Phase 2, when domain terminology, the GLOSSARY.md glossary, or ADR decisions arise
 - `references/coverage-auditor.md` — Phase 3.5, second-pass requirement-coverage check
 
 ---

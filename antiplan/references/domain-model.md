@@ -3,8 +3,8 @@
 ## Contents
 
 - Purpose
-- CONTEXT.md structure
-- Domain term extraction
+- File structure
+- During the session
 - ADR criteria
 
 ---
@@ -15,54 +15,83 @@ Load during Phase 2 when the conversation involves: naming domain concepts,
 resolving terminology conflicts, deciding whether to write an ADR, or
 anchoring architectural decisions to existing glossary definitions.
 
-Applies DDD-style discipline: one-at-a-time questions with recommended
-answers, codebase-first validation, and glossary enforcement.
+This is the active discipline: challenge terms, invent edge-case scenarios,
+and write the glossary and decisions down the moment they settle.
+Ask questions in rounds per `~/.skills/shared/GRILLING.md`.
+Merely reading `GLOSSARY.md` for vocabulary is a habit any phase can have; load this file when you're changing the model.
+
+Adapted from Matt Pocock's `domain-modeling` skill (MIT).
 
 ---
 
-## CONTEXT.md structure
+## File structure
 
-**Single-context repos:** one `CONTEXT.md` at the repo root.
+Most repos have a single context:
 
-**Multi-context repos:** `CONTEXT-MAP.md` at the root, pointing to
-context-specific directories (e.g., `src/orders/CONTEXT.md`). Each
-context directory holds its own `CONTEXT.md` and, optionally, `docs/adr/`.
+```
+/
+├── GLOSSARY.md
+├── docs/
+│   └── adr/
+│       ├── 0001-event-sourced-orders.md
+│       └── 0002-postgres-for-write-model.md
+└── src/
+```
 
-When `CONTEXT.md` exists, treat it as the authoritative glossary. Any
-user terminology that conflicts with a term in `CONTEXT.md` triggers an
-immediate clarification question before proceeding. Do not let conflicting
-terminology coexist silently.
+If a `GLOSSARY-MAP.md` exists at the root, the repo has multiple contexts.
+The map points to where each one lives:
 
-When `CONTEXT.md` does not exist: proceed silently — don't flag its
-absence. Create it lazily when the first domain term is resolved.
+```
+/
+├── GLOSSARY-MAP.md
+├── docs/
+│   └── adr/                          ← system-wide decisions
+├── src/
+│   ├── ordering/
+│   │   ├── GLOSSARY.md
+│   │   └── docs/adr/                 ← context-specific decisions
+│   └── billing/
+│       ├── GLOSSARY.md
+│       └── docs/adr/
+```
 
-**Adding terms:** When a term is resolved during interrogation, add it to
-`CONTEXT.md` immediately — not batched at session end. Include:
-
-- **Term** (bold)
-- One-sentence definition
-- Aliases to avoid (if any)
-- Relationship to adjacent terms (if non-obvious)
+Create files lazily, only when you have something to write.
+If no `GLOSSARY.md` exists, proceed without flagging its absence and create one when the first term is resolved.
+If no `docs/adr/` exists, create it when the first ADR is needed.
 
 ---
 
-## Domain term extraction
+## During the session
 
-When terminology is ambiguous or multiple words are used for the same
-concept:
+### Challenge against the glossary
 
-1. Identify all candidate terms from the conversation and codebase
-2. Be opinionated: pick the best term, list the others as **aliases to avoid**
-3. Group related terms by domain cluster (lifecycle, people, relationships)
-4. For each term, capture: canonical name, definition, aliases, cardinality
-5. Save resolved terms to `CONTEXT.md` immediately
+When the user uses a term that conflicts with `GLOSSARY.md`, call it out in the current round:
+"Your glossary defines 'cancellation' as X, but you seem to mean Y. Which is it?"
+Conflicting terminology gets resolved before you proceed.
 
-**Table format for `CONTEXT.md` or `UBIQUITOUS_LANGUAGE.md`:**
+### Sharpen fuzzy language
 
-| Term | Definition | Aliases to Avoid |
-|------|-----------|-----------------|
-| **Order** | A confirmed Customer request for one or more Items | Purchase, Cart, Basket |
-| **Customer** | A registered user who has placed at least one Order | User, Buyer, Client |
+When the user uses a vague or overloaded term, propose a precise canonical term:
+"You're saying 'account': do you mean the Customer or the User? Those are different things."
+
+### Discuss concrete scenarios
+
+When domain relationships come up, stress-test them with specific scenarios.
+Invent scenarios that probe edge cases and force precision about the boundaries between concepts.
+
+### Cross-reference with code
+
+When the user states how something works, check whether the code agrees.
+Surface contradictions:
+"Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
+
+### Update GLOSSARY.md inline
+
+When a term is resolved, update `GLOSSARY.md` right then, not batched at session end.
+Use the format in [GLOSSARY-FORMAT.md](GLOSSARY-FORMAT.md).
+
+`GLOSSARY.md` holds domain language only.
+Implementation details, specs and scratch notes go in the PRD, tickets or ADRs.
 
 Ambiguities unresolvable in-session: flag with `[?]` and record as
 Unresolved in the Convergence Ledger.
@@ -71,29 +100,16 @@ Unresolved in the Convergence Ledger.
 
 ## ADR criteria
 
-Write an Architecture Decision Record **only when all three conditions hold:**
+Offer an ADR only when all three hold:
 
-1. **Costly to reverse** — undoing requires significant rework
-2. **Unintuitive without context** — a future engineer would reasonably
-   choose differently without knowing why
-3. **Genuine trade-off** — real alternatives existed and were considered
+1. **Hard to reverse**: the cost of changing your mind later is meaningful
+2. **Surprising without context**: a future reader will wonder "why did they do it this way?"
+3. **The result of a real trade-off**: there were genuine alternatives and you picked one for specific reasons
 
-If any condition is absent, skip the ADR. Note the decision in `CONTEXT.md`
-instead.
+If any of the three is missing, skip the ADR.
+Use the format in [ADR-FORMAT.md](ADR-FORMAT.md).
 
 When a user rejects an architecture candidate with a load-bearing reason
 ("we tried X and it failed because Y"), offer: "Want me to record this so
-future reviewers don't re-suggest it?" Only offer when the reason would
-actually guide future exploration — skip ephemeral reasons like "not worth
-it right now."
-
-**ADR format (minimal):**
-
-```markdown
-## ADR-NN: [Decision title]
-**Status:** Accepted
-**Context:** Why this decision was needed
-**Decision:** One sentence
-**Alternatives considered:** What else was evaluated
-**Consequences:** The tradeoffs accepted
-```
+future reviewers don't re-suggest it?"
+Offer only when the reason would guide future exploration, not for ephemeral reasons like "not worth it right now".
