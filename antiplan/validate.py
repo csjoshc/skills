@@ -103,11 +103,13 @@ def parse_assumptions(prd_content: str) -> list[dict[str, str]]:
 def paths_resolve(data: PlanData) -> list[str]:
     """Every MODIFY path's parent directory must exist on disk."""
     errors = []
+    # A file CREATEd by an earlier ticket in the same sequence can't exist at plan time.
+    created: set[str] = set()
     for ticket in data.tickets:
         for f in ticket.files:
             if f.get("action") == "MODIFY" and not f.get("test", False):
                 path_str = f.get("path", "")
-                if "..." in path_str:
+                if "..." in path_str or path_str in created:
                     continue
                 full = data.project_dir / path_str
                 if not full.parent.exists():
@@ -115,6 +117,9 @@ def paths_resolve(data: PlanData) -> list[str]:
                         f"{ticket.id}: MODIFY path parent missing: "
                         f"{path_str} (checked {full.parent})"
                     )
+        created.update(
+            f.get("path", "") for f in ticket.files if f.get("action") == "CREATE"
+        )
     return errors
 
 
