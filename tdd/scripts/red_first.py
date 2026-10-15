@@ -22,8 +22,16 @@ import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-EXEMPT = re.compile(r"#\s*red-first:\s*exempt\b\s*(.*)")
-STUB_BODY = [ast.Return(value=ast.Constant(value=None))]
+FLAG_HINT = ("passes without the change: assert on a value only the new code produces; if it pins "
+             "existing behavior on purpose, put `# red-first: exempt <reason>` inside the test")
+EXEMPT = re.compile(r"(?:#|//|--|/\*|<!--)\s*red-first:\s*exempt\b\s*(.*?)\s*(?:\*/|-->)?$")
+# Two stubs for names head adds: a test that passes against the raising one never really calls
+# the new code (FAIL); one that passes only against the None one asserts little (WEAK).
+STUBS = {
+    "raise": lambda: [ast.Raise(exc=ast.Call(func=ast.Name(id="NotImplementedError", ctx=ast.Load()),
+                                             args=[ast.Constant("red-first stub")], keywords=[]))],
+    "none": lambda: [ast.Return(value=ast.Constant(value=None))],
+}
 # An editable install's finder resolves modules missing from the export to the real working tree.
 RUN_PYTEST = ("import sys; sys.meta_path[:] = [f for f in sys.meta_path "
               "if 'editable' not in getattr(f, '__name__', type(f).__name__).lower()]; "
@@ -48,13 +56,30 @@ def resolve(repo: Path, rev: str) -> str:
     return git(repo, "rev-parse", "--verify", "--end-of-options", f"{rev}^{{commit}}")
 
 
+def snapshot_worktree(repo: Path) -> str:
+    """Commit object for the working tree, untracked files included, via a throwaway index.
+    Writes git objects only: the real index, refs and files are untouched."""
+    with tempfile.TemporaryDirectory(prefix="red-first-idx.") as d:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(d, "index"))}
+        def run(*args: str) -> str:
+            r = subprocess.run(["git", "-C", str(repo), *args], env=env, capture_output=True, text=True)
+            if r.returncode:
+                raise GateError(f"git {' '.join(args)}: {r.stderr.strip()}")
+            return r.stdout.strip()
+        run("read-tree", "HEAD")
+        run("add", "-A")
+        tree = run("write-tree")
+        return run("-c", "user.name=red-first", "-c", "user.email=red-first@invalid",
+                   "commit-tree", tree, "-p", "HEAD", "-m", "red-first worktree snapshot")
+
+
 def default_base(repo: Path, head: str) -> str:
     for ref in ("main", "origin/main", "master", "origin/master"):
         try:
             return git(repo, "merge-base", head, resolve(repo, ref))
         except GateError:
             continue
-    raise GateError("no main or master to diff against; pass --base")
+    raise GateError("no main or master branch to diff against; pass --base <the commit you branched from>")
 
 
 def export(repo: Path, rev: str, dest: Path) -> None:
@@ -127,12 +152,12 @@ def candidate_tests(head_tree: Path, base_tree: Path, test_files: list[str]) -> 
 
 # --- base source with head's new names stubbed ---------------------------------------------
 
-def stub_def(node: ast.AST) -> ast.AST:
+def stub_def(node: ast.AST, kind: str) -> ast.AST:
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        node.body = list(STUB_BODY)
+        node.body = STUBS[kind]()
     elif isinstance(node, ast.ClassDef):
         for sub in node.body:
-            stub_def(sub)
+            stub_def(sub, kind)
     return node
 
 
@@ -147,8 +172,8 @@ def defined_names(body: list[ast.stmt]) -> set[str]:
     return names
 
 
-def stubbed_source(base_src: str | None, head_src: str) -> str:
-    """Base module plus a None-returning stub for every top-level name or method head adds."""
+def stubbed_source(base_src: str | None, head_src: str, kind: str) -> str:
+    """Base module plus a stub for every top-level name or method head adds."""
     head = ast.parse(head_src)
     base = ast.parse(base_src or "")
     have = defined_names(base.body)
@@ -164,10 +189,10 @@ def stubbed_source(base_src: str | None, head_src: str) -> str:
         if isinstance(node, ast.ClassDef) and node.name in base_classes:
             bc = base_classes[node.name]
             methods = defined_names(bc.body)
-            bc.body += [stub_def(m) for m in node.body
+            bc.body += [stub_def(m, kind) for m in node.body
                         if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name not in methods]
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name not in have:
-            added.append(stub_def(node))
+            added.append(stub_def(node, kind))
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             new = defined_names([node]) - have
             added += [ast.Assign(targets=[ast.Name(id=n, ctx=ast.Store())], value=ast.Constant(None))
@@ -179,7 +204,7 @@ def stubbed_source(base_src: str | None, head_src: str) -> str:
     return ast.unparse(ast.fix_missing_locations(base)) + "\n"
 
 
-def build_base(base_tree: Path, head_tree: Path, files: list[tuple[str, str]]) -> None:
+def build_base(base_tree: Path, head_tree: Path, files: list[tuple[str, str]], kind: str) -> None:
     """Turn the base export into base source + head tests + stubs for head's new names."""
     for st, rel in files:
         head_src = read(head_tree, rel)
@@ -195,7 +220,7 @@ def build_base(base_tree: Path, head_tree: Path, files: list[tuple[str, str]]) -
         if head_src is None:
             continue
         try:
-            text = stubbed_source(read(base_tree, rel), head_src)
+            text = stubbed_source(read(base_tree, rel), head_src, kind)
         except SyntaxError:
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -210,7 +235,7 @@ def find_python(repo: Path, override: str | None) -> str:
     for cand in (repo / ".venv/bin/python", repo / "venv/bin/python"):
         if cand.exists():
             return str(cand)
-    raise GateError("no .venv/bin/python in the repo; pass --python")
+    raise GateError("no .venv/bin/python or venv/bin/python in the repo; pass --python <interpreter with pytest>")
 
 
 def run_pytest(python: str, tree: Path, ids: list[str], timeout: int) -> tuple[dict[str, str], str]:
@@ -328,9 +353,22 @@ def junit_cases(path: Path) -> dict[str, str] | None:
     return out
 
 
+def case_exemption(case_id: str, files: list[list[str]]) -> dict | None:
+    """An exempt marker in any comment style within a few lines of the case's name."""
+    name = case_id.rsplit("::", 1)[-1].split(" > ")[-1]
+    for lines in files:
+        for i, line in enumerate(lines):
+            if name and name in line:
+                for near in lines[max(i - 2, 0):i + 6]:
+                    m = EXEMPT.search(near)
+                    if m:
+                        return {"status": "exempt", "detail": m.group(1) or "no reason given"}
+    return None
+
+
 def judge_case(at_base: str | None) -> dict:
     if at_base == "passed":
-        return {"status": "flagged", "detail": "passes without the change: assert on behavior the change adds"}
+        return {"status": "flagged", "detail": FLAG_HINT}
     if at_base and MISSING_SYMBOL.search(at_base):
         return {"status": "weak", "detail": f"fails at base only on a missing name: {at_base[8:]}"}
     if at_base is None:
@@ -385,7 +423,8 @@ def gate_cmd(repo: Path, base: str, head: str, cmd: str, checks: list[str] | Non
             base_cases = junit_cases(Path(tmp).resolve() / "base.junit.xml")
             if head_cases is None:
                 raise GateError("--cmd has {junit} but the runner wrote no JUnit XML at head")
-            verdict["tests"] = [{"id": k, **judge_case((base_cases or {}).get(k))}
+            head_text = [(head_tree / c).read_text(errors="replace").splitlines() for c in checks]
+            verdict["tests"] = [{"id": k, **(case_exemption(k, head_text) or judge_case((base_cases or {}).get(k)))}
                                 for k, o in head_cases.items() if o == "passed" and k not in existing]
     verdict["base_log_tail"] = base_log[-1500:]
     if any(t["status"] == "flagged" for t in verdict.get("tests", [])):
@@ -393,7 +432,7 @@ def gate_cmd(repo: Path, base: str, head: str, cmd: str, checks: list[str] | Non
         return {**verdict, "verdict": "FAIL", "detail": f"{n} new case(s) pass without the change"}
     if base_rc == 0:
         return {**verdict, "verdict": "FAIL",
-                "detail": "passes without the change: assert on behavior the change adds"}
+                "detail": FLAG_HINT}
     if "tests" in verdict:
         weak = sum(t["status"] == "weak" for t in verdict["tests"])
         if weak:
@@ -438,9 +477,15 @@ def gate(repo: Path, base_rev: str | None, head_rev: str, python: str | None, ti
             return verdict
         ids = [c["id"] for c in cands]
         at_head, head_log = run_pytest(py, head_tree, ids, timeout)
-        build_base(base_tree, head_tree, files)
         green = [i for i in ids if at_head[i] == "passed"]
+        build_base(base_tree, head_tree, files, "raise")
         at_base, base_log = run_pytest(py, base_tree, green, timeout) if green else ({}, "")
+        # Rerun what failed against the raising stub with a None stub, to spot weak asserts.
+        retry = [i for i in green if at_base[i] != "passed"]
+        none_tree = Path(tmp).resolve() / "base-none"
+        export(repo, base, none_tree)
+        build_base(none_tree, head_tree, files, "none")
+        at_none, _ = run_pytest(py, none_tree, retry, timeout) if retry else ({}, "")
 
     for c in cands:
         tid, h = c["id"], at_head[c["id"]]
@@ -451,28 +496,71 @@ def gate(repo: Path, base_rev: str | None, head_rev: str, python: str | None, ti
         elif c["exempt"]:
             row = {"status": "exempt", "detail": c["exempt"]}
         elif at_base[tid] == "passed":
-            row = {"status": "flagged", "detail": "passes without the change: assert on behavior the change adds"}
+            row = {"status": "flagged", "detail": FLAG_HINT}
+        elif at_none.get(tid) == "passed":
+            row = {"status": "weak", "detail": "passes when the new code just returns None; assert on a "
+                                                "value only the new code produces, or justify it"}
         elif at_base[tid] == "error":
             row = {"status": "red", "detail": "errors at base (collection or import), not a clean failure"}
         else:
             row = {"status": "red", "detail": f"{at_base[tid]} at base"}
         verdict["tests"].append({"id": tid, **row})
     bad = [t for t in verdict["tests"] if t["status"] in ("flagged", "fails_at_head")]
-    verdict["verdict"] = "FAIL" if bad else "PASS"
-    verdict["detail"] = f"{len(bad)} of {len(cands)} changed tests do not pin the change" if bad \
-        else f"all {len(cands)} changed tests fail without the change"
+    weak = [t for t in verdict["tests"] if t["status"] == "weak"]
+    verdict["verdict"] = "FAIL" if bad else "WEAK" if weak else "PASS"
+    verdict["detail"] = (f"{len(bad)} of {len(cands)} changed tests do not pin the change" if bad
+                         else f"{len(weak)} of {len(cands)} changed tests only fail on a raising stub" if weak
+                         else f"all {len(cands)} changed tests fail without the change")
     if bad:
         verdict["log_tail"] = {"head": head_log[-1500:], "base": base_log[-1500:]}
     return verdict
 
 
+EPILOG = """\
+how it works: it exports --head (or, with --worktree, your uncommitted work) and --base with
+`git archive` into a temp dir and never touches your working tree, index or refs. Base gets head's
+changed tests copied in; every command runs from the export's root, sees the repo's installed
+.venv/node_modules, and globs are repo-relative. No commit needed: use --worktree while iterating.
+
+  python3 red_first.py --worktree                    the usual inner loop: judge what's on disk now
+
+  python3 red_first.py                               Python: each added or changed test function
+  python3 red_first.py --base HEAD~1                 judge only the last commit
+  python3 red_first.py --python "$(which python)"    no <repo>/.venv; any interpreter with pytest
+  python3 red_first.py --cmd 'cd web && npx vitest run --reporter=junit --outputFile={junit} {checks}' \\
+      --only 'web/*'                                 any runner; {junit} gives per-case verdicts
+  python3 red_first.py --cmd 'JEST_JUNIT_OUTPUT_FILE={junit} npx jest --ci --reporters=jest-junit {checks}'
+  {checks} = absolute paths of the changed check files in each tree; --checks picks them by hand
+
+Python mode stubs every name head adds, twice: once raising, once returning None.
+Passing against the raising stub means the test never exercises the new code (flagged);
+passing only against the None stub means it asserts little (weak). Changed names run base code.
+
+verdicts (JSON on stdout; stderr always ends with one summary line):
+  PASS   every added or changed test fails without the change            exit 0
+  WEAK   some fail at base only on a missing name, a None stub, or never  exit 0 (1 with --strict)
+         ran there; say why in the PR or tighten the assert
+  FAIL   flagged (passes without the change) or fails at head            exit 1
+  ERROR  could not run: bad ref, no main (pass --base), no interpreter    exit 2
+"kind" is feature, or tests-only when no source changed (nothing to judge: PASS).
+
+fixing a flag: assert on a value only the new code produces. A test that pins existing behavior
+on purpose (characterization before a refactor) gets a `red-first: exempt <reason>` comment inside
+its body, in the file's own comment style (# or //). With --cmd this needs {junit}.
+"""
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0], epilog=EPILOG,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--base", help="default: merge-base with main")
     ap.add_argument("--head", default="HEAD")
+    ap.add_argument("--worktree", action="store_true",
+                    help="judge uncommitted work (untracked files included) instead of --head")
     ap.add_argument("--repo", default=".")
     ap.add_argument("--python", help="default: <repo>/.venv/bin/python")
     ap.add_argument("--timeout", type=int, default=120, help="seconds per test run")
+    ap.add_argument("--strict", action="store_true", help="WEAK exits 1 too (for hooks and CI)")
     ap.add_argument("--cmd", help="any shape: shell command that must pass at head and fail at base; "
                                   "{checks} expands to the changed check files")
     ap.add_argument("--checks", nargs="+", help="with --cmd: check files to carry to base (default: auto)")
@@ -480,18 +568,22 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         repo = Path(git(Path(args.repo), "rev-parse", "--show-toplevel"))
-        v = gate(repo, args.base, args.head, args.python, args.timeout, args.cmd, args.checks, args.only)
+        head = snapshot_worktree(repo) if args.worktree else args.head
+        v = gate(repo, args.base, head, args.python, args.timeout, args.cmd, args.checks, args.only)
     except GateError as e:
         print(json.dumps({"verdict": "ERROR", "error": str(e)}, indent=2))
+        print(f"red-first: ERROR: {e}", file=sys.stderr)
         return 2
     print(json.dumps(v, indent=2))
     for t in v.get("tests", []):
         if t["status"] in ("flagged", "fails_at_head"):
             print(f"red-first: {t['id']}: {t['detail']}", file=sys.stderr)
-    if v["verdict"] != "PASS":
-        print(f"red-first: {v['verdict']}: {v['detail']}", file=sys.stderr)
+    for t in v.get("tests", []):
+        if t["status"] == "weak":
+            print(f"red-first: weak: {t['id']}: {t['detail']}", file=sys.stderr)
+    print(f"red-first: {v['verdict']}: {v['detail']}", file=sys.stderr)
     # WEAK passes, but the verdict tells the reviewer what still needs a human look.
-    return 0 if v["verdict"] in ("PASS", "WEAK") else 1
+    return 0 if v["verdict"] == "PASS" or (v["verdict"] == "WEAK" and not args.strict) else 1
 
 
 if __name__ == "__main__":

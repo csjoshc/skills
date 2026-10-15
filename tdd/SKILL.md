@@ -22,11 +22,10 @@ More: [shared/TEST_ANTIPATTERNS.md](../shared/TEST_ANTIPATTERNS.md).
 ## Rules of the loop
 
 - **Red before green.** Write the failing test first, then only enough code to pass it, with no speculative features.
-  Python: before claiming a cycle done, run `python3 ~/.skills/tdd/scripts/red_first.py` (add `--base <ref>` off main).
-  It fails any added or changed test that still passes against base code; fix the assertion rather than exempting it.
-  `# red-first: exempt <reason>` is only for a test that pins existing behavior on purpose, such as before a refactor.
-  Other shapes: `--cmd "<runner> {checks}"`; add `{junit}` (e.g. vitest `--reporter=junit --outputFile={junit}`) for a per-case verdict.
-  Scope a mixed commit with `--only 'apps/web/*'`. `WEAK` means base failed only on a missing name: tighten or justify.
+- **Prove the red.** Before claiming a cycle done, run `python3 ~/.skills/tdd/scripts/red_first.py --worktree`.
+  It fails any added or changed test that still passes on base code; `--help` has every shape (Python built in;
+  vitest, jest and others via `--cmd ... {junit} {checks}`), the verdicts, and how to fix a flag. Read it once.
+  Fix the assertion rather than exempting it; `WEAK` must be tightened or justified in the PR.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
 - **Refactor only on green**, as its own phase after the slices pass, running tests after each step.
 

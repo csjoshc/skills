@@ -30,13 +30,13 @@ Determine the change type by reading the diff. Apply the matching requirement.
 
 Evidence must flip: the cited check must give a different result without the change.
 A test that also passes on base, or a screenshot that matches base, proves nothing.
-For any shape with a runnable check, `python3 ~/.skills/tdd/scripts/red_first.py --cmd "<cmd> {checks}"` proves the flip.
+For any shape with a runnable check, `python3 ~/.skills/tdd/scripts/red_first.py` proves the flip (`--help` for shapes).
 A `WEAK` verdict means base failed only on a missing name; say so and show the check would catch a wrong implementation.
 
 | Change type | Required evidence | Format |
 |---|---|---|
-| Bug fix | Regression test that fails on `HEAD~1`, passes on `HEAD`; Python: `python3 ~/.skills/tdd/scripts/red_first.py --base HEAD~1` PASS | `pytest`/`jest` output, both runs, or the red_first JSON verdict |
-| New feature | At least one test per AC, all passing; Python: `tdd/scripts/red_first.py` PASS | Test runner output, AC→test table, red_first JSON verdict |
+| Bug fix | Regression test that fails on `HEAD~1`, passes on `HEAD`; `red_first.py --base HEAD~1` PASS where tests run | `pytest`/`jest` output, both runs, or the red_first JSON verdict |
+| New feature | At least one test per AC, all passing; `red_first.py` PASS or justified WEAK where tests run | Test runner output, AC→test table, red_first JSON verdict |
 | Refactor | Full suite passes; no behavior diff | Test runner output + `git diff --stat` |
 | UI change | Screenshot at visible URL | `.png` file + URL + viewport size |
 | API change | Curl/httpie against running server | Request + full response, incl. status |

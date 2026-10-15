@@ -82,9 +82,29 @@ def test_self_referential_test_is_flagged(repo, capsys):
     write(repo, "tests/test_sub.py", "from pkg.calc import sub\n\n\ndef test_sub():\n    assert sub(5, 3) == sub(5, 3)\n")
     commit(repo, "self-referential test")
     rc, v = run(capsys)
-    assert rc == 1
-    assert status(v, "tests/test_sub.py::test_sub")["status"] == "flagged"
+    # Fails against the raising stub, passes against the None one: weak, not a hard fail.
+    assert (rc, v["verdict"]) == (0, "WEAK")
+    assert status(v, "tests/test_sub.py::test_sub")["status"] == "weak"
 
+
+def test_strict_makes_weak_exit_1(repo, capsys):
+    write(repo, "pkg/calc.py", SUB)
+    write(repo, "tests/test_sub.py", "from pkg.calc import sub\n\n\ndef test_sub():\n    assert sub(5, 3) == sub(5, 3)\n")
+    commit(repo, "self-referential test")
+    rc, v = run(capsys, "--strict")
+    assert (rc, v["verdict"]) == (1, "WEAK")
+
+
+def test_new_function_that_returns_none_is_weak_not_flagged(repo, capsys):
+    write(repo, "pkg/calc.py", CALC + "\n\ndef safe_div(a, b):\n    return None if b == 0 else a / b\n")
+    write(repo, "tests/test_div.py", "from pkg.calc import safe_div\n\n\n"
+          "def test_div_by_zero_is_none():\n    assert safe_div(1, 0) is None\n\n\n"
+          "def test_div():\n    assert safe_div(6, 3) == 2\n")
+    commit(repo, "safe_div")
+    rc, v = run(capsys)
+    assert (rc, v["verdict"]) == (0, "WEAK")
+    assert status(v, "tests/test_div.py::test_div_by_zero_is_none")["status"] == "weak"
+    assert status(v, "tests/test_div.py::test_div")["status"] == "red"
 
 def test_changed_function_needs_a_test_that_tells_old_from_new(repo, capsys):
     write(repo, "pkg/calc.py", "def add(a, b):\n    return max(a + b, 0)\n")
@@ -257,6 +277,20 @@ def test_junit_parametrized_existing_cases_are_not_judged(jsrepo, capsys):
     assert [t["id"] for t in v["tests"]] == ["test::floors at zero"]
 
 
+def test_junit_exempt_comment_in_js(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\n"
+          "test('floors at zero', () => assert.strictEqual(add(-5, 2), 0));\n"
+          "test('still adds positives', () => {\n  // red-first: exempt pins existing addition\n"
+          "  assert.strictEqual(add(2, 2), 4);\n});\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", NODE_JUNIT)
+    assert (rc, v["verdict"]) == (0, "PASS")
+    assert status(v, "test::still adds positives") == {
+        "id": "test::still adds positives", "status": "exempt", "detail": "pins existing addition"}
+
+
 def test_junit_passes_when_every_new_case_is_red(jsrepo, capsys):
     write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
     write(jsrepo, "test/add.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
@@ -313,6 +347,16 @@ def test_cmd_mode_marks_missing_symbol_failures_weak(jsrepo, capsys):
     # Base fails only because the module is missing, which proves nothing about the assertion.
     assert (rc, v["verdict"]) == (0, "WEAK")
     assert "Cannot find module" in v["base_log_tail"]
+
+
+def test_worktree_judges_uncommitted_work_without_touching_git(repo, capsys):
+    write(repo, "pkg/calc.py", SUB)
+    write(repo, "tests/test_sub.py", "from pkg.calc import sub\n\n\ndef test_sub():\n    assert sub(5, 3) == 2\n")
+    before = [git(repo, "status", "--porcelain"), git(repo, "for-each-ref"), git(repo, "rev-parse", "HEAD")]
+    rc, v = run(capsys, "--worktree")
+    assert (rc, v["verdict"]) == (0, "PASS")
+    assert status(v, "tests/test_sub.py::test_sub")["status"] == "red"
+    assert [git(repo, "status", "--porcelain"), git(repo, "for-each-ref"), git(repo, "rev-parse", "HEAD")] == before
 
 
 def test_explicit_base_and_head(repo, capsys):
