@@ -1,11 +1,6 @@
 ---
 name: stop-slop
 description: "Removes AI writing patterns from prose, or audits without rewriting. Use when asked to de-slop text or explain technical work in plain language."
-metadata:
-  trigger: >-
-    Writing prose, editing drafts, reviewing content for AI patterns;
-    plain-vernacular technical explainers, remediation writeups, evidence tables
-  author: Hardik Pandya (https://hvpandya.com)
 ---
 
 # Stop Slop
