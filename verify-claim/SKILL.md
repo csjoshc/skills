@@ -28,6 +28,11 @@ Skip only for:
 
 Determine the change type by reading the diff. Apply the matching requirement.
 
+Evidence must flip: the cited check must give a different result without the change.
+A test that also passes on base, or a screenshot that matches base, proves nothing.
+For any shape with a runnable check, `python3 ~/.skills/tdd/scripts/red_first.py --cmd "<cmd> {checks}"` proves the flip.
+A `WEAK` verdict means base failed only on a missing name; say so and show the check would catch a wrong implementation.
+
 | Change type | Required evidence | Format |
 |---|---|---|
 | Bug fix | Regression test that fails on `HEAD~1`, passes on `HEAD`; Python: `python3 ~/.skills/tdd/scripts/red_first.py --base HEAD~1` PASS | `pytest`/`jest` output, both runs, or the red_first JSON verdict |

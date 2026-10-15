@@ -159,6 +159,162 @@ def test_skipped_at_head_is_not_a_failure(repo, capsys):
     assert status(v, "tests/test_sub.py::test_sub_live")["status"] == "skipped"
 
 
+CHECK_JS = ("const assert = require('node:assert');\nconst {{ sub }} = require('../lib/calc.js');\n"
+            "assert.strictEqual({expr}, 2);\n")
+
+
+@pytest.fixture
+def jsrepo(repo):
+    """A non-Python shape: plain node scripts as the check, run through --cmd."""
+    write(repo, "lib/calc.js", "exports.add = (a, b) => a + b;\n")
+    commit(repo, "js lib")
+    git(repo, "branch", "-f", "main", "HEAD")
+    return repo
+
+
+def test_cmd_mode_passes_when_check_fails_at_base(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\nassert.strictEqual(add(-5, 2), 0);\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    assert (rc, v["verdict"], v["mode"]) == (0, "PASS", "cmd")
+    assert v["checks"] == ["test/add.test.js"]
+
+
+def test_cmd_mode_sees_nested_toolchain_dirs(jsrepo, capsys):
+    write(jsrepo, "apps/web/package.json", "{}\n")
+    write(jsrepo, "apps/web/node_modules/dep.js", "exports.ok = 1;\n")
+    write(jsrepo, ".git/info/exclude", ".venv\nnode_modules\n")
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\nassert.strictEqual(add(-5, 2), 0);\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", "test -f apps/web/node_modules/dep.js && node {checks}")
+    assert (rc, v["verdict"]) == (0, "PASS")
+
+
+def test_cmd_mode_workspace_links_resolve_to_the_export(jsrepo, capsys):
+    write(jsrepo, ".git/info/exclude", ".venv\nnode_modules\n")
+    write(jsrepo, "packages/lib/index.js", "exports.add = (a, b) => a + b;\n")
+    write(jsrepo, "apps/web/package.json", "{}\n")
+    commit(jsrepo, "workspace")
+    git(jsrepo, "branch", "-f", "main", "HEAD")
+    (jsrepo / "apps/web/node_modules").mkdir()
+    (jsrepo / "apps/web/node_modules/lib").symlink_to("../../../packages/lib")
+    write(jsrepo, "packages/lib/index.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "apps/web/test/add.test.js", "const assert = require('node:assert');\n"
+          "assert.strictEqual(require('lib').add(-5, 2), 0);\n")
+    commit(jsrepo, "floor add in the workspace package")
+    # A whole-dir link would resolve 'lib' to the repo checkout (head) and pass at base.
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    assert (rc, v["verdict"]) == (0, "PASS")
+
+
+def test_cmd_mode_only_scopes_checks_in_a_mixed_commit(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\nassert.strictEqual(add(-5, 2), 0);\n")
+    write(jsrepo, "tests/test_more.py", "def test_x():\n    assert True\n")
+    commit(jsrepo, "mixed")
+    rc, v = run(capsys, "--cmd", "node {checks}", "--only", "test/*.js")
+    assert (rc, v["verdict"], v["checks"]) == (0, "PASS", ["test/add.test.js"])
+
+
+NODE_JUNIT = "node --test --test-reporter=junit --test-reporter-destination={junit} {checks}"
+
+
+def test_junit_flags_a_new_case_that_passes_at_base(jsrepo, capsys):
+    write(jsrepo, "test/add.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\ntest('adds', () => assert.strictEqual(add(1, 1), 2));\n")
+    commit(jsrepo, "existing case")
+    git(jsrepo, "branch", "-f", "main", "HEAD")
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\ntest('adds', () => assert.strictEqual(add(1, 1), 2));\n"
+          "test('floors at zero', () => assert.strictEqual(add(-5, 2), 0));\n"
+          "test('still adds positives', () => assert.strictEqual(add(2, 2), 4));\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", NODE_JUNIT)
+    # The file fails at base thanks to one case; the per-case view still catches the other.
+    assert (rc, v["verdict"]) == (1, "FAIL")
+    assert [t["id"] for t in v["tests"] if t["status"] == "flagged"] == ["test::still adds positives"]
+    assert all("floors" not in t["id"] for t in v["tests"] if t["status"] == "flagged")
+
+
+def test_junit_parametrized_existing_cases_are_not_judged(jsrepo, capsys):
+    each = ("const test = require('node:test');\nconst assert = require('node:assert');\n"
+            "const { add } = require('../lib/calc.js');\n"
+            "for (const n of [1, 2, 3]) test(`adds ${n}`, () => assert.strictEqual(add(n, n), 2 * n));\n")
+    write(jsrepo, "test/add.test.js", each)
+    commit(jsrepo, "parametrized cases")
+    git(jsrepo, "branch", "-f", "main", "HEAD")
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", each + "test('floors at zero', () => assert.strictEqual(add(-5, 2), 0));\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", NODE_JUNIT)
+    assert (rc, v["verdict"]) == (0, "PASS")
+    assert [t["id"] for t in v["tests"]] == ["test::floors at zero"]
+
+
+def test_junit_passes_when_every_new_case_is_red(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => Math.max(a + b, 0);\n")
+    write(jsrepo, "test/add.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
+          "const { add } = require('../lib/calc.js');\n"
+          "test('floors at zero', () => assert.strictEqual(add(-5, 2), 0));\n")
+    commit(jsrepo, "floor add")
+    rc, v = run(capsys, "--cmd", NODE_JUNIT)
+    assert (rc, v["verdict"]) == (0, "PASS")
+    assert [t["status"] for t in v["tests"]] == ["red"]
+
+
+def test_junit_case_that_never_ran_at_base_is_weak(jsrepo, capsys):
+    write(jsrepo, "lib/sub.js", "exports.sub = (a, b) => a - b;\n")
+    write(jsrepo, "test/sub.test.js", "const test = require('node:test');\nconst assert = require('node:assert');\n"
+          "const { sub } = require('../lib/sub.js');\ntest('subtracts', () => assert.strictEqual(sub(5, 3), 2));\n")
+    commit(jsrepo, "new module")
+    rc, v = run(capsys, "--cmd", NODE_JUNIT)
+    assert (rc, v["verdict"]) == (0, "WEAK")
+    assert v["tests"][0]["status"] == "weak"
+
+
+def test_cmd_mode_new_export_is_weak(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => a + b;\nexports.sub = (a, b) => a - b;\n")
+    write(jsrepo, "test/sub.test.js", CHECK_JS.format(expr="sub(5, 3)"))
+    commit(jsrepo, "sub")
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    assert (rc, v["verdict"]) == (0, "WEAK")
+
+
+def test_cmd_mode_fails_when_check_passes_at_base(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => a + b;\nexports.sub = (a, b) => a - b;\n")
+    write(jsrepo, "test/sub.test.js", "const assert = require('node:assert');\nassert.ok(true);\n")
+    commit(jsrepo, "sub with a tautological check")
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    assert (rc, v["verdict"]) == (1, "FAIL")
+    assert "passes without the change" in v["detail"]
+
+
+def test_cmd_mode_fails_when_head_fails(jsrepo, capsys):
+    write(jsrepo, "lib/calc.js", "exports.add = (a, b) => a + b;\nexports.sub = (a, b) => a + b;\n")
+    write(jsrepo, "test/sub.test.js", CHECK_JS.format(expr="sub(5, 3)"))
+    commit(jsrepo, "buggy sub")
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    assert (rc, v["verdict"]) == (1, "FAIL")
+    assert "fails at head" in v["detail"]
+
+
+def test_cmd_mode_marks_missing_symbol_failures_weak(jsrepo, capsys):
+    write(jsrepo, "lib/sub.js", "exports.sub = (a, b) => a - b;\n")
+    write(jsrepo, "test/sub.test.js", "const assert = require('node:assert');\n"
+          "const { sub } = require('../lib/sub.js');\nassert.strictEqual(sub(5, 3), 2);\n")
+    commit(jsrepo, "new module")
+    rc, v = run(capsys, "--cmd", "node {checks}")
+    # Base fails only because the module is missing, which proves nothing about the assertion.
+    assert (rc, v["verdict"]) == (0, "WEAK")
+    assert "Cannot find module" in v["base_log_tail"]
+
+
 def test_explicit_base_and_head(repo, capsys):
     write(repo, "pkg/calc.py", SUB)
     write(repo, "tests/test_sub.py", "from pkg.calc import sub\n\n\ndef test_sub():\n    assert sub(5, 3) == 2\n")
