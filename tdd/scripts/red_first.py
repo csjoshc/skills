@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import argparse
 import ast
+import fnmatch
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -253,24 +255,181 @@ def run_pytest(python: str, tree: Path, ids: list[str], timeout: int) -> tuple[d
     return out, log
 
 
+# --- any shape: one command, run at head and at base -----------------------------------------
+
+CHECK_DIRS = {"test", "tests", "__tests__", "spec", "specs", "e2e"}
+CHECK_NAME = re.compile(r"(\.(test|spec)\.\w+$)|(^test_.*\.py$)|(_test\.\w+$)|(Tests?\.(java|kt)$)")
+# Base failing for these reasons proves only that a name is missing, not that an assertion holds.
+MISSING_SYMBOL = re.compile(
+    r"ModuleNotFoundError|ImportError|cannot import name|Cannot find module|Failed to resolve import"
+    r"|is not exported|does not provide an export named|error TS2305|error TS2307|error TS2339"
+    r"|cannot find symbol|is not a function|is not defined|has no attribute|does not exist", re.I)
+TOOLCHAIN = (".venv", "venv", "node_modules")
+
+
+def is_check_path(path: str) -> bool:
+    p = Path(path)
+    return bool(CHECK_DIRS & set(p.parts[:-1])) or bool(CHECK_NAME.search(p.name))
+
+
+def mirror_node_modules(src: Path, dest: Path) -> None:
+    """Rebuild node_modules from links. Relative links (pnpm workspace packages, .pnpm store
+    entries) are copied verbatim so a workspace package resolves to the export, not the repo."""
+    dest.mkdir()
+    for entry in src.iterdir():
+        target = dest / entry.name
+        if entry.is_symlink():
+            target.symlink_to(os.readlink(entry))
+        elif entry.is_dir() and entry.name.startswith("@"):
+            mirror_node_modules(entry, target)
+        else:
+            target.symlink_to(entry)
+
+
+def link_toolchain(repo: Path, tree: Path) -> None:
+    """Symlink every installed toolchain dir (monorepos have one per package) into the export."""
+    for root, dirs, _ in os.walk(repo):
+        hits = [d for d in dirs if d in TOOLCHAIN]
+        for d in hits:
+            rel = Path(root, d).relative_to(repo)
+            if not (tree / rel.parent).is_dir() or (tree / rel).exists():
+                continue
+            if d == "node_modules":
+                mirror_node_modules(repo / rel, tree / rel)
+            else:
+                (tree / rel).symlink_to(repo / rel)
+        dirs[:] = [d for d in dirs if d not in TOOLCHAIN and d != ".git"]
+
+
+def run_cmd(cmd: str, tree: Path, timeout: int) -> tuple[int, str]:
+    try:
+        r = subprocess.run(cmd, shell=True, cwd=tree, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise GateError(f"--cmd timed out after {timeout}s in {tree.name}")
+    return r.returncode, (r.stdout + r.stderr)[-3000:]
+
+
+def junit_cases(path: Path) -> dict[str, str] | None:
+    """{classname::name: passed|skipped|failed: <first line of message>} from any runner's JUnit XML."""
+    if not path.exists():
+        return None
+    out = {}
+    for case in ET.parse(path).iter("testcase"):
+        key = f"{case.get('classname', '')}::{re.sub(r'\[.*\]$', '', case.get('name', ''))}"
+        bad = case.find("failure") if case.find("failure") is not None else case.find("error")
+        if bad is not None or case.get("failure"):
+            msg = (bad.get("message") if bad is not None else None) or (bad.text if bad is not None else "") \
+                or case.get("failure", "")
+            out[key] = "failed: " + " ".join(msg.split())[:160]
+        elif case.find("skipped") is not None:
+            out.setdefault(key, "skipped")
+        else:
+            out.setdefault(key, "passed")
+    return out
+
+
+def judge_case(at_base: str | None) -> dict:
+    if at_base == "passed":
+        return {"status": "flagged", "detail": "passes without the change: assert on behavior the change adds"}
+    if at_base and MISSING_SYMBOL.search(at_base):
+        return {"status": "weak", "detail": f"fails at base only on a missing name: {at_base[8:]}"}
+    if at_base is None:
+        # The case never ran at base, usually because its file failed to import there.
+        return {"status": "weak", "detail": "did not run at base (file-level error, likely a missing import)"}
+    return {"status": "red", "detail": at_base}
+
+
+def gate_cmd(repo: Path, base: str, head: str, cmd: str, checks: list[str] | None, timeout: int,
+             only: str | None = None) -> dict:
+    files = changed_files(repo, base, head)
+    auto = [rel for st, rel in files if st != "D" and is_check_path(rel)]
+    # A mixed commit (say Python backend plus TS frontend) needs one run per shape.
+    checks = checks or [rel for rel in auto if not only or fnmatch.fnmatch(rel, only)]
+    others = [rel for _, rel in files if rel not in auto]
+    verdict = {"mode": "cmd", "base": base, "head": head, "cmd": cmd, "checks": checks,
+               "kind": "feature" if others else "tests-only"}
+    if not others:
+        return {**verdict, "verdict": "PASS", "detail": "only checks changed, so nothing can be red-first"}
+    if not checks:
+        return {**verdict, "verdict": "FAIL", "detail": "the change adds or edits no checks; pass --checks"}
+    def expand(tree: Path, tag: str | None = None) -> str:
+        # Absolute paths, so runners that resolve filters from a sub-package root still match.
+        return (cmd.replace("{checks}", " ".join(shlex.quote(str(tree / c)) for c in checks))
+                .replace("{junit}", shlex.quote(str(tree.parent / f"{tag or tree.name}.junit.xml"))))
+
+    per_case = "{junit}" in cmd
+
+    with tempfile.TemporaryDirectory(prefix="red-first.") as tmp:
+        head_tree, base_tree = Path(tmp).resolve() / "head", Path(tmp).resolve() / "base"
+        export(repo, head, head_tree)
+        export(repo, base, base_tree)
+        if per_case:
+            # Cases base's own checks already report are pre-existing; only new ones are judged.
+            # Runs on the raw export, so parametrized names expand exactly as the runner sees them.
+            link_toolchain(repo, base_tree)
+            run_cmd(expand(base_tree, "orig"), base_tree, timeout)
+            existing = set(junit_cases(Path(tmp).resolve() / "orig.junit.xml") or {})
+        for rel in checks:
+            dest = base_tree / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes((head_tree / rel).read_bytes())
+        for tree in (head_tree, base_tree):
+            link_toolchain(repo, tree)
+        head_rc, head_log = run_cmd(expand(head_tree), head_tree, timeout)
+        if head_rc:
+            return {**verdict, "verdict": "FAIL", "detail": f"fails at head (exit {head_rc}); fix the checks first",
+                    "head_log_tail": head_log[-1500:]}
+        base_rc, base_log = run_cmd(expand(base_tree), base_tree, timeout)
+        if per_case:
+            head_cases = junit_cases(Path(tmp).resolve() / "head.junit.xml")
+            base_cases = junit_cases(Path(tmp).resolve() / "base.junit.xml")
+            if head_cases is None:
+                raise GateError("--cmd has {junit} but the runner wrote no JUnit XML at head")
+            verdict["tests"] = [{"id": k, **judge_case((base_cases or {}).get(k))}
+                                for k, o in head_cases.items() if o == "passed" and k not in existing]
+    verdict["base_log_tail"] = base_log[-1500:]
+    if any(t["status"] == "flagged" for t in verdict.get("tests", [])):
+        n = sum(t["status"] == "flagged" for t in verdict["tests"])
+        return {**verdict, "verdict": "FAIL", "detail": f"{n} new case(s) pass without the change"}
+    if base_rc == 0:
+        return {**verdict, "verdict": "FAIL",
+                "detail": "passes without the change: assert on behavior the change adds"}
+    if "tests" in verdict:
+        weak = sum(t["status"] == "weak" for t in verdict["tests"])
+        if weak:
+            return {**verdict, "verdict": "WEAK", "detail": (
+                f"{weak} new case(s) fail at base only on a missing name; a reviewer must confirm "
+                "they would catch a wrong implementation")}
+        return {**verdict, "verdict": "PASS", "detail": f"all {len(verdict['tests'])} new cases fail at base"}
+    if MISSING_SYMBOL.search(base_log):
+        return {**verdict, "verdict": "WEAK", "detail": (
+            f"base fails (exit {base_rc}) but on a missing name, not an assertion; "
+            "a reviewer must confirm the checks would catch a wrong implementation")}
+    return {**verdict, "verdict": "PASS", "detail": f"checks fail at base (exit {base_rc}) and pass at head"}
+
+
 # --- main ----------------------------------------------------------------------------------
 
-def gate(repo: Path, base_rev: str | None, head_rev: str, python: str | None, timeout: int) -> dict:
+def gate(repo: Path, base_rev: str | None, head_rev: str, python: str | None, timeout: int,
+         cmd: str | None = None, checks: list[str] | None = None, only: str | None = None) -> dict:
     head = resolve(repo, head_rev)
     base = resolve(repo, base_rev) if base_rev else default_base(repo, head)
     if git(repo, "rev-parse", f"{base}^{{tree}}") == git(repo, "rev-parse", f"{head}^{{tree}}"):
         raise GateError("base equals head: nothing to check")
+    if cmd:
+        return gate_cmd(repo, base, head, cmd, checks, timeout, only)
     files = changed_files(repo, base, head)
     test_files = [rel for _, rel in files if is_test_path(rel)]
     source_py = [rel for _, rel in files if rel.endswith(".py") and not is_test_path(rel)]
-    verdict = {"base": base, "head": head, "kind": "feature" if source_py else "tests-only", "tests": []}
+    verdict = {"mode": "python", "base": base, "head": head,
+               "kind": "feature" if source_py else "tests-only", "tests": []}
     if not source_py:
         verdict.update(verdict="PASS", detail="no source change, so no test can be red-first")
         return verdict
 
     py = find_python(repo, python)
     with tempfile.TemporaryDirectory(prefix="red-first.") as tmp:
-        head_tree, base_tree = Path(tmp, "head"), Path(tmp, "base")
+        head_tree, base_tree = Path(tmp).resolve() / "head", Path(tmp).resolve() / "base"
         export(repo, head, head_tree)
         export(repo, base, base_tree)
         cands = candidate_tests(head_tree, base_tree, test_files)
@@ -313,19 +472,26 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--head", default="HEAD")
     ap.add_argument("--repo", default=".")
     ap.add_argument("--python", help="default: <repo>/.venv/bin/python")
-    ap.add_argument("--timeout", type=int, default=120, help="seconds per pytest run")
+    ap.add_argument("--timeout", type=int, default=120, help="seconds per test run")
+    ap.add_argument("--cmd", help="any shape: shell command that must pass at head and fail at base; "
+                                  "{checks} expands to the changed check files")
+    ap.add_argument("--checks", nargs="+", help="with --cmd: check files to carry to base (default: auto)")
+    ap.add_argument("--only", help="with --cmd: glob that scopes auto-detected checks to one shape")
     args = ap.parse_args(argv)
     try:
         repo = Path(git(Path(args.repo), "rev-parse", "--show-toplevel"))
-        v = gate(repo, args.base, args.head, args.python, args.timeout)
+        v = gate(repo, args.base, args.head, args.python, args.timeout, args.cmd, args.checks, args.only)
     except GateError as e:
         print(json.dumps({"verdict": "ERROR", "error": str(e)}, indent=2))
         return 2
     print(json.dumps(v, indent=2))
-    for t in v["tests"]:
+    for t in v.get("tests", []):
         if t["status"] in ("flagged", "fails_at_head"):
             print(f"red-first: {t['id']}: {t['detail']}", file=sys.stderr)
-    return 0 if v["verdict"] == "PASS" else 1
+    if v["verdict"] != "PASS":
+        print(f"red-first: {v['verdict']}: {v['detail']}", file=sys.stderr)
+    # WEAK passes, but the verdict tells the reviewer what still needs a human look.
+    return 0 if v["verdict"] in ("PASS", "WEAK") else 1
 
 
 if __name__ == "__main__":
