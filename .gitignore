@@ -13,3 +13,6 @@ codex-primary-runtime/
 
 # Eval run outputs
 */evals/runs/
+
+# Local scratch
+.trash/
