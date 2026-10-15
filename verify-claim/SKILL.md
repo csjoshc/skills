@@ -30,8 +30,8 @@ Determine the change type by reading the diff. Apply the matching requirement.
 
 | Change type | Required evidence | Format |
 |---|---|---|
-| Bug fix | Regression test that fails on `HEAD~1`, passes on `HEAD` | `pytest`/`jest` output, both runs |
-| New feature | At least one test per AC, all passing | Test runner output, AC→test table |
+| Bug fix | Regression test that fails on `HEAD~1`, passes on `HEAD`; Python: `python3 ~/.skills/tdd/scripts/red_first.py --base HEAD~1` PASS | `pytest`/`jest` output, both runs, or the red_first JSON verdict |
+| New feature | At least one test per AC, all passing; Python: `tdd/scripts/red_first.py` PASS | Test runner output, AC→test table, red_first JSON verdict |
 | Refactor | Full suite passes; no behavior diff | Test runner output + `git diff --stat` |
 | UI change | Screenshot at visible URL | `.png` file + URL + viewport size |
 | API change | Curl/httpie against running server | Request + full response, incl. status |
