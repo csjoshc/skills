@@ -57,7 +57,7 @@ For each path:
 
 **Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills under `.system/` (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.). Do NOT replace it with a single symlink to `~/.skills` — that shadows `.system` and `sync.py` must never `rmtree` it.
 
-`agent-sync/sync.py` handles Codex specially: audit expects a real directory; repair calls `sync_codex_per_skill_links()` (add/fix per-skill links, remove broken links, preserve `.system/`). Manual equivalent:
+`agent-sync/sync.py` handles Codex, pi and pi-gateway (`PER_SKILL_LINK_PLATFORMS`) specially: audit expects a real directory; repair calls `sync_per_skill_links()` (add/fix per-skill links, remove broken links, preserve Codex's `.system/`). pi gets per-skill links so its loader never sees the root `.md` files. Manual equivalent:
 
 ```bash
 # Add per-skill symlinks for any master skill missing from codex
