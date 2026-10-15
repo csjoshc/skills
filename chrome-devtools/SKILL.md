@@ -3,9 +3,6 @@ name: chrome-devtools
 description: "Drives a real browser over Chrome DevTools to verify UI, take screenshots, check accessibility, profile performance and capture network traffic. Use when a frontend change needs proof in a browser."
 license: MIT
 compatibility: opencode
-metadata:
-  audience: frontend-developers
-  use-case: browser-testing
 ---
 
 ## Overview

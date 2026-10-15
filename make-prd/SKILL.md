@@ -2,8 +2,6 @@
 name: make-prd
 description: "Draft a PRD for a fuzzy idea through collaborative question rounds."
 disable-model-invocation: true
-metadata:
-  short-description: Interactive PRD + ticket planner
 ---
 
 # Make PRD
