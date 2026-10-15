@@ -14,8 +14,8 @@ All paths symlink to the master store at `~/.skills`.
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
 | **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
 | **OpenCode** | `~/.config/opencode/skills` | `~/.skills` |
-| **pi** (`pi_agent_rust`) | `~/.pi/agent/skills` | `~/.skills` |
-| **pi, gateway profile** | `~/.gateway-pi/skills` | `~/.skills` |
+| **pi** (`pi_agent_rust`) | `~/.pi/agent/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
+| **pi, gateway profile** | `~/.gateway-pi/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
@@ -33,7 +33,7 @@ The master is `agents/AGENTS.md` in the bootstrap repo, and `bootstrap.sh` links
 | OpenCode | `~/.config/opencode/AGENTS.md` | `~/AGENTS.md` |
 | Antigravity / Gemini | `~/.gemini/GEMINI.md` | `~/AGENTS.md` |
 
-**pi note:** pi warns once per start about files it cannot treat as skills: the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`) and a few unknown frontmatter fields. It still loads every skill. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
+**pi note:** pi treats every markdown file in its skills folder as a skill, so a single symlink to `~/.skills` made it warn about the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`). pi's skills path is therefore a real directory of per-skill symlinks, kept by `agent-sync/sync.py` the same way as Codex's. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
 
 ### Codex exception: per-skill symlinks
 
