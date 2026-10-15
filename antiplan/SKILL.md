@@ -168,13 +168,12 @@ Antiplan's output boundary:
 4. **Task sequence** — written to `.plan/task-sequence.md`. Ordered graph +
    per-task placeholder (YAML frontmatter + 1-paragraph scope + 2–3 invariant
    ACs). Placeholders, not tickets — `spec-writer` expands them into
-   `.tickets/NN-<slug>.md`. See `references/example/ticket-dag.md` §3.
+   `.tickets/NN-<slug>.md` per `shared/TICKET_CONTRACT.md`.
    Optional: run `/trackboard init`, then `/trackboard brief`, to start a progress board.
 5. **Requirements Coverage Report** — feature/AC cross-check, non-goals leak
 6. **Implementation Readiness Checklist** (PRD §17) — final gate before handoff
 
-Fleshed ticket bodies (Scope, full ACs, Verify commands, Technical Notes,
-Failure Protocol) are **downstream** — produced by `spec-writer` consuming
+Fleshed ticket bodies (`shared/TICKET_CONTRACT.md`) are **downstream** — produced by `spec-writer` consuming
 the PRD + ticket-dag.
 
 ### Planning Failed Safely
@@ -259,13 +258,12 @@ is session context — recoverable via session ID if needed.
 
 ### Downstream
 
-- `spec-writer` expands each stub into a fleshed ticket body per the Ticket
-  Contract in ticket-dag.md §3
-- `ticket-critic` validates fleshed tickets; hard-gate failures block
-  `Stage: BUILD`
+- `spec-writer` expands each stub into a fleshed ticket per
+  `shared/TICKET_CONTRACT.md` and runs `spec-writer/scripts/tickets_lint.py`
+- `ticket-critic` runs the same lint, then reviews design and risk; any
+  failure blocks `Stage: BUILD`
 - Integration gate tickets use `tdd` for test-first implementation
-- Gate tickets must include artifact links (CI URL, trace URL, curl
-  transcript) — checklists alone are not sufficient
+- Gate tickets carry local inner-loop proof (see the contract's Integration gates section)
 - `/todo build` (manual) or `/todo run` (auto-driver) executes the overall graph
 
 ---

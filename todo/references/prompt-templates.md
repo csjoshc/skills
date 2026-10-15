@@ -248,15 +248,13 @@ Invoke the /spec-writer skill.
 
 **Inputs:**
 - .plan/PRD.md
-- .plan/task-sequence.md (the Ticket Contract is in §3)
+- .plan/task-sequence.md
 - .plan/brownfield-context.md (if exists; brownfield-only)
 
 **Task:** For every stub in task-sequence.md §2, write one fleshed ticket
-file to .tickets/NNN-slug.md. Each file must satisfy the Ticket Contract
-(task-sequence.md §3) — YAML frontmatter with the required fields, Scope,
-User Story, ≥3 grep-verifiable ACs including ≥1 failure-path AC, Verify
-command, Technical Notes, Failure Protocol. Integration gates additionally
-include Silent Failure Detection, Dev Agent Record, Proof Artifacts.
+file to .tickets/NNN-slug.md following ~/.skills/shared/TICKET_CONTRACT.md.
+Before finishing, run `python3 ~/.skills/spec-writer/scripts/tickets_lint.py .tickets --dry-red --runner "<project pytest command>"`
+and fix every ERROR.
 
 Numbering: use the next-available numeric prefix in .tickets/ (inspect
 existing files to find gaps). Slug format: NNN-kebab-case-title.md.
@@ -271,9 +269,9 @@ Invoke the /ticket-critic skill.
 
 **Inputs:**
 - .tickets/*.md (excluding .plan/)
-- Ticket Contract: .plan/task-sequence.md §3 if it exists, else ticket-critic's own defaults
+- Contract: ~/.skills/shared/TICKET_CONTRACT.md (the lint enforces the mechanical part)
 
-**Task:** Validate every ticket against the Ticket Contract. Emit a report
+**Task:** Run the lint, then review design and risk. Emit a report
 at .plan/critic-report.md with one line per ticket: `PASS <id>` or
 `FAIL <id>: <reasons>`. Block Stage: BUILD on any FAIL until remediated.
 ```
@@ -285,12 +283,13 @@ Invoke /spec-writer in fix mode.
 
 **Inputs:**
 - .plan/critic-report.md (list of FAIL tickets and reasons)
-- .plan/task-sequence.md §3 (Ticket Contract)
+- ~/.skills/shared/TICKET_CONTRACT.md
 - .plan/PRD.md
 - The failing ticket files listed in critic-report.md
 
 **Task:** Rewrite each failing ticket in place to satisfy the contract.
 Do not rewrite passing tickets. Do not renumber.
+Re-run the lint on the rewritten tickets before finishing.
 ```
 
 ### Template: build-ticket-manual (ready-for-build / partial-build)

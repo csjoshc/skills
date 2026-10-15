@@ -5,7 +5,7 @@ Read this when drafting or revising a ticket body. The Stage header contract sta
 ## Contents
 
 - SECTION 1: SPEC (incl. success-criteria reframing)
-- SECTION 2: PLAN (Test Obligation Profile, test paths, failure paths)
+- SECTION 2: PLAN (AC table, test paths, failure paths)
 - SECTION 3: TASKS (task format, vertical slices, expand-contract, sizing)
 
 ### SECTION 1: SPEC
@@ -69,25 +69,12 @@ Endpoints or functions needed. For each: method, path or name, inputs, outputs, 
 **Patterns to follow**
 Reference existing patterns in the codebase if mentioned. If not mentioned, flag: `[ASSUMPTION: following standard CRUD pattern — point me to your auth/data layer if you want me to match your conventions]`
 
-**Test Obligation Profile** (required — structured, not prose)
+**Acceptance Criteria → Tests** (required)
 
-Replaces free-form "testing strategy". Consumed verbatim by `/tdd` Phase 0
-(`../../tdd/SCOPING.md`) as the per-ticket signal feeding the Test
-Obligation Queue. One row per AC.
+The table format, the check rules and the ticket sections are defined once in [`../../shared/TICKET_CONTRACT.md`](../../shared/TICKET_CONTRACT.md): `| AC | Check | Tier |`, one test id or one shell command per row, at least one `(failure path)` row.
+`/tdd` Phase 0 reads the Tier column and derives the test pattern and mutation flag itself, so the table carries nothing else.
 
-```markdown
-| AC # | Requirement (1 line) | Risk Tier | Suggested Pattern | Mutation Candidate? |
-|------|----------------------|-----------|-------------------|---------------------|
-| AC-1 | ...                  | T1/T2/T3  | invariant / contract / state_transition / high_risk_path / characterization / impacted_regression / history_based | yes/no |
-```
-
-Rules:
-- **Risk Tier** — inherit from PRD §8c Risk Surface or repo `.risk-registry.yaml`. If the AC touches paths under multiple tiers, use the highest.
-- **Suggested Pattern** — pick from the catalog in tdd/SCOPING.md (`../../tdd/SCOPING.md`) pattern table. If unsure, default to `invariant` for pure logic, `contract` for boundaries, `state_transition` for flows.
-- **Mutation Candidate** — set `yes` when Risk Tier is T1. /tdd will auto-invoke MUTATION.md on these at green-step.
-- If any AC lacks a concrete target (no file/function name in Technical Notes), ticket-critic blocks the ticket.
-
-**Test path convention:** The `Test file / Command` column must be the **permanent, committed path** — the file is created there directly during BUILD, never in `tests/tickets/` (deprecated gitignored staging area).
+**Test path convention:** a test id in the Check column must be the **permanent, committed path** — the file is created there directly during BUILD, never in `tests/tickets/` (deprecated gitignored staging area).
 
 | Test type | Permanent path |
 |---|---|
@@ -95,7 +82,7 @@ Rules:
 | Documentation consistency | `tests/docs/test_<topic>.py` |
 | Package unit/integration | `packages/<pkg>/tests/test_<module>.py` |
 
-For PDCA-T / METHOD.md workflows: add a short line beneath the table calling out **test-first** ordering and any **quality targets** (e.g. coverage floor) the user or repo mandates. Per-AC categories (happy/error/edge/security/performance) are now encoded via Suggested Pattern — not re-listed as prose.
+For PDCA-T / METHOD.md workflows: add a short line beneath the table calling out **test-first** ordering and any **quality targets** (e.g. coverage floor) the user or repo mandates. Don't re-list per-AC categories (happy/error/edge) as prose; the AC rows carry them.
 
 **Security and performance constraints**
 Authentication requirements, authorization rules, rate limits, response time targets. Mark each unknown as `[ASSUMPTION: ...]`.

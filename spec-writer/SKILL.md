@@ -17,7 +17,7 @@ You generate first, flag assumptions inline. Every decision the user didn't spec
 
 A pasted ticket, PRD fragment or rough description counts as the feature request.
 
-- **Upstream input (preferred):** if `.plan/PRD.md` and `.plan/task-sequence.md` exist, read both and expand each placeholder into a full `.tickets/NN-<slug>.md`. Do not re-debate decisions the PRD settled. Before fleshing any stub, apply the AP-25 naming test; the annotation may not be silently omitted. Procedure: [references/upstream-input.md](references/upstream-input.md).
+- **Upstream input (preferred):** if `.plan/PRD.md` and `.plan/task-sequence.md` exist, read both and expand each placeholder into a full `.tickets/NN-<slug>.md`. Do not re-debate decisions the PRD settled. Before fleshing any stub, apply the AP-25 naming test and annotate every name that fails it; tickets with no failing name carry no naming section. Procedure: [references/upstream-input.md](references/upstream-input.md).
 - **Refactor mode:** for "refactor X", "clean up Y", "restructure Z" or an RFC, load [REFACTOR_MODE.md](REFACTOR_MODE.md) and follow its interview process instead of the three-section output below.
 
 ## Operating principles
@@ -35,21 +35,17 @@ A pasted ticket, PRD fragment or rough description counts as the feature request
 Produce three sections in order. Do not skip or merge them.
 
 - **SECTION 1: SPEC** (mandatory): purpose, users/use cases, requirements, IN/OUT scope, edge cases, Given/When/Then ACs. Turn vague verbs into measurable targets. Mark every unstated decision `[ASSUMPTION: ...]`.
-- **SECTION 2: PLAN**: stack, data model, API contracts, patterns, a per-AC Test Obligation Profile table (consumed by `/tdd`), security/performance, failure paths for `[FALLIBLE_IO]`, ADRs and design alternatives. Test files use permanent committed paths.
+- **SECTION 2: PLAN**: stack, data model, API contracts, patterns, the `## Acceptance Criteria → Tests` table from [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md), security/performance, failure paths for `[FALLIBLE_IO]`, ADRs and design alternatives. Test files use permanent committed paths.
 - **SECTION 3: TASKS**: ordered atomic tasks, one primary source file each, producers before consumers, 1-3 binary ACs, a mandatory **Docs to update** line, then a **Review checkpoint**. Slice vertically; split XL tasks.
 
 Full templates, field lists and rules: read [references/ticket-template.md](references/ticket-template.md) before drafting or editing any ticket body. Worked examples: [EXAMPLE.md](EXAMPLE.md).
 
-### Ticket Stage Header Contract (mandatory for `.tickets/*.md`)
+### Ticket files (`.tickets/*.md`)
 
-```yaml
----
-Stage: BUILD
----
-```
-
-Use `Stage:` (not `Status:`). Allowed values (single line): `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
-An implementation-ready ticket sets **exactly** `Stage: BUILD`.
+Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
+Before handing off, run `python3 ~/.skills/spec-writer/scripts/tickets_lint.py <repo>/.tickets --dry-red --runner "<the project's pytest command>"` and fix every ERROR.
+`--dry-red` runs each read-only check now: it must fail for the expected reason (test not written yet), never because a tool is missing.
+An implementation-ready ticket sets `Stage: BUILD`.
 
 ## Assumption handling
 

@@ -36,15 +36,14 @@ Parse the reflection-3 JSONL output emitted by agent subprocesses into a structu
 
 ### Acceptance Criteria → Tests
 
-| AC | Test file / Command | Assertion shape |
+| AC | Check | Tier |
 |---|---|---|
-| AC-1 | `grep -nE '^def parse_self_assessment' app/observability/self_assessment_parser.py` | exit 0 |
-| AC-2 | `pytest tests/test_self_assessment_parser.py -k test_parses_valid_reflection3_event` | `result["stuck"] == False` |
-| AC-3 | `pytest tests/test_self_assessment_parser.py -k test_returns_none_on_empty_events` | `result is None` |
-| AC-4 | `pytest tests/test_self_assessment_parser.py -k test_returns_none_on_missing_schema_key` | `result is None` |
-| AC-5 | `grep -nE 'parse_self_assessment' app/nodes/build.py` | exit 0 (wired in) |
-| AC-6 | `grep -nE 'class SelfAssessmentEvent' app/observability/gate_events.py` | exit 0 |
-| AC-7 | `ruff check app/observability/self_assessment_parser.py app/nodes/build.py` | exit 0 |
+| AC-1 Given the module, then it exposes `parse_self_assessment` | `grep -qE '^def parse_self_assessment' app/observability/self_assessment_parser.py` | T3 |
+| AC-2 Given a valid reflection-3 event, when parsed, then `stuck` is False | `tests/test_self_assessment_parser.py::test_parses_valid_reflection3_event` | T2 |
+| AC-3 (failure path) Given no events, when parsed, then the result is None | `tests/test_self_assessment_parser.py::test_returns_none_on_empty_events` | T2 |
+| AC-4 (failure path) Given an event missing a schema key, when parsed, then the result is None | `tests/test_self_assessment_parser.py::test_returns_none_on_missing_schema_key` | T2 |
+| AC-5 Given `build_node`, then it calls the parser | `grep -q 'parse_self_assessment' app/nodes/build.py` | T2 |
+| AC-6 Given the events module, then it defines `SelfAssessmentEvent` | `grep -qE 'class SelfAssessmentEvent' app/observability/gate_events.py` | T3 |
 
 **Note:** Each AC is independently verifiable. AC-1 through AC-4 can be checked before AC-5 is wired. No AC depends on a later AC running first. Failure Protocol does NOT mandate full revert — `self_assessment_parser.py` is additive and can be left in place on failure.
 
