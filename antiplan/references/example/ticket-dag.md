@@ -442,52 +442,9 @@ received, debug logs verified clean of raw comment bodies.
 
 ## §3. Ticket Contract
 
-Every ticket in `ticket-pack.md` MUST satisfy the following. ticket-critic
-blocks `Stage: BUILD` transitions if any hard gate fails.
-
-### Frontmatter (YAML, required fields)
-
-- `id`, `title`, `Stage`, `Type`, `Priority`, `Origin`, `Mode`, `Depends-On`, `Blocks`, `Gate`
-- `Files[]`: `{ action: MODIFY|CREATE, path, test: bool, description }` — ≥1 entry
-- `Read-First[]`: ≥2 repo-relative paths (paths MUST exist at plan time)
-- `Exemplar-Files[]`: ≥1 repo-relative path (path MUST exist at plan time)
-- `Assumptions-Validated[]`: list of assumption IDs from PRD §14 (may be empty)
-- `Regression-Baseline[]`: ≥1 executable shell command (or `[]` only for
-  doc-only tickets with explicit justification)
-
-### Body (required sections, in order)
-
-1. **Scope** — one paragraph, file-level (names specific files from `Files[]`)
-2. **User Story** — "As a [persona from PRD §3], I want […] so that […]"
-3. **Acceptance Criteria** — ≥3 items, each:
-   - grep-verifiable (the body includes a concrete `rg`/`pytest -k`/`curl`/shell snippet)
-   - ≥1 item MUST be a failure-path AC asserting user-visible behavior
-     (not a log line; must be observable by the user or an integration test)
-4. **Verify** — single shell command block that exits non-zero on AC failure
-5. **Technical Notes** — implementation anchors (concrete APIs, config keys,
-   existing functions to reuse). Not design speculation.
-6. **Failure Protocol** — max retry count (default 2), revert-and-exit
-   condition (after N consecutive failed attempts), escalation target
-
-### Additional requirements for integration-gate tickets
-
-- **Silent Failure Detection:** ≥1 AC that would catch a silent regression
-  in a real running system (not just unit tests passing)
-- **Dev Agent Record:** verifier session ID, model used, convention-drift check
-- **Proof Artifacts:** curl transcript path, trace URL (Playwright/browser
-  session/recording), CI run URL
-- Gate is a hard dependency — downstream tickets cannot start until
-  gate reaches `Stage: COMPLETE`
-
-### Hard gates (ticket-critic enforces)
-
-- No `[NEEDS CLARIFICATION]` markers anywhere in the ticket body
-- Every `Files[]` path resolves against repo root (ticket-critic runs `test -e`
-  for MODIFY actions; CREATE paths MUST resolve to a valid parent directory)
-- Every `Read-First[]` / `Exemplar-Files[]` path exists at plan time
-- Every AC's grep/test command is executable as written (ticket-critic dry-runs it)
-- Ticket production file count ≤ 5 (AP-12 prevention)
-- `Assumptions-Validated[]` references resolve to PRD §14 IDs
+The contract every fleshed ticket satisfies is defined once in [`../../../shared/TICKET_CONTRACT.md`](../../../shared/TICKET_CONTRACT.md).
+spec-writer checks it with `spec-writer/scripts/tickets_lint.py` before handoff; ticket-critic runs the same lint, then reviews design and risk.
+This example predates the slim contract, so its stubs carry extra fields (`Priority`, `Origin`, `Mode`, `Exemplar-Files`) the contract no longer requires.
 
 ---
 

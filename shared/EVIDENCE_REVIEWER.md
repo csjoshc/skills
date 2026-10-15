@@ -126,7 +126,7 @@ For each AC in the ticket's `## Acceptance Criteria` and
 `## Acceptance Criteria → Tests` table:
 
 1. Locate the AC's verification command (in `## Verify commands` or
-   the AC→Tests table's "Test file / Command" column).
+   the AC→Tests table's "Check" column).
 2. Confirm the command is runnable in the current environment:
    - Binary exists (`command -v <bin>`)
    - File paths referenced are present (`[ -f <path> ]`)

@@ -20,8 +20,9 @@ For each ticket (in parallel where possible):
       signals match the ticket's surface — see "Pattern
       relevance" below)
     - PRD.md and brownfield-context.md for cross-reference
-    - Return contract: one structured verdict block per pattern,
-      with PASS / AUTO-RESOLVED / BLOCKER + ≤2-line evidence.
+    - The lint output for that ticket (run once by the parent)
+    - Return contract: findings only, BLOCKER or WARN per pattern
+      with ≤2-line evidence and the fix; no PASS lines.
 
 Parent ticket-critic aggregates verdicts into a single
 `.plan/critic-report.md`. Subagents that return BLOCKER halt the

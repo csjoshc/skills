@@ -9,53 +9,29 @@ Ticket Critic is a specialized pre-build reviewer: "pre-implementation risk audi
 
 ## Quick Start
 
-1. Validate the `Stage:` header first.
-2. Run the deterministic checks.
-3. Audit all 18 patterns in [PATTERNS.md](PATTERNS.md).
-4. Auto-resolve only when standards already answer the question.
-5. Return `PASS`, `PASS WITH AUTO-RESOLUTIONS` or `BLOCKED` with evidence.
+1. Run the lint: `python3 ~/.skills/spec-writer/scripts/tickets_lint.py .tickets --dry-red --runner "<project pytest command>"`.
+   Any ERROR blocks the ticket; send it back to spec-writer with the lint output, and don't review its design until the lint passes.
+2. Review design, risk and scope against [PATTERNS.md](PATTERNS.md) (the judgement checklist below).
+3. Auto-resolve only when standards already answer the question.
+4. Return `PASS` or `BLOCKED` per ticket, with evidence for every finding.
 
-## Stage Header Gate (Mandatory)
+The ticket format is defined once, in [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
+The lint checks everything mechanical in it (frontmatter, Stage, sections, the AC table, paths against the DAG, `bash -n`, `-k` or-chains, bare `!`, em dashes) and, with `--dry-red`, runs the read-only checks now so a check that can't run fails before build.
+Never re-check by hand what the lint already checks.
 
-Before pattern checks, verify metadata:
+## What the critic judges
 
-- Required field: `Stage:`
-- Allowed values: `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`
-- If implementation-ready, require exactly `Stage: BUILD`
+These need a reader, not a script:
 
-If missing or invalid, stop and block immediately.
-
-## Deterministic Checks First
-
-Run these before subjective judgment:
-
-1. Ticket file exists and is readable.
-2. Header metadata is valid.
-3. Declared dependencies are present or linked.
-4. Standards are reachable: `~/.skills/STANDARDS.md` (a thin index; topic files in `~/.skills/standards/`) and the local `./STANDARDS.md` if the project has one.
-5. The AC→Test traceability table is present (next section).
-
-Only then run the 18-pattern audit.
-
-## AC → Test Traceability (Mandatory for Stage: BUILD)
-
-Every ticket carries an `## Acceptance Criteria → Tests` table with columns `AC | Test file / Command | Test name | Assertion shape | Risk Tier`. Each AC must name its test or verification command before `Stage: BUILD`; the test need not exist yet. Template and rationale: [reference/ac-test-traceability.md](reference/ac-test-traceability.md).
-
-Block conditions:
-
-- Any AC without a named test or command → **BLOCKED**
-- Any test name matching `.*works.*`, `.*handles.*`, or `.*should.*` → **BLOCKED** (too vague; rename to describe the behavior)
-- Any "Assertion shape" that is just `toBe(true)` → **BLOCKED** (describe what's being checked)
-- Any test that exists but asserts only the return value of the function under test with no further condition → **WARN** (tautology risk; let mutation-critic decide on the implementation side)
-- **Risk Tier missing** on any row → **BLOCKED** (spec-writer Test Obligation Profile is incomplete; send back to spec-writer, do not patch in the critic)
-- **T1 AC with no concrete target** (Test file / Command is vague or points at a non-existent file the ticket does not create) → **BLOCKED** (T1 ACs must be load-bearing; /tdd Phase 0 cannot score what it cannot locate)
-- `Test file / Command` cell contains `tests/tickets/` → **BLOCKED** (deprecated gitignored staging area; specify the permanent destination: `tests/infra/`, `tests/docs/`, or `packages/<pkg>/tests/`)
-
-The Risk Tier column feeds `/tdd` Phase 0 scoping and mirrors the ticket's Test Obligation Profile (spec-writer output). The critic enforces that the mirror is honest; it does not re-derive tiers.
+- **Load-bearing checks:** does each AC's check prove its Then clause, or could it pass while the behaviour is broken (a grep that matches the prompt, a test that asserts only the return value, a preservation check standing in for a behaviour)?
+- **Test names:** a test id names the behaviour (`test_rejects_expired_token`), never `works`, `handles` or `should`.
+- **Facts:** claims about other code (a function exists, a branch contains a commit, a tool takes a flag) are checked against the code or the tool, not taken on trust.
+- **Design:** can the change be bypassed by the thing it guards against, does it widen blast radius, does it leak data across a boundary, does it conflict with a settled PRD decision?
+- **Tiers:** each AC's tier matches the PRD risk surface.
 
 ## 18-Pattern Audit
 
-[PATTERNS.md](PATTERNS.md) is the canonical checklist. Score every pattern `PASS`, `AUTO-RESOLVED` or `BLOCKER` with explicit evidence, and give required remediation for each blocker. Do not skip any pattern.
+[PATTERNS.md](PATTERNS.md) is the judgement checklist. Walk every pattern that applies to the ticket's surface, but report only findings (`BLOCKER` or `WARN`) with evidence and the remediation; a pattern with nothing to say gets no line.
 
 - Patterns 1-10: foundational hygiene (scope, dependencies, architecture, success criteria, tests).
 - Patterns 11-14: container-image and Kubernetes failure modes that only surface in a real pod. Always check them for tickets touching a `Dockerfile`, a `helm/` chart or a `securityContext` block.
@@ -64,7 +40,7 @@ The Risk Tier column feeds `/tdd` Phase 0 scoping and mirrors the ticket's Test 
 - Pattern 17: operator entry-point smoke gate (AP-26 gatekeeper).
 - Pattern 18: subagent claims need adversarial evidence review (delegates to `shared/EVIDENCE_REVIEWER.md`).
 
-**More than 5 tickets:** subagents are suggested (see `~/.skills/shared/SUBAGENTS.md`); otherwise audit tickets in batches inline. When delegating, brief each with the ticket path, the relevant PATTERNS.md subset and the PRD/brownfield context, returning one verdict block per pattern. Aggregate into `.plan/critic-report.md`; any subagent BLOCKER halts the parent until the user resolves it. Brief contract and the pattern-relevance table by ticket surface: [reference/scaled-audit.md](reference/scaled-audit.md).
+**More than 5 tickets:** subagents are suggested (see `~/.skills/shared/SUBAGENTS.md`); otherwise audit tickets in batches inline. When delegating, brief each with the ticket path, the relevant PATTERNS.md subset and the PRD/brownfield context, returning findings only. Aggregate into `.plan/critic-report.md`; any subagent BLOCKER halts the parent until the user resolves it. Brief contract and the pattern-relevance table by ticket surface: [reference/scaled-audit.md](reference/scaled-audit.md).
 
 ## E2E Validation Gap
 
@@ -76,32 +52,18 @@ Auto-resolve only when the answer is already explicit in standards: read the mat
 
 ## Output Contract
 
-Return findings using this structure:
+Write `.plan/critic-report.md` with one line per ticket, then findings:
 
 ```markdown
-## Ticket Critic Verdict
-- Overall: PASS | PASS WITH AUTO-RESOLUTIONS | BLOCKED
-- Stage Gate: PASS | BLOCKED
-- Standards Checked: [global], [local]
+PASS T-1
+FAIL T-2: <reasons, semicolon separated>
 
-## Pattern Results
-- Pattern 1: PASS | AUTO-RESOLVED | BLOCKER
-- Pattern 2: ...
-- ...
-- Pattern 18: ...
-
-## Evidence
-- [file/line/section and verification]
-
-## Required Actions Before Build
-- [ ] ...
-- [ ] ...
-
-## Risk Tier Summary
-- Tier 1 assumptions:
-- Tier 2 assumptions:
-- Tier 3 assumptions:
+## T-2
+- BLOCKER Pattern 3: <finding> (<file:line or section>). Fix: <remediation>.
+- WARN Pattern 10: <finding>. Fix: <remediation>.
 ```
+
+Lint errors are listed as `BLOCKER lint: <message>`; don't restate them as patterns.
 
 ## Assumptions and Escalation
 
@@ -116,7 +78,7 @@ Escalate immediately when:
 ## Specialized Review Rules
 
 1. Specialist lens only (ticket readiness/risk), not generic code review.
-2. Deterministic checks before LLM interpretation.
+2. The lint before judgement; never hand-check what the lint checks.
 3. Evidence-backed findings only.
 4. Clear separation from build/spec agents.
 
@@ -124,8 +86,8 @@ Escalate immediately when:
 
 Read only when the situation matches:
 
-- [PATTERNS.md](PATTERNS.md): the 18-pattern checklist, detection signals and remediation (read for every audit)
-- [reference/ac-test-traceability.md](reference/ac-test-traceability.md): the AC→Test table template and rationale
+- [PATTERNS.md](PATTERNS.md): the judgement checklist, detection signals and remediation (read for every audit)
+- [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md): the ticket format the lint enforces
 - [reference/scaled-audit.md](reference/scaled-audit.md): auditing more than 5 tickets; which patterns apply to which ticket surface
 - [reference/e2e-validation-gap.md](reference/e2e-validation-gap.md): the ticket has no E2E validation strategy
 - [examples/audit-findings.md](examples/audit-findings.md): what good findings look like

@@ -73,7 +73,8 @@ the TOQ assembly buffer.
    For each touched path:
 
    1. Match against `.risk-registry.yaml` glob tiers → T1/T2/T3.
-   2. If unmatched, look up `Test Obligation Profile` in ticket body; map
+   2. If unmatched, look up the `Acceptance Criteria → Tests` table (older
+      tickets: `Test Obligation Profile`) in ticket body; map
       requirement → tier.
    3. If still unmatched, look up `## Risk Surface` in `prd.md`.
    4. Default T2.
