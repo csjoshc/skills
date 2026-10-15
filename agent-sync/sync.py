@@ -48,6 +48,9 @@ IS_WINDOWS = OS_TYPE == OS.WINDOWS
 
 HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
+# A single symlink to ~/.skills exposes its root docs (AGENTS.md, ...) as broken skills (pi) or
+# shadows Codex's .system, so these get a real dir holding one link per skill.
+PER_SKILL_LINK_PLATFORMS = {"codex", "pi", "pi-gateway"}
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -274,12 +277,12 @@ def audit_symlink(
         logger.warn(f"{config.name}: Skills symlink missing")
         return result
 
-    # Codex exception: real directory of per-skill symlinks (see SYMLINK_MAP.md)
-    if platform_key == "codex":
+    # Real directory of per-skill symlinks (see SYMLINK_MAP.md)
+    if platform_key in PER_SKILL_LINK_PLATFORMS:
         if is_symlink(symlink_path):
             result.symlink_status = Status.WRONG_TARGET
             result.symlink_details = (
-                "Codex skills must be a real directory of per-skill symlinks, "
+                f"{config.name} skills must be a real directory of per-skill symlinks, "
                 "not a single symlink to ~/.skills"
             )
             logger.warn(f"{config.name}: Skills path is a full symlink (unsafe)")
@@ -287,7 +290,7 @@ def audit_symlink(
 
         if not symlink_path.is_dir():
             result.symlink_status = Status.BROKEN
-            result.symlink_details = "Codex skills path is not a directory"
+            result.symlink_details = f"{config.name} skills path is not a directory"
             logger.warn(f"{config.name}: Skills path is not a directory")
             return result
 
@@ -339,8 +342,8 @@ def repair_symlink(config: PlatformConfig, logger: Logger) -> bool:
     # Codex keeps system-managed skills under ~/.codex/skills/.system and
     # must remain a real directory of per-skill symlinks — never a single
     # symlink to ~/.skills (that shadows .system and risks rmtree of it).
-    if config.platform_key == "codex":
-        return sync_codex_per_skill_links(logger)
+    if config.platform_key in PER_SKILL_LINK_PLATFORMS:
+        return sync_per_skill_links(config, logger)
 
     logger.info(f"Repairing {config.name} skills symlink...")
     success = create_symlink(config.skills_symlink, SKILLS_DIR)
@@ -351,23 +354,23 @@ def repair_symlink(config: PlatformConfig, logger: Logger) -> bool:
     return success
 
 
-def sync_codex_per_skill_links(logger: Logger) -> bool:
-    """Ensure ~/.codex/skills is a real dir with per-skill symlinks to master.
+def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
+    """Ensure the platform's skills path is a real dir with per-skill symlinks to master.
 
-    Preserves Codex-only entries (e.g. `.system/`, plain dirs) and only
+    Preserves platform-only entries (e.g. Codex's `.system/`, plain dirs) and only
     adds/repairs symlinks for master skills that have SKILL.md.
     """
-    codex_skills = HOME / ".codex" / "skills"
-    logger.info("Syncing Codex per-skill symlinks (preserving .system)...")
+    links_dir = config.skills_symlink
+    logger.info(f"Syncing {config.name} per-skill symlinks...")
 
-    if codex_skills.is_symlink():
+    if links_dir.is_symlink():
         logger.warn(
-            "Codex skills path is a symlink to the master store; "
+            f"{config.name} skills path is a symlink to the master store; "
             "converting to a real directory with per-skill links."
         )
-        codex_skills.unlink()
+        links_dir.unlink()
 
-    codex_skills.mkdir(parents=True, exist_ok=True)
+    links_dir.mkdir(parents=True, exist_ok=True)
 
     added = 0
     repaired = 0
@@ -377,7 +380,7 @@ def sync_codex_per_skill_links(logger: Logger) -> bool:
         if not (skill_dir / "SKILL.md").is_file():
             continue
 
-        link_path = codex_skills / skill_dir.name
+        link_path = links_dir / skill_dir.name
         expected = skill_dir.resolve()
 
         if link_path.is_symlink():
@@ -403,22 +406,23 @@ def sync_codex_per_skill_links(logger: Logger) -> bool:
 
     # Drop broken symlinks that no longer exist in master
     stale = []
-    for entry in codex_skills.iterdir():
+    for entry in links_dir.iterdir():
         if entry.is_symlink() and not entry.exists():
             stale.append(entry)
     for entry in stale:
         entry.unlink()
         logger.info(f"  Removed broken: {entry.name}")
 
-    if (codex_skills / ".system").is_dir():
-        logger.info("  .system/ present (Codex-managed; preserved)")
-    else:
-        logger.warn(
-            "  .system/ missing — Codex will recreate it on next Desktop/CLI start"
-        )
+    if config.platform_key == "codex":
+        if (links_dir / ".system").is_dir():
+            logger.info("  .system/ present (Codex-managed; preserved)")
+        else:
+            logger.warn(
+                "  .system/ missing — Codex will recreate it on next Desktop/CLI start"
+            )
 
     logger.info(
-        f"  Codex sync done (added={added}, repaired={repaired}, stale_removed={len(stale)})"
+        f"  {config.name} sync done (added={added}, repaired={repaired}, stale_removed={len(stale)})"
     )
     return True
 
