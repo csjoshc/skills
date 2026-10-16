@@ -68,7 +68,7 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | Tool / Platform | Path | Method |
 | :--- | :--- | :--- |
 | **Master** | `~/AGENTS.md` | (Authoritative, real file) |
-| **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude ignores AGENTS.md) |
+| **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude Code reads only a project-level AGENTS.md, and only when no CLAUDE.md or CLAUDE.local.md is in that folder or above) |
 | **Codex** | `~/.codex/AGENTS.md` | Symlink |
 | **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
 | **Antigravity** | `~/.gemini/antigravity/AGENTS.md` | Symlink |
