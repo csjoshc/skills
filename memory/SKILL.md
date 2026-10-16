@@ -12,7 +12,7 @@ Edit only between `<!-- memory:start -->` and `<!-- memory:end -->` when a file 
 ## Save
 
 1. Decide the destination with the rules in `~/AGENTS.md`.
-   For a repo the user doesn't own, write the proposed line and ask before opening a PR; never commit it yourself.
+   An `AGENTS.local.md` (a repo's main checkout root, or `~`) is never committed; create it with the markers if missing.
 2. Read the destination's memory lines.
    If one overlaps, rewrite it; if one contradicts, replace it and say which. Otherwise add one line.
 3. Write `- fact - why (YYYY-MM-DD)` with today's absolute date.
@@ -22,6 +22,7 @@ Do not save task state, secrets, anything the code or git history shows, or a ru
 
 ## Prune
 
+Targets: `~/AGENTS.md`, `~/AGENTS.local.md`, the repo's `AGENTS.md` and `AGENTS.local.md`.
 Run when the user asks, when a file is over its cap (`./bootstrap.sh --status` prints `LONG` for `~/AGENTS.md`), or when an agent ignored a line.
 For each memory line in the target file, decide one of:
 

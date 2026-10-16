@@ -91,3 +91,5 @@ When explaining scoped technical work to readers unfamiliar with the codebase (r
 ## License
 
 MIT
+
+For prose the user will present as their own, also follow [references/user-voice.md](references/user-voice.md).
