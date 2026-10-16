@@ -11,6 +11,9 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 `~/AGENTS.md` is the single global memory file; the other tools' global files are symlinks to it, and project templates must never overwrite it.
 If the resolved root equals `$HOME` or sits under `~/.skills`, stop and ask for a real project path.
 
+Memory needs no per-repo setup (rules in `~/AGENTS.md`, files made on demand by the `memory` skill).
+Don't add `.memory.md` or memory entries to a repo's `.gitignore`, and don't create memory files during onboarding.
+
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
