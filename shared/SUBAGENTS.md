@@ -24,6 +24,15 @@ If none apply, run the role inline.
 3. Put `run: inline` in the artifact header so readers know there was no independent pass.
 4. For an independence role (Challenger, Coverage Auditor, evidence reviewer, gate review), say once that a subagent or a fresh session would be more independent, then proceed.
 
+## Waiting on remote CI
+
+A subagent that waits on a GitHub Actions run polls in a loop with short sleeps; it never uses Monitor (that tracks local processes) or one long `gh run watch`, which trips the 600s stall watchdog.
+```
+until [ "$(gh run view <id> -R <owner>/<repo> --json status -q .status)" = completed ]; do sleep 20; done
+gh run view <id> -R <owner>/<repo> --json conclusion,url
+```
+Resume a stalled one with SendMessage, not a new agent; its run and PR are untouched.
+
 ## Harnesses without subagents
 
 Run inline, or hand the role to a fresh session with a copy-pasteable prompt.

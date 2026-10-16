@@ -24,4 +24,9 @@ When evaluating user ideas or generating recommendations:
 - `tdd/scripts/red_first.py` is the local test-quality gate; extend it or the skill text only when
   real use shows a need, and leave the archived 16-ticket gate plan (`.trash/gate-plan-2026-10-15/`)
   archived - it shipped nothing in a day (2026-10-15).
+- Skill scripts never import anthropic; the invoking agent does the LLM step and Python only gates
+  or verifies - a second model call adds latency, needs an API key and breaks offline (2026-04-27).
+- Plans for this repo state the net skill count and what gets deprecated, show the workflow change
+  on a real past project, and prefer editing existing files or `shared/` over new skills - a
+  four-new-skill plan was rejected because it didn't map to real use (2026-10-14).
 <!-- memory:end -->

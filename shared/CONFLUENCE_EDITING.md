@@ -19,6 +19,6 @@ That wipes expand and other macros, the editor's `local-id` attributes, layout s
 3. Re-check the version (a `confluence_search` on the title returns it). If it moved, stop and redo step 1.
 4. Publish with `content_format: storage`, and always pass `page_width` with the page's current value.
    The update resets an omitted width to fixed.
-   `content_file` must sit under the session's working directory; paths outside it fail as path traversal.
+   `content_file` (and `confluence_upload_attachment`'s `file_path`) must sit under the session's working directory; paths outside it fail as path traversal.
 5. Read the page back and compare its text, macro count, `local-id` count and `page_width` with what you sent.
    Done when all four match. Confluence may reorder macro parameters; that difference is cosmetic.
