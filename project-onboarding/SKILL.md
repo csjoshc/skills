@@ -166,7 +166,7 @@ context exclusions, and operational rules.
 |------|----------------------------|
 | **OpenCode** | Reads `AGENTS.md` natively. |
 | **GitHub Copilot** | Reads `AGENTS.md` natively. |
-| **Claude Code** | Reads `AGENTS.md` when no `CLAUDE.md` exists. If one is needed, make it `@AGENTS.md`. |
+| **Claude Code** | Reads `AGENTS.md` natively (v2.1.277+) unless a `CLAUDE.md` or `CLAUDE.local.md` is in that folder or above. Add no project `CLAUDE.md` unless something needs it (then make it `@AGENTS.md`); never add `CLAUDE.local.md`. |
 | **Aider** | Add `read: AGENTS.md` to `.aider.conf.yml`. |
 
 ---
