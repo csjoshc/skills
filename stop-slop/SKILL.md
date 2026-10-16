@@ -88,8 +88,8 @@ See [references/examples.md](references/examples.md) for before/after transforma
 
 When explaining scoped technical work to readers unfamiliar with the codebase (relevance, design choices, implications, evidence), follow [references/plain-vernacular-explainers.md](references/plain-vernacular-explainers.md). Voice still follows Core Rules above; that reference adds audience, what/why/evidence structure, and evidence honesty (tests vs live PR).
 
+For prose the user will present as their own, also follow [references/user-voice.md](references/user-voice.md).
+
 ## License
 
 MIT
-
-For prose the user will present as their own, also follow [references/user-voice.md](references/user-voice.md).
