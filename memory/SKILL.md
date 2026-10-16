@@ -12,7 +12,7 @@ Edit only between `<!-- memory:start -->` and `<!-- memory:end -->` when a file 
 ## Save
 
 1. Decide the destination with the rules in `~/AGENTS.md`.
-   Repo memory is `$(git rev-parse --path-format=absolute --git-common-dir)/memory.md`; folder memory is `.memory.md`.
+   Repo memory is `$(git rev-parse --path-format=absolute --git-common-dir)/.memory.md`; folder memory is `.memory.md` in that folder.
    Neither is ever committed; create the file with the markers if missing.
 2. Read the destination's memory lines.
    If one overlaps, rewrite it; if one contradicts, replace it and say which. Otherwise add one line.
@@ -23,7 +23,7 @@ Do not save task state, secrets, anything the code or git history shows, or a ru
 
 ## Prune
 
-Targets: `~/AGENTS.md`, the repo's `AGENTS.md`, the repo's git-dir `memory.md`, and `.memory.md` files.
+Targets: `~/AGENTS.md`, the repo's `AGENTS.md`, the repo's git-dir `.memory.md`, and folder `.memory.md` files.
 Run when the user asks, when a file is over its cap (`./bootstrap.sh --status` prints `LONG` for `~/AGENTS.md`), or when an agent ignored a line.
 For each memory line in the target file, decide one of:
 
