@@ -1,94 +1,56 @@
 ---
 name: stop-slop
-description: "Removes AI writing patterns from prose, or audits without rewriting. Use when asked to de-slop text or explain technical work in plain language."
+description: "Edits prose to remove formulaic AI patterns while preserving the writer's meaning and voice, or audits prose without rewriting. Use when asked to de-slop text or explain technical work in plain language."
 ---
 
 # Stop Slop
 
-Eliminate predictable AI writing patterns from prose.
+Edit prose to remove formulaic habits while keeping its meaning and the writer's voice.
 
 ## Modes
 
-**Edit (default).** Apply the rules below with the minimum effective edit. Fix slop, errors, and unclear passages; leave strong human sentences alone. Preserve the writer's meaning, vocabulary, cadence, and edge (blunt language, humor, honest admissions). A rough draft with a real voice should sound like the same person after editing. Strictness rules below (adverbs, em dashes) still apply.
+**Edit (default).** Read the whole passage, then make the smallest set of useful changes. Keep strong sentences, deliberate style, uncertainty, humor, and bluntness. Fix unclear or unsupported claims only when the source lets you do so; otherwise flag the gap or ask for the missing detail. Treat a pattern as evidence to inspect, not an automatic edit.
 
-**Detect.** When asked to audit, scan, or flag a draft without rewriting: name each pattern found, quote the offending line, give the fix in a few words. Do not rewrite or guess whether AI wrote it. Named patterns are evidence the reader can check; offer to edit afterward.
+**Detect.** When asked to audit without rewriting, quote each passage that shows a pattern, name the pattern, and give a short suggested fix. Do not infer whether AI wrote it. Stop after the findings.
 
-## Core Rules
+## Editing process
 
-1. **Cut filler phrases.** Remove throat-clearing openers, emphasis crutches, and all adverbs. See [references/phrases.md](references/phrases.md).
+1. **Read for meaning and voice.** Note the audience, purpose, claims, and any writing sample. A sample sets the voice and can justify patterns that would otherwise look formulaic.
+2. **Mark patterns by strength.** Edit a strong tell on one clear instance. Edit a weak tell when it repeats or appears alongside other signs. See [references/phrases.md](references/phrases.md) and [references/structures.md](references/structures.md).
+3. **Rewrite at the right scale.** Remove filler directly. For larger patterns, rewrite the sentence or paragraph around its point instead of patching isolated words. Preserve meaningful contrasts, lists, emphasis, and formatting.
+4. **Check meaning and voice.** Compare the rewrite with the source. Keep every supported claim unless a redundant line adds nothing; add no facts, names, numbers, dates, quotes, or citations. Restore intentional language the edit flattened.
+5. **Return the requested form.** For pasted text, provide the rewrite and, when useful, a brief note on major edits. For file edits, change prose only and summarize the changes. For embedded use in a PR, commit message, or document, return only the final text.
 
-2. **Break formulaic structures.** Avoid binary contrasts, negative listings, dramatic fragmentation, rhetorical setups, false agency. See [references/structures.md](references/structures.md).
+The edit is complete when each change removes an identifiable problem, the source's claims remain intact, and the result still fits the writer and audience.
 
-3. **Use active voice.** Every sentence needs a human subject doing something. No passive constructions. No inanimate objects performing human actions ("the complaint becomes a fix").
+## Core guidance
 
-4. **Be specific.** No vague declaratives ("The reasons are structural"). Name the specific thing. No lazy extremes ("every," "always," "never") doing vague work. No architectural metaphors ("seam," "layer," "pipeline," "single source of truth," "first-class," "load-bearing," "non-trivial") that substitute for a concrete name — name the class, function, file, or interface. If a doc claims to be runtime- or vendor-agnostic, scan it for product names ("Vendor A runtime," "Ollama") that contradict the claim.
+1. **Remove empty words and stock phrasing.** Cut throat-clearing, emphasis crutches, puffery, and adverbs that add no meaning. Keep words that carry scope, timing, degree, or voice.
+2. **Replace formula with the point.** Watch for staged openers, false contrasts, negative run-ups, forced triads, dramatic fragments, repeated closers, and ornamental formatting. Keep a construction when both sides add information or the writer uses it deliberately.
+3. **Name actors when it helps.** Prefer active voice when it makes responsibility or action clearer. Keep passive voice when the actor is unknown, irrelevant, or less important than the result. Give human agency to people, not abstractions.
+4. **Be concrete.** Replace vague claims with a source-backed fact, example, mechanism, consequence, or judgment. Avoid lazy extremes and architectural metaphors when they hide the actual class, function, file, or interface. Check vendor or runtime names when a document claims to be agnostic.
+5. **Check portability.** If a sentence could move unchanged to another subject, see whether it contributes a useful general principle. Cut generic filler; ground useful advice in this subject.
+6. **Respect the reader.** State the point without a narrator hovering over the text. Use "you" when it puts the reader in the actual situation, not as a blanket replacement for "people."
+7. **Follow the writer's rhythm.** Vary sentence shape where the prose feels mechanical. Do not ban punctuation, sentence lengths, or list sizes; check whether the pattern earns its place.
+8. **End when the point is complete.** Remove recap endings and quotable kickers that repeat the argument. Keep a final sentence that adds a consequence or next step.
+9. **Keep artifacts self-contained.** In committed prose, explain what a thing does instead of relying on private ticket IDs, gate names, or team-local codenames. Commit messages may retain IDs for traceability.
+10. **Keep code comments close and short.** Put a comment beside the line it explains and state the non-obvious reason. Move longer design rationale to a design document or commit message; leave a brief pointer when needed. See [Atwood](https://blog.codinghorror.com/when-good-comments-go-bad/) and [comment length discussion](https://www.quora.com/What-is-the-ideal-length-for-code-documentation-comments).
 
-5. **Apply the portability test.** If a sentence could move unchanged to another person, company, country, or product, it is filler. Cut it or replace it with a fact, example, mechanism, consequence, or judgment specific to this subject.
+## Final review
 
-6. **Put the reader in the room.** No narrator-from-a-distance voice. "You" beats "People." Specifics beat abstractions.
+Check the rewrite against these questions. Treat them as prompts, not a scorecard.
 
-7. **Vary rhythm.** Mix sentence lengths. Two items beat three. End paragraphs differently. No em dashes.
+- Did any change remove a real qualification, contrast, joke, or point of view?
+- Did the rewrite add, drop, or alter a claim, name, number, date, quote, citation, or causal relationship?
+- Does an opener announce a point instead of making it?
+- Do repeated structures, triads, fragments, dashes, or bold labels sound automatic here?
+- Does each vague or inflated sentence name what happened and who or what did it?
+- Does the ending add information, or repeat what the reader already knows?
+- Does the result still sound like this writer addressing this reader?
 
-8. **Trust readers.** State facts directly. Skip softening, justification, hand-holding. No summary-recap endings; end on the last concrete point or next action.
+## References
 
-9. **Cut quotables.** If it sounds like a pull-quote or a mic-drop kicker, delete it and end on the clearest concrete sentence already in the draft.
-
-10. **Don't leak internal-only shorthand into committed artifacts — commit messages are the one exception.** Ticket/ADR IDs (`T-17`, `AC-3`, `F-C2`, `BL-4`), integration-gate names (`IG-6`), and emergent project nicknames that only mean something inside one team's own tracking (e.g. an internal codename for a feature that isn't the thing's real/canonical name) belong **only** in commit messages — never in code comments, YAML/config, docstrings, PR/issue titles or bodies, or any doc. Name what the thing actually does instead of the internal label for the effort that built it. A commit message is the sanctioned home for this traceability: git history is durable, tied to a point in time, and read by someone already looking at *why this diff exists*. Everything else is read by someone with no such context — including a fresh clone of the *same* repo that owns the ticket system, when (as is typical) the ticket files themselves are gitignored and never travel with the code. So the rule is not "don't leak across repos" — it is "the file/PR/doc in front of the reader must be self-contained regardless of which repo it lives in." Concretely: a workflow YAML comment saying "T-5 adds issues:write" must instead say what issues:write is *for*; a PR body must describe the change, not restate the ticket ID already visible in its own commit messages.
-
-11. **Code comments: mostly 1-2 lines, under 80-100 characters, sitting directly next to the complex or counterintuitive line they explain.** ([Atwood](https://blog.codinghorror.com/when-good-comments-go-bad/); [ideal comment length](https://www.quora.com/What-is-the-ideal-length-for-code-documentation-comments)) A comment describes one non-obvious thing about the code right below it — not a standalone essay above a whole file or function. A multi-paragraph header block is a sign the WHY belongs in a design doc or commit message, not scattered as a wall of prose the reader has to hold in their head while reading unrelated code beneath it. When a real explanation needs more than 2 lines, that is itself a signal: either the code needs restructuring (extract a well-named function instead of commenting the clever one), or the explanation belongs in the commit message / a linked doc, with at most a 1-line pointer left in the code ("see commit message" / "see docs/X.md"). This rule composes with rule 4 (Be specific) and rule 10 (no ticket IDs) — a short comment has no room for filler or a `T-17` reference anyway.
-
-## Quick Checks
-
-Before delivering prose:
-
-- Any adverbs? Kill them.
-- Any passive voice? Find the actor, make them the subject.
-- Inanimate thing doing a human verb ("the decision emerges")? Name the person.
-- Sentence starts with a Wh- word? Restructure it.
-- Any "here's what/this/that" throat-clearing? Cut to the point.
-- Any "not X, it's Y" contrasts? State Y directly.
-- Three consecutive sentences match length? Break one.
-- Paragraph ends with punchy one-liner? Vary it.
-- Em-dash anywhere? Remove it.
-- Vague declarative ("The implications are significant")? Name the specific implication.
-- Banned word (delve, leverage, robust, tapestry, transformative...)? Replace. See references/phrases.md.
-- Faux-insight setup ("what nobody tells you")? Cut the setup, keep the claim.
-- Colon reveal ("The best part: it learns")? Rewrite as a plain sentence.
-- Trailing "-ing" analysis ("..., highlighting the team's commitment")? Replace with the actual consequence.
-- Puffery ("marks a pivotal moment") or weasel attribution ("experts agree")? State the fact; name the source or cut.
-- Synonym cycling (agent/assistant/tool for the same thing)? Repeat the clear word.
-- Ends with "In conclusion" or a recap? Cut; end on the last concrete point.
-- Sentence portable to any company/product unchanged? Filler; cut or make it specific.
-- Narrator-from-a-distance ("Nobody designed this")? Put the reader in the scene.
-- Meta-joiners ("The rest of this essay...")? Delete. Let the essay move.
-- Internal ticket/gate ID or team-local nickname (`T-17`, `IG-6`, an emergent shorthand that isn't the thing's canonical name) anywhere but a commit message — a code/YAML comment, docstring, PR title or body, issue, doc? Cut it; describe what the thing does instead. This includes PRs/comments inside the very repo that owns the ticket system, not just other repos — the ticket files are almost always gitignored, so nobody reading the file has access to what the ID means.
-- A code comment longer than 2 lines, or a multi-paragraph header block above a function/file? Cut it to 1-2 lines next to the specific line it explains, or move the explanation to the commit message and leave a 1-line pointer.
-- A comment line over ~100 characters? Wrap or trim it — length alone signals it drifted from "one fact about this line" into prose.
-
-## Scoring
-
-Rate 1-10 on each dimension:
-
-| Dimension | Question |
-|-----------|----------|
-| Directness | Statements or announcements? |
-| Rhythm | Varied or metronomic? |
-| Trust | Respects reader intelligence? |
-| Authenticity | Sounds human? |
-| Density | Anything cuttable? |
-| Voice | Would the writer recognize it as their own? |
-
-Below 42/60: revise.
-
-## Examples
-
-See [references/examples.md](references/examples.md) for before/after transformations.
-
-## Plain vernacular technical explainers
-
-When explaining scoped technical work to readers unfamiliar with the codebase (relevance, design choices, implications, evidence), follow [references/plain-vernacular-explainers.md](references/plain-vernacular-explainers.md). Voice still follows Core Rules above; that reference adds audience, what/why/evidence structure, and evidence honesty (tests vs live PR).
-
-For prose the user will present as their own, also follow [references/user-voice.md](references/user-voice.md).
+See [examples](references/examples.md) for transformations. For technical explainers, follow [plain vernacular guidance](references/plain-vernacular-explainers.md). For prose the user will present as their own, also follow [user voice](references/user-voice.md).
 
 ## License
 

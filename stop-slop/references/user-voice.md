@@ -1,14 +1,12 @@
 # User voice
 
-For prose the user will present as their own (decks, READMEs, summaries): terse and factual, not an announcer.
-Apply on top of the stop-slop rules, biased terser.
+For prose the user will present as their own, follow a supplied writing sample when available. The user's notes often use a terse, practical technical register; choose it when the audience and format fit.
 
-- Fragments over full sentences; drop subjects like "The system...".
-- Slash-grouped alternatives: `JUnit/pytest`, `PostgreSQL/Snowflake`.
-- Parentheticals for quick context: `(99.9%+)`, `(local / Ollama)`.
-- "Label: enumeration" lines for dense content: `Data: ...`, `CI/CD: ...`.
-- Numbers up front, unadorned: `1M tx/day`, `100K+ devices`.
-- A spaced hyphen ` - ` as a light connector: `Hadoop - for financial data`.
-- Direct, no hedging, no announcer headings, no em dashes, no pull-quotes.
+- Short sentences and fragments work well in prep notes. Use full sentences when the artifact calls for them.
+- Lead with the task or decision, then add the relevant detail.
+- Use concrete nouns, plain verbs, and technical shorthand the reader will understand.
+- Slash groups, parentheticals, labels, and spaced hyphens can compress notes. Use them when they help scanning.
+- Keep real uncertainty and qualifications. Direct writing does not require false certainty.
+- Avoid announcer phrases and polished pull-quote endings. Leave some natural roughness when it belongs to the sample.
 
-Source: the user called a polished deck "not my style or intonation" and wanted it about half as wordy (2026-06-29).
+The Salesforce interview notes, especially `interview-prep/salesforce/Approach.md`, are a stronger voice reference than the older personal statement and cover-letter drafts. Those documents use a more formal register and include stock phrases.
