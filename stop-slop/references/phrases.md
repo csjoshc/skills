@@ -1,12 +1,12 @@
-# Phrases to Remove
+# Phrases to Inspect
 
 ## Contents
 
-- Banned Words
+- Words to Inspect
 - Throat-Clearing Openers
 - Emphasis Crutches
 - Business Jargon
-- Adverbs
+- Empty Emphasis and Stacked Qualifiers
 - Meta-Commentary
 - Faux-Insight Setups
 - Importance Puffery
@@ -19,15 +19,15 @@
 - Vendor Specificity in Agnostic Docs
 
 
-## Banned Words
+## Words to inspect
 
-Cut on sight (unless quoted as an example):
+These words can add puffery or hide a simple action. Replace them when a plainer, more exact word preserves the meaning. Keep them when they name a real property or fit the writer's voice.
 
 delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutting-edge, paradigm shift, game changer, this is huge, this changes everything, tapestry, realm, beacon, multifaceted, meticulous, intricate, paramount, transformative, elevate, embark, supercharge, harness, ever-evolving.
 
 ## Throat-Clearing Openers
 
-Remove these announcement phrases. State the content directly.
+Check whether these phrases delay the point. Cut the opener when the sentence works without it.
 
 - "Here's the thing:"
 - "Here's what [X]"
@@ -45,11 +45,11 @@ Remove these announcement phrases. State the content directly.
 - "Here's what I find interesting"
 - "Here's the problem though"
 
-Any "here's what/this/that" construction is throat-clearing before the point. Cut it and state the point.
+"Here's what/this/that" often announces content the sentence could state directly. Keep it when it introduces a real example or turn in the conversation.
 
 ## Emphasis Crutches
 
-These add no meaning. Delete them.
+These often add emphasis without information. Remove them when the surrounding sentence already carries the point.
 
 - "Full stop." / "Period."
 - "Let that sink in."
@@ -59,7 +59,7 @@ These add no meaning. Delete them.
 
 ## Business Jargon
 
-Replace with plain language.
+Prefer plain language when it keeps the same meaning.
 
 | Avoid | Use instead |
 |-------|-------------|
@@ -75,9 +75,9 @@ Replace with plain language.
 | Circle back | Return to, revisit |
 | On the same page | Aligned, agreed |
 
-## Adverbs
+## Empty emphasis and stacked qualifiers
 
-Kill all adverbs. No -ly words. No softeners, no intensifiers, no hedges.
+Remove adverbs and hedges when they only add emphasis or make a claim sound vague. Keep them when they carry real scope, timing, degree, uncertainty, or voice. Several qualifiers stacked on one claim usually need trimming.
 
 Specific offenders:
 
@@ -97,7 +97,7 @@ Specific offenders:
 - "importantly"
 - "crucially"
 
-Also cut these filler phrases:
+Common filler phrases to inspect:
 
 - "At its core"
 - "In today's [X]"
@@ -109,7 +109,7 @@ Also cut these filler phrases:
 
 ## Meta-Commentary
 
-Remove self-referential asides. The essay should move, not announce its own structure.
+Check whether a self-referential aside helps the reader. Cut it when it only announces the text's structure.
 
 - "Hint:"
 - "Plot twist:" / "Spoiler:"
@@ -125,7 +125,7 @@ Remove self-referential asides. The essay should move, not announce its own stru
 
 ## Faux-Insight Setups
 
-These flatter the writer as the lone expert. Cut the setup; make the claim stand alone.
+These can cast the writer as the lone expert. Cut the setup when the claim stands on its own.
 
 - "This is the part most people skip"
 - "What most people get wrong"
@@ -184,7 +184,7 @@ Announcing difficulty or significance rather than demonstrating it:
 
 ## Vague Declaratives
 
-Sentences that announce importance without naming the specific thing. Kill these.
+Sentences that announce importance without naming the specific thing. Replace the announcement when the source supports a concrete fact or consequence.
 
 - "The reasons are structural"
 - "The implications are significant"
@@ -196,10 +196,10 @@ If a sentence says something is important/deep/structural without showing the sp
 
 ## Architectural Metaphors (Lazy Abstractions)
 
-Replace these placeholders with concrete names. They feel like
-specificity but they aren't — they're the *idea* of specificity. The
-test: can you point at the file, class, function, or interface the
-metaphor is about? If not, the metaphor is hollow.
+These phrases can sound specific while hiding the mechanism. Name the
+file, class, function, or interface when the prose needs that detail
+and the source provides it. Keep a metaphor when it communicates more
+clearly than the implementation name.
 
 | Avoid | Replace with |
 |---|---|
@@ -214,9 +214,7 @@ metaphor is about? If not, the metaphor is hollow.
 | "Cleanly" / "elegantly" | Cut; if the design has a property worth naming, name the property |
 | "Modular" / "extensible" | Show the extension point: "new providers register via `create_provider(name, ProviderClass)`" |
 
-The pattern: architectural metaphors substitute for the concrete name.
-If you can't name the concrete artifact, you don't yet understand the
-design well enough to write about it — go find the name first.
+Use a concrete name when it helps the reader locate or understand the design. If the source does not identify the artifact, keep the wording general or ask for the missing detail.
 
 ## Vendor Specificity in Agnostic Docs
 
@@ -227,7 +225,7 @@ the claim. Common offenders:
 | Token | When it's wrong | What to write instead |
 |---|---|---|
 | "Vendor A runtime" | Doc claims runtime is configurable | "Local model runtime" or "OpenAI-compatible endpoint" |
-| "Ollama" | Same | Same — vendor name in a `runtime:` selector value only |
+| "Ollama" | Same | Same; keep the vendor name only in a `runtime:` selector value |
 | "<host>:<port>" | In a doc that's supposed to read at the abstraction level | "the host-side runtime URL (see `LLM_BASE_URL`)" |
 | "nginx" (in a load-balancer-agnostic doc) | When the reverse proxy is swappable | "reverse proxy" |
 | "Postgres" / "Redis" (in storage-agnostic docs) | When the storage layer is configurable | "persistent store" / "cache" |
