@@ -5,34 +5,34 @@ Genre framing for explaining scoped technical work to readers who do not know th
 ## Audience
 
 - Default reader: smart, busy, unfamiliar with this repo.
-- Prefer plain English and concrete names (files, jobs, checks, PRs) over ticket IDs and planning jargon.
-- Ticket / F-ids optional; lead with the failure mode and the fix, not the tracker label.
+- Use plain English and concrete names (files, jobs, checks, PRs).
+- Lead with the failure and the fix. Leave internal ticket IDs and planning jargon out of the prose.
 
 ## Structure (what / why / evidence)
 
 For each scoped change or claim:
 
-1. **What** — Name the edit in vernacular. What broke or was risky before? What does the reader see now?
-2. **Why** — Relevance, justification, and the design choice you made (and what you rejected if it matters).
-3. **Evidence** — How you know it works. Separate what tests proved from what a live PR / CI run proved.
+1. **What:** Name the edit in plain language. What broke or was risky before? What does the reader see now?
+2. **Why:** Explain the consequence and the design choice. Mention another option only when the reader needs to understand why you rejected it.
+3. **Evidence:** Explain how you know it works. Separate what tests proved from what a live PR or CI run proved.
 
-Put the reader in the room: concrete failure modes ("merge would have passed while X was still open"), not abstract "improved reliability."
+Use the actual failure mode, such as "merge would have passed with a required review still open," instead of an abstract claim like "improved reliability."
 
 ## Evidence honesty
 
-- Do not blur unit/integration coverage with live workflow proof.
-- Prefer a small table when both exist:
+- Separate unit and integration coverage from live workflow proof.
+- When both kinds of evidence matter, a small table can make the distinction clear:
 
 | Claim | Proved by tests | Proved by live PR / CI |
 | --- | --- | --- |
-| … | yes / no / partial — cite | yes / no / partial — cite run or PR |
+| … | yes / no / partial: cite | yes / no / partial: cite run or PR |
 
-- If evidence is missing, say so. Do not imply a live gate from a local test, or the reverse.
-- Scope claims to the edit under discussion. No portfolio language.
+- State when evidence is missing. A local test does not prove a live gate, and a live run does not replace a missing test.
+- Limit claims to the edit under discussion. Avoid claims about overall system quality or personal track record unless the evidence supports them.
 
 ## Vernacular rules (complement stop-slop)
 
-- Active voice; specific names; no em dashes; no filler; no formulaic AI structures (see Core Rules and `structures.md`).
+- Prefer specific names and active voice when the actor matters. Follow the writer's punctuation; check repeated dashes and formulaic structures in `structures.md`.
 - Explain implications in operator terms: what a reviewer, merger, or on-call person would hit.
 - Cut meta ("this section will cover"). State the change, then the proof.
-- Two items beat three. End when the claim and its evidence are clear.
+- Keep each distinct item. End when the claim and its evidence are clear.
