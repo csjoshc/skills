@@ -1,4 +1,6 @@
-# Structures to Avoid
+# Structures to Inspect
+
+Treat the patterns below as clues. A strong tell can justify an edit on one clear instance; weaker signs need repetition or another tell. Keep a pattern when it carries meaning or matches the writer's voice.
 
 ## Contents
 
@@ -16,14 +18,15 @@
 - False Agency
 - Narrator-from-a-Distance
 - Passive Voice
-- Sentence Starters to Avoid
+- Sentence Starters to Inspect
 - Rhythm Patterns
+- Document and Chat Residue
 - Word Patterns
 
 
 ## Binary Contrasts
 
-These create false drama. State the point directly.
+These often create false drama. State the point directly when the negative half adds no useful correction and the positive half carries the claim.
 
 | Pattern | Problem |
 |---------|---------|
@@ -39,7 +42,7 @@ These create false drama. State the point directly.
 | "is about X but not Y" | False distinction |
 | "not just X but also Y" | Additive hedge |
 
-**Instead:** State Y directly. "The problem is Y." "Y matters here." Drop the negation entirely.
+**Instead:** State Y when the contrast adds no information. Keep both sides when the reader holds the rejected belief or each side makes a distinct claim.
 
 ## Negative Listing
 
@@ -50,11 +53,11 @@ Listing what something is *not* before revealing what it *is*. A rhetorical stri
 | "Not a X... Not a Y... A Z." | Dramatic buildup through negation |
 | "It wasn't X. It wasn't Y. It was Z." | Same structure, past tense |
 
-**Instead:** State Z. The reader doesn't need the runway.
+**Instead:** State Z when the exclusions add no useful detail. Keep a negative list when the distinctions matter to the reader.
 
 ## Dramatic Fragmentation
 
-Sentence fragments for emphasis read as manufactured profundity.
+Repeated fragments used only for emphasis can sound staged. Keep fragments when the writer uses them deliberately or they improve pace.
 
 | Pattern | Problem |
 |---------|---------|
@@ -62,7 +65,7 @@ Sentence fragments for emphasis read as manufactured profundity.
 | "X. And Y. And Z." | Staccato drama |
 | "This unlocks something. [Word]." | Artificial revelation |
 
-**Instead:** Complete sentences. Trust content over presentation.
+**Instead:** Use a complete sentence when the fragments add no rhythm or meaning.
 
 ## Rhetorical Setups
 
@@ -75,11 +78,11 @@ These announce insight rather than deliver it.
 | "Think about it:" | Condescending prompt |
 | "And that's okay." | Unnecessary permission |
 
-**Instead:** Make the point. Let readers draw conclusions.
+**Instead:** Make the point when the setup adds no information. Keep a question or cue that serves a real purpose.
 
 ## Colon Reveals
 
-A noun phrase, a colon, then a dramatic reveal: "The detail that makes it work: a separate agent grades it." Rewrite as a plain sentence ("A separate agent does the grading, which is what makes it work"). Colons are for lists, labels, and quotes, not fake drama.
+A noun phrase, a colon, then a dramatic reveal can stage an ordinary point: "The detail that makes it work: a separate agent grades it." Rewrite it as a plain sentence when the colon adds no useful pause or structure. Colons also work for lists, labels, and quotes.
 
 ## Superficial Analysis
 
@@ -89,15 +92,15 @@ Trailing `-ing` clauses that pretend to explain meaning: "highlighting," "unders
 
 ## Synonym Cycling
 
-If the clear word is right, repeat it. Don't rotate terms for style. "The agent reviews the draft. The assistant scores the piece. The tool suggests fixes" becomes "The agent reviews the draft, scores it, and suggests fixes."
+If several terms refer to the same thing, repeat the clearest term or restructure the sentence. Keep distinct terms when they name distinct roles. "The agent reviews the draft. The assistant scores the piece. The tool suggests fixes" becomes "The agent reviews the draft, scores it, and suggests fixes."
 
 ## Fake-Profound Kickers
 
-Cut the final "deep" line when it turns the point into a metaphor, aphorism, or mic-drop. Do not rewrite it into a better metaphor. Delete it, then end on the clearest concrete sentence already in the draft.
+Cut a final metaphor, aphorism, or mic-drop when it only repeats the point. Keep it when it adds a distinct idea or fits the writer's voice.
 
 ## Summary-Recap Endings
 
-"In conclusion," "Ultimately," "Overall," or a final paragraph restating the piece. The reader was just there. End on the last concrete point, takeaway, or next action.
+Inspect "In conclusion," "Ultimately," "Overall," and final paragraphs that restate the piece. End on the last concrete point, consequence, or next action when the ending adds nothing new.
 
 ## Formatting Slop
 
@@ -106,7 +109,7 @@ Cut the final "deep" line when it turns the point into a metaphor, aphorism, or 
 - Bullet lists where two sentences of prose read better
 - Headers over two-sentence sections
 
-Format follows the content; it does not decorate it.
+Keep formatting that helps readers scan or understand the content. Remove decoration applied by habit.
 
 ## Formulaic Constructions
 
@@ -129,7 +132,7 @@ Giving inanimate things human verbs. Complaints don't "become" fixes. Bets don't
 | "the data tells us" | Data sits there. Someone reads it and draws a conclusion. |
 | "the market rewards" | Markets don't reward. Buyers pay for things. |
 
-**Instead:** Name the human. "The team fixed it that week" beats "the complaint becomes a fix." If no specific person fits, use "you" to put the reader in the seat.
+**Instead:** Name the person when the sentence hides who acted. Keep ordinary shorthand such as "the market grew" when it is clear and useful; do not force a human actor into every sentence.
 
 ## Narrator-from-a-Distance
 
@@ -142,45 +145,57 @@ Floating above the scene instead of putting the reader in it.
 | "This is why..." | Same |
 | "People tend to..." | Armchair sociologist |
 
-**Instead:** Put the reader in the room. "You don't sit down one day and decide to..." beats "Nobody designed this."
+**Instead:** Ground the claim in the reader's situation when that helps. Use "you" only when it fits the audience and claim.
 
 ## Passive Voice
 
-Every sentence needs a subject doing something. Passive voice hides the actor and drains energy.
+Passive voice can hide the actor. Prefer active voice when the actor matters and the source identifies them.
 
 | Pattern | Fix |
 |---------|-----|
-| "X was created" | Name who created it |
-| "It is believed that" | Name who believes it |
-| "Mistakes were made" | Name who made them |
-| "The decision was reached" | Name who decided |
+| "X was created" | Name who created it when known and relevant |
+| "It is believed that" | Name who believes it when the source identifies them |
+| "Mistakes were made" | Name who made them when known and relevant |
+| "The decision was reached" | Name who decided when the actor matters |
 
-**Instead:** Find the actor. Put them at the front of the sentence.
+**Instead:** Name the actor when doing so clarifies responsibility. Keep passive voice when the actor is unknown or the result matters more.
 
-## Sentence Starters to Avoid
+## Sentence Starters to Inspect
 
 | Pattern | Fix |
 |---------|-----|
-| Sentences starting with What, When, Where, Which, Who, Why, How | Restructure. Lead with the subject or the verb. |
-| Paragraphs starting with "So" | Start with content |
-| Sentences starting with "Look," | Remove |
+| Several sentences starting with the same word | Vary the openings when repetition sounds mechanical |
+| Paragraphs starting with "So" | Check whether the transition adds anything |
+| Sentences starting with "Look," | Cut staged openers; keep conversational uses that fit the voice |
 
-Wh- openers become a crutch. "What makes this hard is..." becomes "The constraint is..." or better, name the specific constraint.
+Repeated Wh- openers can become a crutch. "What makes this hard is..." could become "The constraint is..." or name the specific constraint. Keep an opener when it suits the sentence.
 
 ## Rhythm Patterns
 
 | Pattern | Fix |
 |---------|-----|
-| Three-item lists | Use two items or one |
-| Questions answered immediately | Let questions breathe or cut them |
-| Every paragraph ends punchily | Vary endings |
-| Em-dashes | Remove. Use commas or periods. No em dashes at all. |
-| Staccato fragmentation | Don't stack short punchy sentences |
+| Forced triads | Keep three items when each adds a distinct idea |
+| Questions answered immediately | Keep the question when it helps; remove it when it only stages the answer |
+| Repeated punchy paragraph endings | Vary endings when the pattern feels automatic |
+| Dashes | Check repeated em dashes or dashes used as a default connector. Keep them when they fit the writer's voice or clarify the sentence. |
+| Staccato fragmentation | Break up fragments when they add no rhythm or meaning |
+| Hyphenated modifiers after the noun | Use standard spelling, such as "the report is high quality"; preserve established hyphenation |
 | "Not always. Not perfectly." | Hedging disguised as reassurance |
+
+## Document and chat residue
+
+Remove text left over from drafting or chat when the reader does not need it.
+
+| Pattern | Edit |
+|---------|------|
+| Greeting, praise, or offer around the answer ("Great question," "I hope this helps") | Keep the answer and cut the wrapper |
+| A heading repeated in the first sentence | Delete the repeated sentence or use it to add information |
+| A paragraph describing what the document will discuss | Cut it when the section already makes the subject clear |
+| A knowledge-limit disclaimer followed by a guess | State what the source supports; remove the guess |
 
 ## Word Patterns
 
 | Pattern | Problem |
 |---------|---------|
 | Lazy extremes (every, always, never, everyone, everybody, nobody) | False authority. Use specifics instead of sweeping claims. |
-| All adverbs (-ly words, "really," "just," "literally," "genuinely," "honestly," "simply," "actually") | Empty emphasis. See phrases.md for full list. |
+| Empty adverbs ("really," "just," "literally," "genuinely," "honestly," "simply," "actually") | Cut when they add emphasis but no meaning. See phrases.md for scope and examples. |
