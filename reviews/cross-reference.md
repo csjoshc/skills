@@ -5,13 +5,13 @@ Each row is one underlying pattern; columns show how it manifests at
 each altitude. Blank cells are real gaps — not all patterns have a
 counterpart at every altitude, and the asymmetries are informative.
 
-**Audience:** `/antiplan`, `pr-review`, and `cleanup` skills. Any
+**Audience:** `/challenge`, `pr-review`, and `cleanup` skills. Any
 finding that cites a code from one column can be enriched with the
 sibling codes from the same row.
 
 **Source taxonomies:**
 
-- **AP-1..AP-16** — [`antiplan/references/anti-patterns.md`](../antiplan/references/anti-patterns.md) (design altitude)
+- **AP-1..AP-16** — [`challenge/references/anti-patterns.md`](../challenge/references/anti-patterns.md) (design altitude)
 - **ARCH-\*-\*** — [`reviews/arch-violations/`](arch-violations/README.md) (diff / both altitudes)
 - **M1..M12** + **P5-1..P5-12** — [`~/.skills/shared/QUALITY_RUBRIC.md`](../shared/QUALITY_RUBRIC.md) (mechanical / subjective)
 
@@ -43,7 +43,7 @@ where the reviewer can act. Cross-references go in prose, not in the
 
 ## Reading the table
 
-- **design (AP)** — catchable before code exists; `/antiplan` Phase 2.
+- **design (AP)** — catchable before code exists; `/challenge` Phase 2.
 - **structural (ARCH)** — catchable from diff or codebase topology.
 - **mechanical (M / P5)** — catchable from a single file, usually by
   a tool or a syntactic check.
@@ -168,7 +168,7 @@ the tests-as-X-ray reasoning lives.
 
 ## Skills that reference this table
 
-- **`/antiplan`** — Phase 2 challenge loop. When a speculative shape is
+- **`/challenge`** — Phase 2 challenge loop. When a speculative shape is
   surfaced, cross-reference the structural (ARCH) column to name the
   diff-time consequence the plan is flirting with. Makes the challenge
   concrete: "this AP-1 speculative seam is the design-time precursor
@@ -214,7 +214,7 @@ table; they shape its next revision.
   same rule for `category: Architectural Drift` and `category: Layer`.
 - **AP / P5 counterparts for the new structural codes (resolved).**
   `AP-15` ("I/O in the pure layer") and `AP-16` ("eager construction
-  of infrastructure") added to `antiplan/references/anti-patterns.md`.
+  of infrastructure") added to `challenge/references/anti-patterns.md`.
   `P5-13` ("eager construction at init") and `P5-14` ("mutable domain
   entity / in-place mutation") added to
   `~/.skills/shared/QUALITY_RUBRIC.md` Part 5. Demeter left without an M-code

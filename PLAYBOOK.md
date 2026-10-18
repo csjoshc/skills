@@ -10,12 +10,12 @@ Before stating what a skill does or advising that a step be skipped, read that s
 |---|---|---|
 | Make a small, scoped change | implement directly, `tdd` if you want test-first | No pipeline needed. |
 | Fix a bug | `tdd` (Prove-It path) | Reproduce with a failing test first. |
-| Build a defined feature (a few tickets) | `/todo spec <feature>` *(typed)* | Lite pipeline: spec-writer, optional ticket-critic, `/todo build`. |
-| Build something risky, contested or large | `/todo start <feature>` *(typed)* | antiplan runs Fast Mode first and escalates only if needed. |
-| Explore a fuzzy idea | `/make-prd` *(typed)* | Collaborative, not adversarial. |
+| Build a defined feature (a few tickets) | `/todo spec <feature>` *(typed)* | Lite pipeline: spec, optional ticket-review, `/todo build`. |
+| Build something risky, contested or large | `/todo start <feature>` *(typed)* | challenge runs Fast Mode first and escalates only if needed. |
+| Explore a fuzzy idea | `/prd` *(typed)* | Collaborative, not adversarial. |
 | Resume or hand off mid-pipeline | `/todo`, `/todo handoff` *(typed)* | Reads state from `.plan/` and `.tickets/`. |
 | Move work to a new harness, directory or colleague | `handoff` | Writes a portable prompt, plus `.handoff/plan-*.md` for complex work. |
-| Claim "done" | `verify-claim` | Inside a red-green loop the failing test is the evidence; use it at the end. |
+| Claim "done" | `verify` | Inside a red-green loop the failing test is the evidence; use it at the end. |
 | Open a PR | `pr-create` | |
 | Self-check your branch | the harness's built-in code review | Cheaper than pr-review. |
 | Review someone else's PR | `pr-review` | Posts evidence-backed inline comments. |
@@ -23,7 +23,7 @@ Before stating what a skill does or advising that a step be skipped, read that s
 | Audit a repo, package or directory | `cleanup` | For whole trees; branch diffs go to code review. |
 | Strip unused template packages | `prune` | Run before `cleanup`. |
 | Document a fork | `/fork-audit` *(typed)* | |
-| Sync skills or MCP servers across tools | `/agent-sync` *(typed)* | |
+| Sync skills or MCP servers across tools | `/sync` *(typed)* | |
 | Look back after a pass or a session that went sideways | `/retro` *(typed)* | Turns mistakes into hooks, lint or standards. Run it before clearing. |
 
 ## Phase boundaries

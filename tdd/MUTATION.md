@@ -141,7 +141,7 @@ Intent assertion:
   function to confirm the fix is tested.
 - `tdd` green-step: optional gate — run a 3-mutant pass before calling
   the cycle complete.
-- `verify-claim`: a survivor rate above a threshold (e.g., > 25%) flips
+- `verify`: a survivor rate above a threshold (e.g., > 25%) flips
   "VERIFIED" to "CLAIM_UNVERIFIED" for that claim.
 
 ## Hard rules

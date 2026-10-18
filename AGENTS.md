@@ -14,7 +14,7 @@
 
 When evaluating user ideas or generating recommendations:
 
-- Present alternatives if they exist and are relevant; reference upstream analysis (antiplan, spec-writer) to avoid re-debating settled decisions.
+- Present alternatives if they exist and are relevant; reference upstream analysis (challenge, spec) to avoid re-debating settled decisions.
 - Identify the strongest counterargument to any proposed approach before endorsing it.
 - Treat user-supplied material as third-party work — critique it with the same directness you'd apply to a stranger's draft.
 - Never soften a finding to spare feelings. A weak spec is a weak spec; poor architecture is poor architecture.

@@ -1,6 +1,6 @@
 # Symlink Map
 
-Authoritative symlink mapping for all AI coding agents. Used by `project-onboarding` and `agent-sync`.
+Authoritative symlink mapping for all AI coding agents. Used by `onboard` and `sync`.
 
 ## Global Symlinks
 
@@ -20,7 +20,7 @@ All paths symlink to the master store at `~/.skills`.
 
 **Note:** If a path does not exist, create parent directories before symlinking.
 
-**pi note:** pi treats every markdown file in its skills folder as a skill, so a single symlink to `~/.skills` made it warn about the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`). pi's skills path is therefore a real directory of per-skill symlinks, kept by `agent-sync/sync.py` the same way as Codex's. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
+**pi note:** pi treats every markdown file in its skills folder as a skill, so a single symlink to `~/.skills` made it warn about the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`). pi's skills path is therefore a real directory of per-skill symlinks, kept by `sync/sync.py` the same way as Codex's. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
 
 ### Codex exception: per-skill symlinks
 

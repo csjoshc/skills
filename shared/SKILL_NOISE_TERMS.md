@@ -16,7 +16,7 @@ Presence of any of these in a committed diff is a `scope-leak` finding. They bel
 `.tickets/`, `.plan/`, planning artifacts, commit messages, or PR-thread comments — never in
 the long-lived tree.
 
-> **Used by**: `pr-review`, `cleanup`, `pr-create` (pre-flight grep), `project-onboarding` (fork audit), `ticket-critic` (build-stage scan)
+> **Used by**: `pr-review`, `cleanup`, `pr-create` (pre-flight grep), `onboard` (fork audit), `ticket-review` (build-stage scan)
 > **Severity when found**: LOW (one-off comment) · MEDIUM (CI YAML, Makefile, docs, config filename) · HIGH (docstring on a public surface, path literal, identifier name)
 
 ---
@@ -39,7 +39,7 @@ the long-lived tree.
 
 ---
 
-## 2. spec-writer / ticket lifecycle
+## 2. spec / ticket lifecycle
 
 | Term / Pattern | Explanation |
 |---|---|
@@ -55,12 +55,12 @@ the long-lived tree.
 
 ---
 
-## 3. antiplan
+## 3. challenge
 
 | Term / Pattern | Explanation |
 |---|---|
 | `AP-1` … `AP-25` | Antiplan anti-pattern codes |
-| `Phase 0\|1\|2\|3\|3.5` (antiplan context) | Antiplan phase labels |
+| `Phase 0\|1\|2\|3\|3.5` (challenge context) | Antiplan phase labels |
 | `BROWNFIELD-CONTEXT`, `GREENFIELD-CONTEXT` | Antiplan section headers |
 | `PROBLEM-STATEMENT`, `TICKET-DAG`, `INTEGRATION-GATES` | Antiplan PRD section names |
 | `PHASE-GATE: Phase N → N+1` | Antiplan gate notation |
@@ -72,12 +72,12 @@ the long-lived tree.
 | `Fail Fast and Learn Faster` | Antiplan motto |
 | `PRD §1` … `§17` | Antiplan PRD section references |
 | `§8b`, `§8c` etc. | Antiplan section sub-codes |
-| `validate.py` (antiplan context) | Antiplan convergence-check artifact |
+| `validate.py` (challenge context) | Antiplan convergence-check artifact |
 | `coverage-auditor`, `challenger`, `champion` | Antiplan persona names |
 
 ---
 
-## 4. ticket-critic
+## 4. ticket-review
 
 | Term / Pattern | Explanation |
 |---|---|
@@ -123,13 +123,13 @@ The patterns the noise terms above compile to:
 ```
 ADR-[A-Z0-9-]+        # ADR labels in code/docs
 T-[0-9]{3,}           # ticket IDs
-FR-[0-9]+|NFR-[0-9]+|RISK-[0-9]+|DEBT-[0-9]+   # spec-writer codes
+FR-[0-9]+|NFR-[0-9]+|RISK-[0-9]+|DEBT-[0-9]+   # spec codes
 IG-[0-9]+G[0-9]*      # integration gate IDs
 [0-9]+G[0-9]+         # bare gate IDs (proof slugs)
 Slice [0-9]+
 Constitution P[0-9]+|^P[0-9]+\b|[^A-Z]P[0-9]+\b
 AP-[0-9]+
-Pattern [0-9]+        # ticket-critic codes
+Pattern [0-9]+        # ticket-review codes
 M[0-9]+\b             # rubric dimension codes (in code context only)
 ```
 
@@ -140,8 +140,8 @@ M[0-9]+\b             # rubric dimension codes (in code context only)
 | `pr-review` | diff hunks, including docstrings + path literals | `git diff main...HEAD -- '*.py' '*.ts' '*.tsx' '*.sh' '*.md' '*.yaml' '*.mmd'` |
 | `cleanup` | changed files in the working tree | same as above on staged + unstaged |
 | `pr-create` (Phase 3C) | full tree if deleting a package/module; otherwise diff | `git grep -nE '<pattern>' -- '*.md' '*.mmd' '.github/workflows/' 'helm/'` |
-| `project-onboarding` | full repo on first audit | `git grep -nE '<pattern>'` |
-| `ticket-critic` | build-stage tickets' AC verify commands | inspect AC `verify:` block in the ticket |
+| `onboard` | full repo on first audit | `git grep -nE '<pattern>'` |
+| `ticket-review` | build-stage tickets' AC verify commands | inspect AC `verify:` block in the ticket |
 
 ### Severity mapping
 

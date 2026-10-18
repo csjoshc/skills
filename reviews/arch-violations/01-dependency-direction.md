@@ -25,7 +25,7 @@ layer cake (data, domain, infrastructure) imports a symbol defined in a
 higher layer (transport, presentation, application). The direction is
 inverted relative to the project's declared topology.
 
-**Decidable at:** `both` — /antiplan Phase 2 sets the topology; pr-review
+**Decidable at:** `both` — /challenge Phase 2 sets the topology; pr-review
 and cleanup catch drift from it.
 
 **Why it compounds:** The lower layer is no longer reusable in isolation.
@@ -79,7 +79,7 @@ type surfaces a concrete implementation type — an ORM row, a framework
 request object, a vendor SDK type — instead of a domain type owned by
 the current layer.
 
-**Decidable at:** `both` — /antiplan should set the policy at Phase 2
+**Decidable at:** `both` — /challenge should set the policy at Phase 2
 ("domain types at the boundary, never implementation types"); diff
 review catches specific leaks.
 
@@ -105,7 +105,7 @@ edge. Imports like `import requests` or `from pathlib import Path`
 inside `domain/` are structurally enough to trigger this smell even
 when no upward layer import exists.
 
-**Decidable at:** `both` — /antiplan Phase 2 should set "no I/O in
+**Decidable at:** `both` — /challenge Phase 2 should set "no I/O in
 domain; environmental dependencies go through ports" as a policy.
 pr-review/cleanup catches the primitives on the diff. Distinct from
 `ARCH-DEP-UP` because no upward import is required — reaching for
@@ -239,7 +239,7 @@ pure arithmetic; `datetime.now()` is the violation.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Upward import | partial — sets the topology but cannot see code | ✅ | ✅ |
 | Sideways without sublayer | ❌ — emerges from code structure | ✅ | ✅ |
@@ -247,7 +247,7 @@ pure arithmetic; `datetime.now()` is the violation.
 | Leaking implementation type | partial — sets domain-type policy | ✅ | ✅ |
 | I/O primitive in pure module | partial — sets "no I/O in domain" policy | ✅ | ✅ |
 
-**partial** means /antiplan should set the policy but cannot detect
+**partial** means /challenge should set the policy but cannot detect
 instances. pr-review/cleanup should emit `category: Architectural Drift`
 with `decidable_at: design` whenever `plan_present: true` and the linked
 plan explicitly addressed the policy.

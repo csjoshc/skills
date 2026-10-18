@@ -1,7 +1,7 @@
 # Ticket contract
 
 The one definition of a `.tickets/NNN-slug.md` file.
-spec-writer writes it, `spec-writer/scripts/tickets_lint.py` checks it mechanically, ticket-critic reviews its design, `/tdd` and `/todo` read it.
+spec writes it, `spec/scripts/tickets_lint.py` checks it mechanically, ticket-review reviews its design, `/tdd` and `/todo` read it.
 No other file restates this schema; link here instead.
 
 ## Contents
@@ -41,7 +41,7 @@ Required: `id`, `title`, `Stage`, `Depends-On` (may be `[]`), `Files` (at least 
 `Files[].action` is `CREATE | MODIFY | VERIFY | DELETE`; add a `description` only when the path doesn't say enough.
 At most 5 non-test files per ticket; split above that.
 
-Optional: `Blocks`, `Type` (`integration-gate` for gates), `Gate` (the gate that validates this ticket; trackboard reads it), `Validates` (on a gate: the tickets it proves), `Read-First`, `Assumptions-Validated` (PRD assumption ids), `Regression-Baseline` (commands that must stay green).
+Optional: `Blocks`, `Type` (`integration-gate` for gates), `Gate` (the gate that validates this ticket), `Validates` (on a gate: the tickets it proves), `Read-First`, `Assumptions-Validated` (PRD assumption ids), `Regression-Baseline` (commands that must stay green).
 A `BLOCKED` ticket also needs `Blocked-By` (what it waits for) and `Unblock-Check` (one command that exits 0 once unblocked).
 
 Paths are repo-relative, or absolute for other repos.
@@ -108,6 +108,6 @@ A gate reaches `Stage: COMPLETE` only when a session other than the implementing
 
 ## Lint
 
-`python3 spec-writer/scripts/tickets_lint.py .tickets` checks everything mechanical in this file: frontmatter, sections, the AC table, paths against the DAG, `bash -n` on Verify, and known traps (`-k` or-chains, bare `!`, em dashes).
+`python3 spec/scripts/tickets_lint.py .tickets` checks everything mechanical in this file: frontmatter, sections, the AC table, paths against the DAG, `bash -n` on Verify, and known traps (`-k` or-chains, bare `!`, em dashes).
 `--runner "<pytest command>" --dry-red` also runs every test-id check and every read-only shell check (grep, test, jq) now, before build, fails when one breaks for an environmental reason (tool or module missing), and warns when one passes already (fine for a preservation check, a bug otherwise).
-spec-writer runs it before handing off; ticket-critic runs it first and reviews only design, risk and scope after it passes.
+spec runs it before handing off; ticket-review runs it first and reviews only design, risk and scope after it passes.

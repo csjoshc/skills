@@ -24,7 +24,7 @@ relation with no explicit limit, pagination token, or cursor — relying
 on "there won't be that many rows." Works on seed data; catastrophic
 at scale.
 
-**Decidable at:** `both` — /antiplan should set "all list endpoints
+**Decidable at:** `both` — /challenge should set "all list endpoints
 paginate" as a policy; diff review finds violations.
 
 **Why it compounds:** Fine until the table grows. First incident is a
@@ -75,7 +75,7 @@ message consumer, payment flow) can be invoked multiple times for the
 same logical event and produce multiple side effects — no idempotency
 key, no dedupe store, no compare-and-swap.
 
-**Decidable at:** `both` — /antiplan should mandate idempotency for any
+**Decidable at:** `both` — /challenge should mandate idempotency for any
 retried-by-design path.
 
 **Why it compounds:** Retries are not "if," they're "when." A single
@@ -94,7 +94,7 @@ write is money/inventory/auth; else `HIGH` / `rule_code: ARCH-DATA-NON-IDEMPOTEN
 call is issued without a bounded deadline. Default behavior on
 upstream slowness is to wait forever.
 
-**Decidable at:** `both` — /antiplan should mandate timeouts at every
+**Decidable at:** `both` — /challenge should mandate timeouts at every
 outbound-call site.
 
 **Why it compounds:** One slow dependency cascades: worker threads
@@ -173,7 +173,7 @@ config) — the query count doesn't scale with user data.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Unbounded query | partial — should mandate pagination | ✅ | ✅ |
 | N+1 | ❌ — emerges in code | ✅ | ✅ |
@@ -181,7 +181,7 @@ config) — the query count doesn't scale with user data.
 | Non-idempotent write | partial — should mandate idempotency policy | ✅ | ✅ |
 | Missing timeout | partial — should mandate timeouts everywhere | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see the code.
+**partial** means /challenge sets the policy but cannot see the code.
 When `plan_present: true` and the plan addressed pagination, idempotency,
 or timeouts, pr-review/cleanup may emit `category: Architectural Drift`
 with `decidable_at: design`.

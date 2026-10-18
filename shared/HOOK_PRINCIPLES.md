@@ -1,7 +1,7 @@
 # Hook & Skill Principles
 
 Canonical reference for when to invoke each enforcement skill and when
-to promote it to a hook. Referenced by `project-onboarding`,
+to promote it to a hook. Referenced by `onboard`,
 and any agent that asks "should this be a hook?"
 
 ## Why hooks backfire
@@ -32,15 +32,15 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 | Skill / companion | Best trigger | Avoid when | Hook? |
 |---|---|---|---|
-| `verify-claim` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
+| `verify` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
 | `caveman` | Context > 50%, bulk reports | First reply, specs, errors | No - the agent cannot measure its own context; invoke on demand |
 | `cleanup/WRITE_TIME_GUARD.md` | New file or new export in mature repo | Tests, generated, prototypes | No — call from workflow |
 | `cleanup/LAYER_ENFORCEMENT.md` | Import added AND layer map exists | No layer map | **Advisory** PostToolUse |
 | `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | **Advisory** on test file writes |
 | `tdd/MUTATION.md` | End of TDD cycle, pre-PR audit | Every save (too slow) | No — on demand |
-| `project-onboarding/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
+| `onboard/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
 | Self code review | Before `gh pr create` | Draft PRs | No - `pr-create` Phase 0 runs it |
-| `ticket-critic` AC→Test table | Ticket readiness before build | NEW/SPEC tickets | No - `/todo` routes Full-mode tickets through the report gate |
+| `ticket-review` AC→Test table | Ticket readiness before build | NEW/SPEC tickets | No - `/todo` routes Full-mode tickets through the report gate |
 | `pr-fix` staleness | After each review-comment fix | No PR open | No — internal |
 | `cleanup` Phase 0 | On-demand audit, pre-PR self-review | After every edit | No |
 
@@ -51,7 +51,7 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 Examples applied:
 
-- `verify-claim` on `git commit` → HIGH cost (false done), CHEAP check
+- `verify` on `git commit` → HIGH cost (false done), CHEAP check
   (scan recent claims), RARE event → **hook**.
 - `mutation-critic` on every save → HIGH cost (tautological test), but
   EXPENSIVE check (seconds) and FREQUENT event → **skill**.
@@ -85,9 +85,9 @@ One hook. Add another only when a real failure mode points to it.
 
 | Hook | Event | Mode | Timeout |
 |---|---|---|---|
-| `verify-claim-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
+| `verify-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
 
-It only catches an agent that ran verify-claim, recorded a failure, and
+It only catches an agent that ran verify, recorded a failure, and
 tried to ship anyway. It cannot catch an agent that never ran the check;
 that rule lives in AGENTS.md and `pr-create` Phase 0.
 
@@ -113,7 +113,7 @@ Anti-examples (do NOT add these):
 
 Hooks accept two bypasses:
 
-1. Resolve the cause (for `verify-claim-gate`: produce the evidence, or
+1. Resolve the cause (for `verify-gate`: produce the evidence, or
    the user says `override: <reason>` and the agent deletes the marker
    and records the reason in the PR body).
 2. `.hooks-disabled` (or `.claude/hooks-disabled`) at repo root - hooks

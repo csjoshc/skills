@@ -33,11 +33,11 @@ a fresh session.
 
 ## Decidable-at legend
 
-- **design** — `/antiplan` Phase 2 should catch this before code exists. If
+- **design** — `/challenge` Phase 2 should catch this before code exists. If
   `pr-review` finds one with `plan_present: true`, emit as
   `category: Architectural Drift` with `decidable_at: design`.
 - **diff** — Only visible once code exists. Regular lens finding.
-- **both** — `/antiplan` sets the policy; `pr-review`/`cleanup` enforces it
+- **both** — `/challenge` sets the policy; `pr-review`/`cleanup` enforces it
   against the diff/codebase.
 
 ## Cross-reference

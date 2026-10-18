@@ -13,7 +13,7 @@ AI anti-patterns).
 comments, use the `pr-review` skill.
 
 If asked to also post comments or edit tickets, decline that part, name `pr-review`
-(or `ticket-critic` for tickets) as the skill to use, and still deliver the audit report.
+(or `ticket-review` for tickets) as the skill to use, and still deliver the audit report.
 Do not offer to post them yourself.
 
 ---
@@ -25,7 +25,7 @@ Do not offer to post them yourself.
 - Remediation planning after a quality gate failure
 
 **Not for:** editing `.tickets/*.md`, epic splits, implementation specs → use
-`ticket-critic`. Not for posting GitHub review comments → use `pr-review`.
+`ticket-review`. Not for posting GitHub review comments → use `pr-review`.
 
 ---
 
@@ -177,9 +177,9 @@ cross-cutting concern (logging, config, errors, file I/O).
 
 | In scope                    | Out of scope                                     |
 | --------------------------- | ------------------------------------------------ |
-| Source code audits          | Editing `.tickets/*.md` → ticket-critic          |
+| Source code audits          | Editing `.tickets/*.md` → ticket-review          |
 | Package / directory audits  | Live PR comments on GitHub → pr-review           |
-| Architecture pattern checks | Visual UI validation → ui-work / chrome-devtools |
+| Architecture pattern checks | Visual UI validation → ui / chrome-devtools |
 
 ---
 

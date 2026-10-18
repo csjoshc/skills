@@ -5,13 +5,13 @@ Fill bracketed slots from detected state; each prompt is stand-alone.
 
 ## Contents
 
-- Template: antiplan-start (manual path for a new, risky or large feature)
-- Template: antiplan-resume (Phase 0 or 1 incomplete)
-- Template: antiplan-audit-resume (dag-done-no-audits)
+- Template: challenge-start (manual path for a new, risky or large feature)
+- Template: challenge-resume (Phase 0 or 1 incomplete)
+- Template: challenge-audit-resume (dag-done-no-audits)
 - Template: audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
-- Template: spec-writer-next (dag-done)
-- Template: ticket-critic-next (tickets-written-uncriticized)
-- Template: spec-writer-fix (critic-failed)
+- Template: spec-next (dag-done)
+- Template: ticket-review-next (tickets-written-uncriticized)
+- Template: spec-fix (critic-failed)
 - Template: build-ticket-manual (ready-for-build / partial-build)
 - Template: build-ticket-resume (mid-build-resume)
 - Template: slice-gate-review (slice-gate-pending)
@@ -22,25 +22,25 @@ these templates. Fill in the bracketed slots from detected state. Each
 prompt is stand-alone — the next session loads it cold with no memory of
 this one.
 
-### Template: antiplan-start (Manual mode, new Full pipeline)
+### Template: challenge-start (Manual mode, new Full pipeline)
 
 ```
-Invoke the /antiplan skill for this feature:
+Invoke the /challenge skill for this feature:
 
 **Feature:** <feature description from user>
 **Working directory:** <pwd>
 **Artifact output dir:** .plan/
 
-Let antiplan pick its mode (Fast Mode by default). If it escalates to a
+Let challenge pick its mode (Fast Mode by default). If it escalates to a
 phased mode, write brownfield-context.md, PRD.md and task-sequence.md into
 .plan/ and stop after Phase 3. Do not emit fleshed ticket bodies; those are
-downstream (spec-writer).
+downstream (spec).
 ```
 
-### Template: spec-writer-direct (Manual mode, new Lite pipeline)
+### Template: spec-direct (Manual mode, new Lite pipeline)
 
 ```
-Invoke the spec-writer skill for this defined feature (no antiplan PRD):
+Invoke the spec skill for this defined feature (no challenge PRD):
 
 **Feature:** <feature description from user>
 **Working directory:** <pwd>
@@ -54,10 +54,10 @@ Return ticket paths, unresolved assumptions, and lint result; do not repeat
 full ticket contents in chat.
 ```
 
-### Template: antiplan-resume (Phase 0 or 1 incomplete)
+### Template: challenge-resume (Phase 0 or 1 incomplete)
 
 ```
-Resume /antiplan. The following artifacts exist and should be treated as
+Resume /challenge. The following artifacts exist and should be treated as
 already-approved inputs — do not re-derive them:
 
 - <list of existing files under .plan/ with absolute paths>
@@ -66,10 +66,10 @@ Continue from <detected phase>. Do not rewrite approved artifacts unless
 the user explicitly asks.
 ```
 
-### Template: antiplan-audit-resume (dag-done-no-audits)
+### Template: challenge-audit-resume (dag-done-no-audits)
 
 ```
-Resume /antiplan to run the Phase 3 / Phase 3.5 final-pass audits. The
+Resume /challenge to run the Phase 3 / Phase 3.5 final-pass audits. The
 DAG is already written; do NOT regenerate it.
 
 **Existing artifacts (treat as approved input):**
@@ -81,7 +81,7 @@ DAG is already written; do NOT regenerate it.
 
 1. If .plan/challenger-report.md is missing OR older than task-sequence.md:
    Run the Challenger per references/subagent-prompts.md (subagent suggested).
-   Pass it ~/.skills/antiplan/rubric.yaml as the AP source of truth.
+   Pass it ~/.skills/challenge/rubric.yaml as the AP source of truth.
    Save its full output (per-AP audit table + per-finding entries +
    summary with VERDICT line) to .plan/challenger-report.md.
 
@@ -96,7 +96,7 @@ DAG is already written; do NOT regenerate it.
 
 3. Run validate.py against both reports and confirm exit 0 before halt:
    ```
-   python3 ~/.skills/antiplan/validate.py \
+   python3 ~/.skills/challenge/validate.py \
      --project-dir . \
      --tickets .plan/task-sequence.md \
      --prd .plan/PRD.md \
@@ -105,16 +105,16 @@ DAG is already written; do NOT regenerate it.
    ```
 
 4. After both reports exist AND validate.py exits 0, do not proceed to
-   spec-writer in this session. Stop and confirm exit status to user.
+   spec in this session. Stop and confirm exit status to user.
    If validate.py exits non-zero, surface the specific failure and halt
-   without proceeding to spec-writer — the user must direct resolution
+   without proceeding to spec — the user must direct resolution
    (which becomes a `audit-fix-resume` invocation).
 ```
 
 ### Template: audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
 
 ```
-Resume /antiplan to address Phase 3 / Phase 3.5 audit failures. The DAG
+Resume /challenge to address Phase 3 / Phase 3.5 audit failures. The DAG
 is the starting point — modify it only to resolve the findings below.
 
 **Existing artifacts (approved input — do not rewrite unless resolving
@@ -207,7 +207,7 @@ receiving agent doesn't re-fetch):
    silently proceed.
 4. Run validate.py against the new reports:
    ```
-   python3 ~/.skills/antiplan/validate.py \
+   python3 ~/.skills/challenge/validate.py \
      --project-dir . \
      --tickets .plan/task-sequence.md \
      --prd .plan/PRD.md \
@@ -224,7 +224,7 @@ receiving agent doesn't re-fetch):
    Only when all four conditions hold may the receiving agent stop
    with "audit-fix complete." If any condition fails, halt with a
    structured report naming exactly which condition failed and what
-   the receiving agent attempted. Do not proceed to spec-writer in
+   the receiving agent attempted. Do not proceed to spec in
    this session.
 ```
 
@@ -243,10 +243,10 @@ receiving agent doesn't re-fetch):
   options exist, the driver halts and asks the user whether to accept
   partial resolution.
 
-### Template: spec-writer-next (dag-done)
+### Template: spec-next (dag-done)
 
 ```
-Invoke the /spec-writer skill.
+Invoke the /spec skill.
 
 **Inputs:**
 - .plan/PRD.md
@@ -255,7 +255,7 @@ Invoke the /spec-writer skill.
 
 **Task:** For every stub in task-sequence.md §2, write one fleshed ticket
 file to .tickets/NNN-slug.md following ~/.skills/shared/TICKET_CONTRACT.md.
-Before finishing, run `python3 ~/.skills/spec-writer/scripts/tickets_lint.py .tickets --dry-red --runner "<project pytest command>"`
+Before finishing, run `python3 ~/.skills/spec/scripts/tickets_lint.py .tickets --dry-red --runner "<project pytest command>"`
 and fix every ERROR.
 
 Numbering: use the next-available numeric prefix in .tickets/ (inspect
@@ -266,10 +266,10 @@ Return created ticket paths, unresolved assumptions, and lint result; do not
 repeat the approved PRD or task-sequence in chat.
 ```
 
-### Template: ticket-critic-next (tickets-written-uncriticized)
+### Template: ticket-review-next (tickets-written-uncriticized)
 
 ```
-Invoke the /ticket-critic skill.
+Invoke the /ticket-review skill.
 
 **Inputs:**
 - .tickets/*.md (excluding .plan/)
@@ -278,13 +278,13 @@ Invoke the /ticket-critic skill.
 **Task:** Run the lint, then review design and risk. Emit a report
 at .plan/critic-report.md with one line per ticket: `PASS <id>` or
 `FAIL <id>: <reasons>`. Do not change ticket files or stages. On any FAIL,
-stop the build handoff and route failing tickets to spec-writer for repair.
+stop the build handoff and route failing tickets to spec for repair.
 ```
 
-### Template: spec-writer-fix (critic-failed)
+### Template: spec-fix (critic-failed)
 
 ```
-Invoke /spec-writer in fix mode.
+Invoke /spec in fix mode.
 
 **Inputs:**
 - .plan/critic-report.md (list of FAIL tickets and reasons)
@@ -301,7 +301,7 @@ Return changed ticket paths and lint result; do not repeat ticket contents.
 ### Template: build-ticket-manual (ready-for-build / partial-build)
 
 Per-ticket flow. Single session per ticket using
-`/tdd` for red-green-refactor and `/verify-claim` as the evidence gate
+`/tdd` for red-green-refactor and `/verify` as the evidence gate
 before commit. Subagents are reserved for slice gates, not per-ticket.
 
 Full template body: see `references/execution-templates.md` §

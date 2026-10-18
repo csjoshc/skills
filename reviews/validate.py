@@ -429,7 +429,7 @@ def structural_findings_have_proof(t: Transcript) -> list[str]:
 def architectural_drift_has_plan_reference(t: Transcript) -> list[str]:
     """Every VALIDATED `Architectural Drift` finding must either cite the
     linked plan in `proof:` or explicitly say `no-plan-available`. This
-    enforces the feedback loop to /antiplan: drift findings must trace
+    enforces the feedback loop to /challenge: drift findings must trace
     back to a plan that was (or wasn't) available."""
     errors = []
     for f in t.findings:
@@ -455,7 +455,7 @@ def architectural_drift_has_plan_reference(t: Transcript) -> list[str]:
             and "plan" not in proof
             and "prd" not in proof
             and "architecture-decisions" not in proof
-            and "antiplan" not in proof
+            and "challenge" not in proof
         ):
             errors.append(
                 f"finding {fid}: Architectural Drift `proof:` must reference "

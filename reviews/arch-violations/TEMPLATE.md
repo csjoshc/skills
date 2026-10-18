@@ -93,7 +93,7 @@ actually fine. Prevents false positives on similar-shaped code. Include:
 
 Which skill/stage catches each smell in this file.
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | <smell-1> | ✅ / ❌ / partial | ✅ / ❌ | ✅ / ❌ |
 | <smell-2> | ... | ... | ... |
