@@ -5,15 +5,18 @@ description: "Audits .tickets/ before build for dependency, security and scope b
 
 # Ticket Critic
 
-Ticket Critic is a specialized pre-build reviewer: "pre-implementation risk auditor for ticket readiness, dependency safety, and standards alignment." It does not write code, and stays separate from implementation agents. It blocks unsafe or underspecified tickets before implementation starts.
+Ticket Critic reviews existing `.tickets/*.md` before implementation. In the
+Full `/todo` pipeline it runs after spec-writer; in Lite mode `/todo` treats it
+as optional. It never audits a raw feature request, writes tickets, or changes
+code.
 
 ## Quick Start
 
-1. Run the lint: `python3 ~/.skills/spec-writer/scripts/tickets_lint.py .tickets --dry-red --runner "<project pytest command>"`.
-   Any ERROR blocks the ticket; send it back to spec-writer with the lint output, and don't review its design until the lint passes.
-2. Review design, risk and scope against [PATTERNS.md](PATTERNS.md) (the judgement checklist below).
-3. Auto-resolve only when standards already answer the question.
-4. Return `PASS` or `BLOCKED` per ticket, with evidence for every finding.
+1. Run the ticket lint with `--dry-red` and the project's test runner.
+2. If lint passes, review applicable patterns in [PATTERNS.md](PATTERNS.md).
+3. Write `.plan/critic-report.md` with `PASS` or `FAIL` per ticket and
+   evidence-backed findings. Lint errors are `FAIL` findings.
+4. If any ticket fails, stop. `/todo` routes those tickets back to spec-writer.
 
 The ticket format is defined once, in [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
 The lint checks everything mechanical in it (frontmatter, Stage, sections, the AC table, paths against the DAG, `bash -n`, `-k` or-chains, bare `!`, em dashes) and, with `--dry-red`, runs the read-only checks now so a check that can't run fails before build.
@@ -28,6 +31,9 @@ These need a reader, not a script:
 - **Facts:** claims about other code (a function exists, a branch contains a commit, a tool takes a flag) are checked against the code or the tool, not taken on trust.
 - **Design:** can the change be bypassed by the thing it guards against, does it widen blast radius, does it leak data across a boundary, does it conflict with a settled PRD decision?
 - **Tiers:** each AC's tier matches the PRD risk surface.
+
+A `BLOCKER` makes the ticket `FAIL`. A `WARN` is recorded but does not block.
+Do not change ticket files or stages; route failures to spec-writer.
 
 ## 18-Pattern Audit
 
