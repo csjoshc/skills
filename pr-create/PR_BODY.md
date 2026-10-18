@@ -72,7 +72,7 @@ Show a before and an after.
 Screenshots are the strongest evidence when the change is visual and the environment can take them ([EVIDENCE_UI.md](EVIDENCE_UI.md)).
 Execution evidence comes next: name the exact test that failed before and passes now, plus the runner output ([EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md)).
 Test Results and Coverage hold the pasted logs from `/tmp/`; drop either sub-section only when there is nothing to paste and say why.
-A bug fix with no correct test seam states that here, as the finding (see verify-claim's regression test rule).
+A bug fix with no correct test seam states that here, as the finding (see verify's regression test rule).
 
 ### Merge Danger
 

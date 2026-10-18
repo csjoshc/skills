@@ -1,6 +1,6 @@
 # Output Templates
 
-Templates for the deliverables produced by the antiplan skill. These are
+Templates for the deliverables produced by the challenge skill. These are
 populated after Phase 3 completes and the DAG is approved by the user.
 
 ---
@@ -12,7 +12,7 @@ populated after Phase 3 completes and the DAG is approved by the user.
 
 ## Status: APPROVED | DRAFT
 ## Date: [date]
-## Author: [user] + antiplan skill
+## Author: [user] + challenge skill
 
 ---
 
@@ -188,7 +188,7 @@ before ticket generation.
 ## Ticket templates
 
 Ticket files (feature, integration gate, infrastructure) follow one contract: [`TICKET_CONTRACT.md`](TICKET_CONTRACT.md).
-antiplan's task-sequence stubs use the same frontmatter (`id`, `title`, `Stage: NEW`, `Depends-On`, `Blocks`, `Gate`, `Files`) plus a short scope and two or three invariant ACs; spec-writer turns each stub into a full ticket and runs `spec-writer/scripts/tickets_lint.py`.
+challenge's task-sequence stubs use the same frontmatter (`id`, `title`, `Stage: NEW`, `Depends-On`, `Blocks`, `Gate`, `Files`) plus a short scope and two or three invariant ACs; spec turns each stub into a full ticket and runs `spec/scripts/tickets_lint.py`.
 
 ---
 
@@ -352,7 +352,7 @@ Rules:
 
 ---
 
-## make-prd-specific templates
+## prd-specific templates
 
 ### PRD Output Template
 

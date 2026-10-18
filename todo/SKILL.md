@@ -23,14 +23,14 @@ the mode choice. If the pipeline is complete, report completion without asking.
 cold-start resume prompt.
 
 For a small, already-scoped change that fits one session, skip `/todo` and use
-the relevant skill directly. For frontend UI work, that entry is `/ui-work`.
+the relevant skill directly. For frontend UI work, that entry is `/ui`.
 
 ## Pipeline
 
 ```text
-Full: antiplan → validate → spec-writer → ticket-critic → build
-Lite: spec-writer → optional ticket-critic → build
-Build: /tdd + /verify-claim, then Stage NEW → BUILD → COMPLETE
+Full: challenge → validate → spec → ticket-review → build
+Lite: spec → optional ticket-review → build
+Build: /tdd + /verify, then Stage NEW → BUILD → COMPLETE
 ```
 
 Artifacts on disk carry state between stages: planning artifacts go in
@@ -57,8 +57,8 @@ and continue without asking the user to copy prompts between stages. Preserve
 the specialist skill's own instructions and approval gates.
 
 For a ticket whose scope changes frontend UI, call the Skill tool with
-`ui-work` for visual implementation and browser review while preserving the
-ticket ACs, `/tdd`, and `/verify-claim` gates.
+`ui` for visual implementation and browser review while preserving the
+ticket ACs, `/tdd`, and `/verify` gates.
 
 ## Escalation
 
@@ -79,9 +79,25 @@ commit, stash, or choose a separate worktree.
 For `/todo status`, list the detected state, present artifacts, ticket stages,
 staleness warnings, and the recommended next skill. Do not execute that skill.
 
+When tickets exist, show a Markdown table with `Stage` and `Tickets` columns,
+counting implementation tickets by their current `Stage:` values.
+Keep each source stage distinct, including FAILED, and flag missing or unknown stages.
+Follow it with `N/M implementation tickets complete`, the in-flight ticket IDs,
+blockers, and the next action.
+Count only `Stage: COMPLETE` as complete; this is a ticket count, not an effort estimate.
+Report integration gates separately with their IDs and stages, excluding them
+from the implementation total; use the gate markers in state detection.
+When there are no implementation tickets, omit the fraction.
+Before tickets exist, report the pipeline state and next action without a ticket table.
+
+Derive progress from the existing `.tickets/` and `.plan/` artifacts on each run.
+Keep it in the response: no progress files, history, percentages, graphical bars,
+or generated diagrams.
+Archify remains an independent skill for explicitly requested diagrams and explainers.
+
 For Manual mode, emit only a short state summary and the next-stage prompt. For
-Auto mode, report progress at stage boundaries and finish with either pipeline
-completion or the escalation details.
+Auto mode, include the progress table at stage boundaries and finish with either
+pipeline completion or the escalation details.
 
 ## Companion files
 

@@ -78,7 +78,7 @@ conventions, linter config, or AGENTS.md explicitly bans — a banned
 type (`any`, untyped dict), a banned logger, a banned error class, a
 banned dependency. The agent didn't read the conventions.
 
-**Decidable at:** `both` — /antiplan's ARCHITECTURE-DECISIONS should
+**Decidable at:** `both` — /challenge's ARCHITECTURE-DECISIONS should
 surface the bans; diff review catches specific violations.
 
 **Why it compounds:** Each reintroduction dilutes the ban. Reviewers
@@ -175,7 +175,7 @@ payload) where the type is nominal, not enforced.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Parallel implementation | ❌ — requires repo knowledge | ✅ | ✅ |
 | Unjustified shim | ❌ — emerges from diff shape | ✅ | ✅ |
@@ -183,7 +183,7 @@ payload) where the type is nominal, not enforced.
 | Rejected pattern | partial — should surface bans | ✅ | ✅ |
 | Compat cruft for unpublished code | ❌ — requires release-history check | ✅ | ✅ |
 
-**partial** means /antiplan should name the ban but cannot detect
+**partial** means /challenge should name the ban but cannot detect
 instances. When `plan_present: true` and the plan or AGENTS.md named
 the rejected pattern, emit as `category: Architectural Drift` with
 `decidable_at: design`.

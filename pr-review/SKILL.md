@@ -35,7 +35,7 @@ codebase audits not tied to a pull request, use `cleanup`.
 Do not use for:
 
 - Full codebase audits unrelated to a PR → use `cleanup`
-- Editing ticket/spec markdown → use `ticket-critic`
+- Editing ticket/spec markdown → use `ticket-review`
 
 ---
 

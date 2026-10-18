@@ -120,7 +120,7 @@ Produce a structured markdown document following the **Output Contract** below.
 
 **If diagrams enabled** (default for architect/engineer):
 1. Generate `.mmd` files using patterns from [reference/diagram-patterns.md](reference/diagram-patterns.md).
-2. Use `classDef` conventions from `~/.skills/confluence-diagrams/example-conventions.mmd`.
+2. Use `classDef` conventions from `~/.skills/confluence/example-conventions.mmd`.
 3. Render: `mmdc -i <file>.mmd -o <file>.svg -b transparent`
 4. Reference each diagram in the YAML frontmatter `diagrams` array.
 
@@ -207,7 +207,7 @@ A complete worked output: [example/output-contract-example.md](example/output-co
   If no timeline exists, write "TIMELINE TBD".
 - **Never lose information silently.** Content cut for the audience goes in the parking lot appendix.
 - **Diagram conventions.** Reuse `classDef` colors and edge styles from
-  `~/.skills/confluence-diagrams/example-conventions.mmd`. Include a legend subgraph for
+  `~/.skills/confluence/example-conventions.mmd`. Include a legend subgraph for
   diagrams with more than 5 nodes.
 - **Output contract is strict.** Every output must use the YAML frontmatter + `## Slide:` section
   format so downstream consumers can parse it reliably.

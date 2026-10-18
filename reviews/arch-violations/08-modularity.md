@@ -79,7 +79,7 @@ code simultaneously encodes all historical versions of itself; every
 new contributor must reason about the full power set of flag
 combinations.
 
-**Decidable at:** `both` — /antiplan should require retirement criteria
+**Decidable at:** `both` — /challenge should require retirement criteria
 when a flag is introduced.
 
 **Why it compounds:** The test matrix grows as the product of all
@@ -156,14 +156,14 @@ a second one?"
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Premature abstraction | ❌ — emerges from code | ✅ | ✅ |
 | Duplicate cross-cutting concern | partial — can mandate a canonical module | ✅ | ✅ |
 | God module / god type | ❌ — grows over time | ✅ | ✅ |
 | Flag sprawl | partial — should require retirement criteria | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot detect instances.
+**partial** means /challenge sets the policy but cannot detect instances.
 When `plan_present: true` and the plan named a canonical module or
 retirement criteria, emit as `category: Architectural Drift` with
 `decidable_at: design`.

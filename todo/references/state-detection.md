@@ -14,13 +14,13 @@ Scan the repo root (from the current working directory) for these paths:
 
 | Path | Meaning |
 | --- | --- |
-| `.plan/brownfield-context.md` | antiplan Phase 0 done (brownfield) |
-| `.plan/PRD.md` | antiplan Phases 1–2 done |
-| `.plan/task-sequence.md` | antiplan Phase 3 done |
-| `.plan/challenger-report.md` | antiplan Phase 3 Challenger subagent ran (per-AP audit table; option-3 evidence) |
-| `.plan/coverage-audit.md` | antiplan Phase 3.5 Coverage Auditor ran (transcript-vs-PRD diff; option-4 evidence) |
-| `.tickets/*.md` | spec-writer has run |
-| `.plan/critic-report.md` | ticket-critic has run |
+| `.plan/brownfield-context.md` | challenge Phase 0 done (brownfield) |
+| `.plan/PRD.md` | challenge Phases 1–2 done |
+| `.plan/task-sequence.md` | challenge Phase 3 done |
+| `.plan/challenger-report.md` | challenge Phase 3 Challenger subagent ran (per-AP audit table; option-3 evidence) |
+| `.plan/coverage-audit.md` | challenge Phase 3.5 Coverage Auditor ran (transcript-vs-PRD diff; option-4 evidence) |
+| `.tickets/*.md` | spec has run |
+| `.plan/critic-report.md` | ticket-review has run |
 | Any `.tickets/*.md` frontmatter with `Stage: BUILD` | a ticket build has started |
 | Any `.tickets/*.md` frontmatter with `Stage: COMPLETE` | a ticket build has finished |
 | `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
@@ -33,38 +33,38 @@ whole files). Avoid shell loops for this; they are slower and noisier.
 
 - **Full** - `.plan/task-sequence.md` exists. Every rule below applies.
 - **Lite** - `.tickets/*.md` exist but `.plan/task-sequence.md` does not
-  (tickets came from spec-writer directly or were hand-written). Skip the
-  antiplan, validator, Challenger, Coverage and orphan-ticket rules. DAG
+  (tickets came from spec directly or were hand-written). Skip the
+  challenge, validator, Challenger, Coverage and orphan-ticket rules. DAG
   readiness uses any dependency the ticket declares (frontmatter field or a
-  `Dependencies:` line), else numeric filename order. ticket-critic is recommended once but is not a
-  build gate in Manual mode. Auto mode runs ticket-critic before build.
+  `Dependencies:` line), else numeric filename order. ticket-review is recommended once but is not a
+  build gate in Manual mode. Auto mode runs ticket-review before build.
 
 ## Stage inference rules
 
 - **fresh** - none of the above paths exist → recommend by size:
-  - small, already-scoped frontend UI change → `/ui-work`
+  - small, already-scoped frontend UI change → `/ui`
   - small, already-scoped non-UI change → skip `/todo`; use `tdd` or implement directly
-  - defined feature, a few tickets → spec-writer direct (Lite mode)
-  - risky, contested or large → antiplan (Full mode; Fast Mode by default)
+  - defined feature, a few tickets → spec direct (Lite mode)
+  - risky, contested or large → challenge (Full mode; Fast Mode by default)
   - Auto mode chooses from these routes; Manual mode emits the next skill prompt
 - **phase-0-done** — only `brownfield-context.md` exists → recommend
-  resuming antiplan into Phase 1
+  resuming challenge into Phase 1
 - **prd-done-no-dag** — `PRD.md` exists but no `task-sequence.md` → recommend
-  resuming antiplan into Phase 3
+  resuming challenge into Phase 3
 - **dag-done-no-audits** — `task-sequence.md` exists but
   `.plan/challenger-report.md` is missing OR (Standard/Heavy run)
-  `.plan/coverage-audit.md` is missing → recommend resuming antiplan to
+  `.plan/coverage-audit.md` is missing → recommend resuming challenge to
   run Phase 3 Challenger and/or Phase 3.5 Coverage Auditor. The plan is
-  NOT ready for spec-writer — the per-AP audit + transcript-vs-PRD diff
+  NOT ready for spec — the per-AP audit + transcript-vs-PRD diff
   are the final pass. Light-mode plans may skip coverage-audit.md if the
   task-sequence.md transcript explicitly emits
   `COVERAGE-AUDIT: skipped — Light classification`.
 - **dag-done** — `task-sequence.md` + `challenger-report.md` (+
   `coverage-audit.md` for Standard/Heavy) all present; no `.tickets/*.md` →
-  validate with all evidence flags before spec-writer. Auto mode runs this
+  validate with all evidence flags before spec. Auto mode runs this
   command; Manual mode emits it as the next action:
   ```
-  python3 ~/.skills/antiplan/validate.py \
+  python3 ~/.skills/challenge/validate.py \
     --project-dir . \
     --tickets .plan/task-sequence.md \
     --prd .plan/PRD.md \
@@ -73,24 +73,24 @@ whole files). Avoid shell loops for this; they are slower and noisier.
   ```
   Drop `--coverage-report` only if the task-sequence/transcript declared
   `COVERAGE-AUDIT: skipped — Light classification`.
-  - exit 0 → recommend spec-writer session (emit spec-writer-next template)
-  - non-zero → recommend antiplan-resume instead; the plan is not ready
+  - exit 0 → recommend spec session (emit spec-next template)
+  - non-zero → recommend challenge-resume instead; the plan is not ready
     for fan-out. Common failures: missing AP rows in challenger-report,
     short evidence on a BLOCK row, GAP/INVERTED in coverage-audit, or
     `RE_DERIVED < 5` (Coverage Auditor likely skimmed the transcript).
 - **lite-ready** - Lite mode and some tickets `Stage: NEW` → Manual mode emits
-  the build-ticket prompt; Auto mode runs ticket-critic if needed, then builds
+  the build-ticket prompt; Auto mode runs ticket-review if needed, then builds
 - **tickets-written-uncriticized** (Full mode) — `.tickets/*.md` exist; no
   `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
-  recommend ticket-critic session
+  recommend ticket-review session
 - **critic-failed** — critic-report.md contains the literal string `FAIL` →
-  recommend fix-cycle: return to spec-writer for failing tickets
+  recommend fix-cycle: return to spec for failing tickets
 - **ready-for-build** — critic-report.md passes; some tickets still
   `Stage: NEW` → Manual mode emits the next build-ticket prompt; Auto mode
   continues the serial build loop.
 - **slice-gate-pending** — within a slice, every non-gate ticket is
   `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
-  ticket with `gate: true` in frontmatter) is `Stage: NEW` → Manual mode emits
+  ticket with `Type: integration-gate` or `gate: true` in frontmatter) is `Stage: NEW` → Manual mode emits
   the slice-gate prompt; Auto mode runs the gate review before building it.
 - **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
   active session is running it (heuristic: invoked from a fresh /todo
@@ -104,7 +104,8 @@ whole files). Avoid shell loops for this; they are slower and noisier.
 - **all-complete** — every ticket `Stage: COMPLETE` → announce the
   pipeline is done
 
-To show ticket state over days or sprints, run `/trackboard refresh`.
+`/todo status` shows current progress as a Markdown table using the Status output
+rules in `todo/SKILL.md`.
 
 ## Staleness warnings (non-blocking)
 
@@ -115,10 +116,10 @@ To show ticket state over days or sprints, run `/trackboard refresh`.
   critic report is stale
 - `task-sequence.md` modified after `challenger-report.md` → warn:
   Challenger audit is stale vs the DAG; re-run the Challenger before
-  spec-writer
+  spec
 - `PRD.md` or `task-sequence.md` modified after `coverage-audit.md` →
   warn: Coverage Auditor diff is stale vs the current PRD/DAG; re-run
-  the Coverage Auditor before spec-writer
+  the Coverage Auditor before spec
 - (Full mode only) Orphan tickets (`.tickets/*.md` whose ID is not in `task-sequence.md`) →
   warn: orphan ticket present, possibly from a prior planning cycle
 - Any `.tickets/*.md` modified after its `.tickets/tdd/toq-<id>.yaml` →
@@ -127,9 +128,9 @@ To show ticket state over days or sprints, run `/trackboard refresh`.
 - Current `HEAD` has advanced past the `diff_base` recorded in a
   BUILD ticket's TOQ → warn: TOQ diff_base is stale; re-scope before
   continuing
-- If an antiplan session transcript is available alongside
+- If an challenge session transcript is available alongside
   `.plan/task-sequence.md`, optionally run
-  `python3 ~/.skills/antiplan/validate.py --transcript <path> ...`
+  `python3 ~/.skills/challenge/validate.py --transcript <path> ...`
   and surface any `confidence: LOW`, `unresolved > 0`, or
   `Proceeding: no` hits as soft warnings. Do not block on these — they are
   advisory alongside the hard-gate `dag-done` validator run.
