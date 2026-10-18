@@ -42,7 +42,8 @@ whole files). Avoid shell loops for this; they are slower and noisier.
 ## Stage inference rules
 
 - **fresh** - none of the above paths exist → recommend by size:
-  - small, already-scoped change → skip `/todo`; use `tdd` or just implement
+  - small, already-scoped frontend UI change → `/ui-work`
+  - small, already-scoped non-UI change → skip `/todo`; use `tdd` or implement directly
   - defined feature, a few tickets → spec-writer direct (Lite mode)
   - risky, contested or large → antiplan (Full mode; Fast Mode by default)
   - Auto mode chooses from these routes; Manual mode emits the next skill prompt

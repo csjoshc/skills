@@ -14,7 +14,7 @@ Do not ask the user to copy a prompt or invoke a skill between stages.
 
 | State | Auto action |
 |---|---|
-| `fresh` | If no feature is supplied, ask for it. For a small scoped change, route to the implementation skill. Use Lite ticketing for a defined feature; use antiplan for large, risky, or contested work. Ask when the route is genuinely unclear. |
+| `fresh` | If no feature is supplied, ask for it. For a small scoped frontend UI change, call the Skill tool with `ui-work`; for other small scoped changes, route to the relevant implementation skill. Use Lite ticketing for a defined feature; use antiplan for large, risky, or contested work. Ask when the route is genuinely unclear. |
 | `phase-0-done`, `prd-done-no-dag`, `dag-done-no-audits` | Resume antiplan at the next incomplete phase. Honor its approval gates. |
 | `dag-done` | Run the antiplan validator with all required evidence. On failure, resume antiplan; on success, invoke spec-writer. |
 | `tickets-written-uncriticized` | Invoke ticket-critic. Auto mode also runs the critic in Lite mode. |
@@ -38,7 +38,9 @@ An unrecognized or inconsistent state is an escalation, not a guess.
 3. Run the build-ticket template in an implementation subagent. It runs `/tdd`
    including Phase 0, implements the ticket ACs, runs `/verify-claim`, lint,
    and typecheck, and sets `Stage: COMPLETE` only when those checks pass. It
-   makes no commit.
+   makes no commit. For frontend UI scope, it calls the Skill tool with
+   `ui-work` to guide visual implementation and browser evidence within the
+   ticket ACs.
 4. Run an independent evidence review against the ticket ACs, diff, and proof.
    If review passes, commit the reviewed source changes as one ticket-scoped
    checkpoint. Do not add `.plan/` or `.tickets/`; never push.

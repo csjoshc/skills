@@ -179,7 +179,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 | --------------------------- | ------------------------------------------------ |
 | Source code audits          | Editing `.tickets/*.md` → ticket-critic          |
 | Package / directory audits  | Live PR comments on GitHub → pr-review           |
-| Architecture pattern checks | Visual UI validation → make-ui / chrome-devtools |
+| Architecture pattern checks | Visual UI validation → ui-work / chrome-devtools |
 
 ---
 

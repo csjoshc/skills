@@ -1,6 +1,6 @@
-# Phase 1 Audit Template
+# Design Spec Audit Template
 
-Fill every row of every table. If a value is absent, write "none" — never leave blank. If the codebase is greenfield, write "N/A — greenfield" and skip to Phase 2.
+For a requested reusable design spec, record the relevant rows. If a value is absent, write "none". If the codebase is greenfield, write "N/A — greenfield" and proceed to emit.
 
 ## Table 1 — Stack
 
@@ -84,4 +84,4 @@ Summarize in one paragraph (3–4 sentences):
 - Current visual identity in one sentence ("looks like generic shadcn", "brand-aligned", "drift-heavy custom")
 - Strongest pattern to preserve
 - Biggest gap to close
-- Whether brand-ingest path applies (Table 8 has values)
+- Whether approved brand inputs are available

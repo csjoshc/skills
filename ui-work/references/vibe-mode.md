@@ -1,6 +1,6 @@
 # Vibe Mode — Speed Path
 
-No DESIGN.md, no consultation, no approval gates. Quick aesthetic pick, then build with production-grade code.
+No DESIGN.md. Infer an appropriate visual direction from project evidence, then build and verify the requested UI.
 
 ## When to use
 
@@ -11,9 +11,9 @@ No DESIGN.md, no consultation, no approval gates. Quick aesthetic pick, then bui
 
 ## When NOT to use
 
-- Multi-page or full-app design — use `/make-design-md` first to capture decisions, then Apply Mode.
+- Multi-page or full-app design with durable shared decisions — use the design-spec route first, then implement against the emitted spec.
 - Project already has DESIGN.md — use Apply Mode (faster and consistent).
-- User wants a portable design spec — redirect to `/make-design-md`.
+- User wants a portable design spec — use the design-spec route.
 
 ## Process
 
@@ -26,13 +26,13 @@ No DESIGN.md, no consultation, no approval gates. Quick aesthetic pick, then bui
 
 **Existing stack takes precedence over any default.** If the project uses CSS modules, do not introduce Tailwind. If it uses MUI, do not introduce shadcn.
 
-### 2. Pick aesthetic (1 decision)
+### 2. Infer visual direction
 
-Use `vibe-quick-pick.md` — vertical → aesthetic in one table. If existing components hint at a direction, follow them. Don't ask the user unless the project is truly ambiguous.
+Use `vibe-quick-pick.md` as inspiration when the project gives no clear signal. Follow existing components and product context when they establish a direction. Ask only if a consequential choice remains unclear.
 
-### 3. Pick density (1 decision)
+### 3. Infer density
 
-Compact / Balanced / Airy. Default to Balanced unless the project signals otherwise (Linear-tight = Compact, Apple-style = Airy).
+Infer compact / balanced / airy density from the existing interface and content. Use balanced when there is no signal.
 
 ### 4. Build
 
@@ -42,12 +42,6 @@ Apply `technical-standards.md` defaults. Output:
 - Any new shared primitives extracted (if you find yourself copy-pasting class strings)
 - Token additions to existing tokens file (if needed for the new component)
 - `prefers-reduced-motion` paths if motion is added
-
-### 5. Hand-off note (always)
-
-Append a short note (3–5 lines) to your final response:
-
-> "If you want this captured as a portable design spec for future agents to read, run `/make-design-md` — it will audit what was built and emit a `DESIGN.md` + `preview-ui/` artifacts."
 
 ## Quality bar
 
