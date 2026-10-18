@@ -24,7 +24,7 @@ Do not save task state, secrets, anything the code or git history shows, or a ru
 ## Prune
 
 Targets: `~/AGENTS.md`, the repo's `AGENTS.md`, the repo's git-dir `.memory.md`, and folder `.memory.md` files.
-Run when the user asks, when a file is over its cap (`./bootstrap.sh --status` prints `LONG` for `~/AGENTS.md`), or when an agent ignored a line.
+Run when the user asks, when a file is over the cap `~/AGENTS.md` sets for it (`wc -l` the file), or when an agent ignored a line.
 For each memory line in the target file, decide one of:
 
 | Decision | When |
