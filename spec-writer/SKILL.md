@@ -5,20 +5,26 @@ description: "Turns a defined feature or .plan/PRD.md into vertical-slice ticket
 
 # spec-writer
 
-You turn vague feature requests into structured specs, technical plans, and task breakdowns that any coding agent can implement without guessing.
+You create implementation tickets from either a defined feature request or an approved plan. `/todo` uses this skill after antiplan; a user may also invoke it directly for Lite mode.
 
 You generate first, flag assumptions inline. Every decision the user didn't specify gets marked `[ASSUMPTION: ...]`. The user corrects what's wrong. This is faster than Q&A and surfaces decisions that would otherwise be invisible.
 
-## Invoke
+## Inputs and modes
 
 ```
 /spec-writer [feature description]
 ```
 
-A pasted ticket, PRD fragment or rough description counts as the feature request.
+A pasted feature description starts Lite mode and writes tickets under
+`.tickets/` without creating `.plan/` artifacts.
 
-- **Upstream input (preferred):** if `.plan/PRD.md` and `.plan/task-sequence.md` exist, read both and expand each placeholder into a full `.tickets/NN-<slug>.md`. Do not re-debate decisions the PRD settled. Before fleshing any stub, apply the AP-25 naming test and annotate every name that fails it; tickets with no failing name carry no naming section. Procedure: [references/upstream-input.md](references/upstream-input.md).
-- **Refactor mode:** for "refactor X", "clean up Y", "restructure Z" or an RFC, load [REFACTOR_MODE.md](REFACTOR_MODE.md) and follow its interview process instead of the three-section output below.
+When `.plan/PRD.md` and `.plan/task-sequence.md` exist, treat them as approved
+inputs and expand each stub into one ticket. This is the normal `/todo` handoff.
+Do not duplicate or re-debate the plan. Apply AP-25 naming review as described
+in [references/upstream-input.md](references/upstream-input.md).
+
+For "refactor", "clean up", "restructure" or an RFC, use
+[REFACTOR_MODE.md](REFACTOR_MODE.md).
 
 ## Operating principles
 
@@ -32,7 +38,9 @@ A pasted ticket, PRD fragment or rough description counts as the feature request
 
 ## Output format
 
-Produce three sections in order. Do not skip or merge them.
+For direct feature input, produce the three sections below before writing the
+tickets. When expanding an approved PRD and task sequence, write only the
+tickets; do not repeat their contents as a second plan.
 
 - **SECTION 1: SPEC** (mandatory): purpose, users/use cases, requirements, IN/OUT scope, edge cases, Given/When/Then ACs. Turn vague verbs into measurable targets. Mark every unstated decision `[ASSUMPTION: ...]`.
 - **SECTION 2: PLAN**: stack, data model, API contracts, patterns, the `## Acceptance Criteria → Tests` table from [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md), security/performance, failure paths for `[FALLIBLE_IO]`, ADRs and design alternatives. Test files use permanent committed paths.
@@ -45,7 +53,9 @@ Full templates, field lists and rules: read [references/ticket-template.md](refe
 Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
 Before handing off, run `python3 ~/.skills/spec-writer/scripts/tickets_lint.py <repo>/.tickets --dry-red --runner "<the project's pytest command>"` and fix every ERROR.
 `--dry-red` runs each read-only check now: it must fail for the expected reason (test not written yet), never because a tool is missing.
-An implementation-ready ticket sets `Stage: BUILD`.
+Write new tickets with `Stage: NEW`. `/todo build` or `/todo run` changes the
+selected ticket to `Stage: BUILD` when implementation starts. The stage meanings
+are defined in [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
 
 ## Assumption handling
 

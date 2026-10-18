@@ -1,215 +1,74 @@
-# Auto-driver: `/todo run`
+# Auto mode
 
-`/todo run` is the **only** sub-command that violates Invariant 1's
-"advise only" rule. It is an explicit operator opt-in to auto-drive
-the planning→implementation pipeline without paste-into-a-new-session
-round trips. The Invariant override is scoped: only `/todo run` may
-invoke skills as subagents, only `/todo run` may modify pipeline
-artifacts (and only via the skills it invokes), only `/todo run` may
-make checkpoint commits (under the operator's standing authorization).
+Auto mode drives the current pipeline from its detected state to completion.
+The user chooses it with `/todo auto` or selects Auto after invoking `/todo`.
+Do not ask the user to copy a prompt or invoke a skill between stages.
 
-## Contents
+## Cycle
 
-- Invocation
-- State machine
-- The build loop
-- Halt conditions
-- Halt output contract
-- Things /todo run may NOT do
-- Tools the auto-driver uses
-- Relationship to other sub-commands
+1. Detect state using [state-detection.md](state-detection.md).
+2. Invoke the specialist skill for that state, following its full instructions.
+3. If it completes without a human gate, detect state again and continue.
+4. Stop only when the pipeline is complete, the user interrupts, or an
+   escalation condition below requires a decision.
 
-Every other sub-command remains advise-only. The user always retains
-the right to interrupt `/todo run` mid-stride; the auto-driver halts
-gracefully on any structured halt condition.
-
-### Invocation
-
-```
-/todo run                       # drive until DAG complete or halt
-/todo run <N>                   # advance at most N more tickets
-/todo run until <condition>     # halt on loose state match
-                                # e.g. "until phase-3-complete",
-                                #      "until critic-report.md",
-                                #      "until T09 complete"
-```
-
-### State machine
-
-On each tick, the auto-driver runs the same state detection as bare
-`/todo`, then maps state to action:
-
-| Detected state | Auto-driver action |
+| State | Auto action |
 |---|---|
-| `fresh` | **HALT** — needs a feature description; emit `/todo start` prompt and stop. Cannot fabricate goals. |
-| `phase-0-done` | Invoke antiplan-resume via Skill tool; antiplan continues Phase 1 |
-| `prd-done-no-dag` | Invoke antiplan-resume; antiplan continues to Phase 3 |
-| `dag-done-no-audits` | Invoke antiplan-audit-resume; Challenger + Coverage subagents run within antiplan |
-| `dag-done` (and `validate.py` exit 0; reports show 0 BLOCKs / 0 INVERTED / 0 GAP) | Invoke spec-writer via Skill tool |
-| `audit-blockers-present` (`validate.py` exit 0 but challenger-report contains BLOCKs OR coverage-audit shows INVERTED/GAP) | Invoke `audit-fix-resume` template — auto-driver pastes one section per finding, inlining verbatim quotes from the reports. Halts when validate.py + verdicts all clean + staleness clean. |
-| `dag-done` (and `validate.py` exit non-zero) | **HALT** — surface validator failures (schema-level malformations: missing AP rows, evidence too short, etc.). Distinct from BLOCKs above; validator failures are structural, not architectural. Return to user for direction. |
-| `tickets-written-uncriticized` | Invoke ticket-critic (per-ticket subagent delegation if N > 5, per ticket-critic SKILL.md) |
-| `critic-failed` | Invoke spec-writer in fix mode for failing tickets only |
-| `ready-for-build` | Enter the **build loop** (see below) |
-| `slice-gate-pending` | Invoke gate review (per `/todo gate` template) |
-| `mid-build-resume` | Resume in-flight ticket via the mid-build-resume template; spawn a subagent that picks up where prior session left off. That subagent runs any reviewer roles inline (`run: inline`), per `~/.skills/shared/SUBAGENTS.md` |
-| `all-complete` | Emit final-status summary and **HALT — pipeline done** |
+| `fresh` | If no feature is supplied, ask for it. For a small scoped frontend UI change, call the Skill tool with `ui-work`; for other small scoped changes, route to the relevant implementation skill. Use Lite ticketing for a defined feature; use antiplan for large, risky, or contested work. Ask when the route is genuinely unclear. |
+| `phase-0-done`, `prd-done-no-dag`, `dag-done-no-audits` | Resume antiplan at the next incomplete phase. Honor its approval gates. |
+| `dag-done` | Run the antiplan validator with all required evidence. On failure, resume antiplan; on success, invoke spec-writer. |
+| `tickets-written-uncriticized` | Invoke ticket-critic. Auto mode also runs the critic in Lite mode. |
+| `critic-failed` | Invoke spec-writer to fix failing tickets only, then rerun ticket-critic once. If any ticket still fails, escalate. |
+| `ready-for-build`, `partial-build`, `lite-ready` | Build the next dependency-ready ticket using the serial build loop below. |
+| `slice-gate-pending` | Run the slice-gate review. Continue only after it passes. |
+| `mid-build-resume` | Resume the in-flight ticket from its diff and TDD artifacts. |
+| `build-unscoped` | Run `/tdd` Phase 0 before resuming implementation. |
+| `all-complete` | Report completion and stop. |
 
-### The build loop
+An unrecognized or inconsistent state is an escalation, not a guess.
 
-When entering `ready-for-build` or `lite-ready`:
+## Ticket build loop
 
-Optional, before the first wave: when tickets need shared codebase or
-external-doc exploration, spawn one exploration subagent. It writes
-markdown notes to a directory outside the repo (for example the session
-scratchpad), and each BUILD prompt in step 3 gets that path, so
-implementers build instead of re-exploring.
-Exploration pattern adapted from Matt Pocock's `implement-spec` (MIT).
+1. Confirm the source worktree is clean before the first source change. Ignore
+   `.plan/`, `.tickets/`, and other configured local planning artifacts. If
+   unrelated source changes exist, stop and ask the user to commit, stash, or
+   choose a separate worktree.
+2. Select one dependency-ready `Stage: NEW` ticket. Follow DAG dependencies in
+   Full mode and the Lite dependency rule otherwise. Build serially.
+3. Run the build-ticket template in an implementation subagent. It runs `/tdd`
+   including Phase 0, implements the ticket ACs, runs `/verify-claim`, lint,
+   and typecheck, and sets `Stage: COMPLETE` only when those checks pass. It
+   makes no commit. For frontend UI scope, it calls the Skill tool with
+   `ui-work` to guide visual implementation and browser evidence within the
+   ticket ACs.
+4. Run an independent evidence review against the ticket ACs, diff, and proof.
+   If review passes, commit the reviewed source changes as one ticket-scoped
+   checkpoint. Do not add `.plan/` or `.tickets/`; never push.
+5. Re-detect state and repeat. Run the slice-gate review automatically when a
+   gate becomes the next required ticket.
 
-1. **Identify the next wave.** Read the DAG (`.plan/task-sequence.md`)
-   to find all tickets whose `Depends-On` chain is fully satisfied
-   (every dep ticket is `Stage: COMPLETE`).
-   In Lite mode (no task-sequence), use the dependency rule in
-   state-detection.md and build one ticket at a time.
-2. **Filter for parallel-safety.** Within the wave, group tickets
-   whose `Files:` lists are fully disjoint AND whose risk tags
-   permit parallel build. Tickets tagged `Risk: medium` or higher,
-   OR tickets marked as the DAG's "mutation hub" / "integration
-   gate", run **solo** even if the wave has multiple ready
-   candidates.
-3. **Spawn the wave in parallel.** For each ticket in the wave,
-   spawn a BUILD subagent (via the `Agent` tool with
-   `subagent_type: general-purpose`) in a single message — multiple
-   `Agent` calls in one turn run concurrently. Each subagent's
-   prompt is the `build-ticket-manual` template plus the ticket's
-   absolute path (and the exploration notes path, if any): pointers,
-   not pasted content. Use `run_in_background: true` so the auto-driver
-   continues to monitor without blocking on any single agent.
-4. **Wait for all wave subagents to complete.** Notifications arrive
-   as each finishes. After ALL have returned:
-5. **Spawn evidence-reviewer per ticket** (via `Agent` tool, parallel
-   batch if multiple tickets completed). Each reviewer gets:
-   - The ticket file path
-   - The prior checkpoint commit SHA (the last checkpoint from
-     `git log --oneline -1`)
-   - The build subagent's final report (verbatim)
-   - The artifact directory path
-   - The ticket's ACs (source of truth)
-   See `~/.skills/shared/EVIDENCE_REVIEWER.md` if present, else
-   inline the audit checklist (scope-check via git diff, per-AC
-   re-verification, artifact existence + size sanity,
-   subagent-deviation audit, wrapper-target re-verification, Stage
-   flip earned).
-6. **Gate on evidence-reviewer verdicts:**
-   - ALL `VERIFIED` → proceed to step 7
-   - ANY `DRIFT-DETECTED` or `EVIDENCE-INSUFFICIENT` → **HALT** with
-     a structured report quoting the reviewer's findings; await
-     operator direction (typically: re-run the build subagent
-     with corrections, or accept the deviation and proceed)
-7. **Checkpoint commit.** Under the operator's standing authorization, run:
-   ```bash
-   cd <repo-root> && git add -A && git commit -m "<wave summary>"
-   ```
-   The commit message names the tickets that just landed and the
-   evidence-reviewer verdict for each. **Never push** unless the
-   operator has explicitly authorized push for this repo (check
-   memory; default deny).
-8. **Loop back to state detection.** Re-detect state, find the next
-   wave, repeat.
+The Auto choice authorizes these local ticket-scoped checkpoint commits.
 
-### Halt conditions
+## Human escalation
 
-The auto-driver halts immediately on any of these:
+Pause, describe the evidence, and ask one focused question when:
 
-- `fresh` state (no feature description; cannot proceed)
-- `dag-done` with `validate.py` non-zero exit
-- `critic-failed` and the failing tickets exceed an automatic-fix
-  heuristic (the operator must decide whether to rewrite specs or
-  accept blockers)
-- ANY BUILD subagent returns `Stage: BUILD` (i.e. did not flip to
-  COMPLETE) after one auto-retry
-- ANY evidence-reviewer returns `DRIFT-DETECTED` or
-  `EVIDENCE-INSUFFICIENT`
-- The user-supplied stop condition matches (`/todo run until X`)
-- The user-supplied ticket cap is hit (`/todo run N`)
-- Tool-use error budget exceeded (≥3 consecutive Bash/Agent failures
-  without progress)
-- Operator interrupts (the operator may always interrupt; the
-  auto-driver honors interrupts gracefully and emits a resumable
-  state summary)
+- antiplan or another specialist skill requests a user decision or sign-off;
+- a Tier 2 or Tier 3 assumption has no answer in the project or global
+  standards;
+- the feature route is unclear between direct implementation, Lite, and Full;
+- validator, critic, gate, or evidence review still fails after one repair;
+- implementation cannot meet an AC, the diff exceeds ticket scope, or the
+  repository state/dependency graph is ambiguous;
+- a commit or required tool fails twice.
 
-### Halt output contract
+Do not weaken a gate, accept a failed review, discard user changes, or push to
+resolve a blocker. After the user answers, continue from the updated artifacts
+and state. If the run is interrupted, report the current stage, ticket stage,
+changed files, completed checkpoint SHAs, and the next action.
 
-On every halt — graceful or fault — the auto-driver emits a
-structured final message:
+## Completion
 
-```markdown
-# /todo run halted
-
-**Reason:** <one of: pipeline-complete | needs-input | validator-failed |
-critic-blocker | build-blocker | drift-detected | evidence-insufficient |
-user-condition-met | ticket-cap-hit | error-budget |
-operator-interrupt>
-
-**Progress this run:**
-- Tickets advanced: <count> (<ticket-IDs>)
-- Checkpoints created: <count> (<commit-SHAs>)
-- Subagents spawned: <count> total (<count-build>, <count-evidence>,
-  <count-critic>)
-
-**Current pipeline state:** <detected-state-from-state-detection>
-
-**Next step (if applicable):** <copy-pasteable prompt or
-explicit-action description>
-```
-
-This contract guarantees the operator can always know exactly where
-the pipeline stopped and what the next action is.
-
-### Things `/todo run` may NOT do
-
-- **Never push** to any git remote without explicit per-repo
-  operator authorization stored in memory
-- **Never invent feature descriptions** when state is `fresh` —
-  halt and ask
-- **Never auto-accept** DRIFT-DETECTED or EVIDENCE-INSUFFICIENT
-  verdicts — halt and surface
-- **Never invoke `/todo run` recursively** — the auto-driver runs
-  in one process; subagents it spawns must not themselves invoke
-  `/todo run`
-- **Never bypass the constitution / sign-off phases** in antiplan
-  — these are operator-gated by design and the auto-driver halts
-  when antiplan halts
-- **Never modify ticket `Stage:` directly** — only BUILD subagents
-  flip Stage to COMPLETE; the auto-driver only orchestrates
-- **Never skip evidence-reviewer** on any BUILD subagent's output
-  (skipping defeats the structural fix that AP-26/27 + Pattern 18
-  add to the pipeline)
-
-### Capabilities the auto-driver uses
-
-Names vary by harness; use the closest equivalent.
-
-- File search and read - state detection
-- Shell - git commands (status, log, diff, add, commit; never push
-  without explicit auth), validate.py invocation
-- Skill invocation - antiplan, spec-writer, ticket-critic when the
-  state machine routes there
-- Background subagents - BUILD subagents, evidence-reviewer subagents.
-  If the harness has none, halt after each ticket and emit the next
-  build-ticket-manual prompt instead.
-- Task list, if available - track wave progress visibly
-- File edit - only on `.plan/critic-report.md` to materialize
-  ticket-critic verdicts when the skill itself doesn't persist them;
-  NEVER on PRD.md, task-sequence.md, or `.tickets/*.md` directly
-
-### Relationship to other sub-commands
-
-`/todo run` complements but does not replace the manual sub-commands:
-
-- `/todo run` halts → operator inspects → operator may invoke
-  `/todo next` / `/todo build` for finer-grained control
-- `/todo handoff` is still useful before `/clear`/`/compact` even
-  mid-run; the auto-driver can emit a handoff prompt and stop
-- `/todo gate` is invoked AUTOMATICALLY by the auto-driver when
-  state is `slice-gate-pending`; no manual call needed
+At every stage boundary, give a short progress update. On completion, report
+the finished pipeline, ticket IDs, and checkpoint SHAs. On escalation, report
+the blocker, evidence, and the question or action needed to continue.

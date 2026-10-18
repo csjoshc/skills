@@ -130,7 +130,7 @@ the SVG background neutral so it picks up the host's page background.
   `.svg`; then use `confluence-diagrams` to upload + embed in Confluence.
 - **`reframe`** — producer. When reframe generates diagrams, it writes
   `.mmd` that follow this skill's conventions.
-- **`brief-docs`** — producer. Diagrams in brief docs should follow these
+- **`docs`** — producer. Diagrams in docs should follow these
   conventions for consistency.
 
 ## Verification

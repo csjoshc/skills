@@ -12,7 +12,7 @@ Runs phased application of any DESIGN.md spec.
 
 ## Pre-flight
 
-1. Confirm `<repo-root>/DESIGN.md` exists. If not → redirect to `/make-design-md`.
+1. Confirm `<repo-root>/DESIGN.md` exists. If not, continue with the no-spec implementation route unless a reusable design spec was requested.
 2. Read DESIGN.md cover-to-cover before any edits. Keep §2/§3/§5/§6/§8 open during the work.
 3. Read `AGENTS.md` / `README.md` and inspect `package.json` + existing CSS to understand the stack.
 4. If the stack contradicts DESIGN.md (e.g. spec says Tailwind v4, project uses CSS modules) — pause and ask the user how to proceed (port the spec or change the stack).
@@ -90,7 +90,7 @@ For greenfield projects, skip Phase 5.
 
 Compose with Audit Mode:
 ```
-- [ ] 6.1 Run /make-ui Audit Mode against the changed code
+- [ ] 6.1 Run the UI audit procedure against the changed code when conformance findings are useful
 - [ ] 6.2 Address every ❌ violation; document any deferred ⚠️ drift
 - [ ] 6.3 Compare rendered output against preview-ui/preview.html and preview-dark.html
 - [ ] 6.4 Test prefers-reduced-motion + reduced-color-contrast paths
@@ -106,7 +106,7 @@ Compose with Audit Mode:
 
 | Mistake | Fix |
 |---|---|
-| Adding tokens not in DESIGN.md "for polish" | Stop. If spec is missing tokens, fix the spec via `/make-design-md`. |
+| Adding tokens not in DESIGN.md "for polish" | Keep the change within the spec; use the design-spec route if the durable spec needs revision. |
 | Per-component style overrides | Use semantic tokens; if a token is missing, add it to the spec, not the component. |
 | Skipping Phase 1 verification | Token errors compound; each phase depends on the prior. |
 | Native `<select>` in dark mode | OS popup ignores the theme — always use custom dropdowns. |
