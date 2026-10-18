@@ -1,7 +1,7 @@
 # Review runbook
 
 Fixed phase sequence that both `pr-review` and `cleanup` follow. Modeled on
-antiplan's phase-gate pattern — the sequence is not negotiable; only the
+challenge's phase-gate pattern — the sequence is not negotiable; only the
 *content* inside each phase is LLM-generated.
 
 ## Contents

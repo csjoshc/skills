@@ -29,11 +29,11 @@ Phase 5: fan out intermediates (.docs/)
 
 | Use this skill | Use a different skill |
 |---|---|
-| Documenting a downloaded fork zip | New design from scratch → `make-prd` or `spec-writer` |
+| Documenting a downloaded fork zip | New design from scratch → `prd` or `spec` |
 | Auditing a divergent branch (main…feature) | Per-PR review comments → `pr-review` |
 | Publishing a fork's design page to Confluence, backed by layered exec/architect/engineer intermediates | Short single-page onboarding → `docs` |
-| Mermaid for system context, data flow, sequence | Just rendering one diagram → `make-mmd` |
-| | Confluence diagram embeds → call `confluence-diagrams` after |
+| Mermaid for system context, data flow, sequence | Just rendering one diagram → `diagram` |
+| | Confluence diagram embeds → call `confluence` after |
 
 ## Decision tree
 
@@ -129,7 +129,7 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 | Step | Skill |
 |---|---|
 | Architect-layer reframing | `/reframe architect <assembled-source>` (produces L1) |
-| Diagram authoring | `/make-mmd` for fresh diagrams; this skill embeds the conventions inline |
-| Diagram embeds on the final page | `/confluence-diagrams` after publishing |
+| Diagram authoring | `/diagram` for fresh diagrams; this skill embeds the conventions inline |
+| Diagram embeds on the final page | `/confluence` after publishing |
 | Final prose polish | `/stop-slop` — mandatory on the Confluence page, per-file on intermediates |
 | Handoff to next session | `/handoff` — point the new agent at `.docs/README.md` and the Confluence page URL |

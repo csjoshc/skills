@@ -26,7 +26,7 @@ GraphQL resolver, message consumer) rather than in a layer the transport
 delegates to. The same rule cannot be reached from another transport or
 a batch job without re-entering the HTTP/queue machinery.
 
-**Decidable at:** `both` — /antiplan Phase 2 sets the topology ("domain
+**Decidable at:** `both` — /challenge Phase 2 sets the topology ("domain
 rules belong in domain/"); pr-review/cleanup catches drift.
 
 **Why it compounds:** Each new transport (a CLI, a scheduled task, a
@@ -65,7 +65,7 @@ a third-party API, vendor SDK, or legacy system flow unchanged through
 the codebase. Internal callers import the vendor's types and react to
 the vendor's error codes directly.
 
-**Decidable at:** `both` — /antiplan should require an adapter when an
+**Decidable at:** `both` — /challenge should require an adapter when an
 external system is introduced.
 
 **Why it compounds:** A vendor rename, field removal, or error-code
@@ -110,7 +110,7 @@ requires nested mock structures like
 picture of the coupling, not an incidental testing detail. The
 caller is coupled to every link in the chain.
 
-**Decidable at:** `diff` — shape visible only in code; /antiplan
+**Decidable at:** `diff` — shape visible only in code; /challenge
 cannot predict which chain depths will appear.
 
 **Why it compounds:** Every link in the chain is a collaborator the
@@ -146,7 +146,7 @@ initialization, no configurable seam. The canonical shape is
 the fallback *looks* injectable but defaults to a concrete client
 that the module now depends on unconditionally for its own import.
 
-**Decidable at:** `both` — /antiplan should set "external
+**Decidable at:** `both` — /challenge should set "external
 collaborators are injected through a port, never constructed at
 init or module-load" as a policy. pr-review/cleanup catches the
 direct-construction pattern on the diff.
@@ -348,7 +348,7 @@ does `Service()` with no arguments cause *any* effectful work?
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Logic in transport | partial — sets layer policy | ✅ | ✅ |
 | Validation at wrong boundary | partial — sets edge-validation policy | ✅ | ✅ |
@@ -357,7 +357,7 @@ does `Service()` with no arguments cause *any* effectful work?
 | Demeter violation | ❌ — emerges in code | ✅ | ✅ |
 | Eager construction | partial — sets DI / no-construction-at-init policy | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see the code;
+**partial** means /challenge sets the policy but cannot see the code;
 pr-review/cleanup should emit `category: Architectural Drift` with
 `decidable_at: design` whenever `plan_present: true` and the plan's
 ARCHITECTURE-DECISIONS block addresses this smell.

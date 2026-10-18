@@ -25,7 +25,7 @@ traverses multiple internal services or async steps with no identifier
 that lets an investigator join logs across hops. Each service's logs
 are a separate island.
 
-**Decidable at:** `design` — /antiplan should set the tracing contract
+**Decidable at:** `design` — /challenge should set the tracing contract
 at Phase 2. Emergent correlation-ID plumbing in individual PRs is
 always incomplete.
 
@@ -46,7 +46,7 @@ was touched, and what the terminal outcome was (success, which
 specific failure class). An incident responder reading the logs at 2am
 learns nothing they can act on.
 
-**Decidable at:** `both` — /antiplan should set the structured-log
+**Decidable at:** `both` — /challenge should set the structured-log
 schema; diff catches violations.
 
 **Why it compounds:** Log formats proliferate as each new code path
@@ -66,7 +66,7 @@ latency histogram), or reports aggregate latency summaries where
 per-event granularity is needed. The metric shape does not answer the
 questions the system is asked about it.
 
-**Decidable at:** `design` — /antiplan should state what questions the
+**Decidable at:** `design` — /challenge should state what questions the
 metrics must answer and choose the matching shape.
 
 **Why it compounds:** Dashboards built on the wrong shape feel
@@ -167,14 +167,14 @@ consults.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | No correlation / trace ID | ✅ — must mandate tracing contract | ✅ | ✅ |
 | Log shape missing actor/resource/outcome | partial — should set log schema | ✅ | ✅ |
 | Wrong metric granularity | ✅ — must match metrics to questions | ✅ | ✅ |
 | Misleading health check | ❌ — emerges from implementation choices | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see the code.
+**partial** means /challenge sets the policy but cannot see the code.
 When `plan_present: true` and the plan specified the log schema or
 tracing contract, pr-review/cleanup emit `category: Architectural Drift`
 with `decidable_at: design`.

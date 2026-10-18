@@ -18,7 +18,7 @@ mmdc -i <file>.mmd -o <file>.png -b white -w 1200   # for PPTX embedding
 
 ## Style Reference
 
-Reuse `classDef` conventions from `~/.skills/confluence-diagrams/example-conventions.mmd`:
+Reuse `classDef` conventions from `~/.skills/confluence/example-conventions.mmd`:
 
 ```mermaid
 classDef person fill:#E8EAED,stroke:#9AA0A6,color:#000
