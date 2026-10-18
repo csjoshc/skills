@@ -45,7 +45,7 @@ any PRD and task-sequence are read-only context.
    AGENTS.md). Commit message references the ticket ID.
 7. Set the ticket's frontmatter `Stage: COMPLETE`. Commit that change.
 8. STOP. Do not start the next ticket in this session. Start a fresh
-   session (or clear context), then run /todo to get the next prompt.
+   session (or clear context), then run `/todo manual` for the next prompt.
 
 **Subagent escalation (exception, not default):** If the ticket touches
 adversarial-review-worthy code (audit logging, auth, transport plumbing,
