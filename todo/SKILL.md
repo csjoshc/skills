@@ -23,7 +23,7 @@ the mode choice. If the pipeline is complete, report completion without asking.
 cold-start resume prompt.
 
 For a small, already-scoped change that fits one session, skip `/todo` and use
-the relevant skill directly.
+the relevant skill directly. For frontend UI work, that entry is `/ui-work`.
 
 ## Pipeline
 
@@ -55,6 +55,10 @@ Follow the state machine in [references/auto-driver.md](references/auto-driver.m
 Invoke the specialist skill for each stage, re-detect state after it returns,
 and continue without asking the user to copy prompts between stages. Preserve
 the specialist skill's own instructions and approval gates.
+
+For a ticket whose scope changes frontend UI, call the Skill tool with
+`ui-work` for visual implementation and browser review while preserving the
+ticket ACs, `/tdd`, and `/verify-claim` gates.
 
 ## Escalation
 

@@ -63,7 +63,7 @@ curl http://localhost:3000 | head -5
 When existing tests don't cover what you need:
 
 ```javascript
-// test-ui.mjs - create in project root
+// ui-check.mjs - create in project root
 import { chromium } from 'playwright';
 
 const FRONTEND_URL = 'http://localhost:3000';  // UPDATE THIS
@@ -87,7 +87,7 @@ await browser.close();
 
 ```bash
 cd /path/to/project
-node test-ui.mjs
+node ui-check.mjs
 ```
 
 ## LLM Prompting Template
