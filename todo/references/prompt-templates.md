@@ -5,7 +5,7 @@ Fill bracketed slots from detected state; each prompt is stand-alone.
 
 ## Contents
 
-- Template: antiplan-start (for /todo start <feature>)
+- Template: antiplan-start (manual path for a new, risky or large feature)
 - Template: antiplan-resume (Phase 0 or 1 incomplete)
 - Template: antiplan-audit-resume (dag-done-no-audits)
 - Template: audit-fix-resume (challenger-BLOCK or coverage-GAP/INVERTED)
@@ -22,7 +22,7 @@ these templates. Fill in the bracketed slots from detected state. Each
 prompt is stand-alone — the next session loads it cold with no memory of
 this one.
 
-### Template: antiplan-start (for `/todo start <feature>`)
+### Template: antiplan-start (Manual mode, new Full pipeline)
 
 ```
 Invoke the /antiplan skill for this feature:
@@ -37,7 +37,7 @@ phased mode, write brownfield-context.md, PRD.md and task-sequence.md into
 downstream (spec-writer).
 ```
 
-### Template: spec-writer-direct (for `/todo spec <feature>`, Lite mode)
+### Template: spec-writer-direct (Manual mode, new Lite pipeline)
 
 ```
 Invoke the spec-writer skill for this defined feature (no antiplan PRD):
@@ -50,6 +50,8 @@ Write one fleshed ticket per independently testable slice to
 frontmatter with `Stage: NEW`, Scope, >=3 grep-verifiable ACs including
 >=1 failure-path AC, an AC->Test table, and a Verify command. Note any
 dependency on another ticket in a `Dependencies:` line. Do not write .plan/.
+Return ticket paths, unresolved assumptions, and lint result; do not repeat
+full ticket contents in chat.
 ```
 
 ### Template: antiplan-resume (Phase 0 or 1 incomplete)
@@ -127,7 +129,7 @@ a finding):**
 verbatim — do NOT re-derive; the receiving agent must address the named
 finding, not its own re-interpretation):
 
-<!-- For each BLOCK in challenger-report.md, the parent /todo run
+<!-- For each BLOCK in challenger-report.md, the Auto driver
 auto-driver pastes a section here using this template: -->
 
 ### Challenger BLOCK <AP-ID> (<ticket-IDs>): <one-line summary>
@@ -226,7 +228,7 @@ receiving agent doesn't re-fetch):
    this session.
 ```
 
-**Template usage notes (for `/todo run` driver):**
+**Template usage notes (for Auto mode):**
 - The auto-driver pastes one `### Challenger BLOCK …` section per BLOCK
   found in challenger-report.md, and one `### Coverage <V>-<N> …`
   section per INVERTED/GAP in coverage-audit.md.
@@ -260,6 +262,8 @@ Numbering: use the next-available numeric prefix in .tickets/ (inspect
 existing files to find gaps). Slug format: NNN-kebab-case-title.md.
 
 Do not produce a monolithic ticket-pack.md. One file per ticket.
+Return created ticket paths, unresolved assumptions, and lint result; do not
+repeat the approved PRD or task-sequence in chat.
 ```
 
 ### Template: ticket-critic-next (tickets-written-uncriticized)
@@ -273,7 +277,8 @@ Invoke the /ticket-critic skill.
 
 **Task:** Run the lint, then review design and risk. Emit a report
 at .plan/critic-report.md with one line per ticket: `PASS <id>` or
-`FAIL <id>: <reasons>`. Block Stage: BUILD on any FAIL until remediated.
+`FAIL <id>: <reasons>`. Do not change ticket files or stages. On any FAIL,
+stop the build handoff and route failing tickets to spec-writer for repair.
 ```
 
 ### Template: spec-writer-fix (critic-failed)
@@ -290,6 +295,7 @@ Invoke /spec-writer in fix mode.
 **Task:** Rewrite each failing ticket in place to satisfy the contract.
 Do not rewrite passing tickets. Do not renumber.
 Re-run the lint on the rewritten tickets before finishing.
+Return changed ticket paths and lint result; do not repeat ticket contents.
 ```
 
 ### Template: build-ticket-manual (ready-for-build / partial-build)

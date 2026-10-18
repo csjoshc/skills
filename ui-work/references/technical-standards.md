@@ -86,4 +86,4 @@ Generated UI has tells. Reject these defaults.
 - Single component, no spec → Vibe Mode
 - Existing DESIGN.md, build/restyle → Apply Mode
 - Existing DESIGN.md, check conformance → Audit Mode
-- Authoring a spec → redirect to `/make-design-md`
+- Authoring a reusable spec → use the design-spec route in `/ui-work`

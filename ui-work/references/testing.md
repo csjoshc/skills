@@ -1,9 +1,4 @@
----
-name: test-ui
-description: "Tests web UIs end to end and documents functional or visual defects. Use when validating frontend behavior or reproducing UI bugs."
----
-
-# Test UI Skill
+# UI Testing Guide
 
 Project-agnostic workflow for testing web UIs with Playwright and documenting defects.
 
@@ -14,7 +9,7 @@ Project-agnostic workflow for testing web UIs with Playwright and documenting de
 - Verifying state synchronization across views
 - Checking form inputs, tabs, and navigation
 
-For live inspection of console, network and rendering in a real browser, use `chrome-devtools` instead.
+For live inspection of console, network and rendering in a real browser, use `chrome-devtools`.
 
 ## Approach
 
@@ -40,7 +35,7 @@ PLAYWRIGHT_BACKEND_URL=http://localhost:8000   # backend API URL
 
 ### Option B: write a custom Playwright script
 
-Only when existing tests don't cover what you need. Setup order is: discover the frontend URL from project config, start the backend, start the frontend, verify with `curl`. Playwright install check, commands, the script skeleton and a prompt template for asking an LLM to run e2e: [SETUP.md](SETUP.md). Selector patterns: [SELECTORS.md](SELECTORS.md).
+Only when existing tests do not cover the requested behavior. Setup order: discover the frontend URL from project config, start required services, then verify the frontend responds. Playwright commands and a script skeleton: [SETUP.md](SETUP.md). Selector patterns: [SELECTORS.md](SELECTORS.md).
 
 ## Test artifact naming
 
@@ -71,13 +66,13 @@ canonical AP-24 failure (see `~/.skills/antiplan/references/anti-patterns.md`).
 
 ## Bug documentation
 
-Write each defect to `fixes/NN-bug-description.md` with date, severity (Critical/High/Medium/Low), component, route, summary, screenshots, current vs expected behavior, steps to reproduce, code reference, impact and an optional suggested fix. Full template: [BUG_REPORT.md](BUG_REPORT.md).
+When the user requests a persistent defect report, write it to `fixes/NN-bug-description.md` using [BUG_REPORT.md](BUG_REPORT.md). Otherwise report concise evidence in the response.
 
 ## Companion files
 
 Read only when the situation matches:
 
-- [SETUP.md](SETUP.md): starting services, installing Playwright, custom script, LLM prompt template
+- [SETUP.md](SETUP.md): starting services and custom Playwright scripts
 - [SELECTORS.md](SELECTORS.md): writing locators
 - [BUG_REPORT.md](BUG_REPORT.md): documenting a defect
 - [CHECKLIST.md](CHECKLIST.md): coverage checklist (navigation, forms, display, interactions) and troubleshooting table

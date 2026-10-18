@@ -1,6 +1,6 @@
 # Example — hub and satellite shape
 
-Illustrates the **brief-docs** pattern with a **fictional** doc tree. Replace names with your product's.
+Illustrates the **docs** pattern with a **fictional** doc tree. Replace names with your product's.
 
 ## Fictional hub (`docs/acme-api/README.md`)
 

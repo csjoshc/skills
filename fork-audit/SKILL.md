@@ -31,7 +31,7 @@ Phase 5: fan out intermediates (.docs/)
 |---|---|
 | Documenting a downloaded fork zip | New design from scratch → `make-prd` or `spec-writer` |
 | Auditing a divergent branch (main…feature) | Per-PR review comments → `pr-review` |
-| Publishing a fork's design page to Confluence, backed by layered exec/architect/engineer intermediates | Short single-page onboarding → `brief-docs` |
+| Publishing a fork's design page to Confluence, backed by layered exec/architect/engineer intermediates | Short single-page onboarding → `docs` |
 | Mermaid for system context, data flow, sequence | Just rendering one diagram → `make-mmd` |
 | | Confluence diagram embeds → call `confluence-diagrams` after |
 

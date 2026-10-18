@@ -1,9 +1,9 @@
 ---
-name: brief-docs
+name: docs
 description: "Writes and tightens internal technical docs summary-first with hub-and-spoke navigation. Use when writing or trimming wiki pages, docs/ pages, or onboarding overviews."
 ---
 
-# brief-docs
+# docs
 
 Apply this skill when producing or editing **short, scannable** technical docs—**one screen of value up front**, detail on demand.
 
@@ -137,4 +137,4 @@ After edits, run the skillsmith audit on the skills directory (if installed):
 
 `python3 "$HOME/.skills/skillsmith/scripts/skill_audit.py" "$HOME/.skills"`
 
-Confirm this skill folder passes frontmatter rules (`name` matches directory `brief-docs`, `description` present).
+Confirm this skill folder passes frontmatter rules (`name` matches directory `docs`, `description` present).

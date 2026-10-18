@@ -35,7 +35,9 @@ any PRD and task-sequence are read-only context.
 2. Set the ticket's frontmatter `Stage: BUILD` (edit the file directly).
 3. Invoke the tdd skill. Phase 0 writes the Test Obligation Queue at
    .tickets/tdd/toq-<ticket-id>.yaml. Phase 1 runs red-green-refactor
-   against the ticket's ACs one at a time. Do NOT skip Phase 0.
+   against the ticket's ACs one at a time. Do NOT skip Phase 0. If the ticket
+   changes frontend UI, invoke `/ui-work` for visual implementation and
+   browser review within the ticket scope; keep `/tdd` as owner of AC order.
 4. When all ACs are green per /tdd, invoke /verify-claim. It will
    require: passing test log, grep-verifiable AC output, and (for
    bug-fix tickets) a regression test. Do not declare done until
@@ -45,7 +47,7 @@ any PRD and task-sequence are read-only context.
    AGENTS.md). Commit message references the ticket ID.
 7. Set the ticket's frontmatter `Stage: COMPLETE`. Commit that change.
 8. STOP. Do not start the next ticket in this session. Start a fresh
-   session (or clear context), then run /todo to get the next prompt.
+   session (or clear context), then run `/todo manual` for the next prompt.
 
 **Subagent escalation (exception, not default):** If the ticket touches
 adversarial-review-worthy code (audit logging, auth, transport plumbing,

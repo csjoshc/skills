@@ -35,7 +35,9 @@ Read-First:
 ```
 
 Required: `id`, `title`, `Stage`, `Depends-On` (may be `[]`), `Files` (at least one entry).
-`Stage` is one of `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`; an implementation-ready ticket is `BUILD`.
+`Stage` is one of `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
+`NEW` means queued and not yet started; `BUILD` means implementation is in progress.
+`/todo` changes `NEW` to `BUILD` when a build session starts.
 `Files[].action` is `CREATE | MODIFY | VERIFY | DELETE`; add a `description` only when the path doesn't say enough.
 At most 5 non-test files per ticket; split above that.
 

@@ -37,14 +37,16 @@ whole files). Avoid shell loops for this; they are slower and noisier.
   antiplan, validator, Challenger, Coverage and orphan-ticket rules. DAG
   readiness uses any dependency the ticket declares (frontmatter field or a
   `Dependencies:` line), else numeric filename order. ticket-critic is recommended once but is not a
-  build gate; `/todo build` may proceed without `critic-report.md`.
+  build gate in Manual mode. Auto mode runs ticket-critic before build.
 
 ## Stage inference rules
 
 - **fresh** - none of the above paths exist → recommend by size:
-  - small, already-scoped change → skip /todo; use `tdd` or just implement
-  - defined feature, a few tickets → `/todo spec <feature>` (spec-writer direct, Lite mode)
-  - risky, contested or large → `/todo start <feature>` (antiplan; Fast Mode by default)
+  - small, already-scoped frontend UI change → `/ui-work`
+  - small, already-scoped non-UI change → skip `/todo`; use `tdd` or implement directly
+  - defined feature, a few tickets → spec-writer direct (Lite mode)
+  - risky, contested or large → antiplan (Full mode; Fast Mode by default)
+  - Auto mode chooses from these routes; Manual mode emits the next skill prompt
 - **phase-0-done** — only `brownfield-context.md` exists → recommend
   resuming antiplan into Phase 1
 - **prd-done-no-dag** — `PRD.md` exists but no `task-sequence.md` → recommend
@@ -59,8 +61,8 @@ whole files). Avoid shell loops for this; they are slower and noisier.
   `COVERAGE-AUDIT: skipped — Light classification`.
 - **dag-done** — `task-sequence.md` + `challenger-report.md` (+
   `coverage-audit.md` for Standard/Heavy) all present; no `.tickets/*.md` →
-  **first** ask the user to run antiplan's pre-flight validator with all
-  evidence flags:
+  validate with all evidence flags before spec-writer. Auto mode runs this
+  command; Manual mode emits it as the next action:
   ```
   python3 ~/.skills/antiplan/validate.py \
     --project-dir . \
@@ -76,32 +78,29 @@ whole files). Avoid shell loops for this; they are slower and noisier.
     for fan-out. Common failures: missing AP rows in challenger-report,
     short evidence on a BLOCK row, GAP/INVERTED in coverage-audit, or
     `RE_DERIVED < 5` (Coverage Auditor likely skimmed the transcript).
-- **lite-ready** - Lite mode and some tickets `Stage: NEW` → recommend
-  `/todo build`; mention ticket-critic if `critic-report.md` is missing
+- **lite-ready** - Lite mode and some tickets `Stage: NEW` → Manual mode emits
+  the build-ticket prompt; Auto mode runs ticket-critic if needed, then builds
 - **tickets-written-uncriticized** (Full mode) — `.tickets/*.md` exist; no
   `critic-report.md`, or critic-report.md older than any `.tickets/*.md` →
   recommend ticket-critic session
 - **critic-failed** — critic-report.md contains the literal string `FAIL` →
   recommend fix-cycle: return to spec-writer for failing tickets
 - **ready-for-build** — critic-report.md passes; some tickets still
-  `Stage: NEW` → recommend `/todo build` (manual, one ticket per
-  session) or `/todo run` (auto-driver) for the next `NEW` ticket. Bare `/todo` may
-  ask which mode the user prefers if it's the first build session.
+  `Stage: NEW` → Manual mode emits the next build-ticket prompt; Auto mode
+  continues the serial build loop.
 - **slice-gate-pending** — within a slice, every non-gate ticket is
   `Stage: COMPLETE` and exactly one gate ticket (0G/1G/2G/3G or any
-  ticket with `gate: true` in frontmatter) is `Stage: NEW` → recommend
-  `/todo gate <slice-id>` (independent review) before flipping
-  the gate to BUILD/COMPLETE.
+  ticket with `gate: true` in frontmatter) is `Stage: NEW` → Manual mode emits
+  the slice-gate prompt; Auto mode runs the gate review before building it.
 - **mid-build-resume** — exactly one ticket is `Stage: BUILD` AND no
   active session is running it (heuristic: invoked from a fresh /todo
-  call with no in-conversation evidence of the build). Recommend
-  `/todo resume` to pick up where the prior session left off.
-- **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → recommend
-  continuing with `/todo build` or `/todo run` for remaining `NEW` tickets
+  call with no in-conversation evidence of the build). Manual mode emits the
+  resume prompt; Auto mode resumes from the recorded diff and TDD artifacts.
+- **partial-build** — some `Stage: BUILD` or `Stage: COMPLETE` → Manual mode
+  emits the next build prompt; Auto mode resumes or builds the next ready ticket
 - **build-unscoped** — a ticket is `Stage: BUILD` but no matching
-  `.tickets/tdd/toq-<id>.yaml` exists → recommend invoking `/tdd` Phase 0
-  before continuing the cycle (this catches BUILD sessions that were
-  started before TOQ scoping was adopted)
+  `.tickets/tdd/toq-<id>.yaml` exists → run `/tdd` Phase 0 before continuing
+  (this catches BUILD sessions that were started before TOQ scoping was adopted)
 - **all-complete** — every ticket `Stage: COMPLETE` → announce the
   pipeline is done
 
