@@ -59,7 +59,21 @@ Inline what every branch needs, and put behind a pointer what only some branches
 
 Done when every section of SKILL.md is used on every branch, or is a one-line pointer.
 
-### Step 4: Writing lenses
+### Step 4: Workflow ergonomics (multi-stage skills only)
+
+For a skill that routes or runs work across multiple stages, make one run contract easy to find:
+
+1. **Entry:** give the workflow one obvious invocation. Add modes only when they change who advances the stages; keep the choice explicit and small.
+2. **Happy path:** show the normal stage order once. Auto mode advances and re-detects durable state after each stage; Manual mode names the next action and gives a paste-ready prompt.
+3. **Escalation:** name the conditions that require a person. At a pause, show the evidence, ask one focused question or action, and say how execution resumes.
+4. **Authority:** state the workflow's write, commit, publish, and external-action boundaries. Do not infer broad authority from an Auto label.
+5. **Recovery:** define how the workflow recognizes an interrupted stage from durable artifacts and resumes without repeating completed work.
+
+Keep routing in the entry skill and branch-specific procedures in linked references. Do not add an orchestration layer to a single-stage skill.
+
+Done when a reader can identify the entry point, normal path, pause conditions, permitted side effects, and resume point without reconciling contradictory instructions.
+
+### Step 5: Writing lenses
 
 Read the body sentence by sentence through three lenses:
 
@@ -69,7 +83,7 @@ Read the body sentence by sentence through three lenses:
 
 Done when every sentence passes all three lenses.
 
-### Step 5: Review-skill hardening (review, audit and critique skills only)
+### Step 6: Review-skill hardening (review, audit and critique skills only)
 
 Enforce:
 
@@ -80,7 +94,7 @@ Enforce:
 
 Done when each of the four is present in the skill's steps.
 
-### Step 6: Stop-slop and caveman integration (prose-producing skills only)
+### Step 7: Stop-slop and caveman integration (prose-producing skills only)
 
 For skills that generate prose output (specs, PRDs, docs, briefs, handoffs, reframes):
 - **stop-slop** is mandatory in the skill's Quality Rules or final step: call the Skill tool with `stop-slop` on all prose output.
@@ -88,7 +102,7 @@ For skills that generate prose output (specs, PRDs, docs, briefs, handoffs, refr
 
 Done when every prose-producing skill ends on a stop-slop call.
 
-### Step 7: Verify and report
+### Step 8: Verify and report
 
 Re-run the audit on every amended skill, including amendments to an existing one.
 Done when:
