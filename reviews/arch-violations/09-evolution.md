@@ -26,7 +26,7 @@ a column before readers stop referencing it, renaming in place rather
 than add-then-remove, or a simultaneous deploy across services with
 no staggered compatibility window.
 
-**Decidable at:** `design` — /antiplan should require an explicit
+**Decidable at:** `design` — /challenge should require an explicit
 rollback path for any schema or contract change.
 
 **Why it compounds:** When the change breaks in production, the only
@@ -46,7 +46,7 @@ exported type is changed such that older clients break the moment the
 change ships — no version, no dual-write period, no overlap window
 during which both shapes are accepted.
 
-**Decidable at:** `design` — /antiplan should require a deprecation
+**Decidable at:** `design` — /challenge should require a deprecation
 window for any public surface change.
 
 **Why it compounds:** Any deploy becomes a coordination problem with
@@ -67,7 +67,7 @@ emission, background jobs) continue executing as if the feature were
 on. Disabling the flag hides the feature from users but doesn't stop
 the work.
 
-**Decidable at:** `both` — /antiplan should require that kill
+**Decidable at:** `both` — /challenge should require that kill
 switches propagate through every dependent layer.
 
 **Why it compounds:** A flag that doesn't fully disable the behavior
@@ -87,7 +87,7 @@ with language like "temporary," "TODO: remove after X," or "until we
 fix Y," without a named owner, a concrete removal criterion, or a
 tracked ticket. The solution outlives the team that wrote it.
 
-**Decidable at:** `both` — /antiplan should require owner + sunset
+**Decidable at:** `both` — /challenge should require owner + sunset
 criteria for anything labeled temporary.
 
 **Why it compounds:** Temporary solutions accumulate as permanent
@@ -168,14 +168,14 @@ apply to published surfaces, not to refactors within a deploy boundary.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Irreversible migration | ✅ — must require rollback plan | ✅ | ✅ |
 | Backwards-incompatible API | ✅ — must require deprecation window | ✅ | ✅ |
 | Flag without kill-switch | partial — must mandate flag propagation | ✅ | ✅ |
 | Orphan temporary solution | partial — must require owner + sunset | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see the code.
+**partial** means /challenge sets the policy but cannot see the code.
 When `plan_present: true` and the plan specified rollback, deprecation,
 or flag propagation requirements, emit as `category: Architectural Drift`
 with `decidable_at: design`.

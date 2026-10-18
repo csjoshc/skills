@@ -80,7 +80,7 @@ layer (database driver, vendor SDK) reach a higher layer (HTTP,
 user-facing UI) unchanged. Storage or vendor implementation details
 leak into error responses, logs, and client retry logic.
 
-**Decidable at:** `both` — /antiplan should set the error-translation
+**Decidable at:** `both` — /challenge should set the error-translation
 policy; diff catches specific leaks.
 
 **Why it compounds:** Clients couple their retry behavior to the
@@ -101,7 +101,7 @@ unexpected programming bugs (type error, null dereference, assertion
 failure) with the same response. There is no distinction in logs,
 metrics, or alerting.
 
-**Decidable at:** `both` — /antiplan should define the error taxonomy.
+**Decidable at:** `both` — /challenge should define the error taxonomy.
 
 **Why it compounds:** Monitoring cannot distinguish "user tried an
 invalid thing" from "code is broken." Alert fatigue sets in; real
@@ -178,7 +178,7 @@ the function's declared contract, not a swallowed signal.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Swallowed error | ❌ — emerges in code | ✅ | ✅ |
 | Catching too broadly | ❌ | ✅ | ✅ |
@@ -186,7 +186,7 @@ the function's declared contract, not a swallowed signal.
 | Untranslated boundary errors | partial — should mandate translation layer | ✅ | ✅ |
 | Expected/unexpected conflation | partial — should define error taxonomy | ✅ | ✅ |
 
-**partial** means /antiplan should set the policy but cannot see code.
+**partial** means /challenge should set the policy but cannot see code.
 When `plan_present: true` and the plan specified the taxonomy or
 translation layer, pr-review/cleanup may emit
 `category: Architectural Drift` with `decidable_at: design`.

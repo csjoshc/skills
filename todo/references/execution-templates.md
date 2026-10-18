@@ -16,7 +16,7 @@ template into the user-facing output.
 ## build-ticket-manual
 
 For users executing tickets by hand. Single-session per ticket
-using `/tdd` for red-green-refactor and `/verify-claim` as the evidence
+using `/tdd` for red-green-refactor and `/verify` as the evidence
 gate before commit. Subagents are reserved for slice gates, not per-ticket.
 
 ```
@@ -36,12 +36,12 @@ any PRD and task-sequence are read-only context.
 3. Invoke the tdd skill. Phase 0 writes the Test Obligation Queue at
    .tickets/tdd/toq-<ticket-id>.yaml. Phase 1 runs red-green-refactor
    against the ticket's ACs one at a time. Do NOT skip Phase 0. If the ticket
-   changes frontend UI, invoke `/ui-work` for visual implementation and
+   changes frontend UI, invoke `/ui` for visual implementation and
    browser review within the ticket scope; keep `/tdd` as owner of AC order.
-4. When all ACs are green per /tdd, invoke /verify-claim. It will
+4. When all ACs are green per /tdd, invoke /verify. It will
    require: passing test log, grep-verifiable AC output, and (for
    bug-fix tickets) a regression test. Do not declare done until
-   /verify-claim passes.
+   /verify passes.
 5. Run the project's lint + typecheck commands. Fix any issues.
 6. Stage and commit using the project's commit conventions (see
    AGENTS.md). Commit message references the ticket ID.
@@ -54,7 +54,7 @@ adversarial-review-worthy code (audit logging, auth, transport plumbing,
 data-deletion flows), run pr-review (or the harness's own code review) in a separate context BEFORE step 6.
 Otherwise skip — per-ticket subagent review is not the default flow.
 
-**If /tdd or /verify-claim refuses to pass:** stop, do not commit, do
+**If /tdd or /verify refuses to pass:** stop, do not commit, do
 not flip Stage to COMPLETE. Document the blocker in the ticket's
 "Failure Protocol" section and surface it to the user.
 ```
@@ -87,7 +87,7 @@ the source of truth.
 4. Run the test suite. Capture which tests pass and fail.
 5. Resume /tdd at the first un-green AC. Continue red-green-refactor.
 6. After all ACs green, follow steps 4-7 of the build-ticket-manual
-   template (verify-claim, lint, commit, Stage: COMPLETE, stop).
+   template (verify, lint, commit, Stage: COMPLETE, stop).
 
 Do not re-derive the ticket scope or rewrite already-passing code.
 ```

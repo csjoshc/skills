@@ -14,11 +14,11 @@ Do not ask the user to copy a prompt or invoke a skill between stages.
 
 | State | Auto action |
 |---|---|
-| `fresh` | If no feature is supplied, ask for it. For a small scoped frontend UI change, call the Skill tool with `ui-work`; for other small scoped changes, route to the relevant implementation skill. Use Lite ticketing for a defined feature; use antiplan for large, risky, or contested work. Ask when the route is genuinely unclear. |
-| `phase-0-done`, `prd-done-no-dag`, `dag-done-no-audits` | Resume antiplan at the next incomplete phase. Honor its approval gates. |
-| `dag-done` | Run the antiplan validator with all required evidence. On failure, resume antiplan; on success, invoke spec-writer. |
-| `tickets-written-uncriticized` | Invoke ticket-critic. Auto mode also runs the critic in Lite mode. |
-| `critic-failed` | Invoke spec-writer to fix failing tickets only, then rerun ticket-critic once. If any ticket still fails, escalate. |
+| `fresh` | If no feature is supplied, ask for it. For a small scoped frontend UI change, call the Skill tool with `ui`; for other small scoped changes, route to the relevant implementation skill. Use Lite ticketing for a defined feature; use challenge for large, risky, or contested work. Ask when the route is genuinely unclear. |
+| `phase-0-done`, `prd-done-no-dag`, `dag-done-no-audits` | Resume challenge at the next incomplete phase. Honor its approval gates. |
+| `dag-done` | Run the challenge validator with all required evidence. On failure, resume challenge; on success, invoke spec. |
+| `tickets-written-uncriticized` | Invoke ticket-review. Auto mode also runs the critic in Lite mode. |
+| `critic-failed` | Invoke spec to fix failing tickets only, then rerun ticket-review once. If any ticket still fails, escalate. |
 | `ready-for-build`, `partial-build`, `lite-ready` | Build the next dependency-ready ticket using the serial build loop below. |
 | `slice-gate-pending` | Run the slice-gate review. Continue only after it passes. |
 | `mid-build-resume` | Resume the in-flight ticket from its diff and TDD artifacts. |
@@ -36,10 +36,10 @@ An unrecognized or inconsistent state is an escalation, not a guess.
 2. Select one dependency-ready `Stage: NEW` ticket. Follow DAG dependencies in
    Full mode and the Lite dependency rule otherwise. Build serially.
 3. Run the build-ticket template in an implementation subagent. It runs `/tdd`
-   including Phase 0, implements the ticket ACs, runs `/verify-claim`, lint,
+   including Phase 0, implements the ticket ACs, runs `/verify`, lint,
    and typecheck, and sets `Stage: COMPLETE` only when those checks pass. It
    makes no commit. For frontend UI scope, it calls the Skill tool with
-   `ui-work` to guide visual implementation and browser evidence within the
+   `ui` to guide visual implementation and browser evidence within the
    ticket ACs.
 4. Run an independent evidence review against the ticket ACs, diff, and proof.
    If review passes, commit the reviewed source changes as one ticket-scoped
@@ -53,7 +53,7 @@ The Auto choice authorizes these local ticket-scoped checkpoint commits.
 
 Pause, describe the evidence, and ask one focused question when:
 
-- antiplan or another specialist skill requests a user decision or sign-off;
+- challenge or another specialist skill requests a user decision or sign-off;
 - a Tier 2 or Tier 3 assumption has no answer in the project or global
   standards;
 - the feature route is unclear between direct implementation, Lite, and Full;

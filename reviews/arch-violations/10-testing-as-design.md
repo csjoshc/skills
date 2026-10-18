@@ -64,7 +64,7 @@ exercised only in unit tests where the dependency is mocked. No
 end-to-end or contract test verifies the real interface. The mock is
 a fiction that can silently drift from reality.
 
-**Decidable at:** `both` — /antiplan should require a contract or
+**Decidable at:** `both` — /challenge should require a contract or
 end-to-end test at every external-dependency boundary.
 
 **Why it compounds:** The vendor changes a field name, an error
@@ -85,7 +85,7 @@ Timeout, duplicate delivery, malformed payload, downstream-error — none
 of these are asserted against. Failures only surface in production
 incidents.
 
-**Decidable at:** `both` — /antiplan should enumerate failure modes
+**Decidable at:** `both` — /challenge should enumerate failure modes
 to test for any critical path.
 
 **Why it compounds:** An incident reveals a missing failure-path
@@ -167,14 +167,14 @@ downstream API with specific arguments; the call is the behavior.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Mocking the world | ❌ — emerges in code | ✅ | ✅ |
 | Implementation-not-behavior asserts | ❌ | ✅ | ✅ |
 | Mock-only integration boundary | partial — should mandate contract tests | ✅ | ✅ |
 | No failure-path coverage | partial — should enumerate failure modes | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see the code.
+**partial** means /challenge sets the policy but cannot see the code.
 When `plan_present: true` and the plan enumerated failure modes or
 mandated contract tests, pr-review/cleanup may emit
 `category: Architectural Drift` with `decidable_at: design`.

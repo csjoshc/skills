@@ -86,7 +86,7 @@ Required fields:
 Optional fields:
 
 - `decidable_at` — `design` | `diff` | `both`. Signals whether the
-  violation should have been caught at /antiplan Phase 2 (`design`), is
+  violation should have been caught at /challenge Phase 2 (`design`), is
   only visible post-code (`diff`), or both (policy at `design`,
   enforcement at `diff`). Required when `category: Architectural Drift`.
 

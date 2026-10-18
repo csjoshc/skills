@@ -1,6 +1,6 @@
 # Grilling: Shared Question-Round Rules
 
-Used by planning skills (antiplan, make-prd) that interview the user to reach a shared understanding.
+Used by planning skills (challenge, prd) that interview the user to reach a shared understanding.
 This is a reference file, not a skill.
 Each skill keeps its own ledger, gates and question content; this file sets how a round is built and asked.
 

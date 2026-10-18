@@ -220,7 +220,7 @@ This is the deliverable. One page, written fresh from the intermediates — **no
 
 3. **Write in the Q&A voice, then run `/stop-slop`.** Direct verdicts ("There is no re-ranking. The cosine score is used directly."), concrete values, gaps stated as gaps. Tables over prose where the content is tabular. No em dashes, no filler, no hedging.
 4. **Keep it one page.** Target the length of a 10-minute read. Anything that wants more depth gets a one-line pointer to the in-repo canonical doc (DEVGUIDE, design specs), not inlined. The `.docs/` intermediates are local-only and gitignored — reference them by name for the audit trail, but don't link them as if readers can click through.
-5. **Publish** via `confluence_update_page`. A new or empty page takes markdown format (`table_layout: wide` reads better for the numbers tables). A page that already has content takes storage format, per the `CONFLUENCE_EDITING.md` row in the SKILL.md companion table. Offer as follow-ups: uploading the diagram SVGs via `/confluence-diagrams`, and linking the PRs if the repo is shareable.
+5. **Publish** via `confluence_update_page`. A new or empty page takes markdown format (`table_layout: wide` reads better for the numbers tables). A page that already has content takes storage format, per the `CONFLUENCE_EDITING.md` row in the SKILL.md companion table. Offer as follow-ups: uploading the diagram SVGs via `/confluence`, and linking the PRs if the repo is shareable.
 
 Template: templates/confluence-design-page.md (`../templates/confluence-design-page.md`).
 

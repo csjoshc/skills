@@ -110,8 +110,8 @@ Invoke on outputs where the *user* doesn't need flowing prose:
 
 Keep full prose for:
 
-- `spec-writer` output — the user reads ACs in full
-- `ticket-critic` verdicts — stakeholders read these
+- `spec` output — the user reads ACs in full
+- `ticket-review` verdicts — stakeholders read these
 - Customer / reviewer replies on PRs or tickets
 - Error messages and failure explanations (clarity > token savings)
 - Anything shown directly to non-technical stakeholders

@@ -75,7 +75,7 @@ Architectural-Drift lens's behavior.
 Look in this order; stop on first match:
 
 1. **PR body** — any link matching `*/PRD.md`, `*.tickets/*`, `*PLAN.md`,
-   or text containing `ARCHITECTURE-DECISIONS` / `antiplan`.
+   or text containing `ARCHITECTURE-DECISIONS` / `challenge`.
 2. **Linked tickets** — any linked issue whose body contains an
    `ARCHITECTURE-DECISIONS` fenced block.
 3. **Local plan** — `.tickets/PRD.md`, `.plan/**/PRD.md` or

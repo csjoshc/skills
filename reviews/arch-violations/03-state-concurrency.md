@@ -124,7 +124,7 @@ shape is a method like `cart.apply_discount(...)` that mutates
 a caller that passed the `cart` to more than one consumer.
 
 **Decidable at:** `diff` — visible in the class definition plus the
-mutation call sites. /antiplan should set "domain types are frozen;
+mutation call sites. /challenge should set "domain types are frozen;
 state transitions return new instances" as a design policy, but the
 specific violation is a code fact.
 
@@ -285,7 +285,7 @@ with the callee's mutation.
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Shared mutable state | ❌ — emerges in code | ✅ | ✅ |
 | Race / check-then-act | ❌ | ✅ | ✅ |
@@ -294,7 +294,7 @@ with the callee's mutation.
 | Unbounded queue/retry/recursion | partial — should require bounds at design | ✅ | ✅ |
 | Mutable domain entity | partial — sets "domain types frozen" policy | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot detect instances.
+**partial** means /challenge sets the policy but cannot detect instances.
 When `plan_present: true` and the plan addressed the policy,
 pr-review/cleanup may emit `category: Architectural Drift` with
 `decidable_at: design`.

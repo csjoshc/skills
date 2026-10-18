@@ -13,7 +13,7 @@ Three Mermaid diagrams target the architect layer (L1):
 2. **Novel-pattern data flow** (flowchart TB) — stages in the data pipeline / orchestration / state machine
 3. **Primary request flow** (sequenceDiagram) — one canonical user→system→external→system→user round trip
 
-**classDef color convention** (consistent with `/make-mmd` and `confluence-diagrams`):
+**classDef color convention** (consistent with `/diagram` and `confluence`):
 
 ```
 classDef consumer fill:#bfbfbf,stroke:#444,color:#000;

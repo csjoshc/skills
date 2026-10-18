@@ -2,7 +2,7 @@
 
 **Audience:** Reviewers auditing existing codebases. Companion to the `cleanup` skill.
 
-**Not for ticket markdown.** Use `ticket-critic` for `.tickets/*.md`.
+**Not for ticket markdown.** Use `ticket-review` for `.tickets/*.md`.
 
 **Precedence:** Organization review packet overrides this file. Then
 Architecture Decisions / `AGENTS.md`. This rubric fills gaps.
@@ -254,7 +254,7 @@ Detection: `grep -n '\.\w*()\.\w*()\.\w*()' src/`
 ## Part 6 — Layer-Specific Notes
 
 **Frontend:** Decouple data-fetch from presentation; explicit props; loading/error
-UI; use `ui-work` if the project uses it.
+UI; use `ui` if the project uses it.
 
 **Middleware / services:** Validation at boundary; standardized error objects;
 business logic not coupled to HTTP transport.

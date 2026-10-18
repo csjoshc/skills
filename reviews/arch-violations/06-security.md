@@ -24,7 +24,7 @@ next ten endpoints.
 single policy layer. Similar checks drift over time and at least one
 handler is eventually missing a clause.
 
-**Decidable at:** `both` — /antiplan should mandate a policy module;
+**Decidable at:** `both` — /challenge should mandate a policy module;
 diff review catches scattered re-implementations.
 
 **Why it compounds:** Divergence is statistically guaranteed at scale.
@@ -79,7 +79,7 @@ codebase where every other endpoint is decorated/wrapped with an auth
 guard, but this one is not. The pattern "every endpoint has X" has a
 gap.
 
-**Decidable at:** `both` — /antiplan should mandate a default-deny
+**Decidable at:** `both` — /challenge should mandate a default-deny
 registration pattern; diff catches gaps.
 
 **Why it compounds:** The same gap will recur every time someone adds
@@ -178,7 +178,7 @@ grant access to anything?" not "does the variable name contain 'key'?"
 
 ## Decidable-at matrix
 
-| Smell | antiplan (Phase 2) | pr-review | cleanup |
+| Smell | challenge (Phase 2) | pr-review | cleanup |
 | --- | --- | --- | --- |
 | Authz scattered | partial — should mandate policy module | ✅ | ✅ |
 | Trust-boundary confusion | ❌ — emerges in code | ✅ | ✅ |
@@ -186,7 +186,7 @@ grant access to anything?" not "does the variable name contain 'key'?"
 | Missing auth check | partial — should mandate default-deny registration | ✅ | ✅ |
 | IDOR | partial — should mandate owner-scoped fetch helper | ✅ | ✅ |
 
-**partial** means /antiplan sets the policy but cannot see code.
+**partial** means /challenge sets the policy but cannot see code.
 When `plan_present: true` and the plan addressed the policy layer,
 pr-review/cleanup may emit `category: Architectural Drift` with
 `decidable_at: design`.

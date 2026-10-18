@@ -11,7 +11,7 @@ and evidence-based descriptions (UI recordings for frontend, test logs for backe
 ## Workflow
 
 ```
-Phase 0: Pre-flight gates (verify-claim, pr-review self-check)
+Phase 0: Pre-flight gates (verify, pr-review self-check)
 Phase 1: Git Preparation
 Phase 2: Commit & Push
 Phase 3: Evidence Collection (conditional)
@@ -35,7 +35,7 @@ false completions or scope-creep PRs.
 
 ```
 Checklist:
-- [ ] 0.1 Run `verify-claim` on the current session's claims. If it
+- [ ] 0.1 Run `verify` on the current session's claims. If it
         writes CLAIM_UNVERIFIED.md at the repo root, halt and surface
         the gap table to the user. Do not proceed without evidence or
         an explicit `override: <reason>`.
@@ -63,7 +63,7 @@ Before opening a PR, paste evidence inline in the `## Evidence` section of the d
 - [ ] curl response (API changes only)
 - [ ] Reproduction test (bug fixes only — must fail on `main`, pass on branch)
 
-A claim of "fixed" without one of the above is a /verify-claim block. Call the Skill tool with `verify-claim`.
+A claim of "fixed" without one of the above is a /verify block. Call the Skill tool with `verify`.
 
 **Production-bound PRs** (ship to production directly or behind a flag) also need the pre-launch checklist and a rollback plan under `## Merge Danger`: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md). Skip for purely internal changes.
 

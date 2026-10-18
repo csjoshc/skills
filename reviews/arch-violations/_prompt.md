@@ -59,9 +59,9 @@ Rules (every rule matters — do not relax any):
   7. FILE UNDER 200 LINES. Trim prose if you approach the cap.
 
   8. FILL THE DECIDABLE-AT MATRIX HONESTLY.
-     - `design` means /antiplan Phase 2 should catch it.
+     - `design` means /challenge Phase 2 should catch it.
      - `diff`   means only visible in code.
-     - `both`   means /antiplan sets policy, pr-review/cleanup enforces.
+     - `both`   means /challenge sets policy, pr-review/cleanup enforces.
 
 After writing, verify the embedded REVIEW-FINDINGS block parses:
 

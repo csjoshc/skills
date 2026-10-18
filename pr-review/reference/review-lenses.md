@@ -284,7 +284,7 @@ or similar) or contain `no-plan-available` verbatim.
 canonical operator flow. Idle services kept "for completeness", config
 defaults the operator path never uses, override files that apologize
 for diverging from the base, and `depends_on` edges that no longer
-gate anything. This lens is the PR-time counterpart of antiplan
+gate anything. This lens is the PR-time counterpart of challenge
 **AP-21 (Requirement Drift / Apologetic Workaround)**: AP-21 is the
 design-time gate, Lens 7 is the after-the-fact evidence detector.
 
@@ -359,7 +359,7 @@ into the base so the topology is honest.
 - MEDIUM: below threshold, do not report
 
 **Finding shape:** `category: Operational Hygiene` with
-`decidable_at: design` (the design-time gate is antiplan AP-21).
+`decidable_at: design` (the design-time gate is challenge AP-21).
 `proof:` must cite the specific override/base/comment pair as a
 quoted excerpt plus a one-line reproducer (e.g. "with `--profile web
 up` and override applied, `docker inspect --format
@@ -387,7 +387,7 @@ When in doubt, validate rather than dismiss.
 1. Remove issues that failed validation.
 2. Merge duplicates across lenses. If the Architectural-Drift lens and
    another lens both flagged the same hunk, prefer the Drift finding
-   when `plan_present: true` (higher signal for antiplan feedback).
+   when `plan_present: true` (higher signal for challenge feedback).
 3. Sort by category:
    - Bug
    - Error Handling

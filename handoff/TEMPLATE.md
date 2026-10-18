@@ -67,13 +67,13 @@ Pick from this map, or from `~/.skills/PLAYBOOK.md`; read a skill's SKILL.md bef
 
 | Task type | Skills to consider |
 |----------|-------------------|
-| **Frontend UI** | `ui-work`, `chrome-devtools` |
+| **Frontend UI** | `ui`, `browser` |
 | **Tests / bug fix** | `tdd` |
-| **Git / PR work** | `pr-create`, `pr-review`, `pr-fix`, `verify-claim` |
-| **Planning / specs** | `todo`, `antiplan`, `spec-writer`, `ticket-critic` |
-| **Infrastructure** | `agent-sync`, `confluence-diagrams` |
-| **CLI / tooling** | `cmd-cli` |
-| **Onboarding** | `project-onboarding` |
+| **Git / PR work** | `pr-create`, `pr-review`, `pr-fix`, `verify` |
+| **Planning / specs** | `todo`, `challenge`, `spec`, `ticket-review` |
+| **Infrastructure** | `sync`, `confluence` |
+| **CLI / tooling** | `cli` |
+| **Onboarding** | `onboard` |
 
 ---
 
