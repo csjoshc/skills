@@ -2,7 +2,7 @@
 """Project the MCP master (~/.secrets/mcp.json) into each tool's native config.
 
 Secrets never travel as literals. A master "${VAR}" becomes the tool's own env reference
-(opencode {env:VAR}, Claude Code ${VAR}, pi $ENV:VAR) or, for GUI apps that do not inherit the
+(opencode {env:VAR}, Claude Code ${VAR}) or, for GUI apps that do not inherit the
 shell env, a /bin/zsh wrapper that sources ~/.config/secrets/work.env first. A literal value in a
 secret-named env/header field is refused (field dropped, warning, exit 1 with --strict).
 Merges are surgical: servers in the master are upserted or, when disabled, removed; tool-only
@@ -10,7 +10,7 @@ servers and unrelated keys stay. Writes are temp file + atomic rename with a .ba
 Values are never printed.
 
 Usage: mcp_sync.py [--dry-run] [--strict] [--targets a,b] [--master PATH] [--npx PATH]
-Targets: claude, opencode, cursor, vscode, desktop, codex, pi, omp
+Targets: claude, opencode, cursor, vscode, desktop, codex, omp
 codex is personal only: it receives just the servers marked "personal": true, never a ${VAR} one.
 Servers from other repos can sit in <master dir>/mcp.d/*.json (same schema, applied in name
 order after the master, same name wins).
@@ -236,35 +236,6 @@ def to_desktop(name, s, ctx):
     return gui_remote(name, s, ctx, typed=False)
 
 
-def to_pi(name, s, ctx):
-    # pi rejects http with args/env and stdio with headers, and expands only a whole $ENV:VAR.
-    fields = ("command", "args", "env") if s["kind"] == "stdio" else ("url", "headers")
-    out = {"type": s["kind"]}
-    for f in fields:
-        if f not in s:
-            continue
-        if f in ("env", "headers"):
-            kept = {}
-            for k, v in s[f].items():
-                m = WHOLE_REF.match(v) if isinstance(v, str) else None
-                if m:
-                    kept[k] = f"$ENV:{m.group(1)}"
-                elif has_ref(v):
-                    ctx.report.warn(f"{name}: dropped {f}.{k}, it has a ${{VAR}} inside a longer "
-                                    "value, which pi cannot expand; make the master value a "
-                                    "bare ${VAR}")
-                else:
-                    kept[k] = v
-            if kept:
-                out[f] = kept
-        else:
-            out[f] = s[f]
-    if "command" not in out if s["kind"] == "stdio" else "url" not in out:
-        ctx.report.warn(f"{name}: skipped, no {'command' if s['kind'] == 'stdio' else 'url'}")
-        return None
-    return out
-
-
 def to_omp(name, s, ctx):
     """OMP uses the standard typed MCP shape and expands ${VAR} from its process env."""
     if s["kind"] == "stdio":
@@ -332,7 +303,6 @@ def default_targets():
                personal_only=True,
                keep=("startup_timeout_sec", "tool_timeout_sec", "enabled", "enabled_tools",
                      "disabled_tools", "default_tools_approval_mode", "required", "tools")),
-        Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),
         Target("omp", HOME / ".omp" / "agent" / "mcp.json", "mcpServers", to_omp,
                keep=("enabled", "timeout", "auth", "oauth", "instructions", "requestIdFormat")),
     ]
@@ -356,7 +326,7 @@ def project(master, target, existing, npx, report):
     doc = copy.deepcopy(existing)  # not a JSON round trip: TOML can hold dates
     servers = doc.setdefault(target.root, {})
     ctx = Ctx(report, npx)
-    allow = (lambda v: v.startswith(("$ENV:", "$CMD:"))) if target.convert is to_pi else None
+    allow = None
     actions = {}
     for name, entry in master.get("mcpServers", {}).items():
         key = target_name(target, name, entry)
@@ -633,8 +603,6 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
         if t.name == "claude" and prune_claude_settings(dry):
             out("  removed mcpServers from ~/.claude/settings.json" if not dry else
                 "  would remove mcpServers from ~/.claude/settings.json")
-    if any(t.convert is to_pi for t in targets):
-        out("New or changed pi servers start untrusted: run /mcp trust <name> once for each.")
     return 0
 
 

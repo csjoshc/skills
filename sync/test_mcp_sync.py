@@ -38,7 +38,6 @@ class Base(unittest.TestCase):
             "cursor": self.home / ".cursor/mcp.json",
             "vscode": self.home / "Library/Application Support/Code/User/mcp.json",
             "desktop": self.home / "Library/Application Support/Claude/claude_desktop_config.json",
-            "pi": self.home / ".pi/agent/mcp.json",
             "omp": self.home / ".omp/agent/mcp.json",
         }
 
@@ -66,6 +65,11 @@ class Base(unittest.TestCase):
 
 
 class Translation(Base):
+    def test_pi_targets_are_not_managed(self):
+        result = self.run_sync("--targets", "pi")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.home / ".pi/agent/mcp.json").exists())
+
     def test_claude_keeps_dollar_brace_and_strips_extensions(self):
         r = self.run_sync("--targets", "claude")
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -91,17 +95,6 @@ class Translation(Base):
         self.assertEqual(s["github"]["environment"]["GITHUB_PERSONAL_ACCESS_TOKEN"],
                          "{env:GITHUB_PERSONAL_ACCESS_TOKEN}")
         self.assertNotIn("args", s["github"])
-
-    def test_pi_whole_value_only(self):
-        m = json.loads(json.dumps(MASTER))
-        m["mcpServers"]["remote"]["headers"]["X-Other"] = "pre ${REMOTE_MCP_AUTH}"
-        self.set_master(m)
-        r = self.run_sync("--targets", "pi")
-        s = self.get("pi")["mcpServers"]
-        self.assertEqual(s["remote"]["headers"], {"Authorization": "$ENV:REMOTE_MCP_AUTH"})
-        self.assertEqual(s["github"]["env"]["GITHUB_PERSONAL_ACCESS_TOKEN"],
-                         "$ENV:GITHUB_PERSONAL_ACCESS_TOKEN")
-        self.assertIn("X-Other", r.stdout)  # warned about the embedded reference
 
     def test_cursor_and_desktop_wrap_only_servers_with_references(self):
         self.run_sync("--targets", "cursor,desktop")
@@ -358,7 +351,7 @@ class Safety(Base):
         self.literal_master()
         r = self.run_sync()
         self.assertEqual(r.returncode, 0, "non-strict still exits 0")
-        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 JSON targets; Codex also reports skipped refs
+        self.assertEqual(r.stdout.count("refused"), 12)  # 2 fields x 6 eligible targets; Codex also reports skipped refs
         for t, p in self.paths.items():
             text = p.read_text()
             self.assertNotIn(FAKE, text, t)
@@ -409,15 +402,13 @@ class Safety(Base):
         self.run_sync("--targets", "opencode")
         self.assertIs(self.get("opencode")["mcp"]["github"]["enabled"], False)
 
-    def test_modes_preserved_and_pi_forced_private(self):
+    def test_modes_are_preserved_for_managed_targets(self):
         self.put("claude", {}, mode=0o644)
         self.put("cursor", {}, mode=0o600)
-        self.put("pi", {}, mode=0o644)
         self.run_sync()
         mode = lambda t: stat.S_IMODE(self.paths[t].stat().st_mode)
         self.assertEqual(mode("claude"), 0o644)
         self.assertEqual(mode("cursor"), 0o600)
-        self.assertEqual(mode("pi"), 0o600)
         self.assertEqual(mode("opencode"), 0o600)
         self.assertEqual(stat.S_IMODE(self.backups("claude")[0].stat().st_mode), 0o600)
 
