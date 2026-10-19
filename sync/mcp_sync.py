@@ -10,7 +10,7 @@ servers and unrelated keys stay. Writes are temp file + atomic rename with a .ba
 Values are never printed.
 
 Usage: mcp_sync.py [--dry-run] [--strict] [--targets a,b] [--master PATH] [--npx PATH]
-Targets: claude, opencode, cursor, vscode, desktop, codex, pi
+Targets: claude, opencode, cursor, vscode, desktop, codex, pi, omp
 codex is personal only: it receives just the servers marked "personal": true, never a ${VAR} one.
 Servers from other repos can sit in <master dir>/mcp.d/*.json (same schema, applied in name
 order after the master, same name wins).
@@ -265,6 +265,27 @@ def to_pi(name, s, ctx):
     return out
 
 
+def to_omp(name, s, ctx):
+    """OMP uses the standard typed MCP shape and expands ${VAR} from its process env."""
+    if s["kind"] == "stdio":
+        if "command" not in s:
+            ctx.report.warn(f"{name}: skipped, no command")
+            return None
+        out = {"type": "stdio", "command": s["command"]}
+        if s.get("args"):
+            out["args"] = list(s["args"])
+        if s.get("env"):
+            out["env"] = dict(s["env"])
+        return out
+    if "url" not in s:
+        ctx.report.warn(f"{name}: skipped, no url")
+        return None
+    out = {"type": s["kind"], "url": s["url"]}
+    if s.get("headers"):
+        out["headers"] = dict(s["headers"])
+    return out
+
+
 def to_codex(name, s, ctx):
     # Codex is personal only: it never gets work.env, so a server that needs a secret is not
     # written at all. Its tables have no `type`, and url headers are called http_headers.
@@ -312,6 +333,8 @@ def default_targets():
                keep=("startup_timeout_sec", "tool_timeout_sec", "enabled", "enabled_tools",
                      "disabled_tools", "default_tools_approval_mode", "required", "tools")),
         Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),
+        Target("omp", HOME / ".omp" / "agent" / "mcp.json", "mcpServers", to_omp,
+               keep=("enabled", "timeout", "auth", "oauth", "instructions", "requestIdFormat")),
     ]
 
 

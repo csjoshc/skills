@@ -181,6 +181,14 @@ Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
   The variable must be exported in the shell that starts pi.
 - Trust: pi runs a server only after `/mcp trust <name>`, per file and per definition. Any change to a server re-pends it. `$ENV:` refs keep a token rotation from re-pending.
 
+### Oh My Pi (OMP)
+- User config: `~/.omp/agent/mcp.json`, root key `mcpServers`.
+- Run `python3 ~/.skills/sync/mcp_sync.py --targets omp` (`--dry-run` first).
+- OMP uses typed `stdio`, `http` and `sse` entries with `command`/`args`/`env` or `url`/`headers`.
+- `${VAR}` references stay as references in `env` and `headers`; keep credential values in the environment and out of the master file.
+- Existing OMP-only servers and OMP fields such as `enabled`, `timeout`, `auth`, `oauth`, `instructions` and `requestIdFormat` are preserved when a shared entry is updated.
+- A new target file is mode `0600`; an existing file keeps its mode. OMP reads its MCP config on startup, so restart it after a sync.
+
 ### Zed
 - Root key `context_servers` (different!).
 

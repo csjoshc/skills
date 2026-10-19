@@ -39,6 +39,7 @@ class Base(unittest.TestCase):
             "vscode": self.home / "Library/Application Support/Code/User/mcp.json",
             "desktop": self.home / "Library/Application Support/Claude/claude_desktop_config.json",
             "pi": self.home / ".pi/agent/mcp.json",
+            "omp": self.home / ".omp/agent/mcp.json",
         }
 
     def set_master(self, doc):
@@ -150,6 +151,68 @@ class Translation(Base):
         self.run_sync("--targets", "claude,opencode")
         self.assertNotIn("off", self.get("claude")["mcpServers"])
         self.assertIs(self.get("opencode")["mcp"]["off"]["enabled"], False)
+
+
+class TestOmpProjection(Base):
+    def test_native_projection_preserves_references_local_servers_and_omp_fields(self):
+        self.put("omp", {"disabledServers": ["do-not-enable"], "mcpServers": {
+            "omp-local": {"type": "stdio", "command": "local-tool", "args": ["--keep"]},
+            "remote": {"type": "http", "url": "https://old.example/mcp", "timeout": 12000,
+                       "enabled": False, "instructions": False, "requestIdFormat": "string",
+                       "auth": {"type": "oauth", "credentialId": "profile-local"}},
+        }}, mode=0o640)
+
+        r = self.run_sync("--targets", "omp")
+
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        doc = self.get("omp")
+        servers = doc["mcpServers"]
+        self.assertEqual(doc["disabledServers"], ["do-not-enable"])
+        self.assertEqual(servers["omp-local"], {"type": "stdio", "command": "local-tool", "args": ["--keep"]})
+        self.assertEqual(servers["remote"], {
+            "type": "http", "url": "https://mcp.example/mcp",
+            "headers": {"Authorization": "${REMOTE_MCP_AUTH}"}, "enabled": False,
+            "timeout": 12000, "instructions": False, "requestIdFormat": "string",
+            "auth": {"type": "oauth", "credentialId": "profile-local"},
+        })
+        self.assertEqual(servers["github"]["env"]["GITHUB_PERSONAL_ACCESS_TOKEN"],
+                         "${GITHUB_PERSONAL_ACCESS_TOKEN}")
+        self.assertNotIn("off", servers)
+        for server in servers.values():
+            self.assertNotIn("allowedTools", server)
+            self.assertNotIn("personal", server)
+        self.assertEqual(stat.S_IMODE(self.paths["omp"].stat().st_mode), 0o640)
+        self.assertNotIn(FAKE, self.paths["omp"].read_text())
+
+    def test_malformed_omp_target_does_not_change_other_targets(self):
+        self.put("claude", {"mcpServers": {"untouched": {"type": "stdio", "command": "mine"}}})
+        original_claude = self.paths["claude"].read_text()
+        self.paths["omp"].parent.mkdir(parents=True)
+        original_omp = '{ "mcpServers": '
+        self.paths["omp"].write_text(original_omp)
+
+        r = self.run_sync("--targets", "claude,omp")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(self.paths["claude"].read_text(), original_claude)
+        self.assertEqual(self.paths["omp"].read_text(), original_omp)
+        self.assertEqual(self.backups("claude"), [])
+        self.assertEqual(self.backups("omp"), [])
+
+    def test_malformed_master_leaves_omp_and_other_targets_unchanged(self):
+        self.put("claude", {"mcpServers": {"untouched": {"type": "stdio", "command": "mine"}}})
+        self.put("omp", {"mcpServers": {"omp-local": {"type": "stdio", "command": "local"}}})
+        original_claude = self.paths["claude"].read_bytes()
+        original_omp = self.paths["omp"].read_bytes()
+        self.master.write_text('{ "mcpServers": ')
+
+        r = self.run_sync("--targets", "claude,omp")
+
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(self.paths["claude"].read_bytes(), original_claude)
+        self.assertEqual(self.paths["omp"].read_bytes(), original_omp)
+        self.assertEqual(self.backups("claude"), [])
+        self.assertEqual(self.backups("omp"), [])
 
 
 class Alias(Base):
@@ -295,7 +358,7 @@ class Safety(Base):
         self.literal_master()
         r = self.run_sync()
         self.assertEqual(r.returncode, 0, "non-strict still exits 0")
-        self.assertEqual(r.stdout.count("refused"), 12)  # 2 fields x 6 JSON targets; codex skips both servers
+        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 JSON targets; Codex also reports skipped refs
         for t, p in self.paths.items():
             text = p.read_text()
             self.assertNotIn(FAKE, text, t)
