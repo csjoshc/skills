@@ -68,14 +68,16 @@ Projects inherit `~/AGENTS.md` from the home directory; keep project-specific ru
 | Tool / Platform | Project Path | Target | Method | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
 | **Universal Shim** | `.skills/` | Granular links to `~/.skills/` | Symlink | General discovery (primary onboarding output) |
-| **Claude Code** | `.claude/skills` | `~/.skills` | **Copy** (`cp -r`) | Claude Code resolves relative to project root |
+| **Claude Code** | `.claude/skills` | `~/.skills` | **Filtered copy** (see sync/skills.md) | Materializes upstream skill links for sandboxed projects |
 | **Cursor** | `.cursor/rules/master` | `~/.skills` | Symlink | .mdc indexing |
 | **VS Code / Copilot** | `.vscode/skills` | `~/.skills` | Symlink | Copilot workspace settings |
 | **Aider** | `.aider.conf.yml` | (Refers to AGENTS.md) | Config | Config-based |
 | **Windsurf** | `.windsurfrules` | (Refers to AGENTS.md) | Shim file | Shim file |
 | **Cline** | `.clinerules` | (Refers to AGENTS.md) | Shim file | Shim file |
 
-**Note:** All project-level skill folders (`.skills/`, `.claude/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`. Claude Code uses `cp -r` at the project level because Claude Desktop is sandboxed and cannot follow symlinks outside the workspace — re-copy when master store changes. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+**Note:** All project-level skill folders (`.skills/`, `.claude/skills/`, etc.) MUST be added to the project's `.gitignore` and `.cursorignore`.
+Claude Desktop is sandboxed and cannot follow symlinks outside the workspace; use the filtered `rsync -aL` command in [sync/skills.md](../sync/skills.md) and re-copy when the master store changes.
+The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
 
 ## Setup: Local `.skills` Granular Loop
 
