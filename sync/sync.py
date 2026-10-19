@@ -431,8 +431,10 @@ def retire_pi_skill_links(home: Path, logger: Logger) -> int:
                 continue
             try:
                 target = entry.resolve(strict=True)
-                target.relative_to(skills_root)
+                expected = (skills_root / entry.name).resolve(strict=True)
             except (OSError, ValueError):
+                continue
+            if target != expected or not (expected / "SKILL.md").is_file():
                 continue
             entry.unlink()
             removed += 1
