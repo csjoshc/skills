@@ -699,9 +699,16 @@ def main():
         install_git_hook(target, logger)
         return
 
+    source_command = [sys.executable, str(Path(__file__).with_name("skill_sources.py"))]
+    if args.audit:
+        source_command.append("--audit")
+    source_result = subprocess.run(source_command)
+    if source_result.returncode:
+        return source_result.returncode
+
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
