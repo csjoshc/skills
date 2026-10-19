@@ -48,8 +48,8 @@ IS_WINDOWS = OS_TYPE == OS.WINDOWS
 
 HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
-# A whole-store link exposes root docs to pi and hides local OMP skills; Codex also needs .system.
-PER_SKILL_LINK_PLATFORMS = {"codex", "pi", "omp"}
+# A whole-store link hides local OMP skills; Codex also needs .system.
+PER_SKILL_LINK_PLATFORMS = {"codex", "omp"}
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -115,13 +115,6 @@ PLATFORMS = {
         skills_symlink=HOME / ".omp" / "agent" / "skills",
         permission_type="trust",
         platform_key="omp",
-    ),
-    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; gateway-pi sets that to ~/.gateway-pi.
-    "pi": PlatformConfig(
-        name="pi",
-        skills_symlink=HOME / ".pi" / "agent" / "skills",
-        permission_type="trust",
-        platform_key="pi",
     ),
     "copilot": PlatformConfig(
         name="Copilot",
@@ -426,6 +419,27 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     return True
 
 
+def retire_pi_skill_links(home: Path, logger: Logger) -> int:
+    """Remove only shared-store symlinks from retired Pi skill directories."""
+    removed = 0
+    skills_root = SKILLS_DIR.resolve()
+    for directory in (home / ".pi/agent/skills", home / ".gateway-pi/skills"):
+        if not directory.is_dir() or directory.is_symlink():
+            continue
+        for entry in directory.iterdir():
+            if not entry.is_symlink():
+                continue
+            try:
+                target = entry.resolve(strict=True)
+                target.relative_to(skills_root)
+            except (OSError, ValueError):
+                continue
+            entry.unlink()
+            removed += 1
+            logger.info(f"Removed retired Pi skills link: {entry}")
+    return removed
+
+
 # ─── Permission Config Audit ────────────────────────────────────────────────
 
 
@@ -705,6 +719,8 @@ def main():
     if source_result.returncode:
         return source_result.returncode
 
+    if not args.audit:
+        retire_pi_skill_links(HOME, logger)
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
 

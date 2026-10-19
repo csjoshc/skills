@@ -166,21 +166,6 @@ Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
 ### Cline, Roo
 - Root key `mcpServers`. Not synced by `mcp_sync.py`; check tool docs per major-version change.
 
-### pi (`pi_agent_rust`)
-- File: `~/.pi/agent/mcp.json`. Root key `mcpServers`.
-- Run `python3 ~/.skills/sync/mcp_sync.py --targets pi` (`--dry-run` first).
-  `mcp_pi.py` is a thin entry point that does the same.
-  Tests: `test_mcp_sync.py` and `test_mcp_pi.py`.
-- Merge only: servers named in the master are added, updated or (when disabled) removed.
-  Other servers, such as the pi-only `claude` one, and other keys stay.
-  Writes are mode 600 with a timestamped `.bak.<ts>` copy when something changed.
-- pi rejects `http` with `args`/`env`, `stdio` with `headers`, `command` with `url`, and `type` `local`/`remote`. The script emits only the fields each type allows.
-- Secrets: pi expands a whole value `$ENV:NAME`, so a master `${NAME}` becomes `$ENV:NAME`.
-  A `${NAME}` inside a longer value is dropped with a warning, and a literal in a secret-named field is refused.
-  Build any prefixed value once in `work.env` (such as `REMOTE_MCP_AUTH`) and keep the master value a bare `${NAME}`.
-  The variable must be exported in the shell that starts pi.
-- Trust: pi runs a server only after `/mcp trust <name>`, per file and per definition. Any change to a server re-pends it. `$ENV:` refs keep a token rotation from re-pending.
-
 ### Oh My Pi (OMP)
 - User config: `~/.omp/agent/mcp.json`, root key `mcpServers`.
 - Run `python3 ~/.skills/sync/mcp_sync.py --targets omp` (`--dry-run` first).
@@ -246,8 +231,12 @@ Every target holds a reference to the variable, never the value, so no config ne
 | Codex | Not used: Codex holds no `work.env` secrets by design | Nothing to rotate. |
 | Claude Code | `${VAR}` expanded from its own environment at startup | Exit and relaunch from a fresh shell. |
 | opencode | `{env:VAR}` expanded by the shared service | Run `opencode service restart` from a fresh shell. |
-| pi | `$ENV:VAR` expanded when the server starts | Quit and relaunch pi. The trust record is unchanged, because it fingerprints the reference, not the value. |
 | Cursor, Claude Desktop, VS Code | A `/bin/zsh -c` wrapper sources `work.env` when the server spawns | Reload the MCP server or restart the app. No shell is needed. |
+
+The model gateway token is a separate secret from the MCP tokens.
+It lives in `~/.config/gateway-claude/env` (mode 600), not in `work.env`, and is sourced per launch by `gateway-claude` and `gateway-opencode`.
+To rotate it, edit that file and relaunch the wrapper; running sessions keep the old value until they exit.
+`./bootstrap.sh --secrets` does not create this file, because the wrappers live in the work-only zsh file and not in the repo.
 
 Check afterwards with `python3 -I mcp_sync.py --dry-run`: every target should report `unchanged`.
 A new variable is a different job: follow "To add a secret" above.
@@ -261,13 +250,14 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | Claude Code | yes | yes |
 | opencode | yes | yes |
 | Cursor | yes | yes |
-| pi | yes | yes |
 | VS Code | no | yes (the `vscode` target) |
 | Claude Desktop | no | yes (the `desktop` target) |
 | Codex | yes | yes, personal only (servers marked `"personal": true`, no secrets; edits `~/.codex/config.toml` in place) |
 | Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
 | Copilot | yes | no |
 
+`gateway-opencode` needs no target of its own.
+It runs a private opencode server that loads `~/.config/opencode` (servers, plugins, skills) and then layers `~/.gateway-opencode/opencode.json`, which only adds the `nexus` provider.
 If a tool in the "no" column needs a master server, add a target in `mcp_sync.py` rather than copying values by hand.
 
 ## Verification checklist
