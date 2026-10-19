@@ -34,6 +34,7 @@ class RetiredPiTargets(unittest.TestCase):
         for path in paths:
             path.mkdir(parents=True)
             os.symlink(master / "tdd", path / "tdd")
+            os.symlink(master / "tdd", path / "my-personal-alias")
             os.symlink(foreign / "local", path / "local-link")
             (path / "local-only").write_text("keep\n")
 
@@ -42,6 +43,8 @@ class RetiredPiTargets(unittest.TestCase):
         self.assertEqual(removed, 2)
         for path in paths:
             self.assertFalse((path / "tdd").exists())
+            self.assertTrue((path / "my-personal-alias").is_symlink())
+            self.assertEqual((path / "my-personal-alias").resolve(), (master / "tdd").resolve())
             self.assertTrue((path / "local-link").is_symlink())
             self.assertEqual((path / "local-only").read_text(), "keep\n")
 
