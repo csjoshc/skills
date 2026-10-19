@@ -48,9 +48,8 @@ IS_WINDOWS = OS_TYPE == OS.WINDOWS
 
 HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
-# A single symlink to ~/.skills exposes its root docs (AGENTS.md, ...) as broken skills (pi) or
-# shadows Codex's .system, so these get a real dir holding one link per skill.
-PER_SKILL_LINK_PLATFORMS = {"codex", "pi"}
+# A whole-store link exposes root docs to pi and hides local OMP skills; Codex also needs .system.
+PER_SKILL_LINK_PLATFORMS = {"codex", "pi", "omp"}
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -111,7 +110,13 @@ PLATFORMS = {
         permission_type="trust",
         platform_key="claude",
     ),
-    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; default dir is ~/.pi/agent.
+    "omp": PlatformConfig(
+        name="OMP",
+        skills_symlink=HOME / ".omp" / "agent" / "skills",
+        permission_type="trust",
+        platform_key="omp",
+    ),
+    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; gateway-pi sets that to ~/.gateway-pi.
     "pi": PlatformConfig(
         name="pi",
         skills_symlink=HOME / ".pi" / "agent" / "skills",
