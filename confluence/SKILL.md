@@ -11,21 +11,21 @@ Confluence Cloud does not natively render Mermaid or PlantUML. This skill upload
 
 ## Prerequisites
 
-`@mermaid-js/mermaid-cli` must be installed globally:
+Rendering comes from the `diagram` skill (Pele, no browser). Set it up once:
 
 ```bash
-npm install -g @mermaid-js/mermaid-cli
-mmdc --version   # verify
+cd ~/.skills/diagram && npm install
 ```
 
 ## Workflow: Upload & Embed
 
 ### 1. Render diagram to SVG
 
-Use `diagram` skill's `render.sh` for light/dark variants, or render directly:
+Confluence embeds SVG, so render the light and dark variants with the `diagram` skill and pick one:
 
 ```bash
-mmdc -i diagram.mmd -o diagram.svg -b transparent
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd
+# produces: diagram.light.svg + diagram.dark.svg
 ```
 
 ### 2. Upload as attachment via REST API

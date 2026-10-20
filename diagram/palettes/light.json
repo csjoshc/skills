@@ -1,36 +1,24 @@
 {
-  "theme": "base",
-  "themeVariables": {
-    "background": "transparent",
-    "primaryColor": "#DBEAFE",
-    "primaryBorderColor": "#1E40AF",
-    "primaryTextColor": "#1E293B",
-    "secondaryColor": "#E9D5FF",
-    "tertiaryColor": "#F1F5F9",
-
-    "actorBkg": "#DBEAFE",
-    "actorBorder": "#1E40AF",
-    "actorTextColor": "#1E293B",
-    "actorLineColor": "#64748B",
-
-    "signalColor": "#334155",
-    "signalTextColor": "#1E293B",
-
-    "labelBoxBkgColor": "#F1F5F9",
-    "labelBoxBorderColor": "#475569",
-    "labelTextColor": "#1E293B",
-
-    "noteBkgColor": "#FEF3C7",
-    "noteBorderColor": "#F59E0B",
-    "noteTextColor": "#1E293B",
-
-    "activationBkgColor": "#E2E8F0",
-    "activationBorderColor": "#64748B",
-
-    "loopTextColor": "#1E293B",
-    "sequenceNumberColor": "#FFFFFF",
-
-    "lineColor": "#475569",
-    "textColor": "#1E293B"
-  }
+  "bg": "#FFFFFF",
+  "fg": "#0F172A",
+  "muted": "#475569",
+  "line": "#475569",
+  "surface": "#F8FAFC",
+  "surface-alt": "#F1F5F9",
+  "border": "#CBD5E1",
+  "accent": "#1E40AF",
+  "font": "Helvetica Neue, Helvetica, Arial, sans-serif",
+  "font-mono": "Menlo, Consolas, monospace",
+  "radius": "6px",
+  "heading-weight": "600",
+  "error": "#B91C1C",
+  "critical": "#B91C1C",
+  "series-1": "#1E40AF",
+  "series-2": "#0F766E",
+  "series-3": "#B45309",
+  "series-4": "#7C3AED",
+  "series-5": "#BE185D",
+  "series-6": "#15803D",
+  "series-7": "#0369A1",
+  "series-8": "#475569"
 }

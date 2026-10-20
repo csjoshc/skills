@@ -55,7 +55,7 @@ sequenceDiagram
 **Do NOT** embed `%%{init}%%` with hardcoded actor/text colors in diagrams
 intended for GitHub markdown rendering — that forces one theme and breaks
 user dark-mode adaptation. Set theme only when rendering to static SVG with
-a known target (see Rendering in SKILL.md).
+a known target (see Rendering in SKILL.md). Pele ignores `%%{init}%%`, so the render theme always applies.
 
 ## Flowcharts — use `classDef` + the palette
 
