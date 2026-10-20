@@ -27,6 +27,7 @@ More: [shared/TEST_ANTIPATTERNS.md](../shared/TEST_ANTIPATTERNS.md).
   vitest, jest and others via `--cmd ... {junit} {checks}`), the verdicts, and how to fix a flag. Read it once.
   Fix the assertion rather than exempting it; `WEAK` must be tightened or justified in the PR.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
+- **Check local code quality.** Before implementation and on the final diff, apply the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass).
 - **Refactor only on green**, as its own phase after the slices pass, running tests after each step.
 
 ## Test paths, dry-run, commits

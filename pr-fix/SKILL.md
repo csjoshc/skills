@@ -25,7 +25,7 @@ These rules prevent the fix process from injecting new problems:
 
 2. **Minimal diff** — touch only the lines the comment addresses. If
    you find an unrelated issue, do not fix it. Mention it to the user
-   separately.
+   separately. Before verification, apply the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass).
 
 3. **Verify after every fix** — never skip verification, even for
    "trivial" changes. Trivial changes break builds too.

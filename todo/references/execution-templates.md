@@ -18,7 +18,8 @@ You are implementing one ticket. The ticket file is the source of truth.
 **DAG (if present):** <absolute path to .plan/task-sequence.md>
 **Exploration notes (if present):** <absolute path outside the repo>
 
-1. Read the ticket, its Read-First files, and any pointers.
+1. Read the ticket, its Read-First files, any pointers, and the change-quality
+   pass in `~/.skills/shared/QUALITY_RUBRIC.md`.
 2. Set Stage: BUILD.
 3. Invoke tdd. Phase 0 writes .tickets/tdd/toq-<id>.yaml. Then red-green
    against the ticket ACs. Do not skip Phase 0.
@@ -49,7 +50,7 @@ You are resuming a ticket whose Stage is BUILD.
 1. Read the ticket and TOQ. If no TOQ, run tdd Phase 0 first.
 2. git diff against the ticket ACs: which are green, which are still red.
 3. If TOQ diff_base is behind HEAD, re-scope.
-4. Resume tdd at the first un-green AC.
+4. Resume tdd at the first un-green AC, applying the shared change-quality pass.
 5. Then follow build-ticket steps 4-7.
 
 Do not re-derive scope or rewrite already-passing code.
