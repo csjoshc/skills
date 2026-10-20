@@ -10,7 +10,7 @@ servers and unrelated keys stay. Writes are temp file + atomic rename with a .ba
 Values are never printed.
 
 Usage: mcp_sync.py [--dry-run] [--strict] [--targets a,b] [--master PATH] [--npx PATH]
-Targets: claude, opencode, cursor, vscode, desktop, codex, pi, pi-gateway
+Targets: claude, opencode, cursor, vscode, desktop, codex, pi
 codex is personal only: it receives just the servers marked "personal": true, never a ${VAR} one.
 Servers from other repos can sit in <master dir>/mcp.d/*.json (same schema, applied in name
 order after the master, same name wins).
@@ -312,7 +312,6 @@ def default_targets():
                keep=("startup_timeout_sec", "tool_timeout_sec", "enabled", "enabled_tools",
                      "disabled_tools", "default_tools_approval_mode", "required", "tools")),
         Target("pi", HOME / ".pi" / "agent" / "mcp.json", "mcpServers", to_pi, mode=0o600),
-        Target("pi-gateway", HOME / ".gateway-pi" / "mcp.json", "mcpServers", to_pi, mode=0o600),
     ]
 
 

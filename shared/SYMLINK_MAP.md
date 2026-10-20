@@ -15,7 +15,6 @@ All paths symlink to the master store at `~/.skills`.
 | **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
 | **OpenCode** | `~/.config/opencode/skills` | `~/.skills` |
 | **pi** (`pi_agent_rust`) | `~/.pi/agent/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
-| **pi, gateway profile** | `~/.gateway-pi/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
