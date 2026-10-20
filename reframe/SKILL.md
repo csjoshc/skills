@@ -120,8 +120,8 @@ Produce a structured markdown document following the **Output Contract** below.
 
 **If diagrams enabled** (default for architect/engineer):
 1. Generate `.mmd` files using patterns from [reference/diagram-patterns.md](reference/diagram-patterns.md).
-2. Use `classDef` conventions from `~/.skills/confluence/example-conventions.mmd`.
-3. Render: `mmdc -i <file>.mmd -o <file>.svg -b transparent`
+2. Use the `classDef` palette from the `diagram` skill (`~/.skills/diagram/SKILL.md`, Semantic colors).
+3. Render: `node ~/.skills/diagram/scripts/render.mjs <file>.mmd --for confluence --theme light --out <file>.svg`
 4. Reference each diagram in the YAML frontmatter `diagrams` array.
 
 **File naming:** `<source-stem>-<audience>.md` / `.mmd` / `.svg`
@@ -207,7 +207,7 @@ A complete worked output: [example/output-contract-example.md](example/output-co
   If no timeline exists, write "TIMELINE TBD".
 - **Never lose information silently.** Content cut for the audience goes in the parking lot appendix.
 - **Diagram conventions.** Reuse `classDef` colors and edge styles from
-  `~/.skills/confluence/example-conventions.mmd`. Include a legend subgraph for
+  the `diagram` skill's Semantic colors table. Include a legend subgraph for
   diagrams with more than 5 nodes.
 - **Output contract is strict.** Every output must use the YAML frontmatter + `## Slide:` section
   format so downstream consumers can parse it reliably.
@@ -232,7 +232,7 @@ Before delivering output:
 - [ ] No fabricated metrics or claims not present in source material
 - [ ] Omitted content noted in parking lot appendix
 - [ ] Output markdown follows the YAML frontmatter + slide section contract
-- [ ] Diagrams (if any) render without errors via `mmdc`
+- [ ] Diagrams (if any) render without errors via the `diagram` skill's `render.mjs`
 - [ ] Diagrams (if any) referenced in frontmatter `diagrams` array
 - [ ] Output file paths reported to user
 - [ ] Gaps in source material flagged explicitly (METRICS NEEDED, TIMELINE TBD)

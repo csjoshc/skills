@@ -13,20 +13,20 @@ Three Mermaid diagrams target the architect layer (L1):
 2. **Novel-pattern data flow** (flowchart TB) — stages in the data pipeline / orchestration / state machine
 3. **Primary request flow** (sequenceDiagram) — one canonical user→system→external→system→user round trip
 
-**classDef color convention** (consistent with `/diagram` and `confluence`):
+**classDef color convention** (the `diagram` skill's Semantic colors: hue at 25% alpha, no `color:`):
 
 ```
-classDef consumer fill:#bfbfbf,stroke:#444,color:#000;
-classDef service  fill:#a8c5ff,stroke:#2855a8,color:#000;
-classDef library  fill:#c9e3ff,stroke:#3970b8,color:#000;
-classDef state    fill:#d6c4f0,stroke:#6a4ea8,color:#000;
-classDef external fill:#d3d3d3,stroke:#666,color:#000;
-classDef compute  fill:#a8c5ff,stroke:#2855a8,color:#000;
-classDef output   fill:#c4eac4,stroke:#3a7a3a,color:#000;
-classDef removed  fill:#f8d6d6,stroke:#a83838,color:#000,stroke-dasharray: 5 5;
+classDef consumer fill:#78716C40,stroke:#78716C,stroke-width:1.5px;
+classDef service  fill:#3B82F640,stroke:#3B82F6,stroke-width:1.5px;
+classDef library  fill:#0284C740,stroke:#0284C7,stroke-width:1.5px;
+classDef state    fill:#A855F740,stroke:#A855F7,stroke-width:1.5px;
+classDef external fill:#64748B40,stroke:#64748B,stroke-width:1.5px;
+classDef compute  fill:#3B82F640,stroke:#3B82F6,stroke-width:1.5px;
+classDef output   fill:#15913F40,stroke:#15913F,stroke-width:1.5px;
+classDef removed  fill:#EF444440,stroke:#EF4444,stroke-width:1.5px,stroke-dasharray: 5 5;
 ```
 
-Render each `.mmd` to `.svg` with `mmdc -i X.mmd -o X.svg -b transparent`.
+Render each `.mmd` to `.svg` with the `diagram` skill: `node ~/.skills/diagram/scripts/render.mjs X.mmd --for confluence --theme light --out X.svg`.
 
 ## Quality checklist
 
