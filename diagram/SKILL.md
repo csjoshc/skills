@@ -1,6 +1,6 @@
 ---
 name: diagram
-description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, paper, catppuccin, cappuccino), then previews each render for the user. Use when creating or updating .mmd files or diagram SVG/PNG files."
+description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, catppuccin-latte, catppuccin, paper, cappuccino), then previews each render for the user. Use when creating or updating .mmd files or diagram SVG/PNG files."
 ---
 
 # diagram — Mermaid Authoring + Rendering
