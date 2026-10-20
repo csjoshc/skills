@@ -1,7 +1,7 @@
 # Ticket contract
 
 The one definition of a `.tickets/NNN-slug.md` file.
-spec writes it, `spec/scripts/tickets_lint.py` checks it mechanically, ticket-review reviews its design, `/tdd` and `/todo` read it.
+spec writes it; `/tdd` and `/todo` read it.
 No other file restates this schema; link here instead.
 
 ## Contents
@@ -35,9 +35,8 @@ Read-First:
 ```
 
 Required: `id`, `title`, `Stage`, `Depends-On` (may be `[]`), `Files` (at least one entry).
-`Stage` is one of `NEW | SPEC | SPEC_SPLIT | PLAN | BLOCKED | BUILD | REVIEW | COMPLETE | FAILED`.
-`NEW` means queued and not yet started; `BUILD` means implementation is in progress.
-`/todo` changes `NEW` to `BUILD` when a build session starts.
+`Stage` is `NEW` at write, `BUILD` when a subagent starts, `COMPLETE` after
+verified ACs, or `FAILED` / `BLOCKED`.
 `Files[].action` is `CREATE | MODIFY | VERIFY | DELETE`; add a `description` only when the path doesn't say enough.
 At most 5 non-test files per ticket; split above that.
 
@@ -106,8 +105,6 @@ Extra required sections:
 
 A gate reaches `Stage: COMPLETE` only when a session other than the implementing one runs its Verify block and records its session id, model and date under `## Proof`, or the user marks it complete.
 
-## Lint
-
-`python3 spec/scripts/tickets_lint.py .tickets` checks everything mechanical in this file: frontmatter, sections, the AC table, paths against the DAG, `bash -n` on Verify, and known traps (`-k` or-chains, bare `!`, em dashes).
-`--runner "<pytest command>" --dry-red` also runs every test-id check and every read-only shell check (grep, test, jq) now, before build, fails when one breaks for an environmental reason (tool or module missing), and warns when one passes already (fine for a preservation check, a bug otherwise).
-spec runs it before handing off; ticket-review runs it first and reviews only design, risk and scope after it passes.
+Keep the ticket short. Do not paste the PRD or chat. Point at them.
+Load-bearing questions the subagent must answer or halt on live in `## Notes`.
+Reversible assumptions go there as `[ASSUMPTION: ...]`, not as user questions.

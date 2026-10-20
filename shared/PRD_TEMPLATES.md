@@ -188,15 +188,14 @@ before ticket generation.
 ## Ticket templates
 
 Ticket files (feature, integration gate, infrastructure) follow one contract: [`TICKET_CONTRACT.md`](TICKET_CONTRACT.md).
-challenge's task-sequence stubs use the same frontmatter (`id`, `title`, `Stage: NEW`, `Depends-On`, `Blocks`, `Gate`, `Files`) plus a short scope and two or three invariant ACs; spec turns each stub into a full ticket and runs `spec/scripts/tickets_lint.py`.
+challenge's task-sequence stubs use the same frontmatter (`id`, `title`, `Stage: NEW`, `Depends-On`, `Blocks`, `Gate`, `Files`) plus a short scope and two or three invariant ACs; spec turns each stub into a full ticket.
 
 ---
 
 ## Phase-Block Contracts (Structural Output Requirements)
 
 Every phase exit must emit a fenced block the user can spot on sight. Missing
-blocks are malformed-on-sight. Downstream tools (`validate.py --transcript`,
-`/todo`) grep for these markers.
+blocks are malformed-on-sight. `/todo` greps for these markers.
 
 ### Header YAML Ledger (every response)
 

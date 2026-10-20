@@ -24,7 +24,7 @@ correct downstream skill so the user doesn't have to remember to do so.
 
 | Phase trigger (user or agent intent) | Required skill(s) | Gate |
 |---|---|---|
-| "Create ticket / spec / plan for X" | `spec`, `ticket-review` | AC→test table present; tasks name primary source file + support set |
+| "Create ticket / spec / plan for X" | `spec` | AC→test table present; tasks name primary source file + support set |
 | "Implement / write / add X" | `redundancy-watcher` (pre-write), `layer-boundary-critic` (on import add); follow `shared/CONTEXT_HYGIENE.md` turn loop + `tdd/WORKFLOW.md` | No BLOCK unresolved; discovery halt if second source file needed |
 | "Design interface / contract for X" | `tdd` → `INTERFACE_DESIGN.md` (interaction spec) | Contract + interaction expectations stated before impl |
 | "Write guards / type guards for X" | `tdd` (with interface companion) | Guard tests cover valid/invalid contract cases |

@@ -679,7 +679,7 @@ same window can run concurrently.
 
 Every challenge response must emit a fenced YAML `ledger:` block as the first
 structural artifact. A response without this block is malformed-on-sight —
-the user can demand re-emission, and `validate.py --transcript` greps for it.
+the user can demand re-emission.
 
 ```yaml
 ledger:
@@ -714,8 +714,7 @@ PHASE-GATE: Phase <N> → <N+1>. Criteria: [<c1>: met|not met — <why>; ...]. P
 
 If `Proceeding: no`, surface the specific blocker and stay in the current
 phase. This makes skipped phases visible — a missing PHASE-GATE line, or one
-with `Proceeding: yes` while criteria are not met, is legible to the user
-and to `validate.py --transcript`.
+with `Proceeding: yes` while criteria are not met, is a process failure.
 
 ---
 

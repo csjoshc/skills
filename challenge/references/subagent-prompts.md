@@ -43,8 +43,8 @@ Main Agent
   │       writes .plan/coverage-audit.md — option 4 transcript-vs-PRD diff.
   │       See references/coverage-auditor.md for the prompt.
   │
-  ├─→ [6] Main agent runs validate.py with --challenger-report and
-  │       --coverage-report. ANY failure blocks sign-off.
+  ├─→ [6] Main agent answers the pre-handoff authoring questions
+  │       (SKILL.md). Implementation-relevant nos block sign-off.
   │
   └─→ [7] Final DAG presented to user
 ```

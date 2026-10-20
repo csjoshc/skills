@@ -1,26 +1,24 @@
 ---
 name: todo
-description: "Route the planning-to-build pipeline in manual or auto mode."
+description: "Drive the planning-to-build pipeline. Default is to run it."
 disable-model-invocation: true
 ---
 
 # /todo
 
 `/todo` is the single entry point for work that needs planning, tickets, and
-implementation. It detects the current pipeline state, then offers two modes:
+implementation. Bare `/todo` drives. `/todo auto` is an alias. `/todo manual`
+emits the next-stage prompt without driving.
 
-- **Manual:** report the next skill and emit its copy-pasteable prompt. The user
-  runs that stage, then invokes `/todo manual` again.
-- **Auto:** run each required stage in order. Pause for human input only at the
-  escalation points in [references/auto-driver.md](references/auto-driver.md).
+- **Drive (default):** detect state, create missing artifacts from the request
+  and the repo, then run each required stage. Pause only for load-bearing
+  decisions in [references/auto-driver.md](references/auto-driver.md).
+- **Manual:** report the next skill and emit its prompt. The user runs that
+  stage, then invokes `/todo manual` again.
 
-Use `/todo auto` or `/todo manual` to choose directly. Bare `/todo` detects the
-state, shows the next stage, and asks: **Auto** to drive through stages and pause
-for critical decisions, or **Manual** to receive the next skill prompt. If the
-pipeline is fresh and no feature was described, ask for its description with
-the mode choice. If the pipeline is complete, report completion without asking.
-`/todo status` prints state without choosing a mode. `/todo handoff` emits a
-cold-start resume prompt.
+`/todo status` prints state without driving. `/todo handoff` writes
+`.handoff/<slug>.md` via the handoff skill and replies with its path plus a
+few sentences.
 
 For a small, already-scoped change that fits one session, skip `/todo` and use
 the relevant skill directly. For frontend UI work, that entry is `/ui`.
@@ -28,51 +26,50 @@ the relevant skill directly. For frontend UI work, that entry is `/ui`.
 ## Pipeline
 
 ```text
-Full: challenge → validate → spec → ticket-review → build
-Lite: spec → optional ticket-review → build
-Build: /tdd + /verify, then Stage NEW → BUILD → COMPLETE
+Full: challenge → spec → build
+Lite: spec → build
+Build: subagent per ticket; /tdd + /verify; Stage NEW → BUILD → COMPLETE
 ```
 
-Artifacts on disk carry state between stages: planning artifacts go in
-`.plan/`, and fleshed tickets go in `.tickets/`. See
-[references/state-detection.md](references/state-detection.md) for the artifact
-map, state inference, dependencies, and staleness rules.
+The DAG and tickets on disk are the guardrails against drift.
+`.plan/` owns order; `.tickets/` owns scope, ACs and Stage.
+ticket-review is optional and never a build gate.
+See [references/state-detection.md](references/state-detection.md).
 
-## Mode behavior
+## Drive
 
-### Manual
+Follow [references/auto-driver.md](references/auto-driver.md).
 
-Read paths, ticket frontmatter, and artifact mtimes to detect the current state.
-Read only what the next stage needs. Do not inline full PRDs, task sequences, or
-tickets into the prompt. Emit the matching template from
-[references/prompt-templates.md](references/prompt-templates.md) or
-[references/execution-templates.md](references/execution-templates.md). Preserve
-any approval or escalation needed by that specialist stage.
+1. Detect state from paths and ticket frontmatter. Do not ingest every ticket body.
+2. If fresh and the user named work: write a thin DAG + compact tickets, or skip
+   tickets for a small change. Proceed on Tier 1 assumptions.
+3. Spawn one BUILD subagent per implementation ticket. Parallel only when
+   `Depends-On` is satisfied, `Files:` are disjoint, and risk is low.
+   Serialize overlapping files, mutation hubs, integration gates, and
+   medium-or-higher risk.
+4. Check returned evidence against ACs
+   (`../shared/EVIDENCE_REVIEWER.md`). Drift or missing evidence → halt.
+5. Loop until complete or a load-bearing halt.
 
-### Auto
+For a ticket whose scope changes frontend UI, the BUILD subagent calls the
+Skill tool with `ui` while preserving ticket ACs, `/tdd`, and `/verify`.
 
-Follow the state machine in [references/auto-driver.md](references/auto-driver.md).
-Invoke the specialist skill for each stage, re-detect state after it returns,
-and continue without asking the user to copy prompts between stages. Preserve
-the specialist skill's own instructions and approval gates.
+Never commit `.plan/` or `.tickets/` and never push. Require a clean working
+tree before the first source change; if it is dirty, ask the user to commit,
+stash, or choose a separate worktree.
 
-For a ticket whose scope changes frontend UI, call the Skill tool with
-`ui` for visual implementation and browser review while preserving the
-ticket ACs, `/tdd`, and `/verify` gates.
+## Manual
+
+Read paths, ticket frontmatter, and artifact mtimes. Emit the matching template
+from [references/prompt-templates.md](references/prompt-templates.md) or
+[references/execution-templates.md](references/execution-templates.md).
 
 ## Escalation
 
-Pause and ask the user when a required decision cannot be inferred safely, a
-specialist skill requests approval, a Tier 2 or Tier 3 assumption is unresolved,
-validation or review still fails after one repair, a slice gate fails, or a
-commit cannot be completed safely. State the blocker, evidence, and one clear
-question or next action. After the user responds, continue the same mode from
-the current artifacts.
-
-Auto mode may create ticket-scoped source checkpoints after evidence review.
-Never commit `.plan/` or `.tickets/` artifacts and never push. Require a clean
-working tree before the first source change; if it is dirty, ask the user to
-commit, stash, or choose a separate worktree.
+Halt and ask only for auth, public API, data-model, security, conflicting
+tickets, undefined success, a failed evidence review, or a specialist skill's
+own sign-off. Record reversible assumptions on the ticket.
+See `~/.skills/shared/ASSUMPTION_TIERS.md`.
 
 ## Status output
 
@@ -84,29 +81,19 @@ counting implementation tickets by their current `Stage:` values.
 Keep each source stage distinct, including FAILED, and flag missing or unknown stages.
 Follow it with `N/M implementation tickets complete`, the in-flight ticket IDs,
 blockers, and the next action.
-Count only `Stage: COMPLETE` as complete; this is a ticket count, not an effort estimate.
-Report integration gates separately with their IDs and stages, excluding them
-from the implementation total; use the gate markers in state detection.
-When there are no implementation tickets, omit the fraction.
-Before tickets exist, report the pipeline state and next action without a ticket table.
+Count only `Stage: COMPLETE` as complete.
+Report integration gates separately; exclude them from the implementation total.
 
-Derive progress from the existing `.tickets/` and `.plan/` artifacts on each run.
-Keep it in the response: no progress files, history, percentages, graphical bars,
-or generated diagrams.
-Archify remains an independent skill for explicitly requested diagrams and explainers.
+Derive progress from `.tickets/` and `.plan/` on each run.
+No progress files, history, percentages, graphical bars, or generated diagrams.
 
-For Manual mode, emit only a short state summary and the next-stage prompt. For
-Auto mode, include the progress table at stage boundaries and finish with either
-pipeline completion or the escalation details.
+Driving: short status, then either the next halt question or "pipeline done".
+`/todo handoff` returns the file path plus 2-4 sentences; no paste block.
 
 ## Companion files
 
-- [references/state-detection.md](references/state-detection.md): state map and
-  routing facts
-- [references/prompt-templates.md](references/prompt-templates.md): manual
-  planning and review prompts
-- [references/execution-templates.md](references/execution-templates.md):
-  manual build, resume, and slice-gate prompts
-- [references/auto-driver.md](references/auto-driver.md): end-to-end Auto mode
-- [../shared/EVIDENCE_REVIEWER.md](../shared/EVIDENCE_REVIEWER.md): evidence
-  review checklist for Auto mode
+- [references/state-detection.md](references/state-detection.md): state map
+- [references/prompt-templates.md](references/prompt-templates.md): challenge / spec start prompts
+- [references/execution-templates.md](references/execution-templates.md): BUILD / resume / gate briefs
+- [references/auto-driver.md](references/auto-driver.md): drive loop
+- [../shared/EVIDENCE_REVIEWER.md](../shared/EVIDENCE_REVIEWER.md): BUILD evidence review

@@ -1,91 +1,46 @@
-# Handoff: Prompt Template and Checklist
+# Handoff file
 
-## Handoff prompt template
+Write this to `<workspace>/.handoff/<slug>.md`. Drop empty sections. Add Verification only when a named check is needed.
 
-Use this structure inside the **Handoff prompt** block; adapt sections and omit empty ones.
-Wrap the whole prompt in a `markdown` code block so it copies in one click:
-
-````markdown
 ```markdown
-## Context
-- Workspace: `<absolute path>`
-- Stack / runtime (if known): ...
+# <short title>
 
 ## Goal
-<What success means>
+<What done looks like>
 
 ## Current state
-<What is already done vs not done>
+<What exists now, and what is left>
 
-## Constraints
-<Non-negotiables: compatibility, no new deps, style, etc.>
-
-## Key files (read these)
-- `<absolute path>` - <role>
-- ...
-
-## Related artifacts (authoritative, read these)
-- `<absolute path, URL or commit sha>` - <spec, ADR, ticket, tracker, standards file: why it matters>
-
-## Your task
-1. ...
+## Next action
+1. <imperative step>
 2. ...
 
-## Plan (if applicable)
-Execute the steps in: `<absolute path>/.handoff/plan-<slug>.md`
+## Constraints
+- <only rules that change this work>
 
-## Suggested skills
-- `<skill>` - <which step it serves>
+## Pointers
+- `<absolute path, URL or commit sha>` - <why it matters>
 
 ## Verification
-<How to confirm completion: tests, commands, acceptance criteria>
-
-## Open questions / risks (if any)
-- ...
+<test, command or acceptance check>
 ```
-````
 
-Tone: **direct instructions** to the receiving agent ("Implement...", "Read...", "Keep...").
+Address the next session: "Read...", "Implement...", "Keep...".
 
----
+## Writing rules
 
-## Write it like this
+- Distill decisions and facts. Leave the conversation out.
+- Use absolute paths for local files.
+- Point at specs, ADRs, tickets and commits. Do not copy their bodies.
+- Name the env var or secrets file, never the value.
+- Skip Verification when the next action already names the check.
 
-- **Decisions and facts**: distill the conversation to what was decided and why; leave the back-and-forth behind.
-- **Absolute paths**: name `/abs/path/to/tests/`, never "the tests folder".
-- **Pointers over copies**: link specs, ADRs, tickets and commits by path, URL or sha.
-- **Verification stated**: always say how the next agent proves it is done.
-- **Steps in the plan file**: for complex work, the step list lives in `.handoff/plan-*.md` and the prompt only summarizes it.
-- **Secrets by location**: name the env var or secrets file, never the value; leave out personal data.
+## Before sending
 
----
-
-## Suggested skills
-
-Name the skills the next agent should invoke, tied to the step each one serves.
-Pick from this map, or from `~/.skills/PLAYBOOK.md`; read a skill's SKILL.md before recommending it.
-
-| Task type | Skills to consider |
-|----------|-------------------|
-| **Frontend UI** | `ui`, `browser` |
-| **Tests / bug fix** | `tdd` |
-| **Git / PR work** | `pr-create`, `pr-review`, `pr-fix`, `verify` |
-| **Planning / specs** | `todo`, `challenge`, `spec`, `ticket-review` |
-| **Infrastructure** | `sync`, `confluence` |
-| **CLI / tooling** | `cli` |
-| **Onboarding** | `onboard` |
-
----
-
-## Quick checklist before sending
-
-- [ ] Paste-ready block is wrapped in a markdown code block for one-click copying.
-- [ ] Paste-ready block is self-contained for a **new** agent.
-- [ ] Task, goal, and **next actions** are explicit.
-- [ ] All critical files use **full paths**.
-- [ ] Specs, ADRs, tickets and commits are referenced by path, URL or sha, not pasted.
-- [ ] Secrets and personal data are redacted.
-- [ ] Complex work has `.handoff/plan-<slug>.md` and that path is in the prompt.
-- [ ] Verification / acceptance criteria included.
-- [ ] Suggested skills section names a skill per step where one applies.
-- [ ] Handoff prompt prose passes `/stop-slop` to remove AI writing patterns.
+- [ ] One file at `.handoff/<slug>.md`
+- [ ] Chat reply is that file's absolute path plus a few sentences on what to do next
+- [ ] No paste-ready prompt block and no second plan file
+- [ ] Goal, current state and next action are explicit
+- [ ] Pointers use full paths
+- [ ] Secrets are redacted
+- [ ] Call the Skill tool with `stop-slop` on the file and the chat reply
