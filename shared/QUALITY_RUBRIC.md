@@ -1,6 +1,6 @@
 # quality-rubric
 
-**Audience:** Reviewers auditing existing codebases. Companion to the `cleanup` skill.
+**Audience:** Engineers implementing or reviewing source changes and auditing codebases.
 
 **Not for ticket markdown.** Optional specialist: `ticket-review` for `.tickets/*.md`.
 
@@ -45,6 +45,24 @@ violation or stays mechanical.
    (reproducible command, failing test, or log excerpt) when it meets
    any of: `severity: CRITICAL` (any category), `category: Architectural
    Drift`, or `category: Layer` at `HIGH`/`CRITICAL`.
+
+### Change-quality pass
+
+For source changes, compare the diff with base behavior and same-role code.
+Preserve behavior and local conventions, including decorators, auth, logging,
+tracing, validation, and error handling, unless the task changes them.
+
+Check for existing package functions and project idioms before adding custom
+code. Reuse them when they meet the contract. Flag added complexity, duplication,
+pass-through wrappers, single-use scaffolding, and comments that narrate code.
+Keep comments that explain a reason or invariant. Prefer the smallest coherent
+change, not fewer lines.
+
+Use LOC and complexity deltas as signals, not targets. Do not delete behavior or
+split code to improve metrics. Report only evidence-backed candidates: cite
+`file:line`, the existing pattern, the proposed change, and tests that protect
+behavior. Report taste or metric concerns only when concrete code evidence
+shows a behavior-preserving improvement.
 
 ---
 
