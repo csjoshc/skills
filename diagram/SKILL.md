@@ -37,6 +37,23 @@ Each theme is one JSON file in `palettes/`; add a theme by adding a file.
 The renderer writes every file next to the source. `--zoom N` scales PNG
 output (default 2, for retina terminals).
 
+## Preview every render (`--show`)
+
+**Always pass `--show`** when rendering, whatever the destination. The user is
+in iTerm2 (cappuccino dark theme), and the agent's own transcript can't display
+images: Claude Code captures tool output and repaints the screen, so `imgcat`
+from a tool call prints raw escape codes.
+
+`--show` renders a cappuccino PNG (reusing `--for iterm` output when present,
+else a temp file under `$TMPDIR/diagram-preview/`) and runs `imgcat` in one
+right-hand iTerm2 split pane. The pane is reused on later renders (id saved in
+`~/.cache/diagram/preview-session`); a closed pane is recreated. Focus returns
+to the agent's pane. Outside iTerm2, or if AppleScript fails, it opens Preview.
+A preview failure only warns; the deliverable and exit code are unaffected.
+
+The first run triggers a one-time macOS Automation prompt to let the terminal
+control iTerm2. Cite the printed `preview:` line to the user; you can't see the pane.
+
 ## When to use which source form
 
 | Target | Approach |
@@ -107,10 +124,10 @@ fenced block. GitHub renders it with the user's theme (light/dark).
 ### Rendering with the script
 
 ```bash
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd                 # light + dark SVG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm      # cappuccino PNG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian   # paper SVG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                  # light + dark SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show      # cappuccino PNG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show   # paper SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3 --show
 ```
 
 Consumers pick the variant: for a Confluence light-theme page use `diagram.light.svg`;
@@ -142,6 +159,7 @@ replaces every variable with the palette's literal value. Two reasons:
 | [palettes/paper.json](palettes/paper.json) | Theme: warm light, Obsidian (`--for obsidian`) |
 | [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: espresso dark, iTerm2 (`--for iterm`) |
 | [scripts/render.mjs](scripts/render.mjs) | Render a `.mmd` to SVG or PNG with a theme |
+| [scripts/preview.mjs](scripts/preview.mjs) | `--show`: reusable iTerm2 preview pane, Preview fallback |
 | [package.json](package.json) | Pins `pele` 1.7.0 |
 | [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette and legend |
 | [example-sequence.mmd](example-sequence.mmd) | Sequence diagram using `rect rgba()` |
@@ -163,4 +181,4 @@ Before committing diagrams:
 - [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — Pele draws them literally, so they fight the dark themes.
 - [ ] No hardcoded `%%{init}%%` in files destined for GitHub markdown.
 - [ ] Flowcharts with >5 node classes include a Legend subgraph.
-- [ ] Render for the destination and look at it: `node scripts/render.mjs diagram.mmd --for iterm` for PNG, or `--for obsidian` for SVG.
+- [ ] Rendered with `--show` and the user saw it in the preview pane (cite the `preview:` line).
