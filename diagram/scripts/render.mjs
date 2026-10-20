@@ -3,18 +3,20 @@
 //
 // Usage:
 //   render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png]
-//                          [--out PATH] [--zoom N]
+//                          [--out PATH] [--zoom N] [--show]
 //
 // No flags: writes <base>.light.svg and <base>.dark.svg.
 // --for iterm:    cappuccino, PNG (iTerm2 shows PNG inline, not SVG).
 // --for obsidian: paper, SVG (Obsidian embeds SVG as an image).
 // --theme NAME:   one file, <base>.<NAME>.<format>, format defaults to svg.
+// --show:         also show a cappuccino PNG in a reusable iTerm2 pane (Preview elsewhere).
 
 import { render, PeleError } from 'pele';
-import { readFileSync, readdirSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
+import { showPreview } from './preview.mjs';
 
 const PALETTES = new URL('../palettes/', import.meta.url);
 const PRESETS = {
@@ -22,6 +24,8 @@ const PRESETS = {
   obsidian: { theme: 'paper', format: 'svg' },
 };
 const DEFAULT_PAIR = ['light', 'dark'];
+// The preview matches the iTerm2 terminal theme, whatever the deliverable's theme is.
+const PREVIEW = PRESETS.iterm.theme;
 const FORMATS = ['svg', 'png'];
 
 function fail(message) {
@@ -30,7 +34,7 @@ function fail(message) {
 }
 
 function usage(code) {
-  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N]');
+  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N] [--show]');
   process.exit(code);
 }
 
@@ -49,6 +53,7 @@ function parseArgs(argv) {
     else if (arg === '--format') opts.format = value();
     else if (arg === '--out') opts.out = value();
     else if (arg === '--zoom') opts.zoom = Number(value());
+    else if (arg === '--show') opts.show = true;
     else if (arg === '-h' || arg === '--help') usage(0);
     else if (arg.startsWith('-')) fail(`unknown flag ${arg}`);
     else if (input) fail('only one input file is allowed');
@@ -120,20 +125,33 @@ function main() {
   const base = opts.input.replace(/\.mmd$/, '');
   const idPrefix = base.split('/').pop().replace(/[^a-zA-Z0-9]+/g, '-');
 
-  for (const target of targets) {
-    const palette = loadPalette(target.theme);
-    let svg;
+  const renderTheme = (name) => {
     try {
-      svg = bake(render(source, { padding: 16, fontSize: 14, idPrefix }).svg, palette);
+      return bake(render(source, { padding: 16, fontSize: 14, idPrefix }).svg, loadPalette(name));
     } catch (error) {
       if (error instanceof PeleError) fail(`${opts.input}: ${error.message}`);
       throw error;
     }
+  };
 
+  let previewPng;
+  for (const target of targets) {
+    const svg = renderTheme(target.theme);
     const out = opts.out ?? `${base}.${target.theme}.${target.format}`;
-    if (target.format === 'png') toPng(svg, out, opts.zoom, palette.bg);
+    if (target.format === 'png') toPng(svg, out, opts.zoom, loadPalette(target.theme).bg);
     else writeFileSync(out, svg);
     console.log(`✓ ${out}`);
+    if (target.theme === PREVIEW && target.format === 'png') previewPng = out;
+  }
+
+  if (opts.show) {
+    if (!previewPng) {
+      const dir = join(tmpdir(), 'diagram-preview');
+      mkdirSync(dir, { recursive: true });
+      previewPng = join(dir, `${basename(base)}.png`);
+      toPng(renderTheme(PREVIEW), previewPng, opts.zoom, loadPalette(PREVIEW).bg);
+    }
+    showPreview(previewPng);
   }
 }
 
