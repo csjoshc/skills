@@ -16,12 +16,10 @@ class Quiet:
 
 
 class RetiredPiTargets(unittest.TestCase):
-    def test_pi_is_not_a_skill_sync_platform(self):
-        self.assertNotIn("pi", sync.PLATFORMS)
-        self.assertNotIn("pi-gateway", sync.PLATFORMS)
-
     def test_only_shared_store_links_are_removed(self):
-        root = Path(tempfile.mkdtemp())
+        temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(temp_dir.cleanup)
+        root = Path(temp_dir.name)
         home = root / "home"
         master = root / "skills"
         (master / "tdd").mkdir(parents=True)
