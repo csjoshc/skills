@@ -39,7 +39,6 @@ class Base(unittest.TestCase):
             "vscode": self.home / "Library/Application Support/Code/User/mcp.json",
             "desktop": self.home / "Library/Application Support/Claude/claude_desktop_config.json",
             "pi": self.home / ".pi/agent/mcp.json",
-            "pi-gateway": self.home / ".gateway-pi/mcp.json",
         }
 
     def set_master(self, doc):
@@ -296,7 +295,7 @@ class Safety(Base):
         self.literal_master()
         r = self.run_sync()
         self.assertEqual(r.returncode, 0, "non-strict still exits 0")
-        self.assertEqual(r.stdout.count("refused"), 14)  # 2 fields x 7 targets; codex skips both servers
+        self.assertEqual(r.stdout.count("refused"), 12)  # 2 fields x 6 JSON targets; codex skips both servers
         for t, p in self.paths.items():
             text = p.read_text()
             self.assertNotIn(FAKE, text, t)
@@ -350,13 +349,12 @@ class Safety(Base):
     def test_modes_preserved_and_pi_forced_private(self):
         self.put("claude", {}, mode=0o644)
         self.put("cursor", {}, mode=0o600)
-        self.put("pi-gateway", {}, mode=0o644)
+        self.put("pi", {}, mode=0o644)
         self.run_sync()
         mode = lambda t: stat.S_IMODE(self.paths[t].stat().st_mode)
         self.assertEqual(mode("claude"), 0o644)
         self.assertEqual(mode("cursor"), 0o600)
-        self.assertEqual(mode("pi-gateway"), 0o600)
-        self.assertEqual(mode("pi"), 0o600)  # created fresh
+        self.assertEqual(mode("pi"), 0o600)
         self.assertEqual(mode("opencode"), 0o600)
         self.assertEqual(stat.S_IMODE(self.backups("claude")[0].stat().st_mode), 0o600)
 
