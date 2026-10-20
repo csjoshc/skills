@@ -7,7 +7,7 @@
 //
 // No flags: writes <base>.light.svg and <base>.dark.svg.
 // --for iterm:    catppuccin (Mocha), PNG (iTerm2 shows PNG inline, not SVG).
-// --for obsidian: paper, SVG (Obsidian embeds SVG as an image).
+// --for obsidian: catppuccin-latte, SVG (Obsidian embeds SVG as an image).
 // --theme NAME:   one file, <base>.<NAME>.<format>, format defaults to svg.
 // --transparent:  SVG without its theme background, for a host of matching lightness.
 // --show:         also show a catppuccin PNG in a reusable iTerm2 pane (Preview elsewhere).
@@ -22,7 +22,7 @@ import { showPreview } from './preview.mjs';
 const PALETTES = new URL('../palettes/', import.meta.url);
 const PRESETS = {
   iterm: { theme: 'catppuccin', format: 'png' },
-  obsidian: { theme: 'paper', format: 'svg' },
+  obsidian: { theme: 'catppuccin-latte', format: 'svg' },
 };
 const DEFAULT_PAIR = ['light', 'dark'];
 // The preview matches the iTerm2 terminal theme, whatever the deliverable's theme is.

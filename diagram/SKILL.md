@@ -27,13 +27,14 @@ node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian
 | Destination | Flags | Output | Why |
 |-------------|-------|--------|-----|
 | iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.catppuccin.png` | iTerm2 shows PNG inline, not SVG. Catppuccin Mocha, the terminal's own theme. |
-| Obsidian note (light vault) | `--for obsidian` | `diagram.paper.svg` | Obsidian embeds SVG as an image. Warm paper theme. |
+| Obsidian note, needs a fixed image | `--for obsidian` | `diagram.catppuccin-latte.svg` | Matches the AnuPpuccin Latte vault. Prefer the raw fence (below) unless the note needs an image. |
 | Confluence, email, any other static consumer | (no flags) | `diagram.light.svg` + `diagram.dark.svg` | Portable SVG; pick the variant at embed time. |
 | One specific theme | `--theme NAME [--format svg\|png]` | `diagram.NAME.FORMAT` | Any theme in `palettes/`; `--out PATH` names the file. |
 
-Themes: `light`, `dark` (general), `paper` (Obsidian light), `catppuccin` (iTerm2,
-Catppuccin Mocha), `cappuccino` (warm espresso dark, opt-in). Each theme is one JSON
-file in `palettes/`; add a theme by adding a file.
+Themes: `light`, `dark` (general), `catppuccin-latte` (Obsidian, AnuPpuccin Latte),
+`catppuccin` (iTerm2 and Obsidian dark, Catppuccin Mocha), `paper` (Soft Paper vaults),
+`cappuccino` (warm espresso dark, opt-in). Each theme is one JSON file in `palettes/`;
+add a theme by adding a file.
 
 Every output carries its theme's background, so text and lines stay readable on any
 host page. Pass `--transparent` only when the host's lightness matches the theme
@@ -69,7 +70,8 @@ A preview failure only warns; the deliverable and exit code are unaffected.
 | Target | Approach |
 |--------|----------|
 | GitHub README / wiki, GitLab, most markdown viewers | Embed mermaid source in ` ```mermaid ` fenced block. Remove hardcoded `%%{init}%%` blocks to let GitHub's auto-theming adapt to user's light/dark mode. Use `rgba()` rect colors for mode-agnostic highlights. |
-| Obsidian, iTerm2, Confluence, PDF, email, any static/image consumer | Render with `render.mjs` (table above). One `.mmd` source; the output format and theme come from the flags. |
+| Obsidian note (default) | Paste the `.mmd` into a ` ```mermaid ` fence. Obsidian bundles Mermaid 11 and renders it in the note, following the vault's light/dark mode. The `classDef` tints carry over; the Pele palettes don't apply. Prefer `flowchart` over `block-beta`, which renders cramped there. Still run `render.mjs --show` so the user sees it here. |
+| Obsidian note that needs a fixed image, iTerm2, Confluence, PDF, email, any static/image consumer | Render with `render.mjs` (table above) and embed the file (`![[diagram.catppuccin-latte.svg]]` in Obsidian). One `.mmd` source; the output format and theme come from the flags. |
 
 ## GitHub inline mermaid (markdown viewers)
 
@@ -112,11 +114,11 @@ at least 3:1 against every theme background, so one source reads in all themes.
 | `person` | User, browser, human actor | `#78716C` | `fill:#78716C40,stroke:#78716C` | `rgba(120,113,108,0.25)` |
 | `service` | App, API, deployed service (sync call) | `#3B82F6` | `fill:#3B82F640,stroke:#3B82F6` | `rgba(59,130,246,0.25)` |
 | `library` | In-process library or module | `#0284C7` | `fill:#0284C740,stroke:#0284C7` | `rgba(2,132,199,0.25)` |
-| `guard` | Security boundary, guardrail, policy (caution) | `#D97706` | `fill:#D9770640,stroke:#D97706` | `rgba(217,119,6,0.25)` |
+| `guard` | Security boundary, guardrail, policy (caution) | `#CA6A04` | `fill:#CA6A0440,stroke:#CA6A04` | `rgba(202,106,4,0.25)` |
 | `external` | External system outside your control | `#64748B` | `fill:#64748B40,stroke:#64748B` | `rgba(100,116,139,0.25)` |
 | `state` | State, data store, token, config (data/mutation) | `#A855F7` | `fill:#A855F740,stroke:#A855F7` | `rgba(168,85,247,0.25)` |
 | `errBlock` | Error state, blocked path | `#EF4444` | `fill:#EF444440,stroke:#EF4444` | `rgba(239,68,68,0.25)` |
-| `passNode` | Success outcome, data-in-motion | `#16A34A` | `fill:#16A34A40,stroke:#16A34A` | `rgba(22,163,74,0.25)` |
+| `passNode` | Success outcome, data-in-motion | `#15913F` | `fill:#15913F40,stroke:#15913F` | `rgba(21,145,63,0.25)` |
 | `auditNode` | Audit / logging / side-effect | `#64748B` | `fill:#64748B33,stroke:#64748B` | `rgba(100,116,139,0.2)` |
 
 Add `stroke-width:1.5px` to each `classDef`. Leave out `color:`, so node text uses the
@@ -141,7 +143,7 @@ fenced block. GitHub renders it with the user's theme (light/dark).
 ```bash
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                  # light + dark SVG
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show      # catppuccin PNG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show   # paper SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show   # catppuccin-latte SVG
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3 --show
 ```
 
@@ -171,7 +173,8 @@ replaces every variable with the palette's literal value. Two reasons:
 | [LAYOUT_RULES.md](LAYOUT_RULES.md) | Read for complex flowcharts headed to a Confluence whiteboard or any dynamic connector router |
 | [palettes/light.json](palettes/light.json) | Theme: light, general use |
 | [palettes/dark.json](palettes/dark.json) | Theme: dark, general use |
-| [palettes/paper.json](palettes/paper.json) | Theme: warm light, Obsidian (`--for obsidian`) |
+| [palettes/catppuccin-latte.json](palettes/catppuccin-latte.json) | Theme: Catppuccin Latte, Obsidian (`--for obsidian`) |
+| [palettes/paper.json](palettes/paper.json) | Theme: warm light, Soft Paper vaults |
 | [palettes/catppuccin.json](palettes/catppuccin.json) | Theme: Catppuccin Mocha, iTerm2 (`--for iterm`, `--show` preview) |
 | [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: warm espresso dark, opt-in |
 | [scripts/render.mjs](scripts/render.mjs) | Render a `.mmd` to SVG or PNG with a theme |
