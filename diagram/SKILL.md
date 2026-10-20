@@ -1,31 +1,48 @@
 ---
 name: diagram
-description: "Authors Mermaid diagrams and renders them to SVG that reads in light and dark mode. Use when creating or updating .mmd files or diagram SVGs."
+description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, paper, cappuccino). Use when creating or updating .mmd files or diagram SVG/PNG files."
 ---
 
 # diagram — Mermaid Authoring + Rendering
 
-Produces `.mmd` sources and renders them to `.svg` with the shared color
-convention. Decouples "how the diagram looks" (this skill) from "where it ends
-up" (consumer skills: `confluence`, README embedding, etc.).
+Produces `.mmd` sources and renders them with Pele (MIT, no runtime dependencies,
+no headless browser) into SVG or PNG. Decouples "how the diagram looks" (this skill)
+from "where it ends up" (consumer skills: `confluence`, README embedding, etc.).
 
 ## Prerequisites
 
-`@mermaid-js/mermaid-cli` installed globally:
-
 ```bash
-npm install -g @mermaid-js/mermaid-cli
-mmdc --version   # 10+ required
+cd ~/.skills/diagram && npm install     # pins pele 1.7.0 in node_modules/
+brew install librsvg                    # rsvg-convert, needed only for PNG
 ```
 
-## When to use which rendering path
+Run the renderer with Node 18+:
+
+```bash
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian
+```
+
+## Choosing the output
+
+| Destination | Flags | Output | Why |
+|-------------|-------|--------|-----|
+| iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.cappuccino.png` | iTerm2 shows PNG inline, not SVG. Dark espresso theme. |
+| Obsidian note (light vault) | `--for obsidian` | `diagram.paper.svg` | Obsidian embeds SVG as an image. Warm paper theme. |
+| Confluence, email, any other static consumer | (no flags) | `diagram.light.svg` + `diagram.dark.svg` | Portable SVG; pick the variant at embed time. |
+| One specific theme | `--theme NAME [--format svg\|png]` | `diagram.NAME.FORMAT` | Any theme in `palettes/`; `--out PATH` names the file. |
+
+Themes: `light`, `dark` (general), `paper` (Obsidian light), `cappuccino` (iTerm2 dark).
+Each theme is one JSON file in `palettes/`; add a theme by adding a file.
+
+The renderer writes every file next to the source. `--zoom N` scales PNG
+output (default 2, for retina terminals).
+
+## When to use which source form
 
 | Target | Approach |
 |--------|----------|
 | GitHub README / wiki, GitLab, most markdown viewers | Embed mermaid source in ` ```mermaid ` fenced block. Remove hardcoded `%%{init}%%` blocks to let GitHub's auto-theming adapt to user's light/dark mode. Use `rgba()` rect colors for mode-agnostic highlights. |
-| Confluence, PDF, email, any static/image consumer | Render to SVG via `mmdc`. Produce a light + dark variant; pick at embed time. |
-
-These two paths share one `.mmd` source. The difference is at render time.
+| Obsidian, iTerm2, Confluence, PDF, email, any static/image consumer | Render with `render.mjs` (table above). One `.mmd` source; the output format and theme come from the flags. |
 
 ## GitHub inline mermaid (markdown viewers)
 
@@ -39,7 +56,10 @@ For any diagram embedded in markdown (GitHub wikis, README files, etc.):
 **DON'T:**
 - Include `%%{init}%%` with hardcoded colors; it locks the diagram to light mode even in dark mode
 - Use solid `rgb()` colors; they don't adapt to theme changes
-- Embed `%%{init}%%` with hardcoded actor/text colors in diagrams meant for GitHub markdown. Set a theme only when rendering to static SVG with a known target.
+- Embed `%%{init}%%` with hardcoded actor/text colors in diagrams meant for GitHub markdown
+
+Pele ignores `%%{init}%%` theme variables, so the render theme always wins. Remove
+them from sources anyway; they only matter for GitHub and mmdc-era files.
 
 Example and recipes: [AUTHORING.md](AUTHORING.md).
 
@@ -73,6 +93,10 @@ across flowchart `classDef` and sequence `rect`.
 
 Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORING.md](AUTHORING.md). Add a Legend subgraph when a flowchart uses more than 5 node classes ([example-conventions.mmd](example-conventions.mmd)).
 
+Pele renders `rect` fills literally, so an opaque `rect rgb(...)` pastel stays pastel in
+every theme and its text becomes unreadable on dark themes. Always write
+`rect rgba(...)` at 0.25 alpha.
+
 ## Rendering
 
 ### Default (GitHub wiki / README inline mermaid)
@@ -80,17 +104,16 @@ Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORI
 No render step needed — commit the `.mmd` source inside a ` ```mermaid `
 fenced block. GitHub renders it with the user's theme (light/dark).
 
-### Rendering to SVG (static consumers)
-
-Render both modes from one source:
+### Rendering with the script
 
 ```bash
-~/.skills/diagram/scripts/render.sh diagram.mmd
-# produces: diagram.light.svg + diagram.dark.svg
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd                 # light + dark SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm      # cappuccino PNG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian   # paper SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3
 ```
 
-The script wraps `mmdc` with the palette config files and emits both variants.
-Consumers pick: for a Confluence light-theme page use `diagram.light.svg`;
+Consumers pick the variant: for a Confluence light-theme page use `diagram.light.svg`;
 for a dark-themed consumer use `diagram.dark.svg`; for ambient/auto use a
 `<picture>` wrapper:
 
@@ -101,16 +124,12 @@ for a dark-themed consumer use `diagram.dark.svg`; for ambient/auto use a
 </picture>
 ```
 
-### Manual render (single mode)
+### How the render works
 
-```bash
-mmdc -i diagram.mmd -o diagram.svg \
-  -c ~/.skills/diagram/palettes/light.json \
-  -b transparent
-```
-
-Swap `light.json` → `dark.json` for the dark variant. `-b transparent` keeps
-the SVG background neutral so it picks up the host's page background.
+Pele emits SVG that reads colors from CSS variables (`--pele-*`). The renderer
+replaces every variable with the palette's literal value. Two reasons:
+- SVG opened as an image (Obsidian embed, Confluence, `<img>`) can't see the page's CSS variables.
+- librsvg, used for PNG, ignores `var()` in attributes and would draw solid black.
 
 ## Files in this skill
 
@@ -118,9 +137,12 @@ the SVG background neutral so it picks up the host's page background.
 |------|---------|
 | [AUTHORING.md](AUTHORING.md) | Read when writing a diagram: GitHub inline example, sequence `rect rgba()`, flowchart `classDef`, edge styles |
 | [LAYOUT_RULES.md](LAYOUT_RULES.md) | Read for complex flowcharts headed to a Confluence whiteboard or any dynamic connector router |
-| [palettes/light.json](palettes/light.json) | `mmdc -c` config, light-mode theme variables |
-| [palettes/dark.json](palettes/dark.json) | `mmdc -c` config, dark-mode theme variables |
-| [scripts/render.sh](scripts/render.sh) | Render a `.mmd` to both light and dark SVGs |
+| [palettes/light.json](palettes/light.json) | Theme: light, general use |
+| [palettes/dark.json](palettes/dark.json) | Theme: dark, general use |
+| [palettes/paper.json](palettes/paper.json) | Theme: warm light, Obsidian (`--for obsidian`) |
+| [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: espresso dark, iTerm2 (`--for iterm`) |
+| [scripts/render.mjs](scripts/render.mjs) | Render a `.mmd` to SVG or PNG with a theme |
+| [package.json](package.json) | Pins `pele` 1.7.0 |
 | [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette and legend |
 | [example-sequence.mmd](example-sequence.mmd) | Sequence diagram using `rect rgba()` |
 
@@ -138,9 +160,7 @@ the SVG background neutral so it picks up the host's page background.
 Before committing diagrams:
 
 - [ ] Each semantic color matches the palette table (Semantic colors).
-- [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — otherwise dark
-      mode viewers see the same fill as light mode.
+- [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — Pele draws them literally, so they fight the dark themes.
 - [ ] No hardcoded `%%{init}%%` in files destined for GitHub markdown.
 - [ ] Flowcharts with >5 node classes include a Legend subgraph.
-- [ ] Render both modes and eyeball: `./scripts/render.sh diagram.mmd &&
-      open diagram.{light,dark}.svg`.
+- [ ] Render for the destination and look at it: `node scripts/render.mjs diagram.mmd --for iterm` for PNG, or `--for obsidian` for SVG.
