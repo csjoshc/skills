@@ -10,31 +10,37 @@ import { dirname, join, resolve } from 'node:path';
 const STATE = join(homedir(), '.cache', 'diagram', 'preview-session');
 const ITERM_IMGCAT = '/Applications/iTerm.app/Contents/Resources/utilities/imgcat';
 
-// argv: saved pane id, origin session id, command. Reuses the saved pane if it still exists,
-// else splits the origin session and gives focus back to it. Prints the pane id.
+// argv: saved pane id, agent session id, command. Reuses the saved pane only if it sits in
+// the agent's tab, else splits the agent session. Gives focus back to the agent; prints the pane id.
 const SCRIPT = `
-on findSession(wanted)
+on findTab(wanted)
   tell application "iTerm2"
     repeat with w in windows
       repeat with t in tabs of w
         repeat with s in sessions of t
-          if id of s is wanted then return s
+          if id of s is wanted then return t
         end repeat
       end repeat
     end repeat
   end tell
   return missing value
-end findSession
+end findTab
 
 on run argv
-  set agentSession to missing value
-  if item 2 of argv is not "" then set agentSession to my findSession(item 2 of argv)
   tell application "iTerm2"
-    if agentSession is missing value then set agentSession to current session of current window
-  end tell
-  set previewSession to missing value
-  if item 1 of argv is not "" then set previewSession to my findSession(item 1 of argv)
-  tell application "iTerm2"
+    set agentTab to missing value
+    if item 2 of argv is not "" then set agentTab to my findTab(item 2 of argv)
+    if agentTab is missing value then
+      set agentTab to current tab of current window
+      set agentSession to current session of current window
+    else
+      set agentSession to first session of agentTab whose id is (item 2 of argv)
+    end if
+    set previewSession to missing value
+    if (item 1 of argv) is not "" then
+      set matches to (sessions of agentTab whose id is (item 1 of argv))
+      if matches is not {} then set previewSession to item 1 of matches
+    end if
     if previewSession is missing value then
       tell agentSession to set previewSession to (split vertically with default profile)
     end if
