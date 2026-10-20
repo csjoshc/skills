@@ -2,13 +2,14 @@
 // Render a Mermaid .mmd file to SVG or PNG with Pele, using a named palette.
 //
 // Usage:
-//   render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png]
+//   render.mjs <input.mmd> [--for iterm|obsidian|confluence] [--theme NAME] [--format svg|png]
 //                          [--out PATH] [--zoom N] [--transparent] [--show]
 //
-// No flags: writes <base>.light.svg and <base>.dark.svg.
-// --for iterm:    catppuccin (Mocha), PNG (iTerm2 shows PNG inline, not SVG).
-// --for obsidian: catppuccin-latte, SVG (Obsidian embeds SVG as an image).
-// --theme NAME:   one file, <base>.<NAME>.<format>, format defaults to svg.
+// No flags: writes <base>.catppuccin-latte.svg and <base>.catppuccin.svg.
+// --for iterm:      catppuccin (Mocha), PNG (iTerm2 shows PNG inline, not SVG).
+// --for obsidian:   catppuccin-latte, SVG (Obsidian embeds SVG as an image).
+// --for confluence: light + dark SVG (neutral slate on a white page).
+// --theme NAME:     one file, <base>.<NAME>.<format>; keeps the preset's format.
 // --transparent:  SVG without its theme background, for a host of matching lightness.
 // --show:         also show a catppuccin PNG in a reusable iTerm2 pane (Preview elsewhere).
 
@@ -20,13 +21,16 @@ import { basename, join } from 'node:path';
 import { showPreview } from './preview.mjs';
 
 const PALETTES = new URL('../palettes/', import.meta.url);
+// Each preset is the theme list and format for one destination. No --for and no --theme
+// renders DEFAULT: the light and dark themes of the user's own setup.
 const PRESETS = {
-  iterm: { theme: 'catppuccin', format: 'png' },
-  obsidian: { theme: 'catppuccin-latte', format: 'svg' },
+  iterm: { themes: ['catppuccin'], format: 'png' },
+  obsidian: { themes: ['catppuccin-latte'], format: 'svg' },
+  confluence: { themes: ['light', 'dark'], format: 'svg' },
 };
-const DEFAULT_PAIR = ['light', 'dark'];
+const DEFAULT = { themes: ['catppuccin-latte', 'catppuccin'], format: 'svg' };
 // The preview matches the iTerm2 terminal theme, whatever the deliverable's theme is.
-const PREVIEW = PRESETS.iterm.theme;
+const PREVIEW = 'catppuccin';
 const FORMATS = ['svg', 'png'];
 
 function fail(message) {
@@ -35,7 +39,7 @@ function fail(message) {
 }
 
 function usage(code) {
-  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N] [--transparent] [--show]');
+  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian|confluence] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N] [--transparent] [--show]');
   process.exit(code);
 }
 
@@ -109,19 +113,16 @@ function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!Number.isFinite(opts.zoom) || opts.zoom <= 0) fail('--zoom must be a positive number');
 
-  let { theme, format } = opts;
+  let preset = DEFAULT;
   if (opts.for) {
-    const preset = PRESETS[opts.for];
-    if (!preset) fail(`unknown --for "${opts.for}". Use iterm or obsidian`);
-    theme ??= preset.theme;
-    format ??= preset.format;
+    preset = PRESETS[opts.for];
+    if (!preset) fail(`unknown --for "${opts.for}". Use ${Object.keys(PRESETS).join(', ')}`);
   }
-  if (format && !FORMATS.includes(format)) fail(`unknown format "${format}". Use svg or png`);
+  const format = opts.format ?? preset.format;
+  if (!FORMATS.includes(format)) fail(`unknown format "${format}". Use svg or png`);
 
-  const targets = theme
-    ? [{ theme, format: format ?? 'svg' }]
-    : DEFAULT_PAIR.map((name) => ({ theme: name, format: format ?? 'svg' }));
-  if (opts.out && targets.length > 1) fail('--out needs one target; pass --theme or --for');
+  const targets = (opts.theme ? [opts.theme] : preset.themes).map((theme) => ({ theme, format }));
+  if (opts.out && targets.length > 1) fail('--out needs one target; pass --theme or a single-theme --for');
 
   let source;
   try {

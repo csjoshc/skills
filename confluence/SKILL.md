@@ -24,7 +24,7 @@ cd ~/.skills/diagram && npm install
 Confluence embeds SVG, so render the light and dark variants with the `diagram` skill and pick one:
 
 ```bash
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for confluence
 # produces: diagram.light.svg + diagram.dark.svg
 ```
 

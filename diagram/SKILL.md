@@ -16,11 +16,31 @@ cd ~/.skills/diagram && npm install     # pins pele 1.7.0 in node_modules/
 brew install librsvg                    # rsvg-convert, needed only for PNG
 ```
 
-Run the renderer with Node 18+:
+## Pick the destination from the request
 
-```bash
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian
-```
+Decide where the diagram ends up before writing anything. The user is in iTerm2
+(Catppuccin Mocha dark) and keeps notes in Obsidian (AnuPpuccin, Catppuccin Latte light).
+
+| The request mentions or implies | Destination | Do this |
+|---------------------------------|-------------|---------|
+| Nothing about a destination ("draw", "diagram this", "show me the state machine") | Look at it now | `render.mjs x.mmd --for iterm --show` |
+| A note, the vault, Obsidian, or a `.md` inside a vault | Obsidian note | Write a ` ```mermaid ` fence into the note, then `render.mjs x.mmd --for obsidian --show` to preview it |
+| An Obsidian note that must stay fixed (exported, shared, "as an image") | Obsidian image | `render.mjs x.mmd --for obsidian --show --out <note folder>/<mmd name>.svg`, then put only `![[<mmd name>.svg]]` in the note (no fence) |
+| Confluence, a team or company wiki, email, a PDF | Static page | `render.mjs x.mmd --for confluence --show`; hand off `light` (the default for white pages) and `dark`. A GitHub wiki is the GitHub row |
+| A slide | Slide image | `render.mjs x.mmd --theme light --format png --show` (`--theme dark` for a dark deck) |
+| A GitHub README, PR, issue, or a `.md` in a git repo that is not a vault | GitHub | Fence in the markdown file, no render step; preview with `render.mjs x.mmd --for iterm --show` |
+| "Light and dark versions", with no named host | Both themes | `render.mjs x.mmd --show`: `catppuccin-latte` + `catppuccin` SVG |
+| "Dark version" or "light version" alone | One theme | If the last render already wrote that variant (Confluence writes both), hand off that file. Otherwise `--theme catppuccin` (dark) or `--theme catppuccin-latte` (light), SVG, with `--show` |
+
+A `.md` path is in a vault when it or a parent folder holds `.obsidian/`.
+
+Verbs like "draw", "show" or "sketch" never name a destination; `--show` already covers
+them. Several destinations in one request ("for my note and the wiki") means one render
+per destination, not a question. Ask only when two destinations conflict on one output
+(same file, two themes). Otherwise pick the rows and state the choice in one line
+("Rendered for iTerm2; say if it's for a note").
+
+Run the renderer with Node 18+ from any directory.
 
 ## Choosing the output
 
@@ -28,19 +48,20 @@ node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian
 |-------------|-------|--------|-----|
 | iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.catppuccin.png` | iTerm2 shows PNG inline, not SVG. Catppuccin Mocha, the terminal's own theme. |
 | Obsidian note, needs a fixed image | `--for obsidian` | `diagram.catppuccin-latte.svg` | Matches the AnuPpuccin Latte vault. Prefer the raw fence (below) unless the note needs an image. |
-| Confluence, email, any other static consumer | (no flags) | `diagram.light.svg` + `diagram.dark.svg` | Portable SVG; pick the variant at embed time. |
+| Confluence, email, any other static consumer | `--for confluence` | `diagram.light.svg` + `diagram.dark.svg` | Neutral slate suits a white page; pick the variant at embed time. |
+| This user's own light + dark pair | (no flags) | `diagram.catppuccin-latte.svg` + `diagram.catppuccin.svg` | The default: the two themes of the user's setup. |
 | One specific theme | `--theme NAME [--format svg\|png]` | `diagram.NAME.FORMAT` | Any theme in `palettes/`; `--out PATH` names the file. |
 
-Themes: `light`, `dark` (general), `catppuccin-latte` (Obsidian, AnuPpuccin Latte),
-`catppuccin` (iTerm2 and Obsidian dark, Catppuccin Mocha), `paper` (Soft Paper vaults),
-`cappuccino` (warm espresso dark, opt-in). Each theme is one JSON file in `palettes/`;
-add a theme by adding a file.
+Themes: `catppuccin-latte` (Obsidian, AnuPpuccin Latte), `catppuccin` (iTerm2 and
+Obsidian dark, Catppuccin Mocha), `light`, `dark` (neutral, Confluence), `paper` (Soft
+Paper vaults), `cappuccino` (warm espresso dark, opt-in). Each theme is one JSON file
+in `palettes/`; add a theme by adding a file.
 
 Every output carries its theme's background, so text and lines stay readable on any
 host page. Pass `--transparent` only when the host's lightness matches the theme
 (a light theme on a light page); on a mismatched page the ink disappears.
 
-The renderer writes every file next to the source. `--zoom N` scales PNG
+Each file lands next to the `.mmd` unless `--out` names a path. `--zoom N` scales PNG
 output (default 2, for retina terminals).
 
 ## Preview every render (`--show`)
@@ -141,13 +162,14 @@ fenced block. GitHub renders it with the user's theme (light/dark).
 ### Rendering with the script
 
 ```bash
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                  # light + dark SVG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show      # catppuccin PNG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show   # catppuccin-latte SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                    # catppuccin-latte + catppuccin SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show        # catppuccin PNG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show     # catppuccin-latte SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for confluence --show   # light + dark SVG
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3 --show
 ```
 
-Consumers pick the variant: for a Confluence light-theme page use `diagram.light.svg`;
+Consumers of a pair pick the variant: on a Confluence light-theme page use `diagram.light.svg`;
 for a dark-themed consumer use `diagram.dark.svg`; for ambient/auto use a
 `<picture>` wrapper:
 
