@@ -3,13 +3,14 @@
 //
 // Usage:
 //   render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png]
-//                          [--out PATH] [--zoom N] [--show]
+//                          [--out PATH] [--zoom N] [--transparent] [--show]
 //
 // No flags: writes <base>.light.svg and <base>.dark.svg.
-// --for iterm:    cappuccino, PNG (iTerm2 shows PNG inline, not SVG).
+// --for iterm:    catppuccin (Mocha), PNG (iTerm2 shows PNG inline, not SVG).
 // --for obsidian: paper, SVG (Obsidian embeds SVG as an image).
 // --theme NAME:   one file, <base>.<NAME>.<format>, format defaults to svg.
-// --show:         also show a cappuccino PNG in a reusable iTerm2 pane (Preview elsewhere).
+// --transparent:  SVG without its theme background, for a host of matching lightness.
+// --show:         also show a catppuccin PNG in a reusable iTerm2 pane (Preview elsewhere).
 
 import { render, PeleError } from 'pele';
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
@@ -20,7 +21,7 @@ import { showPreview } from './preview.mjs';
 
 const PALETTES = new URL('../palettes/', import.meta.url);
 const PRESETS = {
-  iterm: { theme: 'cappuccino', format: 'png' },
+  iterm: { theme: 'catppuccin', format: 'png' },
   obsidian: { theme: 'paper', format: 'svg' },
 };
 const DEFAULT_PAIR = ['light', 'dark'];
@@ -34,7 +35,7 @@ function fail(message) {
 }
 
 function usage(code) {
-  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N] [--show]');
+  console.error('usage: render.mjs <input.mmd> [--for iterm|obsidian] [--theme NAME] [--format svg|png] [--out PATH] [--zoom N] [--transparent] [--show]');
   process.exit(code);
 }
 
@@ -54,6 +55,7 @@ function parseArgs(argv) {
     else if (arg === '--out') opts.out = value();
     else if (arg === '--zoom') opts.zoom = Number(value());
     else if (arg === '--show') opts.show = true;
+    else if (arg === '--transparent') opts.transparent = true;
     else if (arg === '-h' || arg === '--help') usage(0);
     else if (arg.startsWith('-')) fail(`unknown flag ${arg}`);
     else if (input) fail('only one input file is allowed');
@@ -80,6 +82,12 @@ function bake(svg, palette) {
   const internal = {};
   for (const [, name, value] of withPalette.matchAll(/--(_[a-z0-9-]+):([^;"]+)/g)) internal[name] = value.trim();
   return withPalette.replace(/var\(--(_[a-z0-9-]+)\)/g, (match, name) => internal[name] ?? match);
+}
+
+// Theme ink (text, lines) assumes the theme's own background. Pele leaves the SVG
+// transparent, so on a host of the opposite lightness the ink disappears; paint the bg.
+function withBackground(svg, palette) {
+  return svg.replace(/(<svg\b[^>]*>)/, `$1<rect width="100%" height="100%" fill="${palette.bg}"/>`);
 }
 
 function toPng(svg, out, zoom, background) {
@@ -127,7 +135,9 @@ function main() {
 
   const renderTheme = (name) => {
     try {
-      return bake(render(source, { padding: 16, fontSize: 14, idPrefix }).svg, loadPalette(name));
+      const palette = loadPalette(name);
+      const svg = bake(render(source, { padding: 16, fontSize: 14, idPrefix }).svg, palette);
+      return opts.transparent ? svg : withBackground(svg, palette);
     } catch (error) {
       if (error instanceof PeleError) fail(`${opts.input}: ${error.message}`);
       throw error;

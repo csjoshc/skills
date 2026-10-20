@@ -1,6 +1,9 @@
-// Show a PNG in one reusable iTerm2 split pane. Claude Code and similar TUIs capture tool
-// output and repaint the screen, so imgcat only renders in a session they don't own.
-// Falls back to macOS Preview. Never throws: the preview is a convenience, not the output.
+// Preview a PNG where the user can see it. Two paths:
+// - inline: the agent harness renders images its read tool returns (oh-my-pi). The script
+//   only prints the path; the agent reads the file into the transcript.
+// - pane:   the harness captures tool output and repaints (Claude Code), so imgcat only
+//   renders in a session it doesn't own: one reusable iTerm2 split pane, else macOS Preview.
+// Never throws: the preview is a convenience, not the output.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -74,9 +77,19 @@ function showInPane(png) {
   return { pane };
 }
 
+// DIAGRAM_PREVIEW=inline|pane overrides detection. oh-my-pi also sets CLAUDECODE=1 for
+// compatibility, so its own marker is checked first.
+export function previewMode(env = process.env) {
+  if (env.DIAGRAM_PREVIEW === 'inline' || env.DIAGRAM_PREVIEW === 'pane') return env.DIAGRAM_PREVIEW;
+  return env.OMPCODE === '1' ? 'inline' : 'pane';
+}
+
 export function showPreview(file) {
   // The preview pane starts in its own cwd, so a relative path would not resolve there.
   const png = resolve(file);
+  if (previewMode() === 'inline') {
+    return console.log(`preview: ${png} (inline: read this file to show it to the user)`);
+  }
   const inIterm = process.env.TERM_PROGRAM === 'iTerm.app' || Boolean(process.env.ITERM_SESSION_ID);
   if (inIterm) {
     const { pane, error } = showInPane(png);

@@ -1,6 +1,6 @@
 ---
 name: diagram
-description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, paper, cappuccino). Use when creating or updating .mmd files or diagram SVG/PNG files."
+description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, paper, catppuccin, cappuccino), then previews each render for the user. Use when creating or updating .mmd files or diagram SVG/PNG files."
 ---
 
 # diagram — Mermaid Authoring + Rendering
@@ -26,33 +26,43 @@ node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian
 
 | Destination | Flags | Output | Why |
 |-------------|-------|--------|-----|
-| iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.cappuccino.png` | iTerm2 shows PNG inline, not SVG. Dark espresso theme. |
+| iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.catppuccin.png` | iTerm2 shows PNG inline, not SVG. Catppuccin Mocha, the terminal's own theme. |
 | Obsidian note (light vault) | `--for obsidian` | `diagram.paper.svg` | Obsidian embeds SVG as an image. Warm paper theme. |
 | Confluence, email, any other static consumer | (no flags) | `diagram.light.svg` + `diagram.dark.svg` | Portable SVG; pick the variant at embed time. |
 | One specific theme | `--theme NAME [--format svg\|png]` | `diagram.NAME.FORMAT` | Any theme in `palettes/`; `--out PATH` names the file. |
 
-Themes: `light`, `dark` (general), `paper` (Obsidian light), `cappuccino` (iTerm2 dark).
-Each theme is one JSON file in `palettes/`; add a theme by adding a file.
+Themes: `light`, `dark` (general), `paper` (Obsidian light), `catppuccin` (iTerm2,
+Catppuccin Mocha), `cappuccino` (warm espresso dark, opt-in). Each theme is one JSON
+file in `palettes/`; add a theme by adding a file.
+
+Every output carries its theme's background, so text and lines stay readable on any
+host page. Pass `--transparent` only when the host's lightness matches the theme
+(a light theme on a light page); on a mismatched page the ink disappears.
 
 The renderer writes every file next to the source. `--zoom N` scales PNG
 output (default 2, for retina terminals).
 
 ## Preview every render (`--show`)
 
-**Always pass `--show`** when rendering, whatever the destination. The user is
-in iTerm2 (cappuccino dark theme), and the agent's own transcript can't display
-images: Claude Code captures tool output and repaints the screen, so `imgcat`
-from a tool call prints raw escape codes.
+**Always pass `--show`** when rendering, whatever the destination. It renders a
+catppuccin PNG (reusing `--for iterm` output when present, else a temp file under
+`$TMPDIR/diagram-preview/`) and then takes one of two paths, chosen from the
+agent harness:
 
-`--show` renders a cappuccino PNG (reusing `--for iterm` output when present,
-else a temp file under `$TMPDIR/diagram-preview/`) and runs `imgcat` in one
-right-hand iTerm2 split pane. The pane is reused on later renders (id saved in
-`~/.cache/diagram/preview-session`); a closed pane is recreated. Focus returns
-to the agent's pane. Outside iTerm2, or if AppleScript fails, it opens Preview.
+| Harness | Detected by | Path | Your next step |
+|---------|-------------|------|----------------|
+| Shows images from the read tool inline (oh-my-pi) | `OMPCODE=1` | **inline**: prints the PNG path only | Read the printed `preview:` file so it appears in the transcript |
+| Captures tool output and repaints (Claude Code, others) | anything else | **pane**: `imgcat` in one right-hand iTerm2 split pane, else macOS Preview | Cite the printed `preview:` line; you can't see the pane |
+
+`DIAGRAM_PREVIEW=inline|pane` overrides detection. oh-my-pi also sets `CLAUDECODE=1`,
+so detection checks `OMPCODE` first.
+
+Pane path details: the pane is reused on later renders in the same tab (id saved in
+`~/.cache/diagram/preview-session`); a closed pane, or an agent in another tab, gets
+a new split. Focus returns to the agent's pane. Outside iTerm2, or if AppleScript
+fails, it opens Preview. The first run triggers a one-time macOS Automation prompt.
+
 A preview failure only warns; the deliverable and exit code are unaffected.
-
-The first run triggers a one-time macOS Automation prompt to let the terminal
-control iTerm2. Cite the printed `preview:` line to the user; you can't see the pane.
 
 ## When to use which source form
 
@@ -93,26 +103,31 @@ Example and recipes: [AUTHORING.md](AUTHORING.md).
 
 ### Semantic colors (the palette)
 
-Mermaid diagrams use color to encode meaning, not decoration. Same palette
-across flowchart `classDef` and sequence `rect`.
+Mermaid diagrams use color to encode meaning, not decoration. One hue per semantic,
+shared by flowchart `classDef` and sequence `rect`. Each hue is a mid-tone that holds
+at least 3:1 against every theme background, so one source reads in all themes.
 
-| Semantic | Role | Light hex | Dark hex | Mode-agnostic rgba() |
-|----------|------|-----------|----------|-----------------------|
-| `person` | User, browser, human actor | `#E8EAED` | `#374151` | `rgba(156,163,175,0.25)` |
-| `service` | App, API, deployed service (sync call) | `#4285F4` | `#3B82F6` | `rgba(59,130,246,0.25)` |
-| `library` | In-process library or module | `#4FC3F7` | `#38BDF8` | `rgba(56,189,248,0.25)` |
-| `guard` | Security boundary, guardrail, policy (caution) | `#F9AB00` | `#F59E0B` | `rgba(245,158,11,0.25)` |
-| `external` | External system outside your control | `#9AA0A6` | `#6B7280` | `rgba(107,114,128,0.25)` |
-| `state` | State, data store, token, config (data/mutation) | `#A142F4` | `#A855F7` | `rgba(168,85,247,0.25)` |
-| `errBlock` | Error state, blocked path | `#EA4335` | `#EF4444` | `rgba(239,68,68,0.25)` |
-| `passNode` | Success outcome, data-in-motion | `#34A853` | `#22C55E` | `rgba(34,197,94,0.25)` |
-| `auditNode` | Audit / logging / side-effect | `#9AA0A6` | `#6B7280` | `rgba(107,114,128,0.2)` |
+| Semantic | Role | Hue | `classDef` (flowchart) | `rect` (sequence) |
+|----------|------|-----|------------------------|-------------------|
+| `person` | User, browser, human actor | `#78716C` | `fill:#78716C40,stroke:#78716C` | `rgba(120,113,108,0.25)` |
+| `service` | App, API, deployed service (sync call) | `#3B82F6` | `fill:#3B82F640,stroke:#3B82F6` | `rgba(59,130,246,0.25)` |
+| `library` | In-process library or module | `#0284C7` | `fill:#0284C740,stroke:#0284C7` | `rgba(2,132,199,0.25)` |
+| `guard` | Security boundary, guardrail, policy (caution) | `#D97706` | `fill:#D9770640,stroke:#D97706` | `rgba(217,119,6,0.25)` |
+| `external` | External system outside your control | `#64748B` | `fill:#64748B40,stroke:#64748B` | `rgba(100,116,139,0.25)` |
+| `state` | State, data store, token, config (data/mutation) | `#A855F7` | `fill:#A855F740,stroke:#A855F7` | `rgba(168,85,247,0.25)` |
+| `errBlock` | Error state, blocked path | `#EF4444` | `fill:#EF444440,stroke:#EF4444` | `rgba(239,68,68,0.25)` |
+| `passNode` | Success outcome, data-in-motion | `#16A34A` | `fill:#16A34A40,stroke:#16A34A` | `rgba(22,163,74,0.25)` |
+| `auditNode` | Audit / logging / side-effect | `#64748B` | `fill:#64748B33,stroke:#64748B` | `rgba(100,116,139,0.2)` |
+
+Add `stroke-width:1.5px` to each `classDef`. Leave out `color:`, so node text uses the
+theme's text color. The fill is the hue at 25% alpha (`40` hex suffix) because Mermaid's
+`classDef` parser rejects `rgba()`; the theme background shows through, so text keeps
+at least 6.9:1 contrast in every theme.
 
 Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORING.md](AUTHORING.md). Add a Legend subgraph when a flowchart uses more than 5 node classes ([example-conventions.mmd](example-conventions.mmd)).
 
-Pele renders `rect` fills literally, so an opaque `rect rgb(...)` pastel stays pastel in
-every theme and its text becomes unreadable on dark themes. Always write
-`rect rgba(...)` at 0.25 alpha.
+Never use an opaque fill (`rect rgb(...)`, a six-digit `classDef` fill): Pele draws it
+literally, so a pastel stays pastel in every theme and its text fails on dark themes.
 
 ## Rendering
 
@@ -125,7 +140,7 @@ fenced block. GitHub renders it with the user's theme (light/dark).
 
 ```bash
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                  # light + dark SVG
-node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show      # cappuccino PNG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show      # catppuccin PNG
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show   # paper SVG
 node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3 --show
 ```
@@ -157,9 +172,10 @@ replaces every variable with the palette's literal value. Two reasons:
 | [palettes/light.json](palettes/light.json) | Theme: light, general use |
 | [palettes/dark.json](palettes/dark.json) | Theme: dark, general use |
 | [palettes/paper.json](palettes/paper.json) | Theme: warm light, Obsidian (`--for obsidian`) |
-| [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: espresso dark, iTerm2 (`--for iterm`) |
+| [palettes/catppuccin.json](palettes/catppuccin.json) | Theme: Catppuccin Mocha, iTerm2 (`--for iterm`, `--show` preview) |
+| [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: warm espresso dark, opt-in |
 | [scripts/render.mjs](scripts/render.mjs) | Render a `.mmd` to SVG or PNG with a theme |
-| [scripts/preview.mjs](scripts/preview.mjs) | `--show`: reusable iTerm2 preview pane, Preview fallback |
+| [scripts/preview.mjs](scripts/preview.mjs) | `--show`: inline path for image-capable harnesses, else iTerm2 pane / Preview |
 | [package.json](package.json) | Pins `pele` 1.7.0 |
 | [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette and legend |
 | [example-sequence.mmd](example-sequence.mmd) | Sequence diagram using `rect rgba()` |
@@ -177,8 +193,8 @@ replaces every variable with the palette's literal value. Two reasons:
 
 Before committing diagrams:
 
-- [ ] Each semantic color matches the palette table (Semantic colors).
+- [ ] Each `classDef` uses a hue from the palette table with a `40` alpha fill and no `color:`.
 - [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — Pele draws them literally, so they fight the dark themes.
 - [ ] No hardcoded `%%{init}%%` in files destined for GitHub markdown.
 - [ ] Flowcharts with >5 node classes include a Legend subgraph.
-- [ ] Rendered with `--show` and the user saw it in the preview pane (cite the `preview:` line).
+- [ ] Rendered with `--show`; on the inline path you read the preview file, on the pane path you cited the `preview:` line.
