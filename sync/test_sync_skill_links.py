@@ -1,4 +1,4 @@
-"""Tests for per-skill link platforms (codex, pi, pi-gateway). Run: python3 -I test_sync_skill_links.py"""
+"""Tests for per-skill link platforms (codex, pi). Run: python3 -I test_sync_skill_links.py"""
 import importlib.util
 import os
 import tempfile
