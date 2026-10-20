@@ -40,7 +40,7 @@ Source `.mmd` files (rendered to `.svg`):
 - [`l1-data-flow`](./diagrams/l1-data-flow.svg) — the novel pipeline / orchestration
 - [`l1-request-flow`](./diagrams/l1-request-flow.svg) — sequence diagram of the primary use case
 
-Re-render: `mmdc -i <file>.mmd -o <file>.svg -b transparent`
+Re-render: `node ~/.skills/diagram/scripts/render.mjs <file>.mmd --for confluence --theme light --out <file>.svg`
 
 ---
 

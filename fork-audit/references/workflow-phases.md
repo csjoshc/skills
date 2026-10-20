@@ -181,7 +181,7 @@ Create the layered intermediate set. Default folder: `.docs/` at repo root, adde
 **Generation order:**
 1. Write L0 directly (exec voice, problem/constraint/solution table, 1-paragraph identity, "what changed" table, "where to go from here" navigation)
 2. Compose source material for L1 → invoke `/reframe architect <source>` → save its output as `L1-technical-overview.md`
-3. Generate the three Mermaid diagrams (see Diagram conventions below); render each with `mmdc -i X.mmd -o X.svg -b transparent`
+3. Generate the three Mermaid diagrams (see Diagram conventions below); render each with `node ~/.skills/diagram/scripts/render.mjs X.mmd --for confluence --theme light --out X.svg`
 4. Write L2 (per-PR sections; for each, sub-sections for app-specific vs platform-ride-along; tables of files with `additions/deletions` from the PR metadata)
 5. Write topic breakouts (one per `topics/`)
 6. Write README.md last (index with reading-by-audience table; one-screen diff summary; what was written; what was intentionally not written)
