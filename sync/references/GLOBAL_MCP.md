@@ -19,7 +19,7 @@ Start a new master from [mcp.example.json](mcp.example.json).
 | **Zed Editor** | `~/.config/zed/settings.json` | `context_servers` | stdio | Remove entry |
 | **Codex** (app, CLI, IDE), personal only | `~/.codex/config.toml` | `mcp_servers` (TOML tables) | stdio, http | Only servers marked `"personal": true` and with no `${VAR}`; no `type`, headers are `http_headers` |
 | **OpenCode** | `~/.config/opencode/opencode.json` | `mcp` | stdio, http | `"enabled": false` supported; `command` is an **array** |
-| **pi** (`pi_agent_rust`) | `~/.pi/agent/mcp.json` and `~/.gateway-pi/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; run `mcp_sync.py` (see mcp.md) |
+| **pi** (`pi_agent_rust`) | `~/.pi/agent/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; run `mcp_sync.py` (see mcp.md) |
 
 ## Secret references per target
 

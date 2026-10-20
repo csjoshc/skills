@@ -50,7 +50,7 @@ HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
 # A single symlink to ~/.skills exposes its root docs (AGENTS.md, ...) as broken skills (pi) or
 # shadows Codex's .system, so these get a real dir holding one link per skill.
-PER_SKILL_LINK_PLATFORMS = {"codex", "pi", "pi-gateway"}
+PER_SKILL_LINK_PLATFORMS = {"codex", "pi"}
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -111,18 +111,12 @@ PLATFORMS = {
         permission_type="trust",
         platform_key="claude",
     ),
-    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; gateway-pi sets that to ~/.gateway-pi.
+    # pi (pi_agent_rust) reads $PI_CODING_AGENT_DIR/skills; default dir is ~/.pi/agent.
     "pi": PlatformConfig(
         name="pi",
         skills_symlink=HOME / ".pi" / "agent" / "skills",
         permission_type="trust",
         platform_key="pi",
-    ),
-    "pi-gateway": PlatformConfig(
-        name="pi (gateway)",
-        skills_symlink=HOME / ".gateway-pi" / "skills",
-        permission_type="trust",
-        platform_key="pi-gateway",
     ),
     "copilot": PlatformConfig(
         name="Copilot",
