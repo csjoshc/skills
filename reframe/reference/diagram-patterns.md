@@ -10,25 +10,28 @@
 
 ---
 
-Mermaid diagram patterns for each audience mode. Render with:
+Mermaid diagram patterns for each audience mode. Render with the `diagram` skill:
 ```bash
-mmdc -i <file>.mmd -o <file>.svg -b transparent    # standalone
-mmdc -i <file>.mmd -o <file>.png -b white -w 1200   # for PPTX embedding
+R=~/.skills/diagram/scripts/render.mjs
+node $R <file>.mmd --for confluence --theme light --out <file>.svg          # standalone
+node $R <file>.mmd --theme light --format png --zoom 3 --out <file>.png     # for PPTX embedding
 ```
 
 ## Style Reference
 
-Reuse `classDef` conventions from `~/.skills/confluence/example-conventions.mmd`:
+Reuse the `classDef` palette from the `diagram` skill's Semantic colors table
+(`~/.skills/diagram/SKILL.md`). Each fill is the hue at 25% alpha, with no `color:`,
+so node text uses the theme's text color:
 
 ```mermaid
-classDef person fill:#E8EAED,stroke:#9AA0A6,color:#000
-classDef service fill:#4285F4,stroke:#1a73e8,color:#fff
-classDef library fill:#4FC3F7,stroke:#0097A7,color:#000
-classDef guard fill:#F9AB00,stroke:#e8a000,color:#000
-classDef external fill:#9AA0A6,stroke:#6e7479,color:#fff
-classDef state fill:#A142F4,stroke:#8430ce,color:#fff
-classDef errBlock fill:#EA4335,stroke:#c5221f,color:#fff
-classDef passNode fill:#34A853,stroke:#1e8e3e,color:#fff
+classDef person fill:#78716C40,stroke:#78716C,stroke-width:1.5px
+classDef service fill:#3B82F640,stroke:#3B82F6,stroke-width:1.5px
+classDef library fill:#0284C740,stroke:#0284C7,stroke-width:1.5px
+classDef guard fill:#CA6A0440,stroke:#CA6A04,stroke-width:1.5px
+classDef external fill:#64748B40,stroke:#64748B,stroke-width:1.5px
+classDef state fill:#A855F740,stroke:#A855F7,stroke-width:1.5px
+classDef errBlock fill:#EF444440,stroke:#EF4444,stroke-width:1.5px
+classDef passNode fill:#15913F40,stroke:#15913F,stroke-width:1.5px
 ```
 
 **Edge conventions:**
