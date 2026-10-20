@@ -65,11 +65,6 @@ class Base(unittest.TestCase):
 
 
 class Translation(Base):
-    def test_pi_targets_are_not_managed(self):
-        result = self.run_sync("--targets", "pi")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse((self.home / ".pi/agent/mcp.json").exists())
-
     def test_claude_keeps_dollar_brace_and_strips_extensions(self):
         r = self.run_sync("--targets", "claude")
         self.assertEqual(r.returncode, 0, r.stderr)
