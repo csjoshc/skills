@@ -78,7 +78,11 @@ For each path:
 
 **Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills under `.system/` (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.). Do NOT replace it with a single symlink to `~/.skills` — that shadows `.system` and `sync.py` must never `rmtree` it.
 
-`sync/sync.py` handles Codex and pi (`PER_SKILL_LINK_PLATFORMS`) specially: audit expects a real directory; repair calls `sync_per_skill_links()` (add/fix per-skill links, remove broken links, preserve Codex's `.system/`). pi gets per-skill links so its loader never sees the root `.md` files. Manual equivalent:
+`sync/sync.py` handles Codex and OMP (`PER_SKILL_LINK_PLATFORMS`) specially: audit expects a real directory; repair adds or fixes per-skill links and removes broken links while preserving local entries. Codex's `.system/` is preserved. OMP gets per-skill links so their loaders never see root `.md` files.
+
+OMP reads skills from `~/.omp/agent/skills`. Shared skills are linked individually from `~/.skills`; OMP-local skills remain in place. Run `python3 ~/.skills/sync/sync.py --audit` to inspect the path and `python3 ~/.skills/sync/sync.py` to repair it.
+
+Manual equivalent for Codex:
 
 ```bash
 # Add per-skill symlinks for any master skill missing from codex
