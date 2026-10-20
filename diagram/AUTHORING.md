@@ -61,9 +61,9 @@ a known target (see Rendering in SKILL.md). Pele ignores `%%{init}%%`, so the re
 
 ```
 flowchart LR
-  classDef service fill:#4285F4,stroke:#1a73e8,color:#fff
-  classDef state fill:#A142F4,stroke:#8430ce,color:#fff
-  classDef errBlock fill:#EA4335,stroke:#c5221f,color:#fff
+  classDef service fill:#3B82F640,stroke:#3B82F6,stroke-width:1.5px
+  classDef state fill:#A855F740,stroke:#A855F7,stroke-width:1.5px
+  classDef errBlock fill:#EF444440,stroke:#EF4444,stroke-width:1.5px
 
   API["API Gateway"]:::service
   Cache["Token Cache"]:::state
