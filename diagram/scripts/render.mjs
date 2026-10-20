@@ -90,8 +90,8 @@ function toPng(svg, out, zoom, background) {
     const result = spawnSync('rsvg-convert', ['-z', String(zoom), '-b', background, '-o', out, svgPath], {
       encoding: 'utf8',
     });
-    if (result.error?.code === 'ENOENT') fail('rsvg-convert not found. Install with: brew install librsvg');
-    if (result.status !== 0) fail(`rsvg-convert failed: ${result.stderr.trim()}`);
+    if (result.error?.code === 'ENOENT') throw new Error('rsvg-convert not found. Install with: brew install librsvg');
+    if (result.status !== 0) throw new Error(`rsvg-convert failed: ${result.stderr.trim()}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -138,20 +138,30 @@ function main() {
   for (const target of targets) {
     const svg = renderTheme(target.theme);
     const out = opts.out ?? `${base}.${target.theme}.${target.format}`;
-    if (target.format === 'png') toPng(svg, out, opts.zoom, loadPalette(target.theme).bg);
-    else writeFileSync(out, svg);
+    if (target.format === 'png') {
+      try {
+        toPng(svg, out, opts.zoom, loadPalette(target.theme).bg);
+      } catch (error) {
+        fail(error.message);
+      }
+    } else writeFileSync(out, svg);
     console.log(`✓ ${out}`);
     if (target.theme === PREVIEW && target.format === 'png') previewPng = out;
   }
 
   if (opts.show) {
-    if (!previewPng) {
-      const dir = join(tmpdir(), 'diagram-preview');
-      mkdirSync(dir, { recursive: true });
-      previewPng = join(dir, `${basename(base)}.png`);
-      toPng(renderTheme(PREVIEW), previewPng, opts.zoom, loadPalette(PREVIEW).bg);
+    // The preview is a convenience: a failure here warns and leaves the exit code alone.
+    try {
+      if (!previewPng) {
+        const dir = join(tmpdir(), 'diagram-preview');
+        mkdirSync(dir, { recursive: true });
+        previewPng = join(dir, `${basename(base)}.png`);
+        toPng(renderTheme(PREVIEW), previewPng, opts.zoom, loadPalette(PREVIEW).bg);
+      }
+      showPreview(previewPng);
+    } catch (error) {
+      console.error(`warning: preview skipped (${error.message})`);
     }
-    showPreview(previewPng);
   }
 }
 
