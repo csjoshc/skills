@@ -1,31 +1,98 @@
 ---
 name: diagram
-description: "Authors Mermaid diagrams and renders them to SVG that reads in light and dark mode. Use when creating or updating .mmd files or diagram SVGs."
+description: "Authors Mermaid diagrams and renders them with Pele to SVG or PNG in named themes (light, dark, catppuccin-latte, catppuccin, paper, cappuccino), then previews each render for the user. Use when creating or updating .mmd files or diagram SVG/PNG files."
 ---
 
 # diagram — Mermaid Authoring + Rendering
 
-Produces `.mmd` sources and renders them to `.svg` with the shared color
-convention. Decouples "how the diagram looks" (this skill) from "where it ends
-up" (consumer skills: `confluence`, README embedding, etc.).
+Produces `.mmd` sources and renders them with Pele (MIT, no runtime dependencies,
+no headless browser) into SVG or PNG. Decouples "how the diagram looks" (this skill)
+from "where it ends up" (consumer skills: `confluence`, README embedding, etc.).
 
 ## Prerequisites
 
-`@mermaid-js/mermaid-cli` installed globally:
-
 ```bash
-npm install -g @mermaid-js/mermaid-cli
-mmdc --version   # 10+ required
+cd ~/.skills/diagram && npm install     # pins pele 1.7.0 in node_modules/
+brew install librsvg                    # rsvg-convert, needed only for PNG
 ```
 
-## When to use which rendering path
+## Pick the destination from the request
+
+Decide where the diagram ends up before writing anything. The user is in iTerm2
+(Catppuccin Mocha dark) and keeps notes in Obsidian (AnuPpuccin, Catppuccin Latte light).
+
+| The request mentions or implies | Destination | Do this |
+|---------------------------------|-------------|---------|
+| Nothing about a destination ("draw", "diagram this", "show me the state machine") | Look at it now | `render.mjs x.mmd --for iterm --show` |
+| A note, the vault, Obsidian, or a `.md` inside a vault | Obsidian note | Write a ` ```mermaid ` fence into the note, then `render.mjs x.mmd --for obsidian --show` to preview it |
+| An Obsidian note that must stay fixed (exported, shared, "as an image") | Obsidian image | `render.mjs x.mmd --for obsidian --show --out <note folder>/<mmd name>.svg`, then put only `![[<mmd name>.svg]]` in the note (no fence) |
+| Confluence, a team or company wiki, email, a PDF | Static page | `render.mjs x.mmd --for confluence --show`; hand off `light` (the default for white pages) and `dark`. A GitHub wiki is the GitHub row |
+| A slide | Slide image | `render.mjs x.mmd --theme light --format png --show` (`--theme dark` for a dark deck) |
+| A GitHub README, PR, issue, or a `.md` in a git repo that is not a vault | GitHub | Fence in the markdown file, no render step; preview with `render.mjs x.mmd --for iterm --show` |
+| "Light and dark versions", with no named host | Both themes | `render.mjs x.mmd --show`: `catppuccin-latte` + `catppuccin` SVG |
+| "Dark version" or "light version" alone | One theme | If the last render already wrote that variant (Confluence writes both), hand off that file. Otherwise `--theme catppuccin` (dark) or `--theme catppuccin-latte` (light), SVG, with `--show` |
+
+A `.md` path is in a vault when it or a parent folder holds `.obsidian/`.
+
+Verbs like "draw", "show" or "sketch" never name a destination; `--show` already covers
+them. Several destinations in one request ("for my note and the wiki") means one render
+per destination, not a question. Ask only when two destinations conflict on one output
+(same file, two themes). Otherwise pick the rows and state the choice in one line
+("Rendered for iTerm2; say if it's for a note").
+
+Run the renderer with Node 18+ from any directory.
+
+## Choosing the output
+
+| Destination | Flags | Output | Why |
+|-------------|-------|--------|-----|
+| iTerm2 (dark terminal, `imgcat`) | `--for iterm` | `diagram.catppuccin.png` | iTerm2 shows PNG inline, not SVG. Catppuccin Mocha, the terminal's own theme. |
+| Obsidian note, needs a fixed image | `--for obsidian` | `diagram.catppuccin-latte.svg` | Matches the AnuPpuccin Latte vault. Prefer the raw fence (below) unless the note needs an image. |
+| Confluence, email, any other static consumer | `--for confluence` | `diagram.light.svg` + `diagram.dark.svg` | Neutral slate suits a white page; pick the variant at embed time. |
+| This user's own light + dark pair | (no flags) | `diagram.catppuccin-latte.svg` + `diagram.catppuccin.svg` | The default: the two themes of the user's setup. |
+| One specific theme | `--theme NAME [--format svg\|png]` | `diagram.NAME.FORMAT` | Any theme in `palettes/`; `--out PATH` names the file. |
+
+Themes: `catppuccin-latte` (Obsidian, AnuPpuccin Latte), `catppuccin` (iTerm2 and
+Obsidian dark, Catppuccin Mocha), `light`, `dark` (neutral, Confluence), `paper` (Soft
+Paper vaults), `cappuccino` (warm espresso dark, opt-in). Each theme is one JSON file
+in `palettes/`; add a theme by adding a file.
+
+Every output carries its theme's background, so text and lines stay readable on any
+host page. Pass `--transparent` only when the host's lightness matches the theme
+(a light theme on a light page); on a mismatched page the ink disappears.
+
+Each file lands next to the `.mmd` unless `--out` names a path. `--zoom N` scales PNG
+output (default 2, for retina terminals).
+
+## Preview every render (`--show`)
+
+**Always pass `--show`** when rendering, whatever the destination. It renders a
+catppuccin PNG (reusing `--for iterm` output when present, else a temp file under
+`$TMPDIR/diagram-preview/`) and then takes one of two paths, chosen from the
+agent harness:
+
+| Harness | Detected by | Path | Your next step |
+|---------|-------------|------|----------------|
+| Shows images from the read tool inline (oh-my-pi) | `OMPCODE=1` | **inline**: prints the PNG path only | Read the printed `preview:` file so it appears in the transcript |
+| Captures tool output and repaints (Claude Code, others) | anything else | **pane**: `imgcat` in one right-hand iTerm2 split pane, else macOS Preview | Cite the printed `preview:` line; you can't see the pane |
+
+`DIAGRAM_PREVIEW=inline|pane` overrides detection. oh-my-pi also sets `CLAUDECODE=1`,
+so detection checks `OMPCODE` first.
+
+Pane path details: the pane is reused on later renders in the same tab (id saved in
+`~/.cache/diagram/preview-session`); a closed pane, or an agent in another tab, gets
+a new split. Focus returns to the agent's pane. Outside iTerm2, or if AppleScript
+fails, it opens Preview. The first run triggers a one-time macOS Automation prompt.
+
+A preview failure only warns; the deliverable and exit code are unaffected.
+
+## When to use which source form
 
 | Target | Approach |
 |--------|----------|
 | GitHub README / wiki, GitLab, most markdown viewers | Embed mermaid source in ` ```mermaid ` fenced block. Remove hardcoded `%%{init}%%` blocks to let GitHub's auto-theming adapt to user's light/dark mode. Use `rgba()` rect colors for mode-agnostic highlights. |
-| Confluence, PDF, email, any static/image consumer | Render to SVG via `mmdc`. Produce a light + dark variant; pick at embed time. |
-
-These two paths share one `.mmd` source. The difference is at render time.
+| Obsidian note (default) | Paste the `.mmd` into a ` ```mermaid ` fence. Obsidian bundles Mermaid 11 and renders it in the note, following the vault's light/dark mode. The `classDef` tints carry over; the Pele palettes don't apply. Prefer `flowchart` over `block-beta`, which renders cramped there. Still run `render.mjs --show` so the user sees it here. |
+| Obsidian note that needs a fixed image, iTerm2, Confluence, PDF, email, any static/image consumer | Render with `render.mjs` (table above) and embed the file (`![[diagram.catppuccin-latte.svg]]` in Obsidian). One `.mmd` source; the output format and theme come from the flags. |
 
 ## GitHub inline mermaid (markdown viewers)
 
@@ -39,7 +106,10 @@ For any diagram embedded in markdown (GitHub wikis, README files, etc.):
 **DON'T:**
 - Include `%%{init}%%` with hardcoded colors; it locks the diagram to light mode even in dark mode
 - Use solid `rgb()` colors; they don't adapt to theme changes
-- Embed `%%{init}%%` with hardcoded actor/text colors in diagrams meant for GitHub markdown. Set a theme only when rendering to static SVG with a known target.
+- Embed `%%{init}%%` with hardcoded actor/text colors in diagrams meant for GitHub markdown
+
+Pele ignores `%%{init}%%` theme variables, so the render theme always wins. Remove
+them from sources anyway; they only matter for GitHub and mmdc-era files.
 
 Example and recipes: [AUTHORING.md](AUTHORING.md).
 
@@ -56,22 +126,31 @@ Example and recipes: [AUTHORING.md](AUTHORING.md).
 
 ### Semantic colors (the palette)
 
-Mermaid diagrams use color to encode meaning, not decoration. Same palette
-across flowchart `classDef` and sequence `rect`.
+Mermaid diagrams use color to encode meaning, not decoration. One hue per semantic,
+shared by flowchart `classDef` and sequence `rect`. Each hue is a mid-tone that holds
+at least 3:1 against every theme background, so one source reads in all themes.
 
-| Semantic | Role | Light hex | Dark hex | Mode-agnostic rgba() |
-|----------|------|-----------|----------|-----------------------|
-| `person` | User, browser, human actor | `#E8EAED` | `#374151` | `rgba(156,163,175,0.25)` |
-| `service` | App, API, deployed service (sync call) | `#4285F4` | `#3B82F6` | `rgba(59,130,246,0.25)` |
-| `library` | In-process library or module | `#4FC3F7` | `#38BDF8` | `rgba(56,189,248,0.25)` |
-| `guard` | Security boundary, guardrail, policy (caution) | `#F9AB00` | `#F59E0B` | `rgba(245,158,11,0.25)` |
-| `external` | External system outside your control | `#9AA0A6` | `#6B7280` | `rgba(107,114,128,0.25)` |
-| `state` | State, data store, token, config (data/mutation) | `#A142F4` | `#A855F7` | `rgba(168,85,247,0.25)` |
-| `errBlock` | Error state, blocked path | `#EA4335` | `#EF4444` | `rgba(239,68,68,0.25)` |
-| `passNode` | Success outcome, data-in-motion | `#34A853` | `#22C55E` | `rgba(34,197,94,0.25)` |
-| `auditNode` | Audit / logging / side-effect | `#9AA0A6` | `#6B7280` | `rgba(107,114,128,0.2)` |
+| Semantic | Role | Hue | `classDef` (flowchart) | `rect` (sequence) |
+|----------|------|-----|------------------------|-------------------|
+| `person` | User, browser, human actor | `#78716C` | `fill:#78716C40,stroke:#78716C` | `rgba(120,113,108,0.25)` |
+| `service` | App, API, deployed service (sync call) | `#3B82F6` | `fill:#3B82F640,stroke:#3B82F6` | `rgba(59,130,246,0.25)` |
+| `library` | In-process library or module | `#0284C7` | `fill:#0284C740,stroke:#0284C7` | `rgba(2,132,199,0.25)` |
+| `guard` | Security boundary, guardrail, policy (caution) | `#CA6A04` | `fill:#CA6A0440,stroke:#CA6A04` | `rgba(202,106,4,0.25)` |
+| `external` | External system outside your control | `#64748B` | `fill:#64748B40,stroke:#64748B` | `rgba(100,116,139,0.25)` |
+| `state` | State, data store, token, config (data/mutation) | `#A855F7` | `fill:#A855F740,stroke:#A855F7` | `rgba(168,85,247,0.25)` |
+| `errBlock` | Error state, blocked path | `#EF4444` | `fill:#EF444440,stroke:#EF4444` | `rgba(239,68,68,0.25)` |
+| `passNode` | Success outcome, data-in-motion | `#15913F` | `fill:#15913F40,stroke:#15913F` | `rgba(21,145,63,0.25)` |
+| `auditNode` | Audit / logging / side-effect | `#64748B` | `fill:#64748B33,stroke:#64748B` | `rgba(100,116,139,0.2)` |
+
+Add `stroke-width:1.5px` to each `classDef`. Leave out `color:`, so node text uses the
+theme's text color. The fill is the hue at 25% alpha (`40` hex suffix) because Mermaid's
+`classDef` parser rejects `rgba()`; the theme background shows through, so text keeps
+at least 6.9:1 contrast in every theme.
 
 Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORING.md](AUTHORING.md). Add a Legend subgraph when a flowchart uses more than 5 node classes ([example-conventions.mmd](example-conventions.mmd)).
+
+Never use an opaque fill (`rect rgb(...)`, a six-digit `classDef` fill): Pele draws it
+literally, so a pastel stays pastel in every theme and its text fails on dark themes.
 
 ## Rendering
 
@@ -80,17 +159,17 @@ Sequence `rect rgba(...)`, flowchart `classDef` and edge-style recipes: [AUTHORI
 No render step needed — commit the `.mmd` source inside a ` ```mermaid `
 fenced block. GitHub renders it with the user's theme (light/dark).
 
-### Rendering to SVG (static consumers)
-
-Render both modes from one source:
+### Rendering with the script
 
 ```bash
-~/.skills/diagram/scripts/render.sh diagram.mmd
-# produces: diagram.light.svg + diagram.dark.svg
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --show                    # catppuccin-latte + catppuccin SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for iterm --show        # catppuccin PNG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for obsidian --show     # catppuccin-latte SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for confluence --show   # light + dark SVG
+node ~/.skills/diagram/scripts/render.mjs diagram.mmd --theme dark --format png --zoom 3 --show
 ```
 
-The script wraps `mmdc` with the palette config files and emits both variants.
-Consumers pick: for a Confluence light-theme page use `diagram.light.svg`;
+Consumers of a pair pick the variant: on a Confluence light-theme page use `diagram.light.svg`;
 for a dark-themed consumer use `diagram.dark.svg`; for ambient/auto use a
 `<picture>` wrapper:
 
@@ -101,16 +180,12 @@ for a dark-themed consumer use `diagram.dark.svg`; for ambient/auto use a
 </picture>
 ```
 
-### Manual render (single mode)
+### How the render works
 
-```bash
-mmdc -i diagram.mmd -o diagram.svg \
-  -c ~/.skills/diagram/palettes/light.json \
-  -b transparent
-```
-
-Swap `light.json` → `dark.json` for the dark variant. `-b transparent` keeps
-the SVG background neutral so it picks up the host's page background.
+Pele emits SVG that reads colors from CSS variables (`--pele-*`). The renderer
+replaces every variable with the palette's literal value. Two reasons:
+- SVG opened as an image (Obsidian embed, Confluence, `<img>`) can't see the page's CSS variables.
+- librsvg, used for PNG, ignores `var()` in attributes and would draw solid black.
 
 ## Files in this skill
 
@@ -118,9 +193,15 @@ the SVG background neutral so it picks up the host's page background.
 |------|---------|
 | [AUTHORING.md](AUTHORING.md) | Read when writing a diagram: GitHub inline example, sequence `rect rgba()`, flowchart `classDef`, edge styles |
 | [LAYOUT_RULES.md](LAYOUT_RULES.md) | Read for complex flowcharts headed to a Confluence whiteboard or any dynamic connector router |
-| [palettes/light.json](palettes/light.json) | `mmdc -c` config, light-mode theme variables |
-| [palettes/dark.json](palettes/dark.json) | `mmdc -c` config, dark-mode theme variables |
-| [scripts/render.sh](scripts/render.sh) | Render a `.mmd` to both light and dark SVGs |
+| [palettes/light.json](palettes/light.json) | Theme: light, general use |
+| [palettes/dark.json](palettes/dark.json) | Theme: dark, general use |
+| [palettes/catppuccin-latte.json](palettes/catppuccin-latte.json) | Theme: Catppuccin Latte, Obsidian (`--for obsidian`) |
+| [palettes/paper.json](palettes/paper.json) | Theme: warm light, Soft Paper vaults |
+| [palettes/catppuccin.json](palettes/catppuccin.json) | Theme: Catppuccin Mocha, iTerm2 (`--for iterm`, `--show` preview) |
+| [palettes/cappuccino.json](palettes/cappuccino.json) | Theme: warm espresso dark, opt-in |
+| [scripts/render.mjs](scripts/render.mjs) | Render a `.mmd` to SVG or PNG with a theme |
+| [scripts/preview.mjs](scripts/preview.mjs) | `--show`: inline path for image-capable harnesses, else iTerm2 pane / Preview |
+| [package.json](package.json) | Pins `pele` 1.7.0 |
 | [example-conventions.mmd](example-conventions.mmd) | Flowchart showing the full palette and legend |
 | [example-sequence.mmd](example-sequence.mmd) | Sequence diagram using `rect rgba()` |
 
@@ -137,10 +218,8 @@ the SVG background neutral so it picks up the host's page background.
 
 Before committing diagrams:
 
-- [ ] Each semantic color matches the palette table (Semantic colors).
-- [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — otherwise dark
-      mode viewers see the same fill as light mode.
+- [ ] Each `classDef` uses a hue from the palette table with a `40` alpha fill and no `color:`.
+- [ ] Sequence rects use `rgba(...)` not solid `rgb(...)` — Pele draws them literally, so they fight the dark themes.
 - [ ] No hardcoded `%%{init}%%` in files destined for GitHub markdown.
 - [ ] Flowcharts with >5 node classes include a Legend subgraph.
-- [ ] Render both modes and eyeball: `./scripts/render.sh diagram.mmd &&
-      open diagram.{light,dark}.svg`.
+- [ ] Rendered with `--show`; on the inline path you read the preview file, on the pane path you cited the `preview:` line.

@@ -1,0 +1,8 @@
+{
+  "name": "diagram-skill",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "pele": "1.7.0"
+  }
+}
