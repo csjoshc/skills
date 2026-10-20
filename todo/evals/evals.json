@@ -1,0 +1,48 @@
+{
+  "skill": "todo",
+  "cases": [
+    {
+      "id": "bare-todo-drives",
+      "type": "behavior",
+      "prompt": "In this repo I want threaded comments. /todo",
+      "expected_behavior": [
+        "Treats bare /todo as the driver, not an advise-only status dump",
+        "Creates or resumes on-disk DAG/tickets rather than pasting a next-session prompt",
+        "Does not require /todo run as a separate opt-in"
+      ]
+    },
+    {
+      "id": "tickets-use-subagents",
+      "type": "behavior",
+      "prompt": "Continue /todo. There are two Stage NEW tickets with disjoint Files.",
+      "files": ["files/dag.md", "files/t1.md", "files/t2.md"],
+      "expected_behavior": [
+        "Spawns a subagent per implementation ticket",
+        "Runs the two disjoint low-risk tickets in parallel",
+        "Does not implement the tickets in the orchestrator session"
+      ]
+    },
+    {
+      "id": "handoff-file-not-paste",
+      "type": "behavior",
+      "prompt": "/todo handoff so I can continue in a new chat.",
+      "expected_behavior": [
+        "Writes one .handoff/<slug>.md file",
+        "Replies with the absolute path and a few sentences",
+        "Does not emit a fenced paste-ready prompt of the handoff"
+      ]
+    },
+    {
+      "id": "trigger-yes-todo",
+      "type": "trigger",
+      "prompt": "/todo the rest of this feature",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-pr-review",
+      "type": "trigger",
+      "prompt": "Review this open pull request for bugs",
+      "should_trigger": false
+    }
+  ]
+}

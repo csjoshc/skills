@@ -188,23 +188,14 @@ read the transcript).
 
 ---
 
-## Validator handoff
+## After the auditor returns
 
-After the Coverage Auditor returns, the main agent saves the report to
-`.plan/coverage-audit.md` and runs:
+Save the report to `.plan/coverage-audit.md`. Then answer the
+pre-handoff questions in SKILL.md against this report, the
+challenger report, the PRD, and the task sequence.
 
-```
-python ~/.skills/challenge/validate.py \
-  --project-dir <repo> \
-  --tickets .plan/task-sequence.md \
-  --prd .plan/PRD.md \
-  --challenger-report .plan/challenger-report.md \
-  --coverage-report .plan/coverage-audit.md
-```
-
-Both `--challenger-report` and `--coverage-report` must be supplied
-together — the validator rejects sign-off if either is missing. See
-`validate.py` for the parsing rules.
+A GAP, INVERTED cut, or a demanded requirement missing from the PRD
+blocks sign-off.
 
 ---
 

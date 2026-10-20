@@ -2,7 +2,7 @@
 
 **Audience:** Reviewers auditing existing codebases. Companion to the `cleanup` skill.
 
-**Not for ticket markdown.** Use `ticket-review` for `.tickets/*.md`.
+**Not for ticket markdown.** Optional specialist: `ticket-review` for `.tickets/*.md`.
 
 **Precedence:** Organization review packet overrides this file. Then
 Architecture Decisions / `AGENTS.md`. This rubric fills gaps.

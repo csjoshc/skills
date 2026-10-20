@@ -51,11 +51,9 @@ Full templates, field lists and rules: read [references/ticket-template.md](refe
 ### Ticket files (`.tickets/*.md`)
 
 Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
-Before handing off, run `python3 ~/.skills/spec/scripts/tickets_lint.py <repo>/.tickets --dry-red --runner "<the project's pytest command>"` and fix every ERROR.
-`--dry-red` runs each read-only check now: it must fail for the expected reason (test not written yet), never because a tool is missing.
-Write new tickets with `Stage: NEW`. `/todo build` or `/todo run` changes the
-selected ticket to `Stage: BUILD` when implementation starts. The stage meanings
-are defined in [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
+Write `Stage: NEW`. The BUILD subagent flips Stage when it starts.
+Keep tickets short: scope, files, ACs, verify, and load-bearing questions only.
+Record reversible assumptions on the ticket; ask only for Tier 3 or conflicting decisions.
 
 ## Assumption handling
 

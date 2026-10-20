@@ -8,7 +8,7 @@
 - Output contract
 - When to invoke, EO&D lens, anti-patterns
 
-Invoked by the `/todo` auto-driver and by ticket-review Pattern 18. Not a standalone skill; the parent agent points the reviewer subagent at this file.
+Invoked by `/todo` after each BUILD subagent. Not a standalone skill; the parent agent points the reviewer at this file.
 
 You are an **adversarial reviewer** (`Mode: Reviewer`). A BUILD subagent has just finished
 a ticket and flipped its Stage to `COMPLETE`. Your job is to

@@ -1,74 +1,84 @@
-# Auto mode
+# Drive loop
 
-Auto mode drives the current pipeline from its detected state to completion.
-The user chooses it with `/todo auto` or selects Auto after invoking `/todo`.
-Do not ask the user to copy a prompt or invoke a skill between stages.
+Bare `/todo` and `/todo auto` use this loop. `/todo auto <N>` caps tickets;
+`/todo auto until <condition>` stops on a loose state match.
 
-## Cycle
+## Contents
 
-1. Detect state using [state-detection.md](state-detection.md).
-2. Invoke the specialist skill for that state, following its full instructions.
-3. If it completes without a human gate, detect state again and continue.
-4. Stop only when the pipeline is complete, the user interrupts, or an
-   escalation condition below requires a decision.
+- State → action
+- Build waves
+- Halt conditions
+- Halt output
+- Forbidden actions
 
-| State | Auto action |
+## State → action
+
+| Detected state | Action |
 |---|---|
-| `fresh` | If no feature is supplied, ask for it. For a small scoped frontend UI change, call the Skill tool with `ui`; for other small scoped changes, route to the relevant implementation skill. Use Lite ticketing for a defined feature; use challenge for large, risky, or contested work. Ask when the route is genuinely unclear. |
-| `phase-0-done`, `prd-done-no-dag`, `dag-done-no-audits` | Resume challenge at the next incomplete phase. Honor its approval gates. |
-| `dag-done` | Run the challenge validator with all required evidence. On failure, resume challenge; on success, invoke spec. |
-| `tickets-written-uncriticized` | Invoke ticket-review. Auto mode also runs the critic in Lite mode. |
-| `critic-failed` | Invoke spec to fix failing tickets only, then rerun ticket-review once. If any ticket still fails, escalate. |
-| `ready-for-build`, `partial-build`, `lite-ready` | Build the next dependency-ready ticket using the serial build loop below. |
-| `slice-gate-pending` | Run the slice-gate review. Continue only after it passes. |
-| `mid-build-resume` | Resume the in-flight ticket from its diff and TDD artifacts. |
-| `build-unscoped` | Run `/tdd` Phase 0 before resuming implementation. |
-| `all-complete` | Report completion and stop. |
+| `fresh` | If the user named work: write thin DAG + tickets (or skip tickets for a small change) and continue. Small scoped frontend UI → `ui`. If no feature description: **HALT** and ask. |
+| `phase-0-done` / `prd-done-no-dag` / `dag-done-no-audits` | Continue challenge |
+| `audit findings` | Fix or **HALT** with the finding |
+| `dag-done` | Invoke spec |
+| `lite-ready` / `ready-for-build` / `partial-build` | Build waves |
+| `slice-gate-pending` | Independent gate review |
+| `mid-build-resume` | Resume the in-flight ticket in a subagent |
+| `all-complete` | Stop |
 
-An unrecognized or inconsistent state is an escalation, not a guess.
+ticket-review is optional. Do not wait on a critic report.
 
-## Ticket build loop
+## Build waves
 
 1. Confirm the source worktree is clean before the first source change. Ignore
-   `.plan/`, `.tickets/`, and other configured local planning artifacts. If
-   unrelated source changes exist, stop and ask the user to commit, stash, or
-   choose a separate worktree.
-2. Select one dependency-ready `Stage: NEW` ticket. Follow DAG dependencies in
-   Full mode and the Lite dependency rule otherwise. Build serially.
-3. Run the build-ticket template in an implementation subagent. It runs `/tdd`
-   including Phase 0, implements the ticket ACs, runs `/verify`, lint,
-   and typecheck, and sets `Stage: COMPLETE` only when those checks pass. It
-   makes no commit. For frontend UI scope, it calls the Skill tool with
-   `ui` to guide visual implementation and browser evidence within the
-   ticket ACs.
-4. Run an independent evidence review against the ticket ACs, diff, and proof.
-   If review passes, commit the reviewed source changes as one ticket-scoped
-   checkpoint. Do not add `.plan/` or `.tickets/`; never push.
-5. Re-detect state and repeat. Run the slice-gate review automatically when a
-   gate becomes the next required ticket.
+   `.plan/`, `.tickets/`, and other local planning artifacts. If unrelated
+   source changes exist, stop and ask.
+2. **Next wave.** From the DAG, take tickets whose `Depends-On` are COMPLETE.
+   Lite mode: one ticket at a time unless `Depends-On` is explicit.
+3. **Parallel-safety.** Group only tickets with disjoint `Files:` and low risk.
+   `Risk: medium` or higher, mutation hubs, and integration gates run solo.
+4. **Spawn.** One `Agent` call per ticket in the wave, same turn, background.
+   Brief is the build template plus the ticket's absolute path. Pointers only.
+   For frontend UI scope, the brief tells the subagent to invoke `ui`.
+5. **Review.** After the wave returns, check each ticket against
+   `~/.skills/shared/EVIDENCE_REVIEWER.md`.
+6. **Gate.** ALL VERIFIED → optional ticket-scoped checkpoint commit (never
+   add `.plan/` or `.tickets/`; never push). ANY drift or missing evidence → **HALT**.
+7. **Loop.** Re-detect state.
 
-The Auto choice authorizes these local ticket-scoped checkpoint commits.
+## Halt conditions
 
-## Human escalation
+- `fresh` with no feature description
+- Load-bearing question (Tier 3, conflicting tickets, undefined success)
+- BUILD subagent still `Stage: BUILD` after one retry
+- Evidence reviewer: DRIFT-DETECTED or EVIDENCE-INSUFFICIENT
+- User stop condition or ticket cap
+- ≥3 consecutive tool failures without progress
+- Operator interrupt
 
-Pause, describe the evidence, and ask one focused question when:
+## Halt output
 
-- challenge or another specialist skill requests a user decision or sign-off;
-- a Tier 2 or Tier 3 assumption has no answer in the project or global
-  standards;
-- the feature route is unclear between direct implementation, Lite, and Full;
-- validator, critic, gate, or evidence review still fails after one repair;
-- implementation cannot meet an AC, the diff exceeds ticket scope, or the
-  repository state/dependency graph is ambiguous;
-- a commit or required tool fails twice.
+```markdown
+# /todo halted
 
-Do not weaken a gate, accept a failed review, discard user changes, or push to
-resolve a blocker. After the user answers, continue from the updated artifacts
-and state. If the run is interrupted, report the current stage, ticket stage,
-changed files, completed checkpoint SHAs, and the next action.
+**Reason:** <pipeline-complete | needs-input | build-blocker | drift-detected |
+evidence-insufficient | user-condition-met | ticket-cap-hit | error-budget |
+operator-interrupt>
 
-## Completion
+**Progress this run:**
+- Tickets advanced: <count> (<ids>)
+- Checkpoints: <count> (<SHAs>)
+- Subagents: <count>
 
-At every stage boundary, give a short progress update. On completion, report
-the finished pipeline, ticket IDs, and checkpoint SHAs. On escalation, report
-the blocker, evidence, and the question or action needed to continue.
+**State:** <detected>
+**Next:** <question or action>
+```
+
+## Forbidden
+
+- Push without per-repo authorization
+- Invent a feature when `fresh` has no description
+- Auto-accept drift or missing evidence
+- Recurse `/todo auto` from a subagent
+- Flip `Stage:` in the parent; only the BUILD subagent writes COMPLETE
+- Skip evidence review
+- Bypass challenge sign-off when challenge is in use
+- Commit `.plan/` or `.tickets/`

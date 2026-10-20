@@ -193,55 +193,23 @@ Better than a speculative DAG that causes a rebuild-discard loop.
 
 After challenge completes:
 
-### Pre-handoff validation (AGENT RUNS THIS, shows raw output)
+### Pre-handoff check
 
-Before declaring the cycle ready for spec, the agent MUST run
-`validate.py` itself and surface the unedited stdout/stderr in chat.
-The agent does not paraphrase or summarize the result — the user
-reads the actual exit code and any failures from the tool transcript.
+Before declaring the cycle ready for spec, answer these.
+A no on an implementation-relevant item is a blocker: fix the
+artifact, then re-check.
 
-```bash
-python3 ~/.skills/challenge/validate.py \
-  --project-dir <absolute repo path> \
-  --tickets .plan/<task-sequence-file>.md \
-  --prd .plan/<PRD-file>.md \
-  --challenger-report .plan/<challenger-report-file>.md \
-  --coverage-report .plan/<coverage-audit-file>.md
-```
+- Can an implementer find every `Files:` path on disk, or is it marked CREATE?
+- Does every ticket map to a demanded Phase 1 feature or AC, and does every demanded feature have a ticket?
+- Did any user-cut non-goal leak back into the DAG or PRD?
+- Did Challenger findings that still matter get accepted, rejected with a reason, or escalated — not dropped?
+- For Standard/Heavy: would a second reader of the transcript find a demanded requirement missing from the PRD, or a cut re-introduced?
 
-**Interpreter portability:** use `python3`, NOT `python`. macOS does
-not ship `python` on PATH by default; many users run inside a project
-`.venv`, where `python` resolves but `python3` is universal. If
-`python3` lacks `pyyaml` (`ModuleNotFoundError: No module named 'yaml'`),
-fall back to the project venv interpreter explicitly:
-
-```bash
-<project>/.venv/bin/python ~/.skills/challenge/validate.py ...
-```
-
-**Recovery loop:** if exit ≠ 0, the agent MUST NOT proceed to
-spec. Diagnose the failure category and fix the underlying
-artifact OR the rubric, then re-run. Common failures:
-
-- `paths_resolve` — a Files: path in the task sequence does not exist on disk; fix the path or mark the ticket CREATE
-- `challenger_report missing rows` — Challenger subagent did not emit a row for every AP in `rubric.yaml`; rewrite the report
-- `Challenger ... evidence must be a verbatim quote >=10 chars` — BLOCK/WARN row has truncated evidence; widen the quote
-- `Coverage report missing re-derivation table` — Coverage subagent used wrong header shape; the validator regex requires `| ID | Set | ... |` and `| ID | Verdict | ... |` (case-sensitive on `ID`, `Set`, `Verdict`)
-- `Coverage RE_DERIVED count too low (<5)` — auditor skimmed the transcript; re-derive more requirements
-- `rubric.yaml` YAML parse error — fix the rubric (rare; usually a quoted scalar issue at bullet start)
-
-The user can interrupt at any point to take over — but the default is
-the agent drives validation to green before declaring handoff.
-
-The `--challenger-report` flag verifies that every AP in `rubric.yaml`
-has an audit row with verbatim evidence (option 3 — disk-backed rubric
-+ subagent + mechanical coverage check). The `--coverage-report` flag
-verifies the second-pass transcript-vs-PRD diff (option 4). Light-mode
-runs may omit `--coverage-report`; Standard and Heavy must include it.
+If any answer is a blocker, stay in challenge.
 
 ### Context Seed Loader
 
-After validate.py exits 0, start a fresh conversation and load only the
+Once the check is clean, start a fresh conversation and load only the
 three durable artifacts:
 
 ```
@@ -259,12 +227,11 @@ is session context — recoverable via session ID if needed.
 ### Downstream
 
 - `spec` expands each stub into a fleshed ticket per
-  `shared/TICKET_CONTRACT.md` and runs `spec/scripts/tickets_lint.py`
-- `ticket-review` runs the same lint, then reviews design and risk; any
-  failure blocks `Stage: BUILD`
+  `shared/TICKET_CONTRACT.md`
+- `ticket-review` is optional for a specialist design and risk pass
 - Integration gate tickets use `tdd` for test-first implementation
 - Gate tickets carry local inner-loop proof (see the contract's Integration gates section)
-- `/todo build` (manual) or `/todo run` (auto-driver) executes the overall graph
+- `/todo` drives the graph; each ticket is a subagent
 
 ---
 
