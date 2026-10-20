@@ -443,7 +443,6 @@ received, debug logs verified clean of raw comment bodies.
 ## §3. Ticket Contract
 
 The contract every fleshed ticket satisfies is defined once in [`../../../shared/TICKET_CONTRACT.md`](../../../shared/TICKET_CONTRACT.md).
-spec checks it with `spec/scripts/tickets_lint.py` before handoff; ticket-review runs the same lint, then reviews design and risk.
 This example predates the slim contract, so its stubs carry extra fields (`Priority`, `Origin`, `Mode`, `Exemplar-Files`) the contract no longer requires.
 
 ---
@@ -453,10 +452,9 @@ This example predates the slim contract, so its stubs carry extra fields (`Prior
 1. Feed `prd.md` + this file (`ticket-dag.md`) + `brownfield-context.md` into
    `spec`. spec expands each stub into the full body required
    by §3 (Ticket Contract) and emits `ticket-pack.md`.
-2. Run `ticket-review` against `ticket-pack.md` with this file's §3 as the
-   contract. If any hard gate fails, ticket-review emits a report; the
-   offending ticket remains `Stage: NEW` until re-drafted.
-3. Tickets that pass ticket-review transition to `Stage: BUILD` and are
-   executed via `/todo build` or `/todo run`.
+2. Optional: run `ticket-review` against `ticket-pack.md` for a specialist
+   design and risk pass.
+3. `/todo` drives each ticket in a subagent. Stage is NEW at write, BUILD
+   when the subagent starts, COMPLETE after verified ACs.
 4. Integration gates (`IG-*`) block their downstream tickets until
    `Stage: COMPLETE` — enforced by the build driver, not by convention alone.

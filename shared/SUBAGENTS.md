@@ -1,8 +1,10 @@
 # Subagents: suggested, never required
 
 Skills may suggest a subagent (an agent in a separate context).
-No skill requires one.
-The output contract and any validator are the same either way.
+`/todo` is the exception: every implementation ticket runs in its own
+subagent so the orchestrator keeps the DAG, not the ticket context.
+If the harness has no subagents, fall back to a fresh session with a
+pointer brief. The output contract is the same either way.
 
 ## When a subagent earns its cost
 

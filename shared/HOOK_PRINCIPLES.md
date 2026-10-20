@@ -40,7 +40,7 @@ If any criterion fails, keep it as a skill invoked on demand.
 | `tdd/MUTATION.md` | End of TDD cycle, pre-PR audit | Every save (too slow) | No — on demand |
 | `onboard/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
 | Self code review | Before `gh pr create` | Draft PRs | No - `pr-create` Phase 0 runs it |
-| `ticket-review` AC→Test table | Ticket readiness before build | NEW/SPEC tickets | No - `/todo` routes Full-mode tickets through the report gate |
+| `ticket-review` AC→Test table | User asks for a pre-build ticket audit | Default `/todo` drive | No - optional specialist |
 | `pr-fix` staleness | After each review-comment fix | No PR open | No — internal |
 | `cleanup` Phase 0 | On-demand audit, pre-PR self-review | After every edit | No |
 

@@ -5,22 +5,16 @@ description: "Audits .tickets/ before build for dependency, security and scope b
 
 # ticket-review
 
-Ticket Critic reviews existing `.tickets/*.md` before implementation. In the
-Full `/todo` pipeline it runs after spec; in Lite mode `/todo` treats it
-as optional. It never audits a raw feature request, writes tickets, or changes
-code.
+Optional specialist review for ticket readiness, dependency safety, and standards alignment.
+It does not write code, and it is not a `/todo` pipeline gate.
+Use it when the user asks for a pre-build audit of `.tickets/`.
 
 ## Quick Start
 
-1. Run the ticket lint with `--dry-red` and the project's test runner.
-2. If lint passes, review applicable patterns in [PATTERNS.md](PATTERNS.md).
-3. Write `.plan/critic-report.md` with `PASS` or `FAIL` per ticket and
-   evidence-backed findings. Lint errors are `FAIL` findings.
-4. If any ticket fails, stop. `/todo` routes those tickets back to spec.
-
-The ticket format is defined once, in [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
-The lint checks everything mechanical in it (frontmatter, Stage, sections, the AC table, paths against the DAG, `bash -n`, `-k` or-chains, bare `!`, em dashes) and, with `--dry-red`, runs the read-only checks now so a check that can't run fails before build.
-Never re-check by hand what the lint already checks.
+1. Read each ticket against [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md).
+2. Review design, risk and load-bearing questions against [PATTERNS.md](PATTERNS.md).
+3. Auto-resolve only when standards already answer the question.
+4. Return `PASS` or `BLOCKED` per ticket, with evidence for every finding.
 
 ## What the critic judges
 
@@ -46,7 +40,7 @@ Do not change ticket files or stages; route failures to spec.
 - Pattern 17: operator entry-point smoke gate (AP-26 gatekeeper).
 - Pattern 18: subagent claims need adversarial evidence review (delegates to `shared/EVIDENCE_REVIEWER.md`).
 
-**More than 5 tickets:** subagents are suggested (see `~/.skills/shared/SUBAGENTS.md`); otherwise audit tickets in batches inline. When delegating, brief each with the ticket path, the relevant PATTERNS.md subset and the PRD/brownfield context, returning findings only. Aggregate into `.plan/critic-report.md`; any subagent BLOCKER halts the parent until the user resolves it. Brief contract and the pattern-relevance table by ticket surface: [reference/scaled-audit.md](reference/scaled-audit.md).
+**More than 5 tickets:** subagents are suggested (see `~/.skills/shared/SUBAGENTS.md`); otherwise audit tickets in batches inline. When delegating, brief each with the ticket path, the relevant PATTERNS.md subset and the PRD/brownfield context, returning findings only. Any BLOCKER is reported to the user; `/todo` does not wait on this skill. Brief contract and the pattern-relevance table by ticket surface: [reference/scaled-audit.md](reference/scaled-audit.md).
 
 ## E2E Validation Gap
 
@@ -58,7 +52,7 @@ Auto-resolve only when the answer is already explicit in standards: read the mat
 
 ## Output Contract
 
-Write `.plan/critic-report.md` with one line per ticket, then findings:
+Reply with one line per ticket, then findings:
 
 ```markdown
 PASS T-1
@@ -69,7 +63,7 @@ FAIL T-2: <reasons, semicolon separated>
 - WARN Pattern 10: <finding>. Fix: <remediation>.
 ```
 
-Lint errors are listed as `BLOCKER lint: <message>`; don't restate them as patterns.
+Write `.plan/critic-report.md` only if the user asks to persist the audit.
 
 ## Assumptions and Escalation
 
@@ -84,7 +78,7 @@ Escalate immediately when:
 ## Specialized Review Rules
 
 1. Specialist lens only (ticket readiness/risk), not generic code review.
-2. The lint before judgement; never hand-check what the lint checks.
+2. Ask load-bearing questions before judgement; skip mechanical theater.
 3. Evidence-backed findings only.
 4. Clear separation from build/spec agents.
 
@@ -93,7 +87,7 @@ Escalate immediately when:
 Read only when the situation matches:
 
 - [PATTERNS.md](PATTERNS.md): the judgement checklist, detection signals and remediation (read for every audit)
-- [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md): the ticket format the lint enforces
+- [`~/.skills/shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md): the ticket format
 - [reference/scaled-audit.md](reference/scaled-audit.md): auditing more than 5 tickets; which patterns apply to which ticket surface
 - [reference/e2e-validation-gap.md](reference/e2e-validation-gap.md): the ticket has no E2E validation strategy
 - [examples/audit-findings.md](examples/audit-findings.md): what good findings look like

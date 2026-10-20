@@ -1,0 +1,69 @@
+{
+  "skill": "handoff",
+  "cases": [
+    {
+      "id": "one-file-no-prompt-block",
+      "type": "behavior",
+      "prompt": "Hand this off to a new session. Rate limiting is stubbed in limiter.py; the next session should wire Redis using the notes in notes.md.",
+      "files": [
+        "files/notes.md",
+        "files/limiter.py"
+      ],
+      "expected_behavior": [
+        "Writes exactly one markdown file under .handoff/ whose name is a kebab-case slug, not plan-<slug>.md",
+        "That file includes Goal, Current state and Next action, and points at notes.md and limiter.py by absolute path",
+        "The chat reply is the handoff file's absolute path plus a few sentences, not a fenced paste-ready prompt and not a second plan file"
+      ],
+      "check": {
+        "cmd": "test $(find .handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .handoff/plan-*.md >/dev/null 2>&1 && ! grep -q '```markdown' output.txt && grep -qE '/.handoff/[^/]+\\.md' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "pointers-not-copies",
+      "type": "behavior",
+      "prompt": "Write a handoff so the next session can finish the CSV export. The spec is already in spec.md; don't paste it.",
+      "files": [
+        "files/spec.md"
+      ],
+      "expected_behavior": [
+        "The .handoff/*.md file points at spec.md by absolute path with one line on why it matters",
+        "Does not copy the 10k-row cap, UTF-8 rule or filename-date rule into the handoff body",
+        "Chat reply does not include a paste-ready markdown code block of the handoff"
+      ],
+      "check": {
+        "cmd": "f=$(find .handoff -name '*.md' | head -1); test -n \"$f\" && grep -q 'spec.md' \"$f\" && ! grep -q '10k' \"$f\" && ! grep -q '```markdown' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "verification-only-when-needed",
+      "type": "behavior",
+      "prompt": "Hand off this one-line rename: in greet.py change hello() to hi(). No tests exist and none are needed.",
+      "files": [
+        "files/greet.py"
+      ],
+      "expected_behavior": [
+        "Writes one .handoff/*.md whose next action is renaming hello() to hi() in greet.py",
+        "Omits a Verification section, or says none is needed",
+        "Does not create .handoff/plan-*.md"
+      ],
+      "check": {
+        "cmd": "test $(find .handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .handoff/plan-*.md >/dev/null 2>&1 && f=$(find .handoff -name '*.md' | head -1); ! grep -qiE '^## Verification' \"$f\" || grep -qiE 'none|not needed|skip' \"$f\"",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "trigger-yes-new-session",
+      "type": "trigger",
+      "prompt": "I need to continue this work in a new chat. Write a handoff for the next session.",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-no-ticket-breakdown",
+      "type": "trigger",
+      "prompt": "The requirements are clear: add CSV export to the parcel list page, max 10k rows, UTF-8, filename includes the date. Break it into a spec with FR/NFR and micro-tasks for a coding agent.",
+      "should_trigger": false
+    }
+  ]
+}

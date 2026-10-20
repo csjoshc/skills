@@ -15,7 +15,7 @@ Always invoke before:
 
 - Reporting "task complete" to the user
 - Running `pr-create`
-- Closing out a `ticket-review` or `spec` cycle
+- Closing out a `spec` cycle or a `/todo` ticket
 - Writing the `## Evidence` section of a PR description
 - Checking off an AC
 
