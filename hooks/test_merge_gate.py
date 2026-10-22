@@ -1,6 +1,7 @@
 """merge-gate blocks agent merges, approvals and pushes to protected branches."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -10,9 +11,13 @@ import pytest
 GATE = Path(__file__).with_name("merge-gate.py")
 
 
+ENV = {k: v for k, v in os.environ.items() if k not in {"DEVIN_PROJECT_DIR", "CLAUDE_PROJECT_DIR"}}
+
+
 def run(payload: dict) -> int:
+    # Neutral cwd: the ~/.skills push exemption must not leak in from where tests run.
     proc = subprocess.run([sys.executable, str(GATE)], input=json.dumps(payload),
-                          capture_output=True, text=True, check=False)
+                          capture_output=True, text=True, check=False, cwd="/", env=ENV)
     return proc.returncode
 
 
@@ -56,6 +61,17 @@ def test_blocks(cmd: str) -> None:
 ])
 def test_allows(cmd: str) -> None:
     assert shell(cmd) == 0
+
+
+def test_skills_repo_may_push_main_but_nothing_else_is_exempt() -> None:
+    skills = str(Path.home() / ".skills")
+    assert shell("cd ~/.skills && git push origin main") == 0
+    assert shell(f"git -C {skills} push origin HEAD:main") == 0
+    assert run({"tool_name": "exec", "tool_input": {"command": "git push origin main",
+                                                     "workdir": skills}}) == 0
+    assert shell(f"cd {skills} && gh pr merge 3") == 2
+    assert shell("cd ~/.skills && cd /tmp/other && git push origin main") == 2
+    assert shell("cd ~/.skills-fork && git push origin main") == 2
 
 
 def test_github_mcp_merge_and_approve_are_blocked() -> None:

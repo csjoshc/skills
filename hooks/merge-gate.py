@@ -6,11 +6,15 @@ themselves (GitHub UI or their own terminal); there is deliberately no agent-sid
 """
 
 import json
+import os
 import re
 import shlex
 import sys
+from pathlib import Path
 
 PROTECTED = {"main", "master", "dev"}
+# ~/AGENTS.md lets agents push ~/.skills main after a clean commit (skill sync resets it).
+PUSH_EXEMPT = Path.home() / ".skills"
 GH = r"(?:^|[;&|(]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
 # Matched against the command with quoted text blanked, so `echo 'gh pr merge'` passes.
 PATTERNS = [
@@ -25,23 +29,33 @@ QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 
 
-def pushes_to_protected(command: str) -> bool:
+def _exempt(path: str) -> bool:
+    resolved = Path(os.path.expanduser(path)).resolve()
+    return resolved == PUSH_EXEMPT or PUSH_EXEMPT in resolved.parents
+
+
+def pushes_to_protected(command: str, cwd: str) -> bool:
     for segment in re.split(r"&&|\|\||[;|\n]", command):
         try:
             words = shlex.split(segment)
         except ValueError:
             words = segment.split()
+        if words[:1] == ["cd"] and len(words) > 1:
+            cwd = os.path.join(cwd, os.path.expanduser(words[1]))
+            continue
         if "git" not in words:
             continue
-        rest = words[words.index("git") + 1:]
+        rest, repo = words[words.index("git") + 1:], cwd
         while rest and rest[0].startswith("-"):  # git -C dir push ...
+            if rest[0] == "-C" and len(rest) > 1:
+                repo = os.path.join(cwd, os.path.expanduser(rest[1]))
             rest = rest[2:] if rest[0] in {"-C", "-c"} else rest[1:]
         if not rest or rest[0] != "push" or "--delete" in rest or "-d" in rest:
             continue
         refspecs = [w for w in rest[1:] if not w.startswith("-")][1:]  # drop the remote
         for spec in refspecs:
             dest = spec.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-            if dest in PROTECTED:
+            if dest in PROTECTED and not _exempt(repo):
                 return True
     return False
 
@@ -66,7 +80,9 @@ def reason(payload: dict) -> str | None:
             return label
     if GH_GRAPHQL.search(bare) and GRAPHQL_MUTATION.search(command):
         return "GraphQL merge/approve"
-    return "git push to a protected branch" if pushes_to_protected(command) else None
+    cwd = str(args.get("workdir") or payload.get("cwd") or os.environ.get("DEVIN_PROJECT_DIR")
+              or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
+    return "git push to a protected branch" if pushes_to_protected(command, cwd) else None
 
 
 def main() -> int:
