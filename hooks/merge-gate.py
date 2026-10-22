@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,9 +30,24 @@ QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 
 
-def _exempt(path: str) -> bool:
+def _exempt(path: str, branch: str) -> bool:
+    if branch != "main":
+        return False
     resolved = Path(os.path.expanduser(path)).resolve()
-    return resolved == PUSH_EXEMPT or PUSH_EXEMPT in resolved.parents
+    skills = PUSH_EXEMPT.resolve()
+    if resolved != skills and skills not in resolved.parents:
+        return False
+    try:
+        root = subprocess.run(["git", "-C", str(resolved), "rev-parse", "--show-toplevel"],
+                              capture_output=True, text=True, timeout=1)
+        if root.returncode or Path(root.stdout.strip()).resolve() != skills:
+            return False
+        status = subprocess.run(["git", "-C", str(resolved), "status", "--porcelain",
+                                 "--untracked-files=normal"],
+                                capture_output=True, text=True, timeout=1)
+        return status.returncode == 0 and not status.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return False
 
 
 def pushes_to_protected(command: str, cwd: str) -> bool:
@@ -50,12 +66,13 @@ def pushes_to_protected(command: str, cwd: str) -> bool:
             if rest[0] == "-C" and len(rest) > 1:
                 repo = os.path.join(cwd, os.path.expanduser(rest[1]))
             rest = rest[2:] if rest[0] in {"-C", "-c"} else rest[1:]
-        if not rest or rest[0] != "push" or "--delete" in rest or "-d" in rest:
+        if not rest or rest[0] != "push":
             continue
         refspecs = [w for w in rest[1:] if not w.startswith("-")][1:]  # drop the remote
         for spec in refspecs:
             dest = spec.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-            if dest in PROTECTED and not _exempt(repo):
+            deleting = "--delete" in rest or "-d" in rest or spec.startswith(":")
+            if dest in PROTECTED and (deleting or not _exempt(repo, dest)):
                 return True
     return False
 

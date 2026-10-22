@@ -81,13 +81,14 @@ earn their block with a concrete, cheap alternative.
 
 ## Hook catalogue
 
-One hook. Add another only when a real failure mode points to it.
+Add a hook only when a real failure mode points to it.
 
 | Hook | Event | Mode | Timeout |
 |---|---|---|---|
 | `verify-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
+| `merge-gate` | `PreToolUse`: shell and MCP merge, approval and protected-branch push attempts | halt | 5s |
 
-It only catches an agent that ran verify, recorded a failure, and
+`verify-gate` only catches an agent that ran verify, recorded a failure, and
 tried to ship anyway. It cannot catch an agent that never ran the check;
 that rule lives in AGENTS.md and `pr-create` Phase 0.
 
@@ -111,7 +112,7 @@ Anti-examples (do NOT add these):
 
 ## Override protocol
 
-Hooks accept two bypasses:
+`verify-gate` accepts two bypasses:
 
 1. Resolve the cause (for `verify-gate`: produce the evidence, or
    the user says `override: <reason>` and the agent deletes the marker
@@ -121,6 +122,69 @@ Hooks accept two bypasses:
 
 Agents MUST NOT override hooks on their own reasoning. "I think this
 is fine" is not an override.
+
+`merge-gate` does not accept marker-file bypasses or infer authorization from prompts.
+The owner performs merges and approvals in their own terminal or GitHub UI.
+The clean `~/.skills` main-push exception is the only automatic protected-branch exception.
+
+## Guard sync
+
+**Summary:** `/sync hooks` reconciles shared Git guards and native hook registrations for every installed harness.
+This is an agent procedure, not another installer or a new skill.
+The skill count is unchanged.
+Bootstrap owns the executable Git guards and machine setup facts; `~/.skills/hooks/merge-gate.py` owns the native agent gate.
+Retire the older bootstrap repo-crawling installation path in favor of BOM reconciliation; do not reintroduce it under `/sync`.
+
+### Reconcile
+
+1. Discover the bootstrap checkout, then read its `AGENTS.md`, `BOM.md` Git guards section and settings-migration procedure.
+   Use the approved checkout, not an unmerged branch or a copied wrapper in the skills repo.
+2. Inventory installed harnesses from `shared/SYMLINK_MAP.md`, plus other harnesses the owner uses, including OMP and VS Code/Copilot.
+   Record the active profile, config source and shell PATH for each; skill discovery does not establish hook support.
+3. Audit the shared wrapper, Git template and effective repository pre-push hooks against bootstrap's BOM.
+   Cover the current repo and owner-selected existing repositories, not a recursive crawl of the home directory.
+   Check `core.hooksPath` before choosing a hook destination.
+   Preserve other hooks and template content; an existing `exec` must not make the guard unreachable.
+4. Read the installed harness version's hook documentation before adding a registration or adapter.
+   Register the canonical script by absolute path with a five-second timeout, after verifying its input and blocking-output contracts.
+   Keep unrelated hooks and settings; a missing hook is added, a conflicting one needs approval.
+   Follow bootstrap's backup, format-preservation and concurrent-edit checks.
+5. When duplicate registrations exist, identify their effective source, including compatibility imports.
+   Propose one native registration and remove only approved duplicate entries for this same gate in the same change.
+   Preserve all unrelated imported hooks; do not disable compatibility imports globally.
+6. Report each installed harness even when it has no verified blocking-hook adapter.
+   Shared CLI guards are partial coverage, not protection of direct MCP calls or arbitrary API clients.
+   Do not mark a harness protected merely because its skills directory is linked.
+
+### Native registrations
+
+| Harness | Registration | Contract |
+|---|---|---|
+| Claude Code | `hooks.PreToolUse` in the active profile's `settings.json` | Matcher `^(Bash|mcp__.*)$`; command receives `tool_name` and `tool_input`; exit 2 blocks |
+| Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|mcp_call_tool|mcp__.*)$`; same command payload and exit 2 |
+| Codex, Cursor, OpenCode, pi, OMP, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
+
+Both supported registrations invoke `python3` with the absolute path to `~/.skills/hooks/merge-gate.py`.
+Quote the path for the harness's command shell.
+Devin may also import Claude hooks; inspect effective registrations before adding a second copy.
+Gateway/profile-specific Claude installations need their active settings file, not an assumed default.
+For another hook-capable harness, adapt only the event payload and deny response; reuse the existing gate rather than maintaining another policy parser.
+If no blocking hook is supported, record that limitation and retain shared CLI coverage.
+Windows-native shells need a separately verified wrapper integration; the macOS bootstrap links are not Windows coverage.
+
+### Evidence and limits
+
+Report columns: harness/profile, CLI wrapper resolution, repository pre-push hook, native registration source, live blocking evidence and remaining gap.
+Use `missing`, `registered / unverified`, `verified`, or `unsupported` only when backed by the installed version's docs.
+If testing is deferred, leave live evidence `deferred`; do not run a repair implicitly.
+When verification is authorized, use local throwaway repositories and a stub `gh`, then a fresh-session harmless blocked command.
+Do not send a real merge, approval or push as a probe.
+Repeat the audit to confirm the approved repair proposes no further edits.
+
+A terminal is not proof of a human: agents can allocate PTYs.
+These guards prevent common accidents, not a same-user process deliberately bypassing local files, absolute binaries or APIs.
+Server-side authorization is separate and changes only with explicit owner approval.
+For the previous accidental PR merge, this workflow would have surfaced the missing live-blocking evidence before work resumed.
 
 ## Escalation for new hooks
 
