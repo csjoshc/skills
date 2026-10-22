@@ -165,14 +165,17 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
 | Harness | Registration | Contract |
 |---|---|---|
 | Claude Code | `hooks.PreToolUse` in the active profile's `settings.json` | Matcher `^(Bash|mcp__.*)$`; command receives `tool_name` and `tool_input`; exit 2 blocks |
-| Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|write_to_process|mcp_call_tool|mcp__.*)$`; same command payload and exit 2 |
-| Codex, Cursor, OpenCode, pi, OMP, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
+| Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|write_to_process|mcp_call_tool|mcp__.*)$`; same command payload and exit 2. Verified live 2026-10-22 for `write_to_process` |
+| OMP | Extension `~/.omp/agent/extensions/merge-gate.ts`, a symlink to `hooks/adapters/omp/merge-gate.ts` | `pi.on("tool_call")` gets `{toolName, input}` and `ctx.cwd`; return `{block, reason}`; a throw or timeout also blocks. Shell is `bash`, MCP is `mcp__<server>_<tool>`. Verified live 2026-10-22 with `omp -p -e` |
+| Codex, Cursor, OpenCode, pi, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
 
 Both supported registrations invoke `python3` with the absolute path to `~/.skills/hooks/merge-gate.py`.
 Quote the path for the harness's command shell.
 Devin may also import Claude hooks; inspect effective registrations before adding a second copy.
 Gateway/profile-specific Claude installations need their active settings file, not an assumed default.
 For another hook-capable harness, adapt only the event payload and deny response; reuse the existing gate rather than maintaining another policy parser.
+`hooks/adapters/omp/merge-gate.ts` is the reference adapter: it pipes the payload to `merge-gate.py`, maps exit 2 to a block, and fails closed on any error.
+Adapters live in `hooks/adapters/<harness>/` and are linked into the harness, never copied.
 If no blocking hook is supported, record that limitation and retain shared CLI coverage.
 Windows-native shells need a separately verified wrapper integration; the macOS bootstrap links are not Windows coverage.
 

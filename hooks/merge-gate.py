@@ -46,6 +46,7 @@ QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 # GitHub MCP tools that commit straight to args["branch"], skipping review.
 MCP_BRANCH_WRITERS = {"push_files", "create_or_update_file", "delete_file"}
+MCP_KNOWN = MCP_BLOCKED | MCP_BRANCH_WRITERS | {"pull_request_review_write"}
 
 
 LINE_END = re.compile(r"<(?:CR|LF)>")
@@ -193,11 +194,17 @@ def _typed_input(args: dict) -> str | None:
     return f"{text}\n{TYPED_KEY.sub('', typed)}"
 
 
+def _mcp_tool(name: str) -> str:
+    """The server tool a qualified name ends in: mcp__s__t (Claude), mcp__s_t (OMP), s_t."""
+    return next((t for t in MCP_KNOWN if name == t or name.endswith("_" + t)), name)
+
+
 def reason(payload: dict) -> str | None:
     tool = str(payload.get("tool_name", ""))
     args = payload.get("tool_input") or {}
     if tool.startswith("mcp") and isinstance(args, dict):
         name = tool.split("__")[-1] if tool.startswith("mcp__") else str(args.get("tool_name", ""))
+        name = _mcp_tool(name)
         if name in MCP_BLOCKED:
             return f"MCP {name}"
         inner = args if tool.startswith("mcp__") else args.get("arguments") or {}
