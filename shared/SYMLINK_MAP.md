@@ -60,7 +60,7 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude Code reads only a project-level AGENTS.md, and only when no CLAUDE.md or CLAUDE.local.md is in that folder or above) |
 | **Codex** | `~/.codex/AGENTS.md` | Symlink |
 | **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
-| **Devin CLI** | `~/.config/devin/AGENTS.md` | Symlink (Devin does not walk up to `~/AGENTS.md`) |
+| **Devin CLI** | `~/.config/devin/AGENTS.md` | Symlink (Devin does not walk up to `~/AGENTS.md`); created by bootstrap, not `sync.py` |
 | **Antigravity** | `~/.gemini/antigravity/AGENTS.md` | Symlink |
 | **Cursor / Copilot** | (none) | No global file; use project `AGENTS.md` |
 

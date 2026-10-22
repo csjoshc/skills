@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse (shell + MCP): agents never merge, approve, or push to a protected branch.
+"""PreToolUse (shell + MCP): agents never merge, approve, or push/merge into a protected branch.
 
 Mode: halt (exit 2; harnesses relay stderr to the agent). Bypass is the user acting
 themselves (GitHub UI or their own terminal); there is deliberately no agent-side switch.
@@ -30,6 +30,21 @@ QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 
 
+GIT_TIMEOUT = 1  # seconds per git probe; the hook's own budget is 5s
+MERGE_SAFE = {"--abort", "--quit", "--continue"}
+SYNC_SAFE = {"--ff-only", "--rebase", "-r"}  # pull forms that cannot create a merge commit
+
+
+def _git(repo: str, *args: str) -> str | None:
+    """Stdout of a git probe, '' when git fails, None on timeout (callers fail closed)."""
+    try:
+        proc = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True,
+                              timeout=GIT_TIMEOUT)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return proc.stdout.strip() if proc.returncode == 0 else ""
+
+
 def _exempt(path: str, branch: str) -> bool:
     if branch != "main":
         return False
@@ -37,20 +52,15 @@ def _exempt(path: str, branch: str) -> bool:
     skills = PUSH_EXEMPT.resolve()
     if resolved != skills and skills not in resolved.parents:
         return False
-    try:
-        root = subprocess.run(["git", "-C", str(resolved), "rev-parse", "--show-toplevel"],
-                              capture_output=True, text=True, timeout=1)
-        if root.returncode or Path(root.stdout.strip()).resolve() != skills:
-            return False
-        status = subprocess.run(["git", "-C", str(resolved), "status", "--porcelain",
-                                 "--untracked-files=normal"],
-                                capture_output=True, text=True, timeout=1)
-        return status.returncode == 0 and not status.stdout.strip()
-    except (OSError, subprocess.TimeoutExpired):
+    root = _git(str(resolved), "rev-parse", "--show-toplevel")
+    if not root or Path(root).resolve() != skills:
         return False
+    return _git(str(resolved), "status", "--porcelain", "--untracked-files=normal") == ""
 
 
-def pushes_to_protected(command: str, cwd: str) -> bool:
+def git_commands(command: str, cwd: str):
+    """Yield (repo, subcommand, args, switched_to) for each git call in a shell command line."""
+    switched = None  # branch a prior `git checkout|switch` in this command moved to
     for segment in re.split(r"&&|\|\||[;|\n]", command):
         try:
             words = shlex.split(segment)
@@ -66,14 +76,41 @@ def pushes_to_protected(command: str, cwd: str) -> bool:
             if rest[0] == "-C" and len(rest) > 1:
                 repo = os.path.join(cwd, os.path.expanduser(rest[1]))
             rest = rest[2:] if rest[0] in {"-C", "-c"} else rest[1:]
-        if not rest or rest[0] != "push":
+        if not rest:
             continue
-        refspecs = [w for w in rest[1:] if not w.startswith("-")][1:]  # drop the remote
+        yield repo, rest[0], rest[1:], switched
+        if rest[0] in {"checkout", "switch"}:
+            names = [w for w in rest[1:] if not w.startswith("-")]
+            switched = names[0] if names else switched
+
+
+def pushes_to_protected(command: str, cwd: str) -> bool:
+    for repo, sub, args, _ in git_commands(command, cwd):
+        if sub != "push":
+            continue
+        refspecs = [w for w in args if not w.startswith("-")][1:]  # drop the remote
         for spec in refspecs:
             dest = spec.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-            deleting = "--delete" in rest or "-d" in rest or spec.startswith(":")
+            deleting = "--delete" in args or "-d" in args or spec.startswith(":")
             if dest in PROTECTED and (deleting or not _exempt(repo, dest)):
                 return True
+    return False
+
+
+def merges_into_protected(command: str, cwd: str) -> bool:
+    """Local `git merge`, or a `git pull` that may merge, while on a protected branch."""
+    for repo, sub, args, switched in git_commands(command, cwd):
+        if sub == "merge":
+            if MERGE_SAFE & set(args):
+                continue
+        elif sub == "pull":
+            if SYNC_SAFE & set(args):
+                continue
+        else:
+            continue
+        branch = switched or _git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+        if branch is None or branch in PROTECTED:
+            return True
     return False
 
 
@@ -99,7 +136,9 @@ def reason(payload: dict) -> str | None:
         return "GraphQL merge/approve"
     cwd = str(args.get("workdir") or payload.get("cwd") or os.environ.get("DEVIN_PROJECT_DIR")
               or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
-    return "git push to a protected branch" if pushes_to_protected(command, cwd) else None
+    if pushes_to_protected(command, cwd):
+        return "git push to a protected branch"
+    return "local git merge into a protected branch" if merges_into_protected(command, cwd) else None
 
 
 def main() -> int:
@@ -110,7 +149,7 @@ def main() -> int:
     found = reason(payload) if isinstance(payload, dict) else None
     if not found:
         return 0
-    print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or push to "
+    print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or push/merge into "
           f"{'/'.join(sorted(PROTECTED))}. Leave the PR for the user; they merge it themselves.",
           file=sys.stderr)
     return 2

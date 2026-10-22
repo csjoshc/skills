@@ -86,7 +86,7 @@ Add a hook only when a real failure mode points to it.
 | Hook | Event | Mode | Timeout |
 |---|---|---|---|
 | `verify-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
-| `merge-gate` | `PreToolUse`: shell and MCP merge, approval and protected-branch push attempts | halt | 5s |
+| `merge-gate` | `PreToolUse`: shell and MCP merge, approval, protected-branch push and local merge attempts | halt | 5s |
 
 `verify-gate` only catches an agent that ran verify, recorded a failure, and
 tried to ship anyway. It cannot catch an agent that never ran the check;
@@ -126,6 +126,10 @@ is fine" is not an override.
 `merge-gate` does not accept marker-file bypasses or infer authorization from prompts.
 The owner performs merges and approvals in their own terminal or GitHub UI.
 The clean `~/.skills` main-push exception is the only automatic protected-branch exception.
+Local `git merge` (and a `git pull` that can merge) on a protected branch is blocked too, including after a chained `git checkout main`.
+`git pull --ff-only` and `git pull --rebase` stay allowed, so syncing main from origin works.
+Land work by pushing a branch, opening a PR and letting the owner merge it.
+Each git probe inside the gate has a 1s cap, well inside the 5s hook timeout; a probe timeout fails closed (blocks).
 
 ## Guard sync
 
