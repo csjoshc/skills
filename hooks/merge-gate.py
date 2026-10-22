@@ -11,11 +11,8 @@ import re
 import shlex
 import subprocess
 import sys
-from pathlib import Path
 
 PROTECTED = {"main", "master", "dev"}
-# ~/AGENTS.md lets agents push ~/.skills main after a clean commit (skill sync resets it).
-PUSH_EXEMPT = Path.home() / ".skills"
 GH = r"(?:^|[;&|(\'\"]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
 # Matched against the command with quoted text blanked, so `echo 'gh pr merge'` passes.
 PATTERNS = [
@@ -53,19 +50,6 @@ def _git(repo: str, *args: str) -> str | None:
     except (OSError, subprocess.TimeoutExpired):
         return None
     return proc.stdout.strip() if proc.returncode == 0 else ""
-
-
-def _exempt(path: str, branch: str) -> bool:
-    if branch != "main":
-        return False
-    resolved = Path(os.path.expanduser(path)).resolve()
-    skills = PUSH_EXEMPT.resolve()
-    if resolved != skills and skills not in resolved.parents:
-        return False
-    root = _git(str(resolved), "rev-parse", "--show-toplevel")
-    if not root or Path(root).resolve() != skills:
-        return False
-    return _git(str(resolved), "status", "--porcelain", "--untracked-files=normal") == ""
 
 
 def git_commands(command: str, cwd: str):
@@ -116,16 +100,13 @@ def pushes_to_protected(command: str, cwd: str) -> bool:
         if sub != "push":
             continue
         flags = {w for w in args if w.startswith("-")}
-        refspecs = [w for w in args if not w.startswith("-")][1:]  # drop the remote
         if flags & {"--all", "--mirror"}:
-            return not _exempt(repo, "main")
-        deleting = bool(flags & {"--delete", "-d"})
-        targets = [(_dest(spec), deleting or spec.startswith(":")) for spec in refspecs]
-        if not targets or any(dest == "HEAD" for dest, _ in targets):  # bare push sends HEAD
-            targets.append((_current(repo, switched) or "main", deleting))
-        for dest, delete in targets:
-            if (dest in PROTECTED or "*" in dest) and (delete or not _exempt(repo, dest)):
-                return True
+            return True
+        dests = [_dest(w) for w in args if not w.startswith("-")][1:]  # drop the remote
+        if not dests or "HEAD" in dests:  # bare push sends the current branch
+            dests.append(_current(repo, switched) or "main")
+        if any(dest in PROTECTED or "*" in dest for dest in dests):
+            return True
     return False
 
 

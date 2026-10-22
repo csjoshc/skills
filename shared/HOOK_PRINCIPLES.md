@@ -125,7 +125,7 @@ is fine" is not an override.
 
 `merge-gate` does not accept marker-file bypasses or infer authorization from prompts.
 The owner performs merges and approvals in their own terminal or GitHub UI.
-The clean `~/.skills` main-push exception is the only automatic protected-branch exception.
+There is no protected-branch exception; `~/.skills` is onboarded like any other repository.
 Blocked ways to land unreviewed work on `main`, `master` or `dev`:
 - `gh pr merge`, REST `/merges`, `/pulls/N/merge`, `/git/refs/heads/<protected>`, `/contents` writes to a protected branch, GraphQL merge mutations.
 - GitHub MCP `merge_pull_request`, `enable_auto_merge`, and `push_files`, `create_or_update_file`, `delete_file` aimed at a protected branch.
@@ -137,7 +137,7 @@ Blocked ways to land unreviewed work on `main`, `master` or `dev`:
 `git pull --ff-only` and `git pull --rebase` stay allowed, so syncing main from origin works.
 When blocked, the agent tells the owner the exact command to run themselves (`! gh pr merge <n> --squash`) or to merge on GitHub, and does not retry or work around the gate.
 Land work by pushing a branch, opening a PR and letting the owner merge it.
-Out of scope: scripts or other programs that call git or the API on their own, `git reset --hard <ref>` and plain `git commit` on main.
+Out of scope: scripts or other programs that call git or the API on their own, and `git reset --hard <ref>`.
 Each git probe inside the gate has a 1s cap, well inside the 5s hook timeout; a probe timeout fails closed (blocks).
 
 ## Guard sync
