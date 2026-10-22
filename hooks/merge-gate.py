@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse (shell + MCP): agents never merge, approve, or push/merge into a protected branch.
+"""PreToolUse (shell + MCP): agents never merge, approve, or move a protected branch.
 
 Mode: halt (exit 2; harnesses relay stderr to the agent). Bypass is the user acting
 themselves (GitHub UI or their own terminal); there is deliberately no agent-side switch.
@@ -16,22 +16,32 @@ from pathlib import Path
 PROTECTED = {"main", "master", "dev"}
 # ~/AGENTS.md lets agents push ~/.skills main after a clean commit (skill sync resets it).
 PUSH_EXEMPT = Path.home() / ".skills"
-GH = r"(?:^|[;&|(]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
+GH = r"(?:^|[;&|(\'\"]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
 # Matched against the command with quoted text blanked, so `echo 'gh pr merge'` passes.
 PATTERNS = [
     (re.compile(GH + r"pr\s+merge(?:\s|$)"), "gh pr merge"),
     (re.compile(GH + r"pr\s+review\b[^;&|]*\s(?:--approve|-a)(?:\s|$)"), "gh pr review --approve"),
     (re.compile(GH + r"api\b[^;&|]*?/pulls/\d+/merge\b"), "REST pull merge"),
+    (re.compile(GH + r"api\b[^;&|]*?/merges\b"), "REST branch merge"),
+    (re.compile(GH + r"api\b[^;&|]*?/git/refs/heads/(?:main|master|dev)\b"), "REST ref update"),
+    (re.compile(GH + r"api\b[^;&|]*?/contents/[^;&|]*?(?:branch=|ref=)(?:main|master|dev)\b"),
+     "REST commit to a protected branch"),
 ]
+# Quoted text is blanked so `echo 'gh pr merge'` passes, except when it feeds a shell.
+SHELL_WRAPPER = re.compile(r"\b(?:ba|z|da|k)?sh\s+-\w*c\b|\beval\b|\bxargs\b|\|\s*(?:ba|z)?sh\b")
 GH_GRAPHQL = re.compile(GH + r"api\s+graphql\b")
 GRAPHQL_MUTATION = re.compile(
     r"\b(?:mergePullRequest|enablePullRequestAutoMerge)\b|addPullRequestReview[^;&|]*APPROVE")
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
+# GitHub MCP tools that commit straight to args["branch"], skipping review.
+MCP_BRANCH_WRITERS = {"push_files", "create_or_update_file", "delete_file"}
 
 
 GIT_TIMEOUT = 1  # seconds per git probe; the hook's own budget is 5s
-MERGE_SAFE = {"--abort", "--quit", "--continue"}
+# History-moving commands that import other work into the current branch.
+LOCAL_MERGERS = {"merge", "cherry-pick", "rebase", "am", "revert"}
+CONTINUATIONS = {"--abort", "--quit", "--continue", "--skip"}
 SYNC_SAFE = {"--ff-only", "--rebase", "-r"}  # pull forms that cannot create a merge commit
 
 
@@ -59,8 +69,15 @@ def _exempt(path: str, branch: str) -> bool:
 
 
 def git_commands(command: str, cwd: str):
-    """Yield (repo, subcommand, args, switched_to) for each git call in a shell command line."""
+    """Yield (repo, subcommand, args, switched_to) for each git call in a shell command line.
+
+    Quoted text handed to a shell (`bash -c "git merge x"`) is parsed recursively.
+    """
     switched = None  # branch a prior `git checkout|switch` in this command moved to
+    if SHELL_WRAPPER.search(command):
+        for quoted in QUOTED.findall(command):
+            if "git" in quoted:
+                yield from git_commands(quoted[1:-1], cwd)
     for segment in re.split(r"&&|\|\||[;|\n]", command):
         try:
             words = shlex.split(segment)
@@ -69,9 +86,10 @@ def git_commands(command: str, cwd: str):
         if words[:1] == ["cd"] and len(words) > 1:
             cwd = os.path.join(cwd, os.path.expanduser(words[1]))
             continue
-        if "git" not in words:
+        at = next((i for i, w in enumerate(words) if os.path.basename(w) == "git"), None)
+        if at is None:
             continue
-        rest, repo = words[words.index("git") + 1:], cwd
+        rest, repo = words[at + 1:], cwd
         while rest and rest[0].startswith("-"):  # git -C dir push ...
             if rest[0] == "-C" and len(rest) > 1:
                 repo = os.path.join(cwd, os.path.expanduser(rest[1]))
@@ -84,33 +102,58 @@ def git_commands(command: str, cwd: str):
             switched = names[0] if names else switched
 
 
+def _dest(spec: str) -> str:
+    return spec.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
+
+
+def _current(repo: str, switched: str | None) -> str | None:
+    """Current branch, or None when it cannot be told (callers fail closed)."""
+    return switched or _git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+
+
 def pushes_to_protected(command: str, cwd: str) -> bool:
-    for repo, sub, args, _ in git_commands(command, cwd):
+    for repo, sub, args, switched in git_commands(command, cwd):
         if sub != "push":
             continue
+        flags = {w for w in args if w.startswith("-")}
         refspecs = [w for w in args if not w.startswith("-")][1:]  # drop the remote
-        for spec in refspecs:
-            dest = spec.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-            deleting = "--delete" in args or "-d" in args or spec.startswith(":")
-            if dest in PROTECTED and (deleting or not _exempt(repo, dest)):
+        if flags & {"--all", "--mirror"}:
+            return not _exempt(repo, "main")
+        deleting = bool(flags & {"--delete", "-d"})
+        targets = [(_dest(spec), deleting or spec.startswith(":")) for spec in refspecs]
+        if not targets or any(dest == "HEAD" for dest, _ in targets):  # bare push sends HEAD
+            targets.append((_current(repo, switched) or "main", deleting))
+        for dest, delete in targets:
+            if (dest in PROTECTED or "*" in dest) and (delete or not _exempt(repo, dest)):
                 return True
     return False
 
 
-def merges_into_protected(command: str, cwd: str) -> bool:
-    """Local `git merge`, or a `git pull` that may merge, while on a protected branch."""
+def moves_protected(command: str, cwd: str) -> bool:
+    """Any local way to land unreviewed work on a protected branch (push is checked apart)."""
     for repo, sub, args, switched in git_commands(command, cwd):
-        if sub == "merge":
-            if MERGE_SAFE & set(args):
-                continue
-        elif sub == "pull":
-            if SYNC_SAFE & set(args):
-                continue
-        else:
-            continue
-        branch = switched or _git(repo, "rev-parse", "--abbrev-ref", "HEAD")
-        if branch is None or branch in PROTECTED:
+        flags = {w for w in args if w.startswith("-")}
+        names = [w.removeprefix("refs/heads/") for w in args if not w.startswith("-")]
+        short = {c for w in flags if not w.startswith("--") for c in w[1:]}
+        if sub in {"fetch", "pull"} and any(":" in w and _dest(w) in PROTECTED for w in names):
+            return True  # git fetch origin feat:main rewrites local main
+        if sub == "branch" and names:
+            moving = flags & {"--move", "--copy"} or short & {"m", "M", "c", "C"}
+            forcing = flags & {"--force"} or short & {"f", "M", "C"}
+            target = names[-1] if moving else names[0]  # `branch -f <name> [<start>]`
+            if (moving or forcing) and target in PROTECTED:
+                return True
+        if sub in {"checkout", "switch"} and (short & {"B", "C"} or "--force-create" in flags) \
+                and any(n in PROTECTED for n in names):
             return True
+        if sub == "update-ref" and any(n in PROTECTED for n in names):
+            return True
+        if sub in LOCAL_MERGERS or sub == "pull":
+            if CONTINUATIONS & flags or (sub == "pull" and SYNC_SAFE & flags):
+                continue
+            branch = _current(repo, switched)
+            if branch is None or branch in PROTECTED:
+                return True
     return False
 
 
@@ -122,13 +165,15 @@ def reason(payload: dict) -> str | None:
         if name in MCP_BLOCKED:
             return f"MCP {name}"
         inner = args if tool.startswith("mcp__") else args.get("arguments") or {}
+        if name in MCP_BRANCH_WRITERS and str(inner.get("branch", "")) in PROTECTED:
+            return f"MCP {name} to a protected branch"
         if name == "pull_request_review_write" and str(inner.get("event", "")).upper() == "APPROVE":
             return "MCP review APPROVE"
         return None
     command = args.get("command") or args.get("cmd") if isinstance(args, dict) else None
     if not isinstance(command, str):
         return None
-    bare = QUOTED.sub("''", command)
+    bare = command if SHELL_WRAPPER.search(command) else QUOTED.sub("''", command)
     for pattern, label in PATTERNS:
         if pattern.search(bare):
             return label
@@ -138,7 +183,7 @@ def reason(payload: dict) -> str | None:
               or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
     if pushes_to_protected(command, cwd):
         return "git push to a protected branch"
-    return "local git merge into a protected branch" if merges_into_protected(command, cwd) else None
+    return "local git history change on a protected branch" if moves_protected(command, cwd) else None
 
 
 def main() -> int:
@@ -149,8 +194,9 @@ def main() -> int:
     found = reason(payload) if isinstance(payload, dict) else None
     if not found:
         return 0
-    print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or push/merge into "
-          f"{'/'.join(sorted(PROTECTED))}. Leave the PR for the user; they merge it themselves.",
+    print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or change "
+          f"{'/'.join(sorted(PROTECTED))}. Do not retry or work around it: tell the user the exact "
+          "command (e.g. `! gh pr merge <n> --squash`) or to merge on GitHub themselves.",
           file=sys.stderr)
     return 2
 
