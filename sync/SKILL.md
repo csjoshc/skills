@@ -17,6 +17,7 @@ For a named mode, read its file below.
 
 With no mode specified, include the guard audit alongside skill-link discovery.
 Hook reconciliation is agent-assisted; `sync.py` and `mcp_sync.py` do not install hooks.
+Per-repo git hooks belong to `/onboard` (step 0g); sync installs them only in `~/.skills` and `~/bootstrap`.
 An audit writes nothing; repair preserves unrelated settings and asks before replacing conflicting configuration.
 Report registration separately from live enforcement, and leave unverified harnesses explicit.
 Sync does not authorize commits, pushes, merges, service restarts or removal of old history.

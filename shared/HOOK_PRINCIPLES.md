@@ -123,26 +123,17 @@ Anti-examples (do NOT add these):
 Agents MUST NOT override hooks on their own reasoning. "I think this
 is fine" is not an override.
 
-`merge-gate` does not accept marker-file bypasses or infer authorization from prompts.
-The owner performs merges and approvals in their own terminal or GitHub UI.
-There is no protected-branch exception; `~/.skills` is onboarded like any other repository.
-Blocked ways to land unreviewed work on `main`, `master` or `dev`:
-- `gh pr merge`, REST `/merges`, `/pulls/N/merge`, `/git/refs/heads/<protected>`, `/contents` writes to a protected branch, GraphQL merge mutations.
-- GitHub MCP `merge_pull_request`, `enable_auto_merge`, and `push_files`, `create_or_update_file`, `delete_file` aimed at a protected branch.
-- `git push` to a protected branch, including a bare `git push` or `HEAD` while on one, `--all`, `--mirror`, glob refspecs and deletes.
-- On a protected branch: `git merge`, `cherry-pick`, `rebase`, `am`, `revert` and a `git pull` that can merge; `--abort`, `--quit`, `--continue` and `--skip` stay allowed.
-- Moving a protected ref from elsewhere: `git branch -f|-M|-C`, `checkout -B`, `switch -C`, `update-ref`, `fetch|pull <remote> x:main`.
-- The same commands inside `sh -c`, `eval` or `xargs` text, and via a full path such as `/usr/bin/git`; a chained `git checkout main &&` counts as being on main.
-- Text handed to a shell is matched unblanked, so quoting a blocked command inside `sh -c` also blocks; that is accepted.
-`git pull --ff-only` and `git pull --rebase` stay allowed, so syncing main from origin works.
-When blocked, the agent tells the owner the exact command to run themselves (`! gh pr merge <n> --squash`) or to merge on GitHub, and does not retry or work around the gate.
-Land work by pushing a branch, opening a PR and letting the owner merge it.
-Out of scope: scripts or other programs that call git or the API on their own, and `git reset --hard <ref>`.
-Each git probe inside the gate has a 1s cap, well inside the 5s hook timeout; a probe timeout fails closed (blocks).
+`merge-gate` accepts no marker-file bypass and infers no authorization from prompts.
+The owner merges and approves in their own terminal, where the `gh` wrapper asks them to confirm, or in the GitHub UI.
+What it blocks and what stays out of scope is listed in the `merge-gate.py` docstring; the code is the single source.
+Land work by pushing a branch, opening a PR and letting the owner merge it; `~/.skills` has no exception.
+On a block the agent asks the owner to run the command themselves and does not retry or work around the gate.
+Git probes inside the gate time out at 1s (the hook's budget is 5s), and a timeout blocks.
 
 ## Guard sync
 
-**Summary:** `/sync hooks` reconciles shared Git guards and native hook registrations for every installed harness.
+**Summary:** `/sync hooks` reconciles the machine-wide Git guards and native hook registrations for every installed harness.
+Installing hooks in an individual repository is `/onboard` step 0g; the two skills do not overlap.
 This is an agent procedure, not another installer or a new skill.
 The skill count is unchanged.
 Bootstrap owns the executable Git guards and machine setup facts; `~/.skills/hooks/merge-gate.py` owns the native agent gate.
@@ -154,10 +145,10 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
    Use the approved checkout, not an unmerged branch or a copied wrapper in the skills repo.
 2. Inventory installed harnesses from `shared/SYMLINK_MAP.md`, plus other harnesses the owner uses, including OMP and VS Code/Copilot.
    Record the active profile, config source and shell PATH for each; skill discovery does not establish hook support.
-3. Audit the shared wrapper, Git template and effective repository pre-push hooks against bootstrap's BOM.
-   Cover the current repo and owner-selected existing repositories, not a recursive crawl of the home directory.
-   Check `core.hooksPath` before choosing a hook destination.
-   Preserve other hooks and template content; an existing `exec` must not make the guard unreachable.
+3. Audit the shared wrapper, Git template and `init.templateDir` against bootstrap's BOM.
+   Report the current repository's effective hooks too, but install into other repositories through `/onboard` 0g.
+   Reconcile `~/.skills` and `~/bootstrap` here by default, since `/onboard` refuses both as targets.
+   Check `core.hooksPath` first, and preserve other hooks; an existing `exec` must not make the guard unreachable.
 4. Read the installed harness version's hook documentation before adding a registration or adapter.
    Register the canonical script by absolute path with a five-second timeout, after verifying its input and blocking-output contracts.
    Keep unrelated hooks and settings; a missing hook is added, a conflicting one needs approval.

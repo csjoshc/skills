@@ -3,6 +3,17 @@
 
 Mode: halt (exit 2; harnesses relay stderr to the agent). Bypass is the user acting
 themselves (GitHub UI or their own terminal); there is deliberately no agent-side switch.
+
+Blocks, for main/master/dev:
+- gh pr merge/approve, the REST merge, ref and contents routes, GraphQL merge mutations
+- GitHub MCP merge_pull_request, enable_auto_merge, APPROVE reviews, and file writes to them
+- git push to them (bare, HEAD, --all/--mirror, globs, deletes)
+- on them: merge, cherry-pick, rebase, am, revert, and a pull that can merge
+- elsewhere: branch -f/-M/-C, checkout -B, switch -C, update-ref, fetch|pull x:main
+The same inside sh -c, eval or xargs text (matched unblanked) and via a full git path.
+Allowed: git pull --ff-only|--rebase, and --abort/--quit/--continue/--skip.
+Out of scope: programs that call git or the API themselves, and git reset --hard.
+A git probe that times out blocks (fail closed).
 """
 
 import json
@@ -45,8 +56,8 @@ SYNC_SAFE = {"--ff-only", "--rebase", "-r"}  # pull forms that cannot create a m
 def _git(repo: str, *args: str) -> str | None:
     """Stdout of a git probe, '' when git fails, None on timeout (callers fail closed)."""
     try:
-        proc = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True,
-                              timeout=GIT_TIMEOUT)
+        proc = subprocess.run(["git", "-C", repo, *args], check=False, capture_output=True,
+                              text=True, timeout=GIT_TIMEOUT)
     except (OSError, subprocess.TimeoutExpired):
         return None
     return proc.stdout.strip() if proc.returncode == 0 else ""
@@ -110,28 +121,38 @@ def pushes_to_protected(command: str, cwd: str) -> bool:
     return False
 
 
+def _moves_ref(sub: str, args: list[str]) -> bool:
+    """Commands that point a protected ref at other work, whatever branch is checked out."""
+    flags = {w for w in args if w.startswith("-")}
+    names = [w.removeprefix("refs/heads/") for w in args if not w.startswith("-")]
+    short = {c for w in flags if not w.startswith("--") for c in w[1:]}
+    if sub in {"fetch", "pull"}:
+        return any(":" in w and _dest(w) in PROTECTED for w in names)  # fetch origin feat:main
+    if sub == "branch" and names:
+        moving = flags & {"--move", "--copy"} or short & {"m", "M", "c", "C"}
+        forcing = flags & {"--force"} or short & {"f", "M", "C"}
+        target = names[-1] if moving else names[0]  # `branch -f <name> [<start>]`
+        return bool(moving or forcing) and target in PROTECTED
+    if sub in {"checkout", "switch"}:
+        recreating = short & {"B", "C"} or "--force-create" in flags
+        return bool(recreating) and any(n in PROTECTED for n in names)
+    return sub == "update-ref" and any(n in PROTECTED for n in names)
+
+
+def _imports_history(sub: str, args: list[str]) -> bool:
+    """Commands that pull other commits into the current branch (a merge, in effect)."""
+    flags = {w for w in args if w.startswith("-")}
+    if sub in LOCAL_MERGERS:
+        return not CONTINUATIONS & flags
+    return sub == "pull" and not SYNC_SAFE & flags
+
+
 def moves_protected(command: str, cwd: str) -> bool:
     """Any local way to land unreviewed work on a protected branch (push is checked apart)."""
     for repo, sub, args, switched in git_commands(command, cwd):
-        flags = {w for w in args if w.startswith("-")}
-        names = [w.removeprefix("refs/heads/") for w in args if not w.startswith("-")]
-        short = {c for w in flags if not w.startswith("--") for c in w[1:]}
-        if sub in {"fetch", "pull"} and any(":" in w and _dest(w) in PROTECTED for w in names):
-            return True  # git fetch origin feat:main rewrites local main
-        if sub == "branch" and names:
-            moving = flags & {"--move", "--copy"} or short & {"m", "M", "c", "C"}
-            forcing = flags & {"--force"} or short & {"f", "M", "C"}
-            target = names[-1] if moving else names[0]  # `branch -f <name> [<start>]`
-            if (moving or forcing) and target in PROTECTED:
-                return True
-        if sub in {"checkout", "switch"} and (short & {"B", "C"} or "--force-create" in flags) \
-                and any(n in PROTECTED for n in names):
+        if _moves_ref(sub, args):
             return True
-        if sub == "update-ref" and any(n in PROTECTED for n in names):
-            return True
-        if sub in LOCAL_MERGERS or sub == "pull":
-            if CONTINUATIONS & flags or (sub == "pull" and SYNC_SAFE & flags):
-                continue
+        if _imports_history(sub, args):
             branch = _current(repo, switched)
             if branch is None or branch in PROTECTED:
                 return True
@@ -176,8 +197,8 @@ def main() -> int:
     if not found:
         return 0
     print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or change "
-          f"{'/'.join(sorted(PROTECTED))}. Do not retry or work around it: tell the user the exact "
-          "command (e.g. `! gh pr merge <n> --squash`) or to merge on GitHub themselves.",
+          f"{'/'.join(sorted(PROTECTED))}. Do not retry or work around it: ask the user to run "
+          "it in their own terminal (the gh wrapper asks them to confirm) or merge on GitHub.",
           file=sys.stderr)
     return 2
 
