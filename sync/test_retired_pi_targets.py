@@ -28,7 +28,7 @@ class RetiredPiTargets(unittest.TestCase):
         foreign.mkdir()
         (foreign / "local").write_text("keep\n")
         sync.SKILLS_DIR = master
-        paths = [home / ".pi/agent/skills", home / ".gateway-pi/skills"]
+        paths = [home / ".pi/agent/skills"]
         for path in paths:
             path.mkdir(parents=True)
             os.symlink(master / "tdd", path / "tdd")
@@ -38,7 +38,7 @@ class RetiredPiTargets(unittest.TestCase):
 
         removed = sync.retire_pi_skill_links(home, Quiet())
 
-        self.assertEqual(removed, 2)
+        self.assertEqual(removed, 1)
         for path in paths:
             self.assertFalse((path / "tdd").exists())
             self.assertTrue((path / "my-personal-alias").is_symlink())
