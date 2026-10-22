@@ -10,6 +10,7 @@ Blocks, for main/master/dev:
 - git push to them (bare, HEAD, --all/--mirror, globs, deletes)
 - on them: merge, cherry-pick, rebase, am, revert, and a pull that can merge
 - elsewhere: branch -f/-M/-C, checkout -B, switch -C, update-ref, fetch|pull x:main
+The same typed into a process (Devin write_to_process; unreadable key mixes block).
 The same inside sh -c, eval or xargs text (matched unblanked) and via a full git path.
 Allowed: git pull --ff-only|--rebase, and --abort/--quit/--continue/--skip.
 Out of scope: programs that call git or the API themselves, and git reset --hard.
@@ -46,6 +47,8 @@ MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 MCP_BRANCH_WRITERS = {"push_files", "create_or_update_file", "delete_file"}
 
 
+LINE_END = re.compile(r"<(?:CR|LF)>")
+TYPED_KEY = re.compile(r"<[A-Za-z][A-Za-z0-9-]*>")
 GIT_TIMEOUT = 1  # seconds per git probe; the hook's own budget is 5s
 # History-moving commands that import other work into the current branch.
 LOCAL_MERGERS = {"merge", "cherry-pick", "rebase", "am", "revert"}
@@ -159,6 +162,19 @@ def moves_protected(command: str, cwd: str) -> bool:
     return False
 
 
+def _typed_input(args: dict) -> str | None:
+    """Text Devin's write_to_process types into a shell; None when its keys cannot be read.
+
+    <CR>/<LF> end a line. Any other key token (<ESC>, <UP>, <C-c>) is fine alone, but beside
+    text it can rewrite the line, so the line that finally runs is unknowable.
+    """
+    text, keys = str(args.get("text_input") or ""), str(args.get("bytes_input") or "")
+    typed = LINE_END.sub("\n", keys)
+    if TYPED_KEY.search(typed) and (text or TYPED_KEY.sub("", typed).strip()):
+        return None
+    return f"{text}\n{TYPED_KEY.sub('', typed)}"
+
+
 def reason(payload: dict) -> str | None:
     tool = str(payload.get("tool_name", ""))
     args = payload.get("tool_input") or {}
@@ -172,7 +188,12 @@ def reason(payload: dict) -> str | None:
         if name == "pull_request_review_write" and str(inner.get("event", "")).upper() == "APPROVE":
             return "MCP review APPROVE"
         return None
-    command = args.get("command") or args.get("cmd") if isinstance(args, dict) else None
+    if tool == "write_to_process" and isinstance(args, dict):
+        command = _typed_input(args)
+        if command is None:
+            return "keystrokes typed into a process that cannot be read"
+    else:
+        command = args.get("command") or args.get("cmd") if isinstance(args, dict) else None
     if not isinstance(command, str):
         return None
     bare = command if SHELL_WRAPPER.search(command) else QUOTED.sub("''", command)

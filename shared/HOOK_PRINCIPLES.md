@@ -165,7 +165,7 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
 | Harness | Registration | Contract |
 |---|---|---|
 | Claude Code | `hooks.PreToolUse` in the active profile's `settings.json` | Matcher `^(Bash|mcp__.*)$`; command receives `tool_name` and `tool_input`; exit 2 blocks |
-| Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|mcp_call_tool|mcp__.*)$`; same command payload and exit 2 |
+| Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|write_to_process|mcp_call_tool|mcp__.*)$`; same command payload and exit 2 |
 | Codex, Cursor, OpenCode, pi, OMP, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
 
 Both supported registrations invoke `python3` with the absolute path to `~/.skills/hooks/merge-gate.py`.
