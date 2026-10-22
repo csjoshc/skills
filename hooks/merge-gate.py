@@ -10,6 +10,7 @@ Blocks, for main/master/dev:
 - git push to them (bare, HEAD, --all/--mirror, globs, deletes)
 - on them: merge, cherry-pick, rebase, am, revert, and a pull that can merge
 - elsewhere: branch -f/-M/-C, checkout -B, switch -C, update-ref, fetch|pull x:main
+- setting core.hooksPath (git -c, GIT_CONFIG_* env, git config), which skips the local hooks
 The same typed into a process (Devin write_to_process; unreadable key mixes block).
 The same inside sh -c, eval or xargs text (matched unblanked) and via a full git path.
 Allowed: git pull --ff-only|--rebase, and --abort/--quit/--continue/--skip.
@@ -49,6 +50,7 @@ MCP_BRANCH_WRITERS = {"push_files", "create_or_update_file", "delete_file"}
 
 LINE_END = re.compile(r"<(?:CR|LF)>")
 TYPED_KEY = re.compile(r"<[A-Za-z][A-Za-z0-9-]*>")
+GIT_CONFIG_ENV = re.compile(r"GIT_CONFIG_(?:KEY_\d+|PARAMETERS)=")
 GIT_TIMEOUT = 1  # seconds per git probe; the hook's own budget is 5s
 # History-moving commands that import other work into the current branch.
 LOCAL_MERGERS = {"merge", "cherry-pick", "rebase", "am", "revert"}
@@ -88,9 +90,14 @@ def git_commands(command: str, cwd: str):
         if at is None:
             continue
         rest, repo = words[at + 1:], cwd
+        for assignment in words[:at]:  # GIT_CONFIG_KEY_0=core.hooksPath git ...
+            if GIT_CONFIG_ENV.match(assignment):
+                yield repo, "-c", [assignment], switched
         while rest and rest[0].startswith("-"):  # git -C dir push ...
             if rest[0] == "-C" and len(rest) > 1:
                 repo = os.path.join(cwd, os.path.expanduser(rest[1]))
+            if rest[0] == "-c" and len(rest) > 1:
+                yield repo, "-c", [rest[1]], switched
             rest = rest[2:] if rest[0] in {"-C", "-c"} else rest[1:]
         if not rest:
             continue
@@ -98,6 +105,17 @@ def git_commands(command: str, cwd: str):
         if rest[0] in {"checkout", "switch"}:
             names = [w for w in rest[1:] if not w.startswith("-")]
             switched = names[0] if names else switched
+
+
+def overrides_hooks(command: str, cwd: str) -> bool:
+    """Setting core.hooksPath (-c, env or git config) points git at a hook-less directory."""
+    for _, sub, args, _ in git_commands(command, cwd):
+        if sub == "-c" and "core.hookspath" in args[0].lower():
+            return True
+        reading = {"--get", "--get-all", "--get-regexp", "--list", "-l"} & set(args)
+        if sub == "config" and not reading and any(a.lower() == "core.hookspath" for a in args):
+            return True
+    return False
 
 
 def _dest(spec: str) -> str:
@@ -206,6 +224,8 @@ def reason(payload: dict) -> str | None:
               or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
     if pushes_to_protected(command, cwd):
         return "git push to a protected branch"
+    if overrides_hooks(command, cwd):
+        return "overriding core.hooksPath"
     return "local git history change on a protected branch" if moves_protected(command, cwd) else None
 
 
