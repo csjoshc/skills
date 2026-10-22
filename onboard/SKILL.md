@@ -95,10 +95,12 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 0f states the rule; this step makes the repo enforce it.
 Do it when a commit or push is first attempted in a repo with a GitHub remote, after 0c (a hook framework can replace hooks), and stay silent when the guards are already present.
 
-1. Resolve the effective hooks directory with `git rev-parse --git-path hooks`; it honours `core.hooksPath` and worktrees.
+1. Resolve the effective hooks directory with `git -C <repo> rev-parse --path-format=absolute --git-path hooks`; it honours `core.hooksPath` and worktrees, and without the flag it prints a path relative to the repo.
 2. Check it holds executable `pre-push` and `reference-transaction` stubs that call the shared guards. The facts are in `~/bootstrap/BOM.md#git-guards`; do not restate them here.
-3. With no hook present, run `git init` in the repo: it re-applies the template and overwrites nothing.
+3. With the default hooks directory and no hook present, run `git init` in the repo: it re-applies the template and overwrites nothing.
    With a hook present, show the integration and ask first; put the guard ahead of any `exec` or `exit` and keep pre-commit's `.legacy` chaining.
+   When `core.hooksPath` points inside the repo (a tracked directory such as `.githooks`), `git init` fills `.git/hooks`, which git then ignores.
+   Copy the stubs from `~/.config/git/template/hooks/` into that directory as local files and list them in `.git/info/exclude`; never commit them, because they fail closed for teammates who lack the shared guards.
 4. Report it in one line.
 
 ---
