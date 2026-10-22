@@ -430,7 +430,7 @@ def retire_pi_skill_links(home: Path, logger: Logger) -> int:
     """Remove only shared-store symlinks from retired Pi skill directories."""
     removed = 0
     skills_root = SKILLS_DIR.resolve()
-    for directory in (home / ".pi/agent/skills", home / ".gateway-pi/skills"):
+    for directory in (home / ".pi/agent/skills",):
         if not directory.is_dir() or directory.is_symlink():
             continue
         for entry in directory.iterdir():
