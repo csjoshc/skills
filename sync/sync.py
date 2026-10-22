@@ -48,8 +48,8 @@ IS_WINDOWS = OS_TYPE == OS.WINDOWS
 
 HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
-# A whole-store link hides local OMP skills; Codex also needs .system.
-PER_SKILL_LINK_PLATFORMS = {"codex", "omp"}
+# A whole-store link hides local OMP skills and root docs (Devin); Codex also needs .system.
+PER_SKILL_LINK_PLATFORMS = {"codex", "omp", "devin"}
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -115,6 +115,13 @@ PLATFORMS = {
         skills_symlink=HOME / ".omp" / "agent" / "skills",
         permission_type="trust",
         platform_key="omp",
+    ),
+    # Devin CLI reads ~/.config/devin/skills; its ".claude" import does not cover skills.
+    "devin": PlatformConfig(
+        name="Devin",
+        skills_symlink=HOME / ".config" / "devin" / "skills",
+        permission_type="trust",
+        platform_key="devin",
     ),
     "copilot": PlatformConfig(
         name="Copilot",

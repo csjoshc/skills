@@ -10,6 +10,7 @@ Target the **project root** the user is onboarding (usually workspace root). **D
 **Refuse these targets.** Do not onboard `~` or `~/.skills`, or write `AGENTS.md`, `.cursorrules` or `STANDARDS.md` there.
 `~/AGENTS.md` is the single global memory file; the other tools' global files are symlinks to it, and project templates must never overwrite it.
 If the resolved root equals `$HOME` or sits under `~/.skills`, stop and ask for a real project path.
+Their git guards are reconciled by `/sync hooks`, not here.
 
 Memory needs no per-repo setup (rules in `~/AGENTS.md`, files made on demand by the `memory` skill).
 Don't add `.memory.md` or memory entries to a repo's `.gitignore`, and don't create memory files during onboarding.
@@ -86,6 +87,19 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 
 1. Merge the **Git workflow block** (see section 1) into `AGENTS.md`, inserted after the stack preamble; dedupe if an equivalent rule already exists.
 2. The rule holds even when a direct push would technically succeed (branch protection may not be configured to block it) — that is not permission to use it.
+
+---
+
+## 0g. Git guards (required, once per repo)
+
+0f states the rule; this step makes the repo enforce it.
+Do it when a commit or push is first attempted in a repo with a GitHub remote, after 0c (a hook framework can replace hooks), and stay silent when the guards are already present.
+
+1. Resolve the effective hooks directory with `git rev-parse --git-path hooks`; it honours `core.hooksPath` and worktrees.
+2. Check it holds executable `pre-push` and `reference-transaction` stubs that call the shared guards. The facts are in `~/bootstrap/BOM.md#git-guards`; do not restate them here.
+3. With no hook present, run `git init` in the repo: it re-applies the template and overwrites nothing.
+   With a hook present, show the integration and ask first; put the guard ahead of any `exec` or `exit` and keep pre-commit's `.legacy` chaining.
+4. Report it in one line.
 
 ---
 
@@ -202,6 +216,7 @@ context exclusions, and operational rules.
 - [ ] Cross-tool shims (`GEMINI.md`, `.cursorrules`, etc.) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a filtered copy of `~/.skills` for Claude Desktop (the `rsync` command in sync/skills.md, run from the project root). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
+- [ ] The effective hooks directory has the `pre-push` and `reference-transaction` guard stubs (0g).
 - [ ] `.worktrees/` (or existing `worktrees/`) is gitignored; `AGENTS.md` includes the Parallel work (git worktrees) block; [`WORKTREES.md`](WORKTREES.md) is the operator playbook.
 
 ---
