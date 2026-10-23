@@ -22,7 +22,10 @@ const SHELL = new Set(["shell", "bash"])
 // the gate then matches its known suffixes and ignores unrelated tools.
 function gateName(tool: string): string {
   if (SHELL.has(tool)) return "Bash"
-  return tool.startsWith("mcp__") ? tool : `mcp__${tool}`
+  // Code mode and MCP servers have both shown `server.tool` and `server_tool`; the gate
+  // matches underscore suffixes, so flatten dots before qualifying the name.
+  const flat = tool.replaceAll(".", "_")
+  return flat.startsWith("mcp__") ? flat : `mcp__${flat}`
 }
 
 /** Block reason from the gate, or null to allow. */

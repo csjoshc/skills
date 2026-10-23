@@ -57,6 +57,8 @@ def test_allows_and_prints_nothing(tmp_path: Path, command: str) -> None:
     {"tool_name": "mcp__github__merge_pull_request", "tool_input": {}},
     {"tool_name": "mcp__github__pull_request_review_write",
      "tool_input": {"event": "APPROVE"}},
+    # Codex 0.163 namespaces MCP tools as mcp__<server>__<tool>; verified live.
+    {"tool_name": "mcp__ghstub__merge_pull_request", "tool_input": {"pull_number": 1}},
 ])
 def test_denies_with_the_gate_reason(tmp_path: Path, payload: dict) -> None:
     proc = run(sandbox(tmp_path), payload)
@@ -66,6 +68,15 @@ def test_denies_with_the_gate_reason(tmp_path: Path, payload: dict) -> None:
     assert out["permissionDecision"] == "deny"
     assert out["permissionDecisionReason"].startswith("BLOCKED [merge-gate]: ")
     assert len(proc.stdout.strip().splitlines()) == 1
+
+
+@pytest.mark.parametrize("payload", [
+    {"tool_name": "mcp__ghstub__get_pull_request", "tool_input": {"pull_number": 1}},
+    {"tool_name": "Read", "tool_input": {"file_path": "README.md"}},
+])
+def test_allows_other_mcp_and_builtin_tools(tmp_path: Path, payload: dict) -> None:
+    proc = run(sandbox(tmp_path), payload)
+    assert proc.returncode == 0 and proc.stdout == ""
 
 
 def test_missing_gate_denies(tmp_path: Path) -> None:

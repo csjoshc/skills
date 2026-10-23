@@ -7,6 +7,7 @@ import { join } from "node:path"
 import { pathToFileURL } from "node:url"
 
 const ADAPTER = join(import.meta.dir, "merge-gate.ts")
+const GATE = join(import.meta.dir, "..", "..", "merge-gate.py")
 const originalPath = process.env.PATH
 const roots: string[] = []
 
@@ -78,6 +79,26 @@ describe("merge gate", () => {
     const { hook } = await load(RECORD)
     hook({ tool: "github_merge_pull_request", input: {} })
     expect(JSON.parse(readFileSync(path, "utf8")).tool_name).toBe("mcp__github_merge_pull_request")
+  })
+
+  // Live OpenCode 2.0.32 code mode emitted `ghstub_merge_pull_request`; keep the dotted
+  // shape working too so a server rename does not open a hole.
+  test("flattens a dotted code-mode MCP name", async () => {
+    const path = recorder()
+    const { hook } = await load(RECORD)
+    hook({ tool: "ghstub.merge_pull_request", input: { pull_number: 1 } })
+    expect(JSON.parse(readFileSync(path, "utf8")).tool_name).toBe("mcp__ghstub_merge_pull_request")
+  })
+
+  test("blocks a code-mode MCP merge through the real gate", async () => {
+    const { hook } = await load(readFileSync(GATE, "utf8"))
+    expect(call(hook, { tool: "ghstub_merge_pull_request", input: { pull_number: 1 } }))
+      .toThrow("MCP merge_pull_request")
+  })
+
+  test("allows a code-mode MCP read through the real gate", async () => {
+    const { hook } = await load(readFileSync(GATE, "utf8"))
+    expect(call(hook, { tool: "ghstub_get_pull_request", input: { pull_number: 1 } })).not.toThrow()
   })
 
   test("does not mistake an ordinary tool for a shell", async () => {
