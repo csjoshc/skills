@@ -71,8 +71,18 @@ Emit `REVIEW-LEDGER` YAML. Compute counts mechanically from the
   - MEDIUM if validator passes with warnings.
   - LOW otherwise.
 
+### Disposition (pr-review only)
+
+Give every VALIDATED finding a disposition before report → post. FIX
+(mechanical, unambiguous, localized blast radius) is applied to the working
+tree with `pr-fix` safety rules and collected in a `REVIEW-FIXED` block;
+COMMENT (open questions only) is carried forward to post/report. See
+pr-review → Fix-first disposition. `cleanup` has no disposition step; it
+never writes to GitHub and reports findings as-is.
+
 ### Post (pr-review only)
 
+Only COMMENT-disposition findings reach this phase.
 Before any `gh api` call, run `reviews/validate.py --transcript <transcript>`
 on the assembled output. Only post if exit code is 0. Emit final
 `REVIEW-GATE: report → post. Criteria: [validator exit 0: met]. Proceeding: yes.`

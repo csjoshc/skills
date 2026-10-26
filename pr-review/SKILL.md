@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Reviews a pull request or an unpushed local branch with specialist lenses (bugs, standards, errors, tests, scope) and reports evidence-backed findings, posting them only for a PR. Use when reviewing a PR, posting review comments, or reviewing local changes before pushing."
+description: "Reviews a pull request or an unpushed local branch with specialist lenses (bugs, standards, errors, tests, scope), applies auto-fixable findings to the working tree, and leaves comments only for open questions. Use when reviewing a PR, posting review comments, or reviewing local changes before pushing."
 ---
 
 # pr-review
@@ -20,6 +20,7 @@ audits not tied to a change, use `cleanup`.
 - Workflow summary
 - Output contracts
 - Mandatory companions
+- Fix-first disposition
 - Scope boundary
 - Output rules
 
@@ -82,9 +83,11 @@ Done when it prints `side-pane: <where>`; on exit 1, give the user the printed c
    at `phase-1 → report`).
 7. Run `python3 ~/.skills/reviews/validate.py --transcript <draft>` (add
    `--local` in local mode); exit 0 required before posting or reporting.
-8. PR mode: post inline comments and a summary using
-   `reference/review-operations.md`. Local mode: print findings in chat as
-   `file:line` with the suggested fix, and post nothing.
+8. Disposition (see Fix-first disposition): apply auto-fixable findings to
+   the working tree; carry only open questions forward as comments.
+9. PR mode: post the remaining open-question comments and a summary using
+   `reference/review-operations.md`. Local mode: print open questions in chat
+   as `file:line` with the suggested fix, and post nothing.
 
 Do not expand the full lens definitions or posting templates here. Load the
 companions below.
@@ -174,6 +177,37 @@ req.body.user_id  →  used in `WHERE id = ${user_id}`
 | [`~/.skills/shared/SKILL_NOISE_TERMS.md`](../shared/SKILL_NOISE_TERMS.md) | Skill-internal terms that must not appear in committed artifacts — flag as `scope-leak` | When reviewing comments, CI YAML, Makefile, PR body |
 
 ---
+
+## Fix-first disposition
+
+The reviewer commits fixes; it does not just leave comments. A pull request
+full of comments is more human work; a reviewed artifact with the fixes
+already applied is less. Comments are for genuine open questions, not for
+work the reviewer could do itself.
+
+After the ledger, give every VALIDATED finding a disposition:
+
+- **FIX (default):** mechanical or unambiguous changes with a localized blast
+  radius: the lens's suggested edit is clearly correct and behavior-preserving
+  (banned API, import shape, null guard, dead code, naming, obvious bug with a
+  single correct fix). Apply it to the working tree using `pr-fix`'s safety
+  rules (one at a time, minimal diff, verify after each). Collect these in a
+  `REVIEW-FIXED` block: `file:line`, the finding, and the commit/diff.
+- **COMMENT:** open questions only: a behavior change, an ambiguous intent, a
+  design trade-off, a one-way-door or high-blast-radius change, or anything
+  where more than one fix is defensible. These are posted (PR mode) or reported
+  (local mode).
+
+Mode rules:
+
+- **Branch checked out locally (local mode, or a PR branch in a worktree):**
+  apply FIX findings and commit locally. Never push; the user reviews and
+  pushes. Report the `REVIEW-FIXED` block plus any COMMENT findings in chat.
+- **PR branch not checked out or not writable by you:** every finding becomes
+  a COMMENT; note in the summary which ones would otherwise have been fixed.
+
+When unsure whether a finding is FIX or COMMENT, treat it as COMMENT. The
+validator gate still runs on whatever is posted.
 
 ## Scope Boundary
 
