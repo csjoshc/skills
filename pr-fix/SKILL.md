@@ -96,3 +96,10 @@ no prose after it, and put notes in the Comment, Status or Reason cells.
 
 Do NOT commit or push automatically. Let the user review the changes
 and decide when to commit.
+
+## Close the loop
+
+After the summary, if any comment was a repeat of something review has
+flagged before, or was mechanical (a fixed pattern a check could catch),
+add one line: `Suggest /retro on this session to convert it into a check
+or standard so it is not written twice.` Never run `/retro` yourself.
