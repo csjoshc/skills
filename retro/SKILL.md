@@ -35,6 +35,23 @@ Keep AGENTS.md to navigation pointers and rules every session needs.
 Standards are read at review time, so they carry the rules review enforces.
 Before adding a hook, apply `~/.skills/shared/HOOK_PRINCIPLES.md`.
 
+## Mechanical gate
+
+Never write the same comment twice. A mechanical finding is not resolved by
+fixing the one instance — it is resolved only when a deterministic check will
+catch the next instance. For each mechanical finding, the outcome must be one
+of, in order of preference:
+
+1. **Checked** — a lint rule, commit hook, CI job, or audit-script assertion
+   now fails on the pattern. Prove it: run the check and show it flag a seeded
+   instance (red), then pass once fixed (green).
+2. **Deferred** — the user explicitly accepts no check, with a one-line reason
+   recorded in the finding (e.g. "too rare to be worth a rule").
+
+"Noted" and "fixed by hand" are not valid outcomes for a mechanical finding.
+Judgement-call findings are exempt: they go to a standards file and are
+enforced at review time, not by a check.
+
 ## Output
 
 List findings by severity, highest first.
