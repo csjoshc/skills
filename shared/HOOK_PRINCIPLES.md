@@ -129,7 +129,9 @@ is fine" is not an override.
 The owner merges and approves in their own terminal, where the `gh` wrapper asks them to confirm, or in the GitHub UI.
 What it blocks and what stays out of scope is listed in the `merge-gate.py` docstring; the code is the single source.
 Land work by pushing a branch, opening a PR and letting the owner merge it; `~/.skills` has no exception.
-On a block the agent asks the owner to run the command themselves and does not retry or work around the gate.
+On a block the agent stages the command for the owner with `~/.skills/shared/scripts/side-pane.sh stage '<cmd>'` and shows it in a code block.
+That call types the command without Enter, so it is the one sanctioned retry; the gate allows it only as a lone single-quoted call, and `side-pane.sh` refuses multi-line text.
+Any other attempt to run the command is a workaround.
 Git probes inside the gate time out at 1s (the hook's budget is 5s), and a timeout blocks.
 
 ## Guard sync

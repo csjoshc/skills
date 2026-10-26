@@ -8,6 +8,10 @@ set -euo pipefail
 mode=${1:-} cmd=${2:-}
 case $mode in run|stage) ;; *) echo "usage: side-pane.sh run|stage <cmd>" >&2; exit 2 ;; esac
 [ -n "$cmd" ] || { echo "side-pane: empty command" >&2; exit 2; }
+# A typed newline is an Enter, so staged text must be one line or it would run unreviewed.
+if [ "$mode" = stage ] && [[ $cmd == *$'\n'* || $cmd == *$'\r'* ]]; then
+  echo "side-pane: stage takes a single line" >&2; exit 2
+fi
 sh=${SHELL:-/bin/sh}
 held="$cmd; exec $(printf %q "$sh")"
 
