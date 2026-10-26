@@ -36,7 +36,8 @@ During `/onboard`, ensure:
 ## Parallel work (git worktrees)
 
 - **Do not** run two write agents in the same working tree. `git checkout` / `git switch` in one session moves `HEAD` for every session sharing that directory.
-- Prefer one linked worktree per concurrent branch under `.worktrees/<slug>/` (must be gitignored). Keep the primary checkout on `main` (or one stable integration branch).
+- Prefer one linked worktree per concurrent branch under `.worktrees/<slug>/` (must be gitignored), or a `treehouse get` lease.
+- The primary checkout stays on `main`: never switch, checkout or `gh pr checkout` it off `main` without the user's approval.
 - Bind each write session's cwd / workspace root to its worktree path — not the primary checkout.
 - Write subagents must receive an absolute worktree path and must not `checkout` / `switch` in the parent tree. Read-only explore/review may share the parent tree.
 - **No exception for quick, one-off, or corrective tasks.** A single `git checkout`/`git switch`/`git reset --hard` in the shared primary checkout is exactly as disruptive whether the task is large or small. If a task needs a different branch checked out, even briefly, cut a worktree for it.
@@ -93,8 +94,8 @@ Two write sessions both rooted at `<repo>/` will still collide even if worktrees
 
 ### Keep primary clean
 
-- Primary checkout stays on `main` (or one declared integration branch).
-- Feature / fix / experiment work happens only inside `.worktrees/<slug>/`.
+- Primary checkout stays on `main` (or one declared integration branch); never switch, checkout or `gh pr checkout` it off that branch without the user's approval.
+- Feature / fix / experiment work happens only inside `.worktrees/<slug>/` or a `treehouse get` lease.
 - Merge or rebase into the integration branch **after** each worktree branch is ready; resolve conflicts intentionally.
 
 ### List / remove

@@ -101,6 +101,8 @@ Removed hooks and where their intent lives now:
 
 Advisory hooks that only print and exit 0 are not shown to the model on
 some harnesses. Don't add one; make it block, or make it a skill step.
+This covers harness hooks only: a git hook's stderr, such as the `post-checkout`
+main-guard warning, reaches the agent in the tool output.
 
 Anti-examples (do NOT add these):
 
@@ -145,7 +147,7 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
    Use the approved checkout, not an unmerged branch or a copied wrapper in the skills repo.
 2. Inventory installed harnesses from `shared/SYMLINK_MAP.md`, plus other harnesses the owner uses, including OMP and VS Code/Copilot.
    Record the active profile, config source and shell PATH for each; skill discovery does not establish hook support.
-3. Audit the shared wrapper, Git template and `init.templateDir` against bootstrap's BOM.
+3. Audit the shared wrapper, Git template and `init.templateDir` against bootstrap's BOM, including every stub it lists.
    Report the current repository's effective hooks too, but install into other repositories through `/onboard` 0g.
    Reconcile `~/.skills` and `~/bootstrap` here by default, since `/onboard` refuses both as targets.
    Check `core.hooksPath` first, and preserve other hooks; an existing `exec` must not make the guard unreachable.
