@@ -66,6 +66,23 @@ check "a stale unpushed branch is left alone" "$(! grep -q 'origin/main...old' "
 WEZTERM_PANE='' TMUX='' ITERM_SESSION_ID='' fire
 check "no supported terminal, nothing opened" "$([[ $(opens) == 0 ]]; echo $?)"
 
+# A run killed while holding the lock (the harness exits right after Stop) must not wedge later runs.
+: >"$STUB_LOG" && rm -rf "$DIFF_PANE_STATE" && mkdir -p "$DIFF_PANE_STATE/lock"
+touch -t "$(date -v-5M +%Y%m%d%H%M.%S)" "$DIFF_PANE_STATE/lock"
+commit "$tmp/wt" e
+fire
+check "a stale lock is cleared" "$([[ $(opens) == 1 ]]; echo $?)"
+mkdir "$DIFF_PANE_STATE/lock" && commit "$tmp/wt" f
+fire
+check "a fresh lock is respected" "$([[ $(opens) == 1 ]]; echo $?)"
+rmdir "$DIFF_PANE_STATE/lock"
+
+# The background run must outlive the hook process, in its own session.
+: >"$STUB_LOG" && commit "$tmp/wt" g
+echo '{}' | (cd "$tmp/repo" && DIFF_PANE_SYNC='' "$hook")
+for _ in $(seq 50); do [[ $(opens) == 1 ]] && break; sleep 0.1; done
+check "background run finishes after the hook returns" "$([[ $(opens) == 1 ]]; echo $?)"
+
 out=$(echo '{}' | (cd "$tmp" && "$hook"); echo "rc=$?")
 check "outside a repo it exits 0 quietly" "$([[ $out == rc=0 ]]; echo $?)"
 
