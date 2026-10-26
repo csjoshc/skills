@@ -75,7 +75,7 @@ Eight phases. Read [references/workflow-phases.md](references/workflow-phases.md
 | 2.5 Fan-out | Partition large diffs (>~100 files, >3 top-level dirs, >3 commits, >~10k LOC) across parallel subagents returning one fixed envelope; parent re-merges. Skip for small diffs | Each envelope has "what this didn't cover" resolved |
 | 3 Analytical framework | Answer the identity, decomposition, novel-pattern, reuse, NFR and merge-risk questions; split app-specific from platform ride-along | Every planned doc traces to an answer |
 | 4 Silent repo init | Optional: `git init`, no remote, output folder gitignored first | Remote list empty |
-| 5 Intermediates | Write `.docs/` set: L0, L1 (via `/reframe architect`), L2, topics, diagrams, README last | Generation order followed |
+| 5 Intermediates | Write `.docs/` set: L0, L1, L2, topics, diagrams, README last | Generation order followed |
 | 6 Q&A loop | `questions.md` to `answers.md`, code-cited, gaps flagged "design gap — not implemented" | A round yields no new gaps |
 | 7 Synthesize | One fresh Confluence page from the intermediates, `/stop-slop`ed, template [templates/confluence-design-page.md](templates/confluence-design-page.md) | Not a concatenation; every gap traces to `answers.md` |
 | 8 Verify | Gitignore fires, every .mmd has .svg, README complete, page renders | Checklist passes |
@@ -93,7 +93,7 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 | **Confluence design page** (final) | [templates/confluence-design-page.md](templates/confluence-design-page.md) | Q&A vernacular, `/stop-slop`ed | Identity + one-sentence framing; fork-in-one-screen table; request flow; novel pattern; mechanics with surprises; numbers table; numbered gaps; pointer table |
 | `README.md` | [templates/README.md](templates/README.md) | Neutral | Reading-by-audience table; one-screen diff summary; "What was written / not written" |
 | `L0-executive-summary.md` | [templates/L0-executive-summary.md](templates/L0-executive-summary.md) | Exec | Identity paragraph; Problem · Constraints · Solution table; "What changed vs upstream" 3-column table (PR / files / what it does); "Where to go from here" |
-| `L1-technical-overview.md` | [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Architect (via `/reframe`) | YAML frontmatter + `## Slide:` sections per reframe contract; thesis; core-tension table; component-boundaries diagram; reuse map; NFRs; migration considerations; parking lot |
+| `L1-technical-overview.md` | [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Architect | Thesis; core-tension table; component-boundaries diagram; reuse map; NFRs; migration considerations; parking lot |
 | `L2-deep-dive.md` | [templates/L2-deep-dive.md](templates/L2-deep-dive.md) | Engineer | Per-PR section with sub-section per logical commit; file table with additions/deletions; key code snippets where the design choice isn't obvious from the diff |
 | `topics/<name>.md` | [templates/topic.md](templates/topic.md) | Engineer | Single-purpose; lead with "where it lives" + "why it exists"; diagram link if applicable; "see also" tail |
 | `questions.md` / `answers.md` | none (freeform) | Interrogative / verdict | Questions verbatim; answers cite file:line; gaps flagged "design gap — not implemented"; cross-cutting gaps numbered with active/latent status + confirm check |
@@ -103,8 +103,7 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 - **Output folder is gitignored by default.** Prepend the output folder (e.g. `.docs/`) to the repo's `.gitignore` *before* the initial commit if doing a silent-repo init, so it never gets tracked.
 - **Don't invent commit metadata.** If a PR body says "three commits inside this squash", honor it. Don't synthesize a decomposition the maintainer didn't endorse.
 - **Distinguish app-specific from platform ride-along.** Single squash commits frequently carry both. Failing to split them produces an L2 that misleads readers about what's actually patent-search-specific (or whatever the app is).
-- **L1 goes through `/reframe`.** Don't write the architect-audience layer from scratch — that's what `/reframe architect` exists for. Hand it the assembled source material in one call.
-- **No silent information loss.** Anything cut from a doc for audience reasons goes in that doc's parking-lot (mirrors the `/reframe` contract).
+- **No silent information loss.** Anything cut from a doc for audience reasons goes in that doc's parking lot, with where it lives instead.
 - **Don't trust `gh api compare` cross-fork.** It can return `status: identical` for branches that differ. Always verify with the head's own commit history.
 - **The Confluence page is a synthesis, not a concatenation.** Never paste an intermediate onto the page wholesale. Every section is rewritten for the one-page read, and every claim on it traces to an intermediate.
 - **Gaps come from the Q&A loop.** Don't write the known-gaps section from intuition; write it from the flagged "design gap — not implemented" answers in `answers.md`. If the loop hasn't run, run it first.
@@ -118,7 +117,7 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 | [../shared/CONFLUENCE_EDITING.md](../shared/CONFLUENCE_EDITING.md) | Publishing onto a Confluence page that already has content (Phase 7) |
 | [templates/README.md](templates/README.md) | Writing the index page |
 | [templates/L0-executive-summary.md](templates/L0-executive-summary.md) | Writing the exec layer |
-| [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Feeding into `/reframe architect` |
+| [templates/L1-technical-overview.md](templates/L1-technical-overview.md) | Writing the architect layer |
 | [templates/L2-deep-dive.md](templates/L2-deep-dive.md) | Writing the engineer file-by-file layer |
 | [templates/topic.md](templates/topic.md) | Each topic breakout |
 | [references/workflow-phases.md](references/workflow-phases.md) | Executing any phase in detail |
@@ -128,7 +127,6 @@ The Confluence page is the deliverable; each intermediate follows a defined shap
 
 | Step | Skill |
 |---|---|
-| Architect-layer reframing | `/reframe architect <assembled-source>` (produces L1) |
 | Diagram authoring | `/diagram` for fresh diagrams; this skill embeds the conventions inline |
 | Diagram embeds on the final page | `/confluence` after publishing |
 | Final prose polish | `/stop-slop` — mandatory on the Confluence page, per-file on intermediates |

@@ -34,7 +34,7 @@ Before reporting done:
 
 - [ ] Output folder is gitignored and `git status` is clean
 - [ ] L0 fits on one screen and leads with the identity paragraph
-- [ ] L1 has YAML frontmatter, `## Slide:` sections, a parking-lot appendix, and at least one diagram
+- [ ] L1 follows the template sections, ends with a parking lot, and has at least one diagram
 - [ ] L2 has one section per divergent commit, with app-specific vs platform ride-along sub-sections where applicable
 - [ ] At least one topic breakout exists for the novel architectural pattern (the structurally new thing, not just the biggest file group)
 - [ ] Each diagram has a `.mmd` source and a rendered `.svg`

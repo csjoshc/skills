@@ -100,7 +100,6 @@ Invoke on outputs where the *user* doesn't need flowing prose:
 
 - `pr-review` multi-agent summary
 - `cleanup` mechanical + subjective findings
-- `reframe` engineer or architect mode outputs
 - `pr-fix` summary table
 - `consolidate-memory` index rebuild
 - Any agent-internal thought trace before a final answer

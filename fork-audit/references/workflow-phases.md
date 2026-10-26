@@ -109,7 +109,7 @@ The "what this didn't cover" field is the most important — it lets the parent 
 
 1. Read all subagent envelopes side-by-side.
 2. Cross-reference findings to spot duplicates and contradictions; pick one canonical statement per fact.
-3. Build the **L1 source material** by stitching the subagent findings into the structure the architect-audience reframe expects (component boundaries, novel pattern, reuse map, NFRs, risks, migration). Hand that bundle to `/reframe architect` in a single call.
+3. Build **L1** by stitching the subagent findings into the L1 template sections (component boundaries, novel pattern, reuse map, NFRs, risks, migration).
 4. Build **L2 per-commit / per-domain sections** by pulling each subagent's slice into its template position.
 5. **Topic breakouts** get one page each, drafted by whichever subagent flagged the novel pattern strongest; the parent edits for cross-references.
 6. Keep the subagent envelopes around (in `.docs/.scratch/` or memory) until the layered docs are written and verified — they're the audit trail.
@@ -164,7 +164,7 @@ Create the layered intermediate set. Default folder: `.docs/` at repo root, adde
 .docs/
 ├── README.md                       # index — see templates/README.md
 ├── L0-executive-summary.md         # ~1 page, exec/product — see templates/L0-executive-summary.md
-├── L1-technical-overview.md        # ~5 pages, architect — VIA /reframe architect, see templates/L1-technical-overview.md
+├── L1-technical-overview.md        # ~5 pages, architect — see templates/L1-technical-overview.md
 ├── L2-deep-dive.md                 # file-by-file walkthrough, engineer — see templates/L2-deep-dive.md
 ├── questions.md                    # Q&A loop input — see Phase 6
 ├── answers.md                      # Q&A loop output — code-cited answers + design gaps
@@ -180,7 +180,7 @@ Create the layered intermediate set. Default folder: `.docs/` at repo root, adde
 
 **Generation order:**
 1. Write L0 directly (exec voice, problem/constraint/solution table, 1-paragraph identity, "what changed" table, "where to go from here" navigation)
-2. Compose source material for L1 → invoke `/reframe architect <source>` → save its output as `L1-technical-overview.md`
+2. Write L1 from `templates/L1-technical-overview.md` (architect voice: tradeoffs and boundaries, no code; parking lot for anything cut)
 3. Generate the three Mermaid diagrams (see Diagram conventions below); render each with `node ~/.skills/diagram/scripts/render.mjs X.mmd --for confluence --theme light --out X.svg`
 4. Write L2 (per-PR sections; for each, sub-sections for app-specific vs platform-ride-along; tables of files with `additions/deletions` from the PR metadata)
 5. Write topic breakouts (one per `topics/`)
