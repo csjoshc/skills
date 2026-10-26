@@ -63,7 +63,7 @@ Re-render: `node ~/.skills/diagram/scripts/render.mjs <file>.mmd --for confluenc
 
 - ✅ `README.md` (this file) — index and reading guide
 - ✅ `L0-executive-summary.md` — product/exec summary
-- ✅ `L1-technical-overview.md` — architect-audience reframe (via `/reframe` contract)
+- ✅ `L1-technical-overview.md` — architect-audience overview
 - ✅ `L2-deep-dive.md` — engineer-audience file-by-file walkthrough
 - ✅ `topics/*.md` — single-topic breakouts
 - ✅ `diagrams/*.{mmd,svg}` — Mermaid sources + rendered SVGs

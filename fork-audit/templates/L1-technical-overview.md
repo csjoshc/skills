@@ -11,43 +11,36 @@ sources:
     url: "https://github.com/<owner>/<repo>/tree/<sha>"
   - label: "PR #<n> — <title>"
     url: "https://github.com/<owner>/<repo>/pull/<n>"
-diagrams:
-  - path: "./diagrams/l1-system-context.mmd"
-    slide: "Component Boundaries"
-  - path: "./diagrams/l1-data-flow.mmd"
-    slide: "Novel Pattern — Data Flow"
-  - path: "./diagrams/l1-request-flow.mmd"
-    slide: "Primary Request Flow"
 ---
 
 ## Contents
 
-- Slide: Thesis
-- Slide: The Core Tension
-- Slide: Context
-- Slide: Component Boundaries
-- Slide: Tech Stack
-- Slide: Novel Pattern — <name>
-- Slide: Primary Request Flow
-- Slide: Base Template / Platform Reuse Map
-- Slide: CI/CD Posture
-- Slide: NFRs and Operational Notes
-- Slide: Architectural Risks
-- Slide: Migration Considerations
-- Slide: Parking Lot
+- Thesis
+- The Core Tension
+- Context
+- Component Boundaries
+- Tech Stack
+- Novel Pattern — <name>
+- Primary Request Flow
+- Base Template / Platform Reuse Map
+- CI/CD Posture
+- NFRs and Operational Notes
+- Architectural Risks
+- Migration Considerations
+- Parking Lot
 
 
-## Slide: Thesis
+## Thesis
 
 <One paragraph stating the architectural shape of the fork. Where does the fork add structurally? Where does it reuse upstream? What is the *one* novel pattern that justifies a topic breakout?>
 
-## Slide: The Core Tension
+## The Core Tension
 
 | Tension | What pushed it | How the fork resolved it |
 |---|---|---|
 | <vs> | <forcing function> | <design choice> |
 
-## Slide: Context
+## Context
 
 | | Upstream | Fork |
 |---|---|---|
@@ -60,7 +53,7 @@ diagrams:
 | `containers/` | … | … |
 | `.github/workflows/` | … | … |
 
-## Slide: Component Boundaries
+## Component Boundaries
 
 ![Component Boundaries](./diagrams/l1-system-context.svg)
 
@@ -70,7 +63,7 @@ Source: [./diagrams/l1-system-context.mmd](./diagrams/l1-system-context.mmd)
 - **Not used here**: <list upstream surfaces the fork bypasses>
 - **Newly added**: <list new modules / surfaces>
 
-## Slide: Tech Stack
+## Tech Stack
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -80,7 +73,7 @@ Source: [./diagrams/l1-system-context.mmd](./diagrams/l1-system-context.mmd)
 | AI provider | … | … |
 | … | … | … |
 
-## Slide: Novel Pattern — <name>
+## Novel Pattern — <name>
 
 ![<name>](./diagrams/l1-data-flow.svg)
 
@@ -90,7 +83,7 @@ Source: [./diagrams/l1-data-flow.mmd](./diagrams/l1-data-flow.mmd)
 |---|---|---|---|
 | … | … | … | … |
 
-## Slide: Primary Request Flow
+## Primary Request Flow
 
 ![Primary Request Flow](./diagrams/l1-request-flow.svg)
 
@@ -98,40 +91,40 @@ Source: [./diagrams/l1-request-flow.mmd](./diagrams/l1-request-flow.mmd)
 
 <Numbered walkthrough of one canonical end-to-end request — what crosses each boundary and why.>
 
-## Slide: Base Template / Platform Reuse Map
+## Base Template / Platform Reuse Map
 
 | Upstream primitive | Used by fork | How |
 |---|---|---|
 | `<module.X>` | Yes / No / Vestigial | <one phrase> |
 | … | … | … |
 
-## Slide: CI/CD Posture
+## CI/CD Posture
 
 | Workflow | Status | Triggers | Scope |
 |---|---|---|---|
 | `<workflow>.yml` | Added / Removed / Modified | <triggers> | <scope> |
 
-## Slide: NFRs and Operational Notes
+## NFRs and Operational Notes
 
-- **Throughput** — <numbers if known, "METRICS NEEDED" otherwise>
+- **Throughput** — <numbers if known, `[TK: what to measure]` otherwise>
 - **Concurrency** — <coordination posture>
 - **Storage caps** — <limits>
 - **Recoverability** — <idempotency / cascade rules>
 - **Audit / logging** — <where it lands>
 
-## Slide: Architectural Risks
+## Architectural Risks
 
 | Risk | Severity | Mitigation in place | Suggested follow-up |
 |---|---|---|---|
 | … | Low/Med/High | … | … |
 
-## Slide: Migration Considerations
+## Migration Considerations
 
 - **Likely conflict surfaces** when merging from upstream: …
 - **No-conflict surfaces**: …
 - **Pulling vs rebasing** — given the merge style on this repo, … is safer because …
 
-## Slide: Parking Lot
+## Parking Lot
 
 - **<topic>** — covered in L2 — Deep Dive (`./L2-deep-dive.md`) instead (engineer audience).
 - **<topic>** — covered in [topics/<name>.md](./topics/<name>.md).

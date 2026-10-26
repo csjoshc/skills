@@ -209,8 +209,6 @@ replaces every variable with the palette's literal value. Two reasons:
 
 - **`confluence`** — consumer. Use this skill to render `.mmd` →
   `.svg`; then use `confluence` to upload + embed in Confluence.
-- **`reframe`** — producer. When reframe generates diagrams, it writes
-  `.mmd` that follow this skill's conventions.
 - **`docs`** — producer. Diagrams in docs should follow these
   conventions for consistency.
 

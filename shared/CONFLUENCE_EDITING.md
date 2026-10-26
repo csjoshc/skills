@@ -13,6 +13,8 @@ That wipes expand and other macros, the editor's `local-id` attributes, layout s
 1. Fetch the page fresh with `confluence_get_page` and `convert_to_markdown=false`, just before you edit.
    Save the storage XHTML and note the version number.
    Done when you hold the storage body and version of the current page.
+   Note each `ac:inline-comment-marker` and the phrase it wraps: rewording or moving that phrase orphans the comment.
+   Keep anchored phrases verbatim; if one must move, add a fresh inline comment with the original question and author on surviving text.
 2. Make surgical string edits to that storage body: change only the text, cells or elements the task names.
    Wrap new collapsible content in an `expand` macro copied from one already on the page.
    Done when a text diff against the saved body shows only the intended changes, and the macro and `local-id` counts match, plus any you added.

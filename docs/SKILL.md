@@ -27,6 +27,8 @@ Apply this skill when producing or editing **short, scannable** technical docsâ€
 3. **Collapse** multiple Mermaid diagrams to **one per page**; split pages if two diagrams serve different audiences.
 4. Remove **stale behavior** (deprecated flags, removed services) using the drift checklist.
 5. **Retire stale satellite pages.** When a spoke becomes obsolete (API changed, feature collapsed, package deleted), delete it and grep the hub for dangling cross-references. Hub-and-spoke only works if spokes stay current or are pruned â€” a parallel page that contradicts the hub is worse than no satellite.
+   Before adding a page, check whether one already covers the feature; fold into it instead of adding a parallel page.
+6. **Shed an overloaded hub.** When one section dominates the hub and answers a question readers came to a child page for, move it down into the child that owns that job (create one only if none does). Regroup it to fit the destination, and leave a two- or three-line gist plus a link on the hub.
 
 ## Structural rules
 
