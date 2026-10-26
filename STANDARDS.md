@@ -21,6 +21,7 @@ This file is an index. Read only the topic file you need.
 | Block vs. proceed, assumption tiers | Unsure whether to ask or assume | [standards/decisions.md](standards/decisions.md) |
 | API, auth, data, testing, structure, file size, errors | Designing or placing code | [standards/architecture.md](standards/architecture.md) |
 | Layer ownership (domain, service, application, infra) | Deciding where logic belongs | [standards/layers.md](standards/layers.md) |
+| Module depth vocabulary (seam, depth, leverage, locality) | Designing or reviewing module shape | [standards/modularity.md](standards/modularity.md) |
 | Security checklist, subprocess rules | Before implementing any feature | [standards/security.md](standards/security.md) |
 | Performance budgets, cleanup | Setting or checking targets | [standards/performance.md](standards/performance.md) |
 | Docstrings and comment format | Writing or reviewing docs in code | [standards/docstrings.md](standards/docstrings.md) |
