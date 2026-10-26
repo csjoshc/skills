@@ -112,9 +112,9 @@ Each task must:
 - Contain all context needed — no assumptions, no "see previous task"
 - Have its own mini acceptance criteria
 - Stay **one action per task** where possible; if a task must bundle steps, use numbered sub-steps, each still verifiable (**Do** + **Check** + **Test** at micro scale)
-- When aligning with [METHOD.md](https://github.com/exchanet/method_pdca-t_coding/blob/main/METHOD.md) Phase 4: aim for **≤ ~50 lines** of production change per task (excluding tests/docstrings); split otherwise
-- Prefer **one primary source file per task** (plus that file's support set: types, guards, mocks, tests). Do not cram a second unrelated source file into the same task "for a small tweak."
-- Attach interface/type/guard edits to the **first consuming source-file task** — never orphan them as standalone type-only tasks.
+- Keep each task one independently verifiable behavior, including its declared implementation and support files.
+- Use size as a review signal, not a reason to split tests or required migrations away from their behavior.
+- Attach interface/type/guard edits to the **first consuming behavior** — never orphan them as standalone type-only tasks.
 - Order tasks producers-before-consumers; keep the tree buildable after each task.
 - Author the verification steps yourself (grep/check/validate in the task text). Do not push "determine whether X exists" onto the implementer.
 - Prefer path/symbol identifiers over brittle renumbering when tasks may be inserted mid-list.
@@ -125,10 +125,10 @@ Format each task as:
 ## Task N: [Title]
 
 **What to build:** [specific description]
-**Primary source file:** [exactly one implementation file, or "n/a" for pure docs/config]
-**Support files:** [types/guards/mocks/tests belonging to that source file]
-**Files likely affected:** [list — should match primary + support]
-**Acceptance criteria:** [1-3 specific, verifiable outcomes]
+**Implementation files:** [files that jointly implement the behavior, or "n/a" for pure docs/config]
+**Support files:** [types/guards/mocks/tests and required consumer updates]
+**Files likely affected:** [list — should match implementation + support]
+**Acceptance criteria:** [specific, verifiable outcomes following the ticket contract]
 **Dependencies:** [Task N if blocked, or "none"]
 **Docs to update:** [bullet list of every doc/diagram/runbook that mentions the surface being changed, with relative paths — or "None — internal change" if truly none]
 ```

@@ -32,11 +32,12 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 | Skill / companion | Best trigger | Avoid when | Hook? |
 |---|---|---|---|
-| `verify` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
+| `verify` | Before completion, PR, or commit of a fix | Mid-TDD loop | `verify-gate` halts PR/commit only when a failure marker exists |
 | `caveman` | Context > 50%, bulk reports | First reply, specs, errors | No - the agent cannot measure its own context; invoke on demand |
-| `cleanup/WRITE_TIME_GUARD.md` | New file or new export in mature repo | Tests, generated, prototypes | No — call from workflow |
-| `cleanup/LAYER_ENFORCEMENT.md` | Import added AND layer map exists | No layer map | **Advisory** PostToolUse |
-| `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | **Advisory** on test file writes |
+| Shared change-quality pass | Before source edits, first working slice, final diff | Read-only work | No - called by instructions and implementation/completion skills |
+| `cleanup/redundancy-watcher.md` | Detailed redundancy audit | Routine small edits | No - read as a cleanup companion |
+| `cleanup/layer-boundary-critic.md` | Import-boundary audit with a layer map | No layer map | No - read as an audit companion |
+| `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | No - read during TDD |
 | `tdd/MUTATION.md` | End of TDD cycle, pre-PR audit | Every save (too slow) | No — on demand |
 | `onboard/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
 | Self code review | Before `gh pr create` | Draft PRs | No - `pr-create` Phase 0 runs it |
@@ -51,12 +52,10 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 Examples applied:
 
-- `verify` on `git commit` → HIGH cost (false done), CHEAP check
-  (scan recent claims), RARE event → **hook**.
+- `verify-gate` on `git commit` → HIGH cost (shipping past a failed check), CHEAP marker lookup, RARE event → **hook**.
 - `mutation-critic` on every save → HIGH cost (tautological test), but
   EXPENSIVE check (seconds) and FREQUENT event → **skill**.
-- `redundancy-watcher` on every `Write` → moderate cost, cheap-ish
-  check but FREQUENT event → **skill**, invoked from `workflow-guard`.
+- Reuse checks before implementation → codebase search and judgment, not a mechanical violation → **shared change-quality pass**, not a hook on every write.
 
 ## Mechanical rule or judgement call
 
@@ -75,9 +74,8 @@ Reserve `halt` for unambiguous, user-visible harms:
 - `CLAIM_UNVERIFIED.md` present at PR/commit time
 - Upward layer imports with a provided fix suggestion
 
-Everything else is `advisory` — the hook posts a report; the agent or
-user decides. Advisory hooks degrade gracefully; blocking hooks must
-earn their block with a concrete, cheap alternative.
+Everything else belongs in a skill's advisory report, not an advisory harness hook.
+The agent or user decides from the evidence; blocking hooks must earn their block with a concrete, cheap alternative.
 
 ## Hook catalogue
 

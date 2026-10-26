@@ -80,12 +80,8 @@ git ls-files --others --exclude-standard   # untracked files are part of the cha
 
 ## Diff Sizing Gate
 
-If the diff exceeds roughly 400 changed lines, emit a batch-size warning and
-recommend splitting the PR before deep review. Large diffs reduce review
-quality and increase false negatives.
-
-Use this as a warning gate, not an automatic hard failure unless your org
-requires it.
+Apply the review-budget and diff-coverage guidance in the [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass) before deep review.
+This also applies to standalone local reviews; reuse a current preflight from `pr-create` instead of repeating it.
 
 ---
 

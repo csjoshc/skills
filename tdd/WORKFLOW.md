@@ -3,7 +3,7 @@
 ## Contents
 
 - 0. Scoping (deterministic, ticket builds only)
-- 1. Planning, one source file per cycle, discovery halt
+- 1. Planning, coherent cycles, discovery halt
 - 2. Tracer Bullet
 - 3. Incremental Loop
 - 4. Refactor
@@ -43,9 +43,10 @@ Present the TOQ to the user. Ask:
 e2e per ticket) enforce this. Anything outside the caps is deferred, not
 discarded — it stays in the YAML for future reconsideration.
 
-### One source file per cycle (support set included)
+### One coherent behavior per cycle (support set included)
 
-Treat each TDD cycle as **one source file** plus its support set — not a second unrelated source file "for a small tweak."
+Treat each TDD cycle as one verifiable behavior across its declared implementation and support files.
+Keep unrelated tweaks out even when they share a file.
 
 Dependency order inside the cycle (skip steps the node does not need):
 
@@ -60,19 +61,21 @@ Dependency order inside the cycle (skip steps the node does not need):
 
 Rules:
 
-- Types/interfaces/guards are **not** their own cycles — attach them to the first source file that consumes the change.
+- Types/interfaces/guards are **not** their own cycles — attach them to the first behavior that consumes the change.
 - Do not orphan an interface edit in a separate task from its consumer.
 - Build producers before consumers; keep the tree buildable after each cycle.
 - Prefer relational identifiers (path + symbol) over numbered steps that break on insert/reorder.
 
-### Discovery halt (multi-file scope)
+### Discovery halt (unexpected scope)
 
-If completing the current cycle requires editing a **second source file** (or an undeclared support file outside this cycle):
+If completing the cycle requires an unexpected subsystem or contract change, or behavior beyond the agreed scope:
 
 1. Stop editing.
-2. Report discovery: dependent files, why, minimal next cycles.
-3. Propose the added cycles (one source file each).
-4. Wait for explicit approval — do not improvise the multi-file change.
+2. Report the affected consumers, why the expansion is necessary, and the smallest complete alternative.
+3. Propose a revised coherent cycle or an independent follow-up.
+4. Wait for explicit approval before expanding scope.
+
+An additional support file for the same agreed behavior is not an automatic halt; record it and explain its role.
 
 ## 2. Tracer Bullet
 
@@ -85,6 +88,7 @@ GREEN: Write minimal code to pass → test passes
 ```
 
 This is your tracer bullet - proves the path works end-to-end.
+Apply the shared change-quality pass now, before more implementation accumulates.
 
 ## 3. Incremental Loop
 
@@ -108,12 +112,12 @@ Rules:
 
 ## 4. Refactor
 
-After all tests pass, look for refactor candidates:
+After all tests pass, consider only refactors required by this task or problems introduced by its implementation:
 
-- [ ] Extract duplication
-- [ ] Deepen modules (move complexity behind simple interfaces)
-- [ ] Apply SOLID principles where natural
-- [ ] Consider what new code reveals about existing code
+- [ ] Remove duplication introduced by the change
+- [ ] Simplify new scaffolding without changing established contracts
+- [ ] Keep required consumer migrations complete
+- [ ] Report unrelated cleanup candidates separately
 - [ ] Run tests after each refactor step
 
 **Never refactor while RED.** Get to GREEN first.

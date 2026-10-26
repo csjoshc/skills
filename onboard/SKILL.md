@@ -20,7 +20,7 @@ Companion files:
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
 - Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy (`gh stack` workflow, cascading rebases, AGENTS.md block to merge on request).
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
-- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase. Link it from the project AGENTS.md. Load when setting up the agent loop for a repo, not for file-level onboarding.
+- Workflow routing: [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills and shared checks fit each phase, not an installed orchestrator. Link it from the project AGENTS.md. Load when setting up the agent loop for a repo, not for file-level onboarding.
 - Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
 ---
@@ -123,6 +123,7 @@ Insertion order is mandatory:
 5. Tokenify block (optional; only on request)
 
 When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it, then exactly one Engineering principles block.
+Reconcile outdated template wording in place: replace "Prefer the shortest solution that is still correct" with the coherent-change wording in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md), without appending a second principles block or discarding project-specific constraints.
 
 ### Stack-specific preamble (pick one)
 

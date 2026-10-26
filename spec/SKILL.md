@@ -44,7 +44,7 @@ tickets; do not repeat their contents as a second plan.
 
 - **SECTION 1: SPEC** (mandatory): purpose, users/use cases, requirements, IN/OUT scope, edge cases, Given/When/Then ACs. Turn vague verbs into measurable targets. Mark every unstated decision `[ASSUMPTION: ...]`.
 - **SECTION 2: PLAN**: stack, data model, API contracts, patterns, the `## Acceptance Criteria → Tests` table from [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md), security/performance, failure paths for `[FALLIBLE_IO]`, ADRs and design alternatives. Test files use permanent committed paths.
-- **SECTION 3: TASKS**: ordered atomic tasks, one primary source file each, producers before consumers, 1-3 binary ACs, a mandatory **Docs to update** line, then a **Review checkpoint**. Slice vertically; split XL tasks.
+- **SECTION 3: TASKS**: ordered coherent behavior changes with declared implementation/support files, producers before consumers, binary ACs per the ticket contract, a mandatory **Docs to update** line, then a **Review checkpoint**. Slice vertically; separate independent concerns.
 
 Full templates, field lists and rules: read [references/ticket-template.md](references/ticket-template.md) before drafting or editing any ticket body. Worked examples: [EXAMPLE.md](EXAMPLE.md).
 
@@ -53,7 +53,8 @@ Full templates, field lists and rules: read [references/ticket-template.md](refe
 Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
 Write `Stage: NEW`. The BUILD subagent flips Stage when it starts.
 Keep tickets short: scope, files, ACs, verify, and load-bearing questions only.
-Record reversible assumptions on the ticket; ask only for Tier 3 or conflicting decisions.
+Before delegation, establish the [shared authoring contract](../shared/QUALITY_RUBRIC.md#change-quality-pass) using the ticket's existing fields.
+Record reversible local assumptions; resolve its decision boundary and the tiers below, reusing prior approval.
 
 ## Assumption handling
 
@@ -85,7 +86,7 @@ Before delegating any ticket to a subagent, run the audit in [references/brief-a
 - Every task is independently deployable or testable. If it can't be verified alone, split it.
 - Acceptance criteria are binary. "Works correctly" is not one; "Returns 401 when unauthenticated" is.
 - Never write a task that says "implement the feature." That is the whole spec.
-- **Size thresholds:** if a planned change pushes any file past 300 lines (500 for well-structured modules), the plan includes a refactoring step as a first-level AC. Check [ANTIPATTERNS.md](ANTIPATTERNS.md) before finalizing.
+- **Size signals:** use [ANTIPATTERNS.md](ANTIPATTERNS.md) to identify mixed responsibilities or difficult verification, not to mandate refactoring by line count. Include a preparatory refactor only when needed for the requested change; keep its tests and required consumers together.
 - **Deploy-time ACs** for tickets touching `Dockerfile`, `helm/**/*.yaml`, or `*-entry.sh` / `start-*.sh` / `entrypoint*.sh` / `docker-entrypoint*`: apply the three conventions in [references/deploy-time-acs.md](references/deploy-time-acs.md). `helm lint` PASS is not deploy proof. Cross-referenced with `ticket-review` patterns 11/12/13.
 - **Artifact and naming hygiene** ([references/artifact-hygiene.md](references/artifact-hygiene.md)): no cycle/gate/ticket IDs in committed paths or filenames; no vendor/runtime tokens in agnostic identifiers; no internal-label drops in docstrings; every ticket has a mandatory `## Docs to Update` checklist; review codes (`F-NN`, `RISK-NN`, `Pattern N`) live in commits and PR threads, never in committed prose.
 - **Run prose through `/stop-slop`:** after generating Section 1 prose and all assumption descriptions.

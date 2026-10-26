@@ -11,6 +11,7 @@
 
 
 A catalog of common antipatterns to avoid when writing specs and plans. Use this as a checklist during spec review.
+Size is an inspection signal; require a cohesion or verification problem before proposing a task-scoped refactor.
 
 ---
 
@@ -187,12 +188,14 @@ api/dto/
 ## Decision Checklist
 
 When reviewing a spec, ask:
+Size thresholds below are inspection prompts, not automatic refactor requirements.
+Require evidence of mixed responsibilities or difficult verification, and keep unrelated cleanup out of the ticket.
 
 | Question | Threshold |
 |----------|-----------|
-| Any file will exceed 300 lines after this change? | Trigger refactoring |
+| Any file will exceed 300 lines after this change? | Inspect cohesion; refactor only if needed for the task |
 | Multiple unrelated DTOs in one file? | Split by domain |
-| Route handler > 100 lines? | Extract to service |
+| Route handler > 100 lines? | Inspect whether unrelated business logic obscures the boundary |
 | Test file duplicated elsewhere? | Consolidate |
 | Hardcoded values repeated 3+ times? | Centralize |
 | Dataclass has 20+ fields? | Consider splitting |
@@ -201,14 +204,14 @@ When reviewing a spec, ask:
 
 ## Quick Reference
 
-| Antipattern | Trigger Size | Solution |
+| Antipattern | Evidence to inspect | Candidate refactor |
 |-------------|-------------|----------|
-| God File | > 500 lines | Split by domain |
-| Route Monolith | > 1000 lines | Extract routes |
-| DTO File | > 30 models | Split by resource |
-| Service Module | > 300 lines | Split by operation |
-| Test File | > 500 lines | Split by feature |
-| Dataclass | > 20 fields | Split into value objects |
+| God File | Unrelated responsibilities | Split by domain |
+| Route Monolith | Unrelated route domains obscure ownership | Extract routes |
+| DTO File | Mixed resource models obscure contracts | Split by resource |
+| Service Module | Unrelated operations change independently | Split by operation |
+| Test File | Unrelated behaviors hinder navigation | Split by feature |
+| Dataclass | Fields combine independent domain concepts | Split into value objects |
 
 ---
 

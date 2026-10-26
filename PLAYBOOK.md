@@ -28,6 +28,26 @@ Before stating what a skill does or advising that a step be skipped, read that s
 
 ## Phase boundaries
 
+### Authoring and review workflow map
+
+The [shared change-quality contract](shared/QUALITY_RUBRIC.md#change-quality-pass) owns the rubric.
+This map owns navigation; skills own execution and evals check behavior.
+Carry the same claims forward in the existing ticket, chat brief, or PR body, not a new document per stage.
+
+| Stage | Entry | Application of the contract |
+|---|---|---|
+| Establish | `spec` / `/todo`, or a brief for a small edit | State intent, structure, planned evidence, and delivery boundary before delegation |
+| Implement | `tdd` / `ui` | Produce the evidence and check scope at the first working slice |
+| Prepare handoff | `verify` | Match the account to the final diff and evidence |
+| Request review | `pr-create` | Apply aggregate review budget and present the concise account |
+| Challenge | `pr-review`, or the chosen human/built-in reviewer | Independently assess the same contract |
+| Examine cumulative debt | `cleanup` | Propose separately scoped work rather than expanding the active PR |
+
+Read a cross-skill policy change in this order: shared contract, corrected contradictions, caller wiring, then evals.
+Change obligations in the contract; change when/how they apply in the owning skill.
+
+### Session transitions
+
 A phase is a chunk of work inside a session (grilling, implementing, QA).
 Decide at the boundary between phases; mid-phase, continue or split the rest into subagents.
 Ask in order; the first yes wins:

@@ -92,6 +92,50 @@
       }
     },
     {
+      "id": "private-helper-preserves-contract",
+      "type": "behavior",
+      "prompt": "Use pr-review on private-helper.diff locally; do not post. The approved task is to deduplicate currency formatting without changing the public functions or their output. The new test intentionally characterizes existing behavior.",
+      "files": ["files/private-helper.diff"],
+      "expected_behavior": [
+        "Does not demand separate architecture approval merely for the private formatting helper",
+        "Does not reject the preservation test for also passing before the refactor",
+        "Does not infer an API or dependency change that is absent from the diff"
+      ]
+    },
+    {
+      "id": "tests-repeat-wrong-implementation",
+      "type": "behavior",
+      "prompt": "Use pr-review on tautological-discount.diff locally; do not post. The requirement is a percentage discount: 20 percent off 1000 cents must charge 800 cents. The author says the added unit test passes.",
+      "files": ["files/tautological-discount.diff"],
+      "expected_behavior": [
+        "Identifies the surcharge implementation returning 1200 rather than the required 800",
+        "Explains that the test copies the implementation's erroneous calculation",
+        "Proposes an independently grounded expectation or failure scenario rather than merely more tests"
+      ]
+    },
+    {
+      "id": "shared-contract-consumer-gap",
+      "type": "behavior",
+      "prompt": "Use pr-review on consumer-contract.diff locally; do not post. Switching the pricing API to basis points was approved, but checkout.py must still apply its existing 20 percent discount. checkout.py is an unchanged production consumer provided alongside the diff.",
+      "files": ["files/consumer-contract.diff", "files/checkout.py"],
+      "expected_behavior": [
+        "Traces the changed pricing contract to the unchanged checkout consumer",
+        "Reports that checkout now charges 998 for 1000 cents rather than 800",
+        "Explains why the direct pricing test does not protect the consumer path and requires completing the migration"
+      ]
+    },
+    {
+      "id": "disclosed-design-question",
+      "type": "behavior",
+      "prompt": "Use pr-review on private-helper.diff locally; do not post. This is an early design discussion, not a request for final approval. I have verified unchanged output and want your opinion on keeping a private formatting helper versus duplicating the expression. No shared contract, dependency, or state changes.",
+      "files": ["files/private-helper.diff"],
+      "expected_behavior": [
+        "Treats the disclosed helper choice as design discussion rather than a missing-preparation violation",
+        "Does not demand a diagram or a separate architecture decision for this local helper",
+        "Does not claim that an explanation or passing preservation test establishes human understanding"
+      ]
+    },
+    {
       "id": "trigger-yes-review-pr",
       "type": "trigger",
       "prompt": "Can you review PR 482 on acme/storefront and leave inline comments on anything wrong before I merge it?",

@@ -22,15 +22,20 @@ Always invoke before:
 Skip only for:
 
 - Documentation-only edits (`.md`, `.txt`)
-- Rename-only diffs (no logic change, verified via `git log --name-status`)
+
+Rename-only diffs may skip behavior tests, but still need the final source-scope check and referrer verification below.
 
 ## Evidence requirements
 
 Determine the change type by reading the diff. Apply the matching requirement.
+For source changes, check the author's final account and evidence against the [shared contract](../shared/QUALITY_RUBRIC.md#change-quality-pass), using the full pending diff including untracked source.
+Reuse a current pass for the same diff and scope; this is not a second full code review.
+Unresolved material scope expansion or an incomplete migration is a gap.
+Distinguish verified implementation claims from review readiness under the contract's review budget.
 
-Evidence must flip: the cited check must give a different result without the change.
-A test that also passes on base, or a screenshot that matches base, proves nothing.
-For any shape with a runnable check, `python3 ~/.skills/tdd/scripts/red_first.py` proves the flip (`--help` for shapes).
+For a bug fix or new behavior, show a check that fails without the change and passes with it.
+For preservation or refactoring, unchanged outcomes on both versions are expected.
+Use `python3 ~/.skills/tdd/scripts/red_first.py` where applicable (`--help` for characterization exemptions).
 A `WEAK` verdict means base failed only on a missing name; say so and show the check would catch a wrong implementation.
 
 | Change type | Required evidence | Format |
@@ -75,7 +80,7 @@ grep -l "HTTP/" /tmp/*.txt 2>/dev/null
 
 ### Phase 3: Gap check
 
-For every claim with no evidence, add an entry to the gap table:
+For every claim with no evidence, or unresolved source-scope gap, add an entry to the gap table:
 
 ```markdown
 | Claim | Required evidence | Gap |
@@ -152,7 +157,7 @@ If a correct seam exists and no new test is in the diff, the fix is not verified
 | Rationalization | Reality |
 |---|---|
 | "It compiled, so it works" | Type-check is not a behavior test. Run the thing. |
-| "I added the test, that's enough" | Did the test fail before the fix? If not, you wrote a tautology. |
+| "I added the test, that's enough" | Check its independent expectation and sensitivity to a plausible failure; preservation tests may pass on both versions. |
 | "The CI link will land later" | If you can't paste evidence now, the claim isn't ready. |
 | "It worked locally" | Reproduction evidence (command + output) or it didn't happen. |
 
