@@ -22,11 +22,16 @@ Always invoke before:
 Skip only for:
 
 - Documentation-only edits (`.md`, `.txt`)
-- Rename-only diffs (no logic change, verified via `git log --name-status`)
+
+Rename-only diffs may skip behavior tests, but still need the final source-scope check and referrer verification below.
 
 ## Evidence requirements
 
 Determine the change type by reading the diff. Apply the matching requirement.
+For source changes, apply the completion checkpoint of the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass).
+Use the full pending change, including untracked source, and check unexplained hunks, incomplete migrations, and unexpected boundary changes.
+Reuse a current pass for the same diff and scope; this is not a second full code review.
+Unresolved material scope expansion or an incomplete migration is a gap; size warnings alone are not verification failures.
 
 Evidence must flip: the cited check must give a different result without the change.
 A test that also passes on base, or a screenshot that matches base, proves nothing.
@@ -75,7 +80,7 @@ grep -l "HTTP/" /tmp/*.txt 2>/dev/null
 
 ### Phase 3: Gap check
 
-For every claim with no evidence, add an entry to the gap table:
+For every claim with no evidence, or unresolved source-scope gap, add an entry to the gap table:
 
 ```markdown
 | Claim | Required evidence | Gap |

@@ -75,7 +75,8 @@ general-purpose`) after a BUILD subagent flips a ticket to
 | Input | Purpose |
 |---|---|
 | **Ticket file path** | The source of truth — ACs, Files: list, Verify commands, Failure Protocol |
-| **Prior checkpoint commit SHA** | Git reference for the diff comparison |
+| **Before/after source snapshot paths** | Complete ticket/wave starting and ending content, including uncommitted work |
+| **Wave ownership and starting HEAD** | Declared files per ticket for attribution; commit SHA for history only |
 | **Build subagent's final report** | The claim under review (verbatim, not paraphrased) |
 | **Artifact directory** | Where the subagent claims to have written evidence files |
 | **Optional: recent terminal logs / docker logs** | If the ticket touched runtime infra |
@@ -88,8 +89,8 @@ The reviewer has **read-only** access. It must NOT:
 
 It MAY:
 - Read any file in the repo
-- Run `git diff <SHA>..HEAD`
-- Run `git diff --stat <SHA>..HEAD` and `git status`
+- Run `git diff --no-index` between the supplied snapshots and `git status`
+- Inspect staged, unstaged, and untracked changes to verify snapshot completeness
 - Run `git log <SHA>..HEAD` for the commit history (if any)
 - Run `docker ps`, `docker logs <container>`, `docker images`
 - Run `cat`, `ls`, `wc -l`, `file` against artifact paths
@@ -106,19 +107,32 @@ write it until every prior item has been answered.
 
 ### 1. Scope check — git diff vs declared Files:
 
+The parent captures snapshots before and after each build wave outside the source worktree.
+Include tracked and nonignored untracked project files, not just declared ticket paths; exclude local planning/proof artifacts and secrets.
+Preserve repo-relative paths, executable bits, and symlinks without following them.
+Record excluded paths and starting HEAD with the snapshots; do not stage, commit, or stash to create a baseline.
+For a resumed wave, use its original baseline rather than treating existing edits as pre-existing work.
+Missing or incomplete baseline → **EVIDENCE-INSUFFICIENT**, not a fallback to committed-only diffs.
+
 ```bash
-git diff --name-only <PRIOR_SHA>..HEAD
+git diff --no-index --name-status <BEFORE_SNAPSHOT> <AFTER_SNAPSHOT>
+git diff --no-index <BEFORE_SNAPSHOT> <AFTER_SNAPSHOT>
 ```
 
-For every file in the diff:
+Exit 1 means differences were found, not a failed check.
+Compare actual file contents, not subtraction of two diffstats.
+Confirm the after-snapshot still matches current source before accepting evidence.
+Changes from earlier tickets present in both snapshots are not new drift.
+For parallel waves, attribute hunks using the disjoint ownership map; ambiguous ownership or undeclared edits require review before another wave starts.
+
+For every changed project file:
 
 - Is it in the ticket's `Files:` list (or a child path of a declared
   directory)?
-- If NO, is it a justified deviation explicitly noted in the
-  subagent's final report? (e.g., "Patched gold_stage.py — not in
-  Files: list but the placeholder-status write is mandated by ticket
-  text and the caller lives there")
-- If both NO, **DRIFT-DETECTED** with the unexpected paths quoted.
+- Does each hunk implement the agreed behavior, its tests, or a required migration?
+- An undeclared support file for that same behavior needs a concrete explanation and reviewer confirmation.
+- A new subsystem, contract, or behavior needs prior user approval; the builder's explanation alone is not approval.
+- Unexplained edits or unapproved material expansion → **DRIFT-DETECTED**, even within a declared file.
 
 ### 2. AC-by-AC verification
 
@@ -174,9 +188,8 @@ Read the subagent's final report for these signals:
   justified (env prerequisite genuinely absent; not a workaround
   for an actual failure).
 - "deviation" / "adapted" / "alternative" / "patched outside scope"
-  — verify the deviation was necessary, not convenient. The
-  subagent must have explained WHY a divergence from spec was the
-  right call.
+  — verify necessity and the approval required by the scope check.
+  A necessary material expansion without prior user approval is still drift.
 - "test PASS" without a numeric count — suspicious. Real test
   output has counts.
 - "all ACs pass" with the skip count > 0 — break it down per-AC.
@@ -212,11 +225,11 @@ Compose the verdict from the above:
   PASS-via-skip, every artifact present and sensible, no
   unexplained deviations, wrapper-target (if any) re-verifies,
   Stage flip is earned.
-- **DRIFT-DETECTED** — At least one of: out-of-scope files modified
-  without justification, an AC was claimed PASS but FAIL on re-run,
+- **DRIFT-DETECTED** — At least one of: unexplained edits or unapproved material
+  scope expansion, an AC was claimed PASS but FAIL on re-run,
   a deviation is convenient rather than necessary, wrapper-target
   sidesteps a real bug.
-- **EVIDENCE-INSUFFICIENT** — At least one AC's artifact doesn't
+- **EVIDENCE-INSUFFICIENT** — Missing/incomplete scope snapshots, or at least one AC's artifact doesn't
   exist OR can't be re-run; environment doesn't support
   reproducing the claim.
 
@@ -229,14 +242,15 @@ Emit exactly this structure as your final message:
 ```markdown
 # Evidence Review — <ticket-id>
 
-**Reviewed against checkpoint:** <PRIOR_SHA>
+**Reviewed snapshots:** <BEFORE_SNAPSHOT> → <AFTER_SNAPSHOT>
+**Starting HEAD (history only):** <SHA>
 **Reviewed at:** <ISO-date>
 
 ## Audit checklist
 
 ### 1. Scope (git diff)
 - Declared Files: <count> | Diff Files: <count> | Out-of-scope: <count>
-- Out-of-scope file paths (if any): <list with one-line justification or "no justification">
+- Out-of-scope paths/hunks (if any): <explanation and prior user approval for material expansion, or unresolved gap>
 
 ### 2. Per-AC verification
 | AC | Verdict | Evidence (quote from disk) |
@@ -250,7 +264,7 @@ Emit exactly this structure as your final message:
 | <path> | yes/no | <bytes> | yes/no — <reason> |
 
 ### 4. Deviations
-- <list each deviation from subagent report with reviewer assessment: necessary / convenient / un-justified>
+- <list each deviation with necessity, scope impact, and required approval evidence>
 
 ### 5. Wrapper-target (if applicable)
 - Literal wrapper invocation: <command>

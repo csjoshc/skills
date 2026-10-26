@@ -48,21 +48,42 @@ violation or stays mechanical.
 
 ### Change-quality pass
 
-For source changes, compare the diff with base behavior and same-role code.
-Preserve behavior and local conventions, including decorators, auth, logging,
-tracing, validation, and error handling, unless the task changes them.
+Use this pass for source changes, not read-only research.
+Correctness and completeness come first, readability second, diff size third.
+Prefer the smallest coherent change, not fewer lines.
 
-Check for existing package functions and project idioms before adding custom
-code. Reuse them when they meet the contract. Flag added complexity, duplication,
-pass-through wrappers, single-use scaffolding, and comments that narrate code.
-Keep comments that explain a reason or invariant. Prefer the smallest coherent
-change, not fewer lines.
+- **Before editing:** name the requested behavior, the contracts that must stay unchanged, and the expected implementation/support files.
+  Use the existing ticket or a short statement in chat; small changes need no tickets or cleanup audit.
+  Record pre-existing edits so they are not mistaken for this task's work.
+  Check existing package functions and same-role code before adding custom code; change the narrowest correct owner.
+- **At the first working slice:** compare actual scope with that intent.
+  Preserve behavior and local conventions, including decorators, auth, logging, tracing, validation, and error handling, unless the task changes them.
+  Pause before an unexpected subsystem, public contract, schema, dependency, or security change; an extra declared support file is not itself scope expansion.
+  Material expansion needs user approval, not a justification written after the edits.
+- **Before completion:** inspect every changed hunk for a connection to the requested behavior, its tests, or a required migration.
+  Keep supporting tests and required consumer updates together; leave no permanent fallback or incomplete migration to shrink the diff.
+  Remove only this task's incidental renames, formatting, duplication, pass-through wrappers, or speculative scaffolding.
+  Preserve pre-existing user edits and comments that explain reasons or invariants.
+  Report unrelated defects instead of fixing them.
 
-Use LOC and complexity deltas as signals, not targets. Do not delete behavior or
-split code to improve metrics. Report only evidence-backed candidates: cite
-`file:line`, the existing pattern, the proposed change, and tests that protect
-behavior. Report taste or metric concerns only when concrete code evidence
-shows a behavior-preserving improvement.
+These are scope checks, not repeated full audits.
+Reuse a recorded pass only while its diff and intended scope remain unchanged; after further edits, recheck the affected hunks.
+Report evidence-backed concerns with `file:line`, the violated intent or existing pattern, and protecting tests, not taste.
+
+**Diff coverage:** use the merge-base with the intended PR target, or the preceding branch for a stack.
+`git diff <base>` covers the final tracked content across committed, staged, and unstaged work; also inspect `git diff --cached` before committing and `git ls-files --others --exclude-standard` for untracked files.
+For ticket attribution, compare with the ticket/wave starting state, not just `HEAD` or the entire branch.
+Inspect file contents for untracked additions; neither an empty unstaged diff nor a clean working tree proves the PR is small.
+
+**Size warning:** report files and added/deleted lines, separating production code, tests, and generated/lockfile changes.
+Around 400 changed handwritten lines, or unexpectedly scattered files, recommend a coherent split or explain why keeping the change together is clearer.
+This is a warning, not a hard limit unless project policy requires one.
+Use LOC and complexity deltas as signals, not targets; never omit tests, duplicate logic, or split cohesive code to satisfy them.
+Whitespace-ignoring and structural diffs aid review but do not prove semantic equivalence.
+Follow required formatting checks while avoiding unrelated autofixes; flag unavoidable formatter churn.
+Keep generated or lockfile changes with their inputs when needed for a valid build, and verify regeneration or dependency intent rather than telling reviewers to skip them.
+Split independent concerns, not implementation from its tests; preparatory refactors must be necessary and independently verifiable.
+Suggest branch splitting without rewriting history or publishing anything unless authorized.
 
 ---
 

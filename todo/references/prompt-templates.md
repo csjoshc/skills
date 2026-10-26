@@ -60,7 +60,8 @@ Invoke spec.
 - .plan/brownfield-context.md (if present)
 
 For every stub in task-sequence.md, write one .tickets/NNN-slug.md following
-~/.skills/shared/TICKET_CONTRACT.md. Stage: NEW. One file per ticket.
+~/.skills/shared/TICKET_CONTRACT.md. Stage: NEW. One coherent behavior per ticket,
+including its implementation files, tests, and required consumer updates.
 ```
 
 ### handoff

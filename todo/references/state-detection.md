@@ -57,7 +57,7 @@ Do not read whole ticket bodies in the orchestrator.
   resume that ticket
 - **build-unscoped** — `Stage: BUILD` without `.tickets/tdd/toq-<id>.yaml` →
   tdd Phase 0 in that subagent first
-- **all-complete** — every ticket COMPLETE → stop
+- **all-complete** — every ticket COMPLETE → aggregate PR scope/size checkpoint in the drive loop, then stop
 
 ticket-review is optional. Missing critic output is not a stage.
 

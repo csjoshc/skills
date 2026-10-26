@@ -38,7 +38,9 @@ Required: `id`, `title`, `Stage`, `Depends-On` (may be `[]`), `Files` (at least 
 `Stage` is `NEW` at write, `BUILD` when a subagent starts, `COMPLETE` after
 verified ACs, or `FAILED` / `BLOCKED`.
 `Files[].action` is `CREATE | MODIFY | VERIFY | DELETE`; add a `description` only when the path doesn't say enough.
-At most 5 non-test files per ticket; split above that.
+Default to at most 5 non-test files per ticket.
+Above that, propose a coherent split or record why the complete change must stay together and obtain user approval.
+Keep tests and required consumer migrations with the behavior they validate.
 
 Optional: `Blocks`, `Type` (`integration-gate` for gates), `Gate` (the gate that validates this ticket), `Validates` (on a gate: the tickets it proves), `Read-First`, `Assumptions-Validated` (PRD assumption ids), `Regression-Baseline` (commands that must stay green).
 A `BLOCKED` ticket also needs `Blocked-By` (what it waits for) and `Unblock-Check` (one command that exits 0 once unblocked).

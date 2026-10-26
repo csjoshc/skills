@@ -22,7 +22,7 @@ Bare `/todo` and `/todo auto` use this loop. `/todo auto <N>` caps tickets;
 | `lite-ready` / `ready-for-build` / `partial-build` | Build waves |
 | `slice-gate-pending` | Independent gate review |
 | `mid-build-resume` | Resume the in-flight ticket in a subagent |
-| `all-complete` | Stop |
+| `all-complete` | Apply the aggregate PR size/scope checkpoint in Build waves step 7, then stop |
 
 ticket-review is optional. Do not wait on a critic report.
 
@@ -35,14 +35,22 @@ ticket-review is optional. Do not wait on a critic report.
    Lite mode: one ticket at a time unless `Depends-On` is explicit.
 3. **Parallel-safety.** Group only tickets with disjoint `Files:` and low risk.
    `Risk: medium` or higher, mutation hubs, and integration gates run solo.
+   Capture a before-wave source snapshot and ownership map as specified in
+   `~/.skills/shared/EVIDENCE_REVIEWER.md`; retain it for retries and resume.
 4. **Spawn.** One `Agent` call per ticket in the wave, same turn, background.
    Brief is the build template plus the ticket's absolute path. Pointers only.
    For frontend UI scope, the brief tells the subagent to invoke `ui`.
-5. **Review.** After the wave returns, check each ticket against
-   `~/.skills/shared/EVIDENCE_REVIEWER.md`.
+5. **Review.** Capture the after-wave snapshot and pass both snapshots,
+   ownership, and reports to the reviewer in `~/.skills/shared/EVIDENCE_REVIEWER.md`.
+   Include uncommitted and untracked source; earlier tickets' work is part of
+   the before-state, not new drift.
 6. **Gate.** ALL VERIFIED → optional ticket-scoped checkpoint commit (never
    add `.plan/` or `.tickets/`; never push). ANY drift or missing evidence → **HALT**.
-7. **Loop.** Re-detect state.
+7. **Loop.** At slice boundaries and before final completion, apply the
+   [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass)
+   size warning to the aggregate proposed PR, not only the latest ticket.
+   Recommend coherent splits without creating branches or publishing them.
+   Re-detect state.
 
 ## Halt conditions
 

@@ -27,7 +27,7 @@ More: [shared/TEST_ANTIPATTERNS.md](../shared/TEST_ANTIPATTERNS.md).
   vitest, jest and others via `--cmd ... {junit} {checks}`), the verdicts, and how to fix a flag. Read it once.
   Fix the assertion rather than exempting it; `WEAK` must be tightened or justified in the PR.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
-- **Check local code quality.** Before implementation and on the final diff, apply the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass).
+- **Check local code quality.** Apply the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass) before implementation, at the first green slice, and on the final diff; these are scope checkpoints, not full audits.
 - **Refactor only on green**, as its own phase after the slices pass, running tests after each step.
 
 ## Test paths, dry-run, commits
@@ -61,7 +61,8 @@ Pick the path first:
 3. **Incremental loop.** One TOQ entry at a time, in score order. While iterating, run only `TOQ[i].target` plus its `existing_tests`; run the full suite once at end of ticket, before Stage COMPLETE.
 4. **Refactor** after all tests pass, running tests after each step. Candidates: [REFACTORING.md](REFACTORING.md).
 
-One source file per cycle (plus its support set). If a cycle needs a second source file, stop and report; see the discovery halt in [WORKFLOW.md](WORKFLOW.md).
+One coherent behavior per cycle, including its declared implementation and support files.
+Pause for unexpected scope or contract expansion, not merely a second file; see the discovery halt in [WORKFLOW.md](WORKFLOW.md).
 
 **Bug fixes:** write a test that reproduces the bug through the public interface. It MUST fail first; a passing reproduction is not a reproduction. Then fix, re-run, run the relevant suite. Steps: [WORKFLOW.md](WORKFLOW.md) (Prove-It pattern).
 
@@ -80,7 +81,7 @@ One source file per cycle (plus its support set). If a cycle needs a second sour
 Read only when the situation matches:
 
 - [SCOPING.md](SCOPING.md): Phase 0 for ticket builds, builds the TOQ
-- [WORKFLOW.md](WORKFLOW.md): phase detail, one-file cycles, discovery halt, bug fixes
+- [WORKFLOW.md](WORKFLOW.md): phase detail, coherent cycles, discovery halt, bug fixes
 - [TESTS.md](TESTS.md): good/bad examples, red flags, naming, frontend and async/streaming patterns
 - [TEST_CRAFT.md](TEST_CRAFT.md): FIRST, flaky tests, smells, coverage, doubles, integration/e2e, black-box techniques, pyramid
 - [INTERFACE_DESIGN.md](INTERFACE_DESIGN.md): testable surfaces, interaction specs, Deps/Params/Payload, fractal companions

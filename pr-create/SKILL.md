@@ -40,7 +40,7 @@ Checklist:
         the gap table to the user. Do not proceed without evidence or
         an explicit `override: <reason>`.
 - [ ] 0.2 Self-review the pending diff with the harness's built-in code
-        review if it has one; otherwise run `pr-review` in advisory mode
+        review if it has one; otherwise run `pr-review --local`
         (no posting). Fix or acknowledge findings before continuing.
 - [ ] 0.3 If the changed files touch backend production code, run
         `tdd/MUTATION.md` in single-mutant mode on the touched
@@ -49,6 +49,10 @@ Checklist:
 - [ ] 0.4 If the changed files introduce a new boundary mock, run
         `tdd/MOCK_CONTRACT.md`. Missing contract refs → BLOCK.
 ```
+
+Before choosing the reviewer in 0.2, apply the completion and size-warning checks in the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass) to the aggregate proposed PR.
+Reuse current scope evidence from `verify`, but include earlier commits and all pending files against the intended PR target.
+Run one substantive review, not both built-in review and `pr-review`.
 
 These gates are cheap relative to opening and re-opening a PR. Skipping
 them costs far more in review cycles than it saves now.

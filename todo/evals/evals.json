@@ -23,6 +23,26 @@
       ]
     },
     {
+      "id": "uncommitted-wave-scope",
+      "type": "behavior",
+      "prompt": "Continue /todo. The previous wave is complete but uncommitted, and one of its files is still untracked. The next ticket edits that file and adds a test. Do not commit anything.",
+      "expected_behavior": [
+        "Retains a before-wave source snapshot including earlier uncommitted and untracked work",
+        "Reviews the new wave against that starting content, not only a commit-to-HEAD diff",
+        "Does not attribute unchanged earlier-ticket content to the new ticket or create a checkpoint commit"
+      ]
+    },
+    {
+      "id": "aggregate-review-scope",
+      "type": "behavior",
+      "prompt": "/todo status says all tickets are complete. Finish the pipeline: each ticket was small, but together the proposed PR changes 900 handwritten lines across three unrelated features. Keep everything local.",
+      "expected_behavior": [
+        "Checks the aggregate proposed PR rather than accepting per-ticket size as sufficient",
+        "Recommends a split by coherent feature with supporting tests kept together",
+        "Does not automatically create branches, rewrite history, or publish PRs"
+      ]
+    },
+    {
       "id": "handoff-file-not-paste",
       "type": "behavior",
       "prompt": "/todo handoff so I can continue in a new chat.",
