@@ -57,7 +57,7 @@ When the user will read the change alongside you, open it beside the agent's pan
 
 For a PR that isn't checked out, run `git fetch origin <base> pull/<N>/head` and pass `origin/<base>...FETCH_HEAD`.
 It picks WezTerm, tmux or iTerm2 from the environment, falls back to a new Terminal.app window on macOS, and uses difftastic when installed.
-Done when it prints `side-diff: <where>`; on exit 1, give the user the printed command.
+Done when it prints `side-pane: <where>`; on exit 1, give the user the printed command.
 
 ---
 
