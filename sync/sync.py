@@ -7,7 +7,6 @@ Usage:
     python sync.py              # Full audit + repair (verbose)
     python sync.py --audit      # Audit only, no changes
     python sync.py --project    # Add project-level .skills symlink
-    python sync.py --hook       # Silent mode for git hooks
 """
 
 import json
@@ -575,31 +574,6 @@ def add_project_symlink(project_dir: Path, logger: Logger) -> bool:
     return success
 
 
-# ─── Git Hook Installation ──────────────────────────────────────────────────
-
-
-def install_git_hook(project_dir: Path, logger: Logger) -> bool:
-    """Install the post-checkout hook in a project."""
-    hooks_dir = project_dir / ".git" / "hooks"
-    if not hooks_dir.exists():
-        logger.warn(f"No .git/hooks directory in {project_dir}")
-        return False
-
-    hook_path = hooks_dir / "post-checkout"
-    template_path = SKILLS_DIR / "hooks" / "post-checkout"
-
-    if not template_path.exists():
-        logger.error(f"Hook template missing: {template_path}")
-        return False
-
-    shutil.copy2(template_path, hook_path)
-    if not IS_WINDOWS:
-        hook_path.chmod(0o755)
-
-    logger.info(f"Installed git hook: {hook_path}")
-    return True
-
-
 # ─── Main Sync Logic ────────────────────────────────────────────────────────
 
 
@@ -695,15 +669,9 @@ def main():
     parser.add_argument("--audit", action="store_true", help="Audit only, no repairs")
     parser.add_argument("--project", type=str, help="Add project-level .skills symlink")
     parser.add_argument(
-        "--hook", action="store_true", help="Install git hook in current project"
-    )
-    parser.add_argument(
-        "--hook-dir", type=str, help="Install git hook in specific directory"
-    )
-    parser.add_argument(
         "--verbose", action="store_true", default=True, help="Verbose output (default)"
     )
-    parser.add_argument("--quiet", action="store_true", help="Silent mode (for hooks)")
+    parser.add_argument("--quiet", action="store_true", help="Silent mode")
     args = parser.parse_args()
 
     verbose = not args.quiet
@@ -713,12 +681,6 @@ def main():
         project_dir = Path(args.project).resolve()
         logger.info(f"Adding project symlink for: {project_dir}")
         add_project_symlink(project_dir, logger)
-        return
-
-    if args.hook or args.hook_dir:
-        target = Path(args.hook_dir).resolve() if args.hook_dir else Path.cwd()
-        logger.info(f"Installing git hook in: {target}")
-        install_git_hook(target, logger)
         return
 
     source_command = [sys.executable, str(Path(__file__).with_name("skill_sources.py"))]
