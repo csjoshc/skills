@@ -95,6 +95,8 @@ on the assembled output. Only post if exit code is 0. Emit final
   output is folded directly into the lens findings with `source: tool-flagged`.
 - `cleanup` skips `report → post` — cleanup does not post to GitHub. Its final
   gate is `phase-1 → report`.
+- `pr-review` local mode skips `report → post` the same way; validate with
+  `--local`.
 
 ---
 
