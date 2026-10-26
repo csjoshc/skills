@@ -1,59 +1,35 @@
 # Stop Slop
 
-A skill for removing AI tells from prose.
-
-## What this is
-
-AI writing has patterns. Predictable phrases, structures, rhythms. This skill teaches Claude (or any LLM) to catch and remove them.
+A skill for removing formulaic AI patterns from prose without inventing facts or flattening the writer's voice.
 
 ## Skill Structure
 
 ```
 stop-slop/
-├── SKILL.md              # Core instructions
+├── SKILL.md                              # Modes, safeguards, register, editing process
 ├── references/
-│   ├── phrases.md        # Phrases to remove
-│   ├── structures.md     # Structural patterns to avoid
-│   └── examples.md       # Before/after transformations
-├── README.md
-└── LICENSE
+│   ├── patterns.md                       # Patterns to inspect, with tests and fixes
+│   ├── examples.md                       # Before/after transformations
+│   ├── plain-vernacular-explainers.md    # Explaining technical work to outsiders
+│   └── user-voice.md                     # Prose the user presents as their own
+├── evals/                                # evals.json and fixture files
+└── README.md
 ```
-
-## Quick start
-
-**Claude Code:** Add this folder as a skill (already done).
-
-**Claude Projects:** Upload `SKILL.md` and reference files to project knowledge.
-
-**Custom instructions:** Copy core rules from `SKILL.md`.
-
-**API calls:** Include `SKILL.md` in your system prompt. Reference files load on demand.
 
 ## What it catches
 
-**Banned phrases** - Throat-clearing openers, emphasis crutches, business jargon, all adverbs, vague declaratives, meta-commentary. See `references/phrases.md`.
+**Missing substance** - hollow drafts, importance claimed without mechanism, specific-looking vagueness, vague attribution. Gaps get a `[TK: question]`, never an invented detail.
 
-**Structural clichés** - Binary contrasts, negative listings, dramatic fragmentation, rhetorical setups, false agency, narrator-from-a-distance voice, passive voice. See `references/structures.md`.
+**Formula** - binary contrasts, negative listing, colon reveals, forced triads, decorative `-ing` tails, abstract actors, structural regularity, recap endings.
 
-**Sentence-level rules** - No Wh- sentence starters, no em dashes, no staccato fragmentation, no lazy extremes, active voice required.
+**Surface residue** - stock words, throat-clearing, meta narration, chat wrappers, empty adverbs, jargon, formatting by habit.
 
-## Scoring
+Every pattern is a prompt to read the passage in context, not a ban. See `references/patterns.md`.
 
-Rate 1-10 on each dimension:
+## Credits
 
-| Dimension | Question |
-|-----------|----------|
-| Directness | Statements or announcements? |
-| Rhythm | Varied or metronomic? |
-| Trust | Respects reader intelligence? |
-| Authenticity | Sounds human? |
-| Density | Anything cuttable? |
-
-Below 35/50: revise.
-
-## Author
-
-[Hardik Pandya](https://hvpandya.com)
+Original skill by [Hardik Pandya](https://hvpandya.com).
+Safeguards, register table, diagnosis order, and several pattern tests adapted from https://github.com/addyosmani/clarity @ e27ceef.
 
 ## License
 
