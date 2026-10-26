@@ -85,6 +85,51 @@ def test_github_mcp_merge_and_approve_are_blocked() -> None:
         "arguments": {"event": "COMMENT"}}}) == 0
 
 
+MERGE = "gh pr merge 43 --repo o/r && GH_TOKEN=$(gh auth token --user u) gh pr merge 46"
+
+
+@pytest.mark.parametrize("cmd", [
+    f"~/.skills/shared/scripts/side-pane.sh stage '{MERGE}'",
+    f"/Users/u/.skills/shared/scripts/side-pane.sh stage '{MERGE}'",
+    f"  side-pane.sh stage '{MERGE}'  ",
+    "side-pane.sh stage 'gh pr merge 45 --repo o/r && git -C ~/.skills pull --ff-only'",
+])
+def test_lone_stage_call_is_allowed(cmd: str) -> None:
+    assert shell(cmd) == 0
+    assert shell(cmd, tool="Bash") == 0
+
+
+@pytest.mark.parametrize("cmd", [
+    f"side-pane.sh stage '{MERGE}' && gh pr merge 1",
+    f"gh pr merge 1; side-pane.sh stage '{MERGE}'",
+    f"cd /repo && side-pane.sh stage '{MERGE}' | sh",
+    'side-pane.sh stage "$(gh pr merge 1)"',
+    f"bash -c \"side-pane.sh stage '{MERGE}'\"",
+    "$(gh pr merge 1)/side-pane.sh stage 'x'",
+    "side-pane.sh run 'gh pr merge 1'",
+    'echo "$(gh pr merge 1)"',
+    'echo "`gh pr merge 1`"',
+])
+def test_stage_lookalikes_still_block(cmd: str) -> None:
+    assert shell(cmd) == 2
+
+
+def test_side_pane_refuses_to_stage_a_newline() -> None:
+    # A typed newline is an Enter: the staged command would run without the user.
+    side_pane = Path(__file__).parents[1] / "shared/scripts/side-pane.sh"
+    proc = subprocess.run([str(side_pane), "stage", "gh pr merge 1\n"], capture_output=True,
+                          text=True, check=False, env={**ENV, "WEZTERM_PANE": "", "TMUX": ""})
+    assert proc.returncode == 2 and "single line" in proc.stderr
+
+
+def test_block_message_points_to_staging() -> None:
+    proc = subprocess.run([sys.executable, str(GATE)], capture_output=True, text=True, check=False,
+                          input=json.dumps({"tool_name": "exec",
+                                            "tool_input": {"command": "gh pr merge 1"}}),
+                          cwd="/", env=ENV)
+    assert proc.returncode == 2 and "side-pane.sh stage" in proc.stderr
+
+
 def test_unparseable_input_does_not_block() -> None:
     proc = subprocess.run([sys.executable, str(GATE)], input="not json",
                           capture_output=True, text=True, check=False)

@@ -12,8 +12,10 @@ Blocks, for main/master/dev:
 - elsewhere: branch -f/-M/-C, checkout -B, switch -C, update-ref, fetch|pull x:main
 - setting core.hooksPath (git -c, GIT_CONFIG_* env, git config), which skips the local hooks
 The same typed into a process (Devin write_to_process; unreadable key mixes block).
-The same inside sh -c, eval or xargs text (matched unblanked) and via a full git path.
+The same inside sh -c, eval, xargs or `side-pane.sh run` text (matched unblanked), inside
+double-quoted $(...) or backticks, and via a full git path.
 Allowed: git pull --ff-only|--rebase, and --abort/--quit/--continue/--skip.
+Allowed: a lone `side-pane.sh stage '<cmd>'`, which types cmd unrun for the user to run.
 Out of scope: programs that call git or the API themselves, and git reset --hard.
 A git probe that times out blocks (fail closed).
 """
@@ -26,7 +28,7 @@ import subprocess
 import sys
 
 PROTECTED = {"main", "master", "dev"}
-GH = r"(?:^|[;&|(\'\"]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
+GH = r"(?:^|[;&|(\'\"`]|\s)gh(?:\s+-{1,2}\S+(?:\s+[^-\s]\S*)?)*\s+"
 # Matched against the command with quoted text blanked, so `echo 'gh pr merge'` passes.
 PATTERNS = [
     (re.compile(GH + r"pr\s+merge(?:\s|$)"), "gh pr merge"),
@@ -38,11 +40,17 @@ PATTERNS = [
      "REST commit to a protected branch"),
 ]
 # Quoted text is blanked so `echo 'gh pr merge'` passes, except when it feeds a shell.
-SHELL_WRAPPER = re.compile(r"\b(?:ba|z|da|k)?sh\s+-\w*c\b|\beval\b|\bxargs\b|\|\s*(?:ba|z)?sh\b")
+SHELL_WRAPPER = re.compile(
+    r"\b(?:ba|z|da|k)?sh\s+-\w*c\b|\beval\b|\bxargs\b|\|\s*(?:ba|z)?sh\b|side-pane\.sh\s+run\b")
 GH_GRAPHQL = re.compile(GH + r"api\s+graphql\b")
 GRAPHQL_MUTATION = re.compile(
     r"\b(?:mergePullRequest|enablePullRequestAutoMerge)\b|addPullRequestReview[^;&|]*APPROVE")
 QUOTED = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
+# Double quotes still run $(...) and backticks, so those strings are never blanked.
+SUBSTITUTION = re.compile(r"\$\(|`")
+# Single quotes only, so nothing expands on the agent's side; side-pane.sh refuses newlines too.
+STAGE_ONLY = re.compile(r"^\s*[\w~./-]*side-pane\.sh\s+stage\s+'[^'\n\r]*'\s*$")
+STAGE_HINT = "~/.skills/shared/scripts/side-pane.sh stage '<cmd>'"
 MCP_BLOCKED = {"merge_pull_request", "enable_auto_merge"}
 # GitHub MCP tools that commit straight to args["branch"], skipping review.
 MCP_BRANCH_WRITERS = {"push_files", "create_or_update_file", "delete_file"}
@@ -219,9 +227,11 @@ def reason(payload: dict) -> str | None:
             return "keystrokes typed into a process that cannot be read"
     else:
         command = args.get("command") or args.get("cmd") if isinstance(args, dict) else None
-    if not isinstance(command, str):
+    if not isinstance(command, str) or (tool != "write_to_process" and STAGE_ONLY.match(command)):
         return None
-    bare = command if SHELL_WRAPPER.search(command) else QUOTED.sub("''", command)
+    bare = command if SHELL_WRAPPER.search(command) else QUOTED.sub(
+        lambda m: m.group(0) if m.group(0)[0] == '"' and SUBSTITUTION.search(m.group(0)) else "''",
+        command)
     for pattern, label in PATTERNS:
         if pattern.search(bare):
             return label
@@ -245,9 +255,9 @@ def main() -> int:
     if not found:
         return 0
     print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or change "
-          f"{'/'.join(sorted(PROTECTED))}. Do not retry or work around it: ask the user to run "
-          "it in their own terminal (the gh wrapper asks them to confirm) or merge on GitHub.",
-          file=sys.stderr)
+          f"{'/'.join(sorted(PROTECTED))}. Stage it for the user instead: run `{STAGE_HINT}` "
+          "as the whole command (single quotes, nothing chained, no shell wrapper), and show "
+          "the command in a code block. Make no other attempt to run it.", file=sys.stderr)
     return 2
 
 
