@@ -32,7 +32,7 @@ Use the actual failure mode, such as "merge would have passed with a required re
 
 ## Vernacular rules (complement stop-slop)
 
-- Prefer specific names and active voice when the actor matters. Follow the writer's punctuation; check repeated dashes and formulaic structures in `structures.md`.
+- Prefer specific names and active voice when the actor matters. Follow the writer's punctuation; check repeated dashes and formulaic structures in `patterns.md`.
 - Explain implications in operator terms: what a reviewer, merger, or on-call person would hit.
 - Cut meta ("this section will cover"). State the change, then the proof.
 - Keep each distinct item. End when the claim and its evidence are clear.
