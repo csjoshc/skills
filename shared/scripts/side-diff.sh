@@ -28,5 +28,4 @@ git rev-parse "$range" >/dev/null 2>&1 || { echo "side-diff: unknown revision in
 # Plain git diff output reflows in less on its own; only difft needs the re-render loop.
 view="git diff $(printf %q "$range")"
 command -v difft >/dev/null && view="$(printf %q "$(cd -P "$(dirname "$0")" && pwd)/side-diff.sh") --view $(printf %q "$range")"
-# -P resolves the skill-dir symlinks (~/.claude/skills/pr-review) back to ~/.skills.
-exec "$(cd -P "$(dirname "$0")/../../shared/scripts" && pwd)/side-pane.sh" run "$view"
+exec "$(cd -P "$(dirname "$0")" && pwd)/side-pane.sh" run "$view"
