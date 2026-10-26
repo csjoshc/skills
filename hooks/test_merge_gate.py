@@ -92,6 +92,7 @@ MERGE = "gh pr merge 43 --repo o/r && GH_TOKEN=$(gh auth token --user u) gh pr m
     f"~/.skills/shared/scripts/side-pane.sh stage '{MERGE}'",
     f"/Users/u/.skills/shared/scripts/side-pane.sh stage '{MERGE}'",
     f"  side-pane.sh stage '{MERGE}'  ",
+    "side-pane.sh stage 'gh pr merge 45 --repo o/r && git -C ~/.skills pull --ff-only'",
 ])
 def test_lone_stage_call_is_allowed(cmd: str) -> None:
     assert shell(cmd) == 0
