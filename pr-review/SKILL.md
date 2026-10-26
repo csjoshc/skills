@@ -47,6 +47,18 @@ Do not use for:
 
 If already on the PR branch, detect repo and PR automatically via `gh pr view`.
 
+### Side-by-side diff
+
+When the user will read the change alongside you, open it beside the agent's pane after fetching the PR:
+
+```bash
+~/.skills/pr-review/scripts/side-diff.sh <base>...<head>
+```
+
+For a PR that isn't checked out, run `git fetch origin <base> pull/<N>/head` and pass `origin/<base>...FETCH_HEAD`.
+It picks WezTerm, tmux or iTerm2 from the environment, falls back to a new Terminal.app window on macOS, and uses difftastic when installed.
+Done when it prints `side-diff: <where>`; on exit 1, give the user the printed command.
+
 ---
 
 ## Workflow Summary
