@@ -48,7 +48,7 @@ ticket-review is optional. Do not wait on a critic report.
    add `.plan/` or `.tickets/`; never push). ANY drift or missing evidence → **HALT**.
 7. **Loop.** At slice boundaries and before final completion, apply the
    [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass)
-   size warning to the aggregate proposed PR, not only the latest ticket.
+   review budget to the aggregate proposed PR, not only the latest ticket.
    Recommend coherent splits without creating branches or publishing them.
    Re-detect state.
 

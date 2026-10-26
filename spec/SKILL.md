@@ -53,7 +53,8 @@ Full templates, field lists and rules: read [references/ticket-template.md](refe
 Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
 Write `Stage: NEW`. The BUILD subagent flips Stage when it starts.
 Keep tickets short: scope, files, ACs, verify, and load-bearing questions only.
-Record reversible assumptions on the ticket; ask only for Tier 3 or conflicting decisions.
+Before delegation, establish the [shared authoring contract](../shared/QUALITY_RUBRIC.md#change-quality-pass) using the ticket's existing fields.
+Record reversible local assumptions; resolve its decision boundary and the tiers below, reusing prior approval.
 
 ## Assumption handling
 

@@ -59,6 +59,10 @@ Required sections, in this order:
 
 Optional, only when they have content: `## Not Doing`, `## Docs to Update`, `## Assumptions`, `## Failure Protocol` (only to override the default).
 
+Establish the [authoring contract](QUALITY_RUBRIC.md#change-quality-pass) in these existing sections before delegation.
+Scope holds intent and delivery; Notes holds structure, consumers, and approved decisions; ACs/Verify hold the evidence obligations.
+No extra table columns or contract document are required.
+
 ### The AC table
 
 ```markdown

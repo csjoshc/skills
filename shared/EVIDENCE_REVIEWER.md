@@ -125,6 +125,9 @@ Confirm the after-snapshot still matches current source before accepting evidenc
 Changes from earlier tickets present in both snapshots are not new drift.
 For parallel waves, attribute hunks using the disjoint ownership map; ambiguous ownership or undeclared edits require review before another wave starts.
 
+Independently assess the builder's account against the [shared authoring contract](QUALITY_RUBRIC.md#change-quality-pass).
+Use the ticket's existing Scope, Notes, and ACs, not a second set of review requirements.
+
 For every changed project file:
 
 - Is it in the ticket's `Files:` list (or a child path of a declared
@@ -145,7 +148,7 @@ For each AC in the ticket's `## Acceptance Criteria` and
    - Binary exists (`command -v <bin>`)
    - File paths referenced are present (`[ -f <path> ]`)
    - Env-vars the command depends on are set
-3. Re-run the command. Compare the output to what the AC asserts.
+3. Re-run the command and assess its result against the shared contract's Evidence obligation, not only its exit code.
 4. Record one of:
    - **PASS** — command ran, assertion held
    - **PASS-via-skip** — command was correctly skipped per the

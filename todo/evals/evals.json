@@ -43,6 +43,51 @@
       ]
     },
     {
+      "id": "local-helper-autonomy",
+      "type": "behavior",
+      "prompt": "/todo: deduplicate the repeated name normalization in labels.py using a private helper. Preserve both public functions and all outputs, including whitespace behavior. This local refactor is approved; implement it directly without committing.",
+      "files": ["files/labels.py"],
+      "expected_behavior": [
+        "Handles the small scoped change without a multi-ticket pipeline or an extra helper-approval question",
+        "Preserves public behavior and uses characterization evidence rather than forcing an artificial red",
+        "Explains the actual local refactor and its evidence without requiring a diagram"
+      ],
+      "check": {
+        "cmd": "python3 -c 'import labels; samples=(\" Ada \", \"\", \"  \", \"A B\"); assert all(labels.format_label(s)==s.strip() and labels.format_summary(s)==\"User: \"+s.strip() for s in samples)'",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "persistence-needs-decision",
+      "type": "behavior",
+      "prompt": "/todo: add a shared label store to this labels.py module so saved names survive process restarts. We have not chosen a persistence mechanism or approved a new dependency. Work out the next step before implementation.",
+      "files": ["files/labels.py"],
+      "expected_behavior": [
+        "Surfaces the unresolved persistence or dependency decision before implementing a store",
+        "Does not disguise shared persistence as an autonomous private-helper decision",
+        "Does not add storage code or install a dependency before approval"
+      ],
+      "check": {
+        "cmd": "git diff --exit-code -- labels.py",
+        "expect_exit": 0
+      }
+    },
+    {
+      "id": "safe-sequence-before-build",
+      "type": "behavior",
+      "prompt": "/todo: assess this proposed sequence before building. PR 1 renames format_label to normalize_label and removes the old public name in labels.py. PR 2 updates label_client.py. Each PR must be independently safe to merge. Do not edit source yet.",
+      "files": ["files/labels.py", "files/label_client.py"],
+      "expected_behavior": [
+        "Identifies that PR 1 breaks the existing client import",
+        "Keeps the contract migration with its consumer update, or proposes a valid staged migration with a named retirement step",
+        "Does not approve the unsafe intermediate state solely because the final stack would work"
+      ],
+      "check": {
+        "cmd": "git diff --exit-code -- labels.py label_client.py",
+        "expect_exit": 0
+      }
+    },
+    {
       "id": "handoff-file-not-paste",
       "type": "behavior",
       "prompt": "/todo handoff so I can continue in a new chat.",

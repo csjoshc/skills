@@ -2,7 +2,8 @@
 
 **Audience:** Engineers implementing or reviewing source changes and auditing codebases.
 
-**Not for ticket markdown.** Optional specialist: `ticket-review` for `.tickets/*.md`.
+The change-quality pass also guides planned source work.
+The remaining code-health rubric does not grade ticket prose; use `ticket-review` for `.tickets/*.md`.
 
 **Precedence:** Organization review packet overrides this file. Then
 Architecture Decisions / `AGENTS.md`. This rubric fills gaps.
@@ -19,6 +20,7 @@ violation or stays mechanical.
 ## Contents
 
 - Part 1 — Review rules
+- [Change-quality pass: authoring and review contract](#change-quality-pass)
 - Part 2 — Subjective keys and weight tiers
 - Part 3 — Subjective tiers
 - Part 4 — Mechanical patterns (M1–M12)
@@ -51,33 +53,63 @@ violation or stays mechanical.
 Use this pass for source changes, not read-only research.
 Correctness and completeness come first, readability second, diff size third.
 Prefer the smallest coherent change, not fewer lines.
+The same contract applies to agent-to-human and human-to-human review.
+The author owns the actual diff, not merely the prompt or original plan.
 
-- **Before editing:** name the requested behavior, the contracts that must stay unchanged, and the expected implementation/support files.
-  Use the existing ticket or a short statement in chat; small changes need no tickets or cleanup audit.
+| Obligation | Author establishes | Reviewer challenges |
+|---|---|---|
+| **Intent** | Actual outcome and preserved invariants | Does the diff deliver that outcome without unrelated changes? |
+| **Structure** | Ownership, affected contracts/consumers, and why significant new pieces are needed | Does the structure earn its cost, and were boundary decisions approved? |
+| **Evidence** | Independent expected results and checks for plausible failures in affected consumers | Would a credible wrong implementation fail, and what remains unverified? |
+| **Delivery** | Safe, complete state at this merge point | Does correctness depend on an unfinished follow-up? |
+| **Review cost** | Focused diff, concise explanation, and useful reading order | Can this be assessed without reconstructing excessive context? |
+
+**Decision boundary:** obtain approval before introducing a dependency, persistence mechanism, shared mutable state, public contract, or responsibility transfer between modules.
+Reuse prior approval in the task or plan; do not ask again.
+A private helper within an existing responsibility needs no separate approval unless it changes one of those boundaries.
+An abstraction's name or size does not determine its significance.
+
+- **Before editing:** establish the contract above, expected implementation/support files, and planned evidence.
+  Use existing ticket fields or a short chat brief, not a separate contract document.
+  Small changes need neither tickets nor a cleanup audit.
   Record pre-existing edits so they are not mistaken for this task's work.
   Check existing package functions and same-role code before adding custom code; change the narrowest correct owner.
 - **At the first working slice:** compare actual scope with that intent.
   Preserve behavior and local conventions, including decorators, auth, logging, tracing, validation, and error handling, unless the task changes them.
-  Pause before an unexpected subsystem, public contract, schema, dependency, or security change; an extra declared support file is not itself scope expansion.
-  Material expansion needs user approval, not a justification written after the edits.
+  Pause for an unapproved boundary decision or material scope expansion; an extra declared support file is not itself expansion.
 - **Before completion:** inspect every changed hunk for a connection to the requested behavior, its tests, or a required migration.
   Keep supporting tests and required consumer updates together; leave no permanent fallback or incomplete migration to shrink the diff.
   Remove only this task's incidental renames, formatting, duplication, pass-through wrappers, or speculative scaffolding.
   Preserve pre-existing user edits and comments that explain reasons or invariants.
   Report unrelated defects instead of fixing them.
+  Update the original brief to explain the actual delta and evidence, not a file inventory or repetition of the prompt.
 
 These are scope checks, not repeated full audits.
 Reuse a recorded pass only while its diff and intended scope remain unchanged; after further edits, recheck the affected hunks.
 Report evidence-backed concerns with `file:line`, the violated intent or existing pattern, and protecting tests, not taste.
+Separate missing preparation, substantive defects, and explicitly disclosed design questions.
+Explain the concrete review burden without imputing intent; a prepared question is legitimate review work.
+An explanation, checklist, or generated diagram does not independently prove correctness or human understanding.
+
+**Evidence selection:** use requirements, public contracts, worked examples, or established behavior as the basis for expected results, not the implementation's own calculation.
+Reuse existing effective checks; for consequential behavior, name a plausible failure and show that a representative scenario or targeted mutation detects it.
+Preservation checks should tolerate valid refactors and may pass on both versions.
+Test count and mutant kill rate are not substitutes for this argument.
+
+**Mental map:** use a small before/after flow or system view when ownership, dependencies, or sequencing changes; omit it for a straightforward local edit.
+For a stack, show the overall sequence and what is complete at the current step without making the reviewer read future implementation.
+Update durable architecture documentation when its described ownership or contracts become inaccurate.
 
 **Diff coverage:** use the merge-base with the intended PR target, or the preceding branch for a stack.
 `git diff <base>` covers the final tracked content across committed, staged, and unstaged work; also inspect `git diff --cached` before committing and `git ls-files --others --exclude-standard` for untracked files.
 For ticket attribution, compare with the ticket/wave starting state, not just `HEAD` or the entire branch.
 Inspect file contents for untracked additions; neither an empty unstaged diff nor a clean working tree proves the PR is small.
 
-**Size warning:** report files and added/deleted lines, separating production code, tests, and generated/lockfile changes.
-Around 400 changed handwritten lines, or unexpectedly scattered files, recommend a coherent split or explain why keeping the change together is clearer.
-This is a warning, not a hard limit unless project policy requires one.
+**Review budget:** report files and added/deleted lines, separating production code, tests, and generated/lockfile changes.
+Around 400 changed handwritten lines, or above a project-defined budget, propose a coherent split before requesting final human review.
+If keeping the change together is clearer, obtain an explicit exception from the intended reviewer or user; this accepts review burden, not correctness.
+Unexpected file spread is also a warning even below the line budget.
+An unaccepted exception blocks a review-ready claim, not an accurately qualified implementation/test result; this instruction does not install a CI limit.
 Use LOC and complexity deltas as signals, not targets; never omit tests, duplicate logic, or split cohesive code to satisfy them.
 Whitespace-ignoring and structural diffs aid review but do not prove semantic equivalence.
 Follow required formatting checks while avoiding unrelated autofixes; flag unavoidable formatter churn.

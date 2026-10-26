@@ -21,11 +21,14 @@ More: [shared/TEST_ANTIPATTERNS.md](../shared/TEST_ANTIPATTERNS.md).
 
 ## Rules of the loop
 
-- **Red before green.** Write the failing test first, then only enough code to pass it, with no speculative features.
+- **Plan evidence first.** Apply the Evidence obligation in the [shared contract](../shared/QUALITY_RUBRIC.md#change-quality-pass) before writing tests; use ticket ACs or the inline brief.
+- **Red before green.** For changed behavior, write the failing test first, then only enough code to pass it, with no speculative features.
 - **Prove the red.** Before claiming a cycle done, run `python3 ~/.skills/tdd/scripts/red_first.py --worktree`.
   It fails any added or changed test that still passes on base code; `--help` has every shape (Python built in;
   vitest, jest and others via `--cmd ... {junit} {checks}`), the verdicts, and how to fix a flag. Read it once.
-  Fix the assertion rather than exempting it; `WEAK` must be tightened or justified in the PR.
+  Red-first distinguishes versions, not whether expectations are correct.
+  Intentional preservation checks use the supported characterization exemption; do not weaken them to force a failure.
+  For changed behavior, fix the assertion rather than exempting it; `WEAK` must be tightened or justified in the PR.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
 - **Check local code quality.** Apply the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass) before implementation, at the first green slice, and on the final diff; these are scope checkpoints, not full audits.
 - **Refactor only on green**, as its own phase after the slices pass, running tests after each step.

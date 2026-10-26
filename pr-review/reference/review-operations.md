@@ -80,7 +80,7 @@ git ls-files --others --exclude-standard   # untracked files are part of the cha
 
 ## Diff Sizing Gate
 
-Apply the size-warning and diff-coverage guidance in the [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass) before deep review.
+Apply the review-budget and diff-coverage guidance in the [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass) before deep review.
 This also applies to standalone local reviews; reuse a current preflight from `pr-create` instead of repeating it.
 
 ---

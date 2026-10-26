@@ -30,6 +30,9 @@ Use specialist review, not a single-pass generalist review.
 - Reject findings without file/line/code-path evidence
 - Separate generation and review roles
 
+Independently challenge the [shared authoring contract](../../shared/QUALITY_RUBRIC.md#change-quality-pass); do not introduce a second preparation rubric.
+Tie preparation findings to its unmet obligation and concrete reviewer burden, distinguishing them from defects or disclosed design questions.
+
 ---
 
 ## Lens 1 — Bug Hunter
@@ -152,7 +155,7 @@ A documented repo rule overrides the baseline: where the repo endorses a pattern
 
 **Role:** Test strategy reviewer
 
-**Focus:** Critical test coverage gaps in changed code
+**Focus:** Missing or ineffective evidence for consequential changed behavior and affected consumer contracts
 
 **Check for:**
 
@@ -172,9 +175,9 @@ A documented repo rule overrides the baseline: where the repo endorses a pattern
 
 | #   | Criterion                                                     |
 | --- | ------------------------------------------------------------- |
-| 1   | A new or modified public function lacks corresponding tests   |
+| 1   | Evidence is absent or does not meaningfully exercise the changed behavior |
 | 2   | A specific bug or regression this gap would miss can be named |
-| 3   | No integration or e2e coverage appears elsewhere              |
+| 3   | No other credible test or execution evidence covers that regression |
 | 4   | The gap is in changed code                                    |
 
 ---
@@ -188,6 +191,7 @@ A documented repo rule overrides the baseline: where the repo endorses a pattern
 **Inputs:**
 
 - Linked ticket(s) and acceptance criteria
+- User request or author brief when there is no ticket; approved decisions and delivery boundary
 - PR diff hunks
 - `CLAIM_UNVERIFIED.md` if present
 - `layer-boundary-critic` output if present
@@ -198,6 +202,7 @@ A documented repo rule overrides the baseline: where the repo endorses a pattern
 - Acceptance criteria with no hunk
 - Scope creep outside ticket intent
 - Missing claim verification
+- The shared contract's Intent, Structure, and Delivery obligations, checked against the actual diff
 - Any layer BLOCK finding
 - Requirements that look implemented but where the implementation is wrong; quote the spec line
 
@@ -213,7 +218,7 @@ A documented repo rule overrides the baseline: where the repo endorses a pattern
 | --- | ---------------------------------------------- |
 | 1   | The hunk/AC mismatch is clear and unambiguous  |
 | 2   | No other lens already caught it                |
-| 3   | Fixing it is cheap                             |
+| 3   | The gap traces to the request, approved plan, or shared contract |
 | 4   | Leaving it hurts reviewability or completeness |
 
 ---

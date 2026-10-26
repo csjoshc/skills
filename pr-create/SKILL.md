@@ -42,15 +42,15 @@ Checklist:
 - [ ] 0.2 Self-review the pending diff with the harness's built-in code
         review if it has one; otherwise run `pr-review --local`
         (no posting). Fix or acknowledge findings before continuing.
-- [ ] 0.3 If the changed files touch backend production code, run
-        `tdd/MUTATION.md` in single-mutant mode on the touched
-        functions. Survivors → user decides whether to strengthen the
-        test or acknowledge.
+- [ ] 0.3 Inspect the evidence planned under the shared contract.
+        Reuse results that still apply; for missing or weak consequential
+        evidence, use a targeted failure scenario or `tdd/MUTATION.md`.
+        Do not add a mutation pass for every touched function.
 - [ ] 0.4 If the changed files introduce a new boundary mock, run
         `tdd/MOCK_CONTRACT.md`. Missing contract refs → BLOCK.
 ```
 
-Before choosing the reviewer in 0.2, apply the completion and size-warning checks in the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass) to the aggregate proposed PR.
+Before choosing the reviewer in 0.2, apply the completion and review-budget checks in the [change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass) to the aggregate proposed PR.
 Reuse current scope evidence from `verify`, but include earlier commits and all pending files against the intended PR target.
 Run one substantive review, not both built-in review and `pr-review`.
 
@@ -129,7 +129,7 @@ Checklist:
 ```
 
 Title: `<type>(<scope>): <summary>`. Body sections:
-- `## Summary`: why in a line or two, then the smallest visual (diagram, diff-sketch or tree).
+- `## Summary`: why and the actual delta; add a small visual when it clarifies changed relationships or sequencing.
 - `## Evidence`: before and after, then the `Test Results` and `Coverage` pastes.
 - `## Merge Danger`: one-way or two-way door, plus blast radius.
 - `## Not Doing` and `## Test Plan`.

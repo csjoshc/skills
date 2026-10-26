@@ -1,10 +1,9 @@
 ---
 name: mutation-critic
 description: >-
-  Detects tautological tests that assert "code does what code does" instead
-  of user intent. Generates small mutants of changed code (boolean flip,
-  off-by-one, return-early, negation) and re-runs the test suite. Tests
-  that survive all mutants are flagged as suspect. Use after TDD cycles,
+  Checks test sensitivity to plausible incorrect behavior using targeted
+  mutations of changed code. Investigates survivors rather than treating
+  them as proof of tautology. Use after TDD cycles,
   before PR creation, and during pr-review test analysis.
 ---
 
@@ -21,11 +20,9 @@ description: >-
 - Output contract
 
 
-Kills circular tests. A test that passes while the code under test is
-deliberately broken is not a test — it's a restatement of the
-implementation. This skill injects small, semantically meaningful
-mutations into changed functions and reports which tests failed to catch
-them.
+Mutation checks test sensitivity to specific incorrect behavior.
+A survivor may indicate a coverage gap, an equivalent mutation, or an invalid experiment; it does not by itself prove tautology.
+A killed mutant does not establish an independent basis for the expected result.
 
 ## When to invoke
 
@@ -46,7 +43,6 @@ set. This keeps the mutant pass scoped to the obligation that just turned green.
 - Pure data files (JSON, YAML, fixtures)
 - Migrations
 - Files with only type declarations
-- First 24 hours of a brand-new module (let TDD stabilize)
 
 ## Mutant catalogue
 
@@ -64,8 +60,8 @@ time per function:
 | Constant twiddle | `timeout = 5000` | `timeout = 0` |
 | Skip invariant | `assert x is not None` | (remove line) |
 
-Apply exactly one mutation per run. Run the full relevant test suite.
-Record whether any test failed.
+Apply exactly one mutation per run and select the relevant tests for that obligation.
+Record whether the intended assertion detected the incorrect behavior, not merely whether any test failed.
 
 ## Workflow
 
@@ -83,8 +79,9 @@ the Test Analyzer, not here.
 
 ### Phase 2: Mutation pass
 
-For each target function, pick 3 mutations from the catalogue (boolean
-flip, off-by-one, return-early are the cheapest high-signal set).
+For each selected obligation, start with one mutation representing a plausible wrong implementation.
+Add another only when it probes a distinct consequential failure.
+Use a temporary copy or controlled fixture so the user's working code stays intact.
 
 Use a real mutation runner where available:
 
@@ -97,9 +94,8 @@ mutmut run --paths-to-mutate "$CHANGED_FILE" --tests-dir tests/
 npx stryker run
 ```
 
-Fallback when no runner exists: apply the mutation with a one-line
-Python/Node AST rewrite, re-run pytest / jest on the target test file,
-revert.
+Fallback when no runner exists: apply a targeted rewrite in the temporary copy,
+then re-run the relevant tests there.
 
 ### Phase 3: Interpretation
 
@@ -107,9 +103,9 @@ For each mutant:
 
 | Outcome | Meaning |
 |---|---|
-| Test fails | Good — test catches the mutant |
-| Test passes | **SURVIVOR** — test is tautological for this branch |
-| Test errors out | Unrelated — skip |
+| Relevant assertion fails | The check detects this incorrect behavior |
+| Test passes | **SURVIVOR** — investigate equivalence, reachability, and a possible coverage gap |
+| Compilation, setup, or unrelated failure | Invalid or inconclusive experiment; repair it or report the gap |
 
 Build `MUTATION_SURVIVORS.md`:
 
@@ -121,11 +117,12 @@ Build `MUTATION_SURVIVORS.md`:
 
 ### Phase 4: Remediation guidance
 
-For each survivor, suggest an intent-oriented assertion:
+For each meaningful survivor, suggest an assertion grounded in the contract.
+A literal expected value can be strong evidence; relational assertions are not inherently better.
 
 ```markdown
 Current test:
-  expect(total).toBe(90)          // value-only; passes even with discount logic removed
+  expect(Number.isFinite(total)).toBe(true) // shape-only; passes with discount logic removed
 
 Intent assertion:
   // "10% discount applies when hasDiscount is true"
@@ -139,10 +136,8 @@ Intent assertion:
   survivors into its report.
 - `pr-fix`: for every fixed comment, re-run mutation-critic on that
   function to confirm the fix is tested.
-- `tdd` green-step: optional gate — run a 3-mutant pass before calling
-  the cycle complete.
-- `verify`: a survivor rate above a threshold (e.g., > 25%) flips
-  "VERIFIED" to "CLAIM_UNVERIFIED" for that claim.
+- `tdd` green-step: follow the invocation criteria above and the planned evidence obligations.
+- `verify`: an unresolved meaningful survivor is an evidence gap for the affected claim, not an automatic failure based on a survivor percentage.
 
 ## Hard rules
 
