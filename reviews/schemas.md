@@ -158,7 +158,7 @@ Required transitions:
 
 - `phase-0 → phase-1` (cleanup only; pr-review's pre-flight is a direct gate to lens phase).
 - `phase-1 → report` (both skills).
-- `report → post` (pr-review only; Criteria must include `validator exit 0`).
+- `report → post` (pr-review PR mode only; Criteria must include `validator exit 0`).
 
 `Proceeding: yes` with any unresolved Phase 0 row = malformed, blocks the
 validator.
@@ -198,6 +198,6 @@ Every review transcript ends with, in order:
 3. One or more `REVIEW-FINDINGS` blocks.
 4. `REVIEW-GATE: phase-1 → report`.
 5. `REVIEW-LEDGER`.
-6. `REVIEW-GATE: report → post` (pr-review only, immediately before `gh api`).
+6. `REVIEW-GATE: report → post` (pr-review PR mode only, immediately before `gh api`).
 
 Any deviation trips `reviews/validate.py`.

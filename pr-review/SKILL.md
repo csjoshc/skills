@@ -1,17 +1,17 @@
 ---
 name: pr-review
-description: "Reviews a pull request with specialist lenses (bugs, standards, errors, tests, scope) and posts evidence-backed findings. Use when reviewing a PR or posting review comments."
+description: "Reviews a pull request or an unpushed local branch with specialist lenses (bugs, standards, errors, tests, scope) and reports evidence-backed findings, posting them only for a PR. Use when reviewing a PR, posting review comments, or reviewing local changes before pushing."
 ---
 
 # pr-review
 
-Reviews pull requests with specialist review lenses and criteria-based
-checklists. Every reported issue must pass an explicit binary checklist.
+Reviews pull requests, or local changes before they are pushed, with
+specialist review lenses and criteria-based checklists. Every reported issue
+must pass an explicit binary checklist.
 
-Use this skill for reviewing other people's PRs and posting GitHub review
-comments. To self-check your own branch before opening a PR, prefer the
-harness's built-in code review if it has one; it is cheaper. For local
-codebase audits not tied to a pull request, use `cleanup`.
+PR mode posts GitHub review comments. Local mode reviews the branch diff plus
+uncommitted work and reports in chat; nothing leaves the machine. For codebase
+audits not tied to a change, use `cleanup`.
 
 ## Contents
 
@@ -28,6 +28,7 @@ codebase audits not tied to a pull request, use `cleanup`.
 ## When to Use
 
 - Reviewing an open pull request
+- Reviewing your own branch or working tree before pushing (local mode)
 - Preparing code review feedback before posting
 - Auditing a PR diff for bugs, standards, tests, error handling, or scope drift
 - Posting inline PR comments and a summary review
@@ -47,6 +48,15 @@ Do not use for:
 
 If already on the PR branch, detect repo and PR automatically via `gh pr view`.
 
+```bash
+/pr-review --local [<base>]
+```
+
+Local mode: no PR, no posting. Use it when the user asks to review before
+pushing, or when the current branch has no PR. Base defaults to the merge-base
+with the remote default branch. Context commands are in
+`reference/review-operations.md` → Local mode.
+
 ### Side-by-side diff
 
 When the user will read the change alongside you, open it beside the agent's pane after fetching the PR:
@@ -63,15 +73,18 @@ Done when it prints `side-pane: <where>`; on exit 1, give the user the printed c
 
 ## Workflow Summary
 
-1. Run pre-flight checks and fetch the PR context.
+1. Run pre-flight checks and fetch the PR context (local mode: the git diff).
 2. Gather standards from `reference/review-standards.md` and repo-local policy files.
 3. Run deterministic checks before LLM critique when available.
 4. Launch specialist review lenses from `reference/review-lenses.md`.
 5. Validate, deduplicate, and sort findings into `REVIEW-FINDINGS` blocks.
-6. Emit `REVIEW-LEDGER` and `REVIEW-GATE: report → post`.
-7. Run `python3 ~/.skills/reviews/validate.py --transcript <draft>`; exit 0
-   required before posting.
-8. Post inline comments and a summary using `reference/review-operations.md`.
+6. Emit `REVIEW-LEDGER` and `REVIEW-GATE: report → post` (local mode: stop
+   at `phase-1 → report`).
+7. Run `python3 ~/.skills/reviews/validate.py --transcript <draft>` (add
+   `--local` in local mode); exit 0 required before posting or reporting.
+8. PR mode: post inline comments and a summary using
+   `reference/review-operations.md`. Local mode: print findings in chat as
+   `file:line` with the suggested fix, and post nothing.
 
 Do not expand the full lens definitions or posting templates here. Load the
 companions below.
@@ -87,6 +100,7 @@ Every `/pr-review` session emits, in order:
 2. `REVIEW-GATE: phase-1 → report. Criteria: [...]. Proceeding: yes.`
 3. `REVIEW-LEDGER` YAML summarizing counts and confidence.
 4. `REVIEW-GATE: report → post. Criteria: [validator exit 0: met]. Proceeding: yes.`
+   Local mode omits this gate.
 
 Findings use `source: lens-derived` (or `tool-flagged` for pre-flight
 results folded in). Structural findings require a `proof:` field — a
