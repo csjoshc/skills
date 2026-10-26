@@ -96,7 +96,7 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 Do it when a commit or push is first attempted in a repo with a GitHub remote, after 0c (a hook framework can replace hooks), and stay silent when the guards are already present.
 
 1. Resolve the effective hooks directory with `git -C <repo> rev-parse --path-format=absolute --git-path hooks`; it honours `core.hooksPath` and worktrees, and without the flag it prints a path relative to the repo.
-2. Check it holds executable `pre-push` and `reference-transaction` stubs that call the shared guards. The facts are in `~/bootstrap/BOM.md#git-guards`; do not restate them here.
+2. Check it holds an executable copy of each stub listed in `~/bootstrap/BOM.md#git-guards`, each calling its shared guard; do not restate the list here.
 3. With the default hooks directory and no hook present, run `git init` in the repo: it re-applies the template and overwrites nothing.
    With a hook present, show the integration and ask first; put the guard ahead of any `exec` or `exit` and keep pre-commit's `.legacy` chaining.
    When `core.hooksPath` points inside the repo (a tracked directory such as `.githooks`), `git init` fills `.git/hooks`, which git then ignores.
@@ -218,7 +218,7 @@ context exclusions, and operational rules.
 - [ ] Cross-tool shims (`GEMINI.md`, `.cursorrules`, etc.) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a filtered copy of `~/.skills` for Claude Desktop (the `rsync` command in sync/skills.md, run from the project root). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
-- [ ] The effective hooks directory has the `pre-push` and `reference-transaction` guard stubs (0g).
+- [ ] The effective hooks directory has the stubs listed in `~/bootstrap/BOM.md#git-guards` (0g).
 - [ ] `.worktrees/` (or existing `worktrees/`) is gitignored; `AGENTS.md` includes the Parallel work (git worktrees) block; [`WORKTREES.md`](WORKTREES.md) is the operator playbook.
 
 ---
