@@ -46,7 +46,8 @@ Follow [references/auto-driver.md](references/auto-driver.md).
 3. Spawn one BUILD subagent per implementation ticket. Parallel only when
    `Depends-On` is satisfied, `Files:` are disjoint, and risk is low.
    Serialize overlapping files, mutation hubs, integration gates, and
-   medium-or-higher risk.
+   medium-or-higher risk. When the harness has a phased subagent runner,
+   the wave runs as one throwaway script; tickets stay the only state.
 4. Check returned evidence against ACs
    (`../shared/EVIDENCE_REVIEWER.md`). Drift or missing evidence → halt.
 5. Loop until complete or a load-bearing halt.
