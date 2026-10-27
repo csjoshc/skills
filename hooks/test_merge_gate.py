@@ -71,6 +71,35 @@ def test_skills_repo_is_not_exempt() -> None:
                                                      "workdir": skills}}) == 2
 
 
+@pytest.fixture
+def checkout(tmp_path: Path) -> Path:
+    """A primary checkout on main with a linked worktree on feat under .worktrees/feat."""
+    repo = tmp_path / "repo"
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(repo)]
+    # No template: the machine's guard hooks would refuse the commit on main.
+    subprocess.run(["git", "init", "-q", "--template=", "-b", "main", str(repo)], check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "base"], check=True)
+    subprocess.run([*git, "worktree", "add", "-q", "-b", "feat", ".worktrees/feat"], check=True)
+    return repo
+
+
+def in_dir(cmd: str, session: Path, tool_input: dict) -> int:
+    return run({"tool_name": "Bash", "tool_input": {"command": cmd, **tool_input},
+                "cwd": str(session)})
+
+
+@pytest.mark.parametrize("tool_input", [{"cwd": ".worktrees/feat"}, {"workdir": ".worktrees/feat"}])
+def test_tool_dir_on_a_feature_branch_allows_rebase(checkout: Path, tool_input: dict) -> None:
+    # The session sits on main; the command runs in the feat worktree.
+    assert in_dir("git rebase main", checkout, tool_input) == 0
+    assert in_dir("git rebase main", checkout, {"cwd": str(checkout / ".worktrees/feat")}) == 0
+
+
+def test_tool_dir_on_main_still_blocks_rebase(checkout: Path) -> None:
+    assert in_dir("git rebase feat", checkout, {}) == 2
+    assert in_dir("git rebase feat", checkout / ".worktrees/feat", {"cwd": "../.."}) == 2
+
+
 def test_github_mcp_merge_and_approve_are_blocked() -> None:
     assert run({"tool_name": "mcp__github__merge_pull_request", "tool_input": {}}) == 2
     assert run({"tool_name": "mcp_call_tool", "tool_input": {
