@@ -35,7 +35,8 @@ You are implementing one ticket. The ticket file is the source of truth.
 6. Do not commit. Return the concise, updated account of the change and
    per-AC evidence (command + result), with remaining risks or questions.
    Do not repeat the ticket or substitute a file inventory for the account.
-7. Set Stage: COMPLETE only when verify passes. Do not start another ticket.
+7. Set Stage: COMPLETE and Completed-At: <today> only when verify passes.
+   Do not start another ticket.
 
 If tdd or verify fails: do not flip COMPLETE.
 Leave Stage: BUILD or FAILED, and report the blocker.
