@@ -95,9 +95,15 @@ def test_tool_dir_on_a_feature_branch_allows_rebase(checkout: Path, tool_input: 
     assert in_dir("git rebase main", checkout, {"cwd": str(checkout / ".worktrees/feat")}) == 0
 
 
-def test_tool_dir_on_main_still_blocks_rebase(checkout: Path) -> None:
-    assert in_dir("git rebase feat", checkout, {}) == 2
-    assert in_dir("git rebase feat", checkout / ".worktrees/feat", {"cwd": "../.."}) == 2
+# Work reaches main only through a merged PR on the remote, so every local way of importing
+# commits into a checked-out main stays blocked; the owner's decision, 2026-10-27.
+@pytest.mark.parametrize("cmd", ["git rebase feat", "git merge feat", "git merge --ff-only feat",
+                                 "git cherry-pick feat", "git pull origin feat", "git am x.patch",
+                                 "git revert HEAD"])
+def test_tool_dir_on_main_still_blocks_local_merges(checkout: Path, cmd: str) -> None:
+    assert in_dir(cmd, checkout, {}) == 2
+    assert in_dir(cmd, checkout / ".worktrees/feat", {"cwd": "../.."}) == 2
+    assert in_dir(cmd, checkout / ".worktrees/feat", {}) == 0  # the same command on feat
 
 
 def test_github_mcp_merge_and_approve_are_blocked() -> None:
