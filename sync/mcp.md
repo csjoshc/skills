@@ -208,6 +208,29 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 
 ## Secret hygiene
 
+### Scoped startup for an individually reconciled consumer
+
+`shared/credential_exec.py` loads named credentials into one consumer, not the parent harness or global shell.
+For a native MCP entry, use `python3` as its command and the following tokens as its argument array, with reviewed absolute paths:
+
+```text
+-I /absolute/skills/shared/credential_exec.py --file /absolute/private/work.env --var EXAMPLE_TOKEN -- /absolute/bin/consumer
+```
+
+Repeat `--var` for required names; reserve `--set NAME=value` for non-secret runtime settings.
+Arguments after `--` remain literal; never put secret values in them or in the native config.
+The helper permits a fixed runtime environment and rejects missing/empty credentials, unsafe file ownership/modes and symlinked credential files.
+It sources a trusted shell-compatible file in a clean Bash subprocess: this is not a sandbox for untrusted files or encryption at rest.
+Use private files outside repositories on macOS or the Linux side of WSL; WSL execution is not yet verified.
+Descriptor mode is retained for existing bridge bindings, not required for new direct command bindings.
+Tests: `python3 -I shared/test_credential_exec.py` runs synthetic child processes without live credentials.
+
+No harness is automatically migrated by installing this helper.
+Reconcile one native entry, preserve account/tool permissions and unrelated configuration, then verify a real read-only operation with approval.
+Full sync must remain paused during migration: the legacy generator below can replace a manually reconciled entry.
+
+### Legacy generator
+
 - The master holds `${VAR}` placeholders only.
   Values live in `~/.config/secrets/work.env` (dir 700, file 600), outside every repo.
 - To add a secret: add `NAME=` to the repo template `secrets/work.env.example` in `~/bootstrap`, set it in `work.env`, put `${NAME}` in the master, then run `mcp_sync.py`.
@@ -217,6 +240,9 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 - The script never prints values; its warnings name the server and field only.
 
 ## Rotating a token
+
+For scoped startup, update the owning file and relaunch only its consumer with approval; do not source credentials into the parent harness or global shell.
+The steps below describe legacy bindings that have not been reconciled.
 
 Rotation touches one file.
 Every target holds a reference to the variable, never the value, so no config needs editing and `mcp_sync.py` does not need to run.
