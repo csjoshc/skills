@@ -44,7 +44,10 @@ ticket-review is optional. Do not wait on a critic report.
    tells the subagent to invoke `ui`.
    - *Harness runner:* write one throwaway run covering this wave and its
      review; the run's phases are the wave then the reviewer.
-   - *Fallback:* one `Agent` call per ticket, same turn, background.
+   - *Fallback:* one `Agent` call per ticket, same turn, background. If the
+     harness's subagents have no skill tool (Devin CLI `run_subagent`), the
+     brief inlines the `tdd` and `verify` SKILL.md paths as read-first files
+     instead of asking the subagent to invoke them.
 5. **Review.** Capture the after-wave snapshot and pass both snapshots,
    ownership, and reports to the reviewer in `~/.skills/shared/EVIDENCE_REVIEWER.md`.
    Include uncommitted and untracked source; earlier tickets' work is part of
@@ -70,7 +73,11 @@ pipeline, the harness owns execution. Nothing below depends on one vendor.
   Never write it under `.plan/` or `.tickets/`; the tickets are the only
   durable state and the only resume point.
 - Phase prompts are the briefs in execution-templates.md with the ticket path
-  as the argument. No ticket bodies inside the script.
+  as the argument. No ticket bodies inside the script. Where the runner types
+  its subagents by role, name a write-capable role for build agents; a
+  read-only role gets the reviewer only.
+- A subagent's account of its own tools or skill loads is a claim, not
+  evidence; the reviewer checks the diff and test output, as always.
 - One run covers one wave. Several waves need several runs so a single run
   stays inside the harness's size guideline and a halt lands between waves.
 - The run ends early with a halt payload (reason, ticket ids) on any halt
