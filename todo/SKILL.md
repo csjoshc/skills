@@ -89,6 +89,8 @@ Derive progress from `.tickets/` and `.plan/` on each run.
 No progress files, history, percentages, graphical bars, or generated diagrams.
 
 Driving: short status, then either the next halt question or "pipeline done".
+On "pipeline done", add one line suggesting `/retro` on the run to turn any
+review comment or rework into a check or standard so it is not repeated.
 `/todo handoff` returns the file path plus 2-4 sentences; no paste block.
 
 ## Companion files

@@ -238,6 +238,9 @@ the linked plan's `ARCHITECTURE-DECISIONS` block.
 - `~/.skills/reviews/arch-violations/README.md` (`../../reviews/arch-violations/README.md`)
   and the specific catalog file relevant to the detected smell (e.g.,
   01-dependency-direction (`../../reviews/arch-violations/01-dependency-direction.md`))
+- `~/.skills/standards/modularity.md` (`../../standards/modularity.md`) — shared
+  module/interface/seam/depth/leverage/locality vocabulary. Use these terms
+  exactly for `category: Modularity` findings so review and `cleanup` agree.
 
 **Check for:**
 

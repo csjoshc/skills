@@ -191,3 +191,12 @@ req.body.user_id  →  used in `WHERE id = ${user_id}`
 - Every finding must pass its lens checklist threshold.
 - Findings are ordered by severity/category after deduplication.
 - Posted comments carry no agent or model signature.
+
+## Close the loop
+
+After the ledger, if any finding was mechanical (a fixed pattern, banned
+API, import shape, or file location a check could catch) or repeats a
+standard review keeps enforcing by hand, add one line: `Suggest /retro to
+turn these into a check or standard so they are not reviewed by hand
+again.` The goal is to never write the same comment twice. Never run
+`/retro` yourself.

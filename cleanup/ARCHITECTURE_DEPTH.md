@@ -25,21 +25,11 @@ Source: [codebase-design](https://github.com/mattpocock/skills) by Matt Pocock (
 
 ## Vocabulary
 
-Use these terms exactly.
-Say module, interface, seam or adapter rather than "component", "service", "API" or "boundary".
-
-| Term | Definition |
-|------|-----------|
-| **Module** | Anything with an interface and an implementation, at any scale: function, class, package, tier-spanning slice |
-| **Interface** | Everything a caller must know to use the module correctly: type signature, invariants, ordering, error modes, required config, performance |
-| **Implementation** | The code inside the module. Distinct from adapter: a small adapter can have a large implementation, and the reverse |
-| **Depth** | Leverage at the interface: behaviour a caller or test can exercise per unit of interface learned. Deep = lots behind a small interface. Shallow = interface nearly as complex as the implementation |
-| **Seam** | Where an interface lives; a place behaviour can be altered without editing in place (Feathers) |
-| **Adapter** | A concrete thing satisfying an interface at a seam. Names a role, not a substance |
-| **Leverage** | What callers get from depth: one implementation pays back across N call sites and M tests |
-| **Locality** | What maintainers get from depth: change, bugs, knowledge and verification concentrate in one place |
-
-Depth is measured as leverage, not as a ratio of implementation lines to interface lines, which would reward padding.
+Module, interface, implementation, depth, seam, adapter, leverage and locality
+are defined once in [`../standards/modularity.md`](../standards/modularity.md).
+Use those terms exactly; `pr-review` cites the same file. Depth is measured as
+leverage, not as a ratio of implementation lines to interface lines, which
+would reward padding.
 
 ---
 
