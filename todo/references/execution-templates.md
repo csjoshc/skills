@@ -1,6 +1,8 @@
 # Execution Templates
 
 Subagent briefs. Pointers, not pasted ticket bodies.
+The same text is the per-agent prompt inside a harness run (auto-driver.md,
+Runner selection); the ticket path is the only argument.
 
 ## Contents
 
