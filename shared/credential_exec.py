@@ -1,4 +1,6 @@
 """Exec a consumer with scoped file credentials, never a harness-wide export."""
+# Broad exports expose unrelated credentials; per-tool wrappers duplicate security-sensitive logic.
+# One tested launcher shares that boundary without taking over each harness's configuration.
 import argparse
 import base64
 import binascii
@@ -12,6 +14,7 @@ from pathlib import Path
 
 NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+# Credential names are not predictable enough for a denylist of inherited variables.
 RUNTIME = frozenset((
     "HOME", "PATH", "TMPDIR", "TMP", "TEMP", "LANG", "LANGUAGE", "LC_ALL",
     "LC_CTYPE", "LC_COLLATE", "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC", "LC_TIME",
@@ -29,6 +32,7 @@ class Failure(Exception):
 
 class Parser(argparse.ArgumentParser):
     def error(self, message):
+        # Argparse diagnostics can echo arguments that contain credentials.
         raise Failure("invalid arguments")
 
 
@@ -43,17 +47,21 @@ def required_values(path, names, env):
         raise Failure("credential file required")
     path = str(Path(path).expanduser())
     try:
+        # Validate and source the same open file so a pathname swap cannot bypass the checks.
+        # Nonblocking open lets us reject a FIFO without waiting for a writer.
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
         with os.fdopen(fd, "rb") as source:
             info = os.fstat(source.fileno())
             if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
                     or info.st_mode & 0o077 or not info.st_mode & 0o400):
                 raise Failure(f"{path}: private owner-readable file required")
+            # Bash invents defaults such as PATH; those must not satisfy a missing file assignment.
             script = (
                 "builtin unset -v -- " + " ".join(names) + " 2>/dev/null || exit 1\n"
                 f'. /dev/fd/{source.fileno()} >/dev/null 2>&1 || exit 1\n'
                 'builtin printf "%s\\0" ' + " ".join('"${' + name + '-}"' for name in names)
             )
+            # Trusted files need shell expansion; a clean subprocess contains exports and noise.
             result = subprocess.run(
                 ["/bin/bash", "--noprofile", "--norc", "-c", script, "credential-source"],
                 check=False,
@@ -120,6 +128,8 @@ def run(argv):
         env.update(values)
         env.update({k: REF.sub(lambda m: values[m[1]], v) for k, v in data["env"].items()})
         command = list(data["argv"])
+        # Bridges resolve these placeholders from their environment; expansion here would expose
+        # secret values in process arguments.
         for k, v in data.get("headers", {}).items():
             command += ["--header", f"{k}:{v}"]
         if data.get("path_prepend"):
@@ -139,6 +149,7 @@ def run(argv):
             raise Failure("command required")
         env.update(required_values(args.file, names, env))
         env.update(settings)
+    # Replacement keeps the consumer's signals and exit status without a supervising wrapper.
     os.execvpe(command[0], command, env)
 
 
