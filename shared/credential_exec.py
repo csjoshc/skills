@@ -66,8 +66,8 @@ def required_values(path, names, env):
                 ["/bin/bash", "--noprofile", "--norc", "-c", script, "credential-source"],
                 check=False,
                 env={k: v for k, v in env.items() if k not in names},
-                pass_fds=(source.fileno(),), stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL, timeout=10,
+                pass_fds=(source.fileno(),), stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10,
             )
     except (OSError, subprocess.TimeoutExpired):
         raise Failure(f"{path}: cannot read credential file") from None
@@ -150,7 +150,11 @@ def run(argv):
         env.update(required_values(args.file, names, env))
         env.update(settings)
     # Replacement keeps the consumer's signals and exit status without a supervising wrapper.
-    os.execvpe(command[0], command, env)
+    try:
+        os.execvpe(command[0], command, env)
+    except OSError as exc:
+        # The executable name is literal config, never a secret; strerror is libc text.
+        raise Failure(f"cannot execute consumer {command[0]}: {exc.strerror}") from None
 
 
 def main(argv=None):

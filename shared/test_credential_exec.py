@@ -83,6 +83,25 @@ class CredentialExec(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn(str(self.file), r.stderr)
 
+    def test_sourcing_never_reads_consumer_stdin(self):
+        self.file.write_text("SHARED=work-value\nread -r line || :\n")
+        r = subprocess.run([sys.executable, "-I", str(HELPER), "--file", str(self.file),
+                            "--var", "SHARED", "--", "/bin/cat"], check=False, env=self.env,
+                           input="protocol-message\n", capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout, "protocol-message\n")
+
+    def test_exec_failure_names_consumer_without_values(self):
+        missing = str(self.home / "missing-consumer")
+        r = subprocess.run([sys.executable, "-I", str(HELPER), "--file", str(self.file),
+                            "--var", "SHARED", "--", missing, "work-value"], check=False,
+                           env=self.env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(r.stdout, "")
+        self.assertIn(missing, r.stderr)
+        self.assertIn("No such file", r.stderr)
+        self.assertNotIn("work-value", r.stderr)
+
     def test_file_without_required_vars_is_not_sourced(self):
         self.file.write_text("exit 1\n")
         r = self.run_helper(["--file", str(self.file)])
