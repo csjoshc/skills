@@ -47,6 +47,9 @@ wait_for_prompt() {
 }
 
 if [ -n "${WEZTERM_PANE:-}" ] && command -v wezterm >/dev/null; then
+  # The split focuses the new pane and activate-pane also switches tabs, so remember where the
+  # user really was (maybe another tab) and go back there, not to the agent's pane.
+  focused=$(wezterm cli list-clients --format json 2>/dev/null | sed -n 's/.*"focused_pane_id": *\([0-9]*\).*/\1/p' | head -1)
   split=(wezterm cli split-pane --pane-id "$WEZTERM_PANE" --right --percent 50 --cwd "$PWD")
   if [ "$mode" = run ]; then
     pane=$("${split[@]}" -- "$sh" -lc "$held")
@@ -55,7 +58,7 @@ if [ -n "${WEZTERM_PANE:-}" ] && command -v wezterm >/dev/null; then
     wait_for_prompt wezterm cli get-text --pane-id "$pane"
     printf '%s' "$cmd" | wezterm cli send-text --pane-id "$pane" --no-paste
   fi
-  wezterm cli activate-pane --pane-id "$WEZTERM_PANE"
+  wezterm cli activate-pane --pane-id "${focused:-$WEZTERM_PANE}"
   echo "side-pane: WezTerm pane $pane ($mode)"
 elif [ -n "${TMUX:-}" ]; then
   if [ "$mode" = run ]; then
@@ -71,6 +74,9 @@ elif [ -n "${ITERM_SESSION_ID:-}" ]; then
   pane=$(osascript - "${ITERM_SESSION_ID##*:}" "cd $(printf %q "$PWD") && clear" "$cmd" "$mode" <<'EOF'
 on run argv
   tell application "iTerm2"
+    -- Splitting selects the new session and select also switches tabs, so put focus back
+    -- where the user was, not on the agent session.
+    set orig to current session of current window
     repeat with w in windows
       repeat with t in tabs of w
         repeat with s in sessions of t
@@ -78,7 +84,7 @@ on run argv
             tell s to set p to (split vertically with default profile)
             tell p to write text (item 2 of argv)
             tell p to write text (item 3 of argv) newline ((item 4 of argv) is "run")
-            tell s to select
+            tell orig to select
             return id of p
           end if
         end repeat
