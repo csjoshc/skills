@@ -14,11 +14,14 @@ GATE = Path(__file__).with_name("merge-gate.py")
 ENV = {k: v for k, v in os.environ.items() if k not in {"DEVIN_PROJECT_DIR", "CLAUDE_PROJECT_DIR"}}
 
 
-def run(payload: dict) -> int:
+def run_result(payload: dict) -> subprocess.CompletedProcess[str]:
     # Neutral cwd so the repo the tests run from never decides the outcome.
-    proc = subprocess.run([sys.executable, str(GATE)], input=json.dumps(payload),
+    return subprocess.run([sys.executable, str(GATE)], input=json.dumps(payload),
                           capture_output=True, text=True, check=False, cwd="/", env=ENV)
-    return proc.returncode
+
+
+def run(payload: dict) -> int:
+    return run_result(payload).returncode
 
 
 def shell(cmd: str, tool: str = "exec") -> int:
@@ -69,6 +72,34 @@ def test_skills_repo_is_not_exempt() -> None:
     assert shell(f"git -C {skills} push origin HEAD:main") == 2
     assert run({"tool_name": "exec", "tool_input": {"command": "git push origin main",
                                                      "workdir": skills}}) == 2
+
+
+@pytest.fixture
+def primary_with_feature_worktree(tmp_path: Path) -> Path:
+    repo = tmp_path / "repo"
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(repo)]
+    subprocess.run(["git", "init", "-q", "--template=", "-b", "main", str(repo)], check=True)
+    subprocess.run([*git, "commit", "-q", "--allow-empty", "-m", "base"], check=True)
+    subprocess.run([*git, "worktree", "add", "-q", "-b", "feat", ".worktrees/feat"], check=True)
+    return repo
+
+
+def in_tool_dir(command: str, session: Path, tool_input: dict) -> int:
+    return run({"tool_name": "Bash", "tool_input": {"command": command, **tool_input},
+                "cwd": str(session)})
+
+
+def test_merge_base_into_feature_worktree_is_allowed(primary_with_feature_worktree: Path) -> None:
+    # Codex sends the active tool directory as `cwd`; the session directory is still on main.
+    payload = {"tool_name": "Bash", "tool_input": {
+        "command": "git merge --no-edit origin/main", "cwd": ".worktrees/feat"},
+        "cwd": str(primary_with_feature_worktree)}
+    result = run_result(payload)
+    assert result.returncode == 0, result.stderr
+
+
+def test_merge_into_primary_main_is_still_blocked(primary_with_feature_worktree: Path) -> None:
+    assert in_tool_dir("git merge feat", primary_with_feature_worktree, {}) == 2
 
 
 def test_github_mcp_merge_and_approve_are_blocked() -> None:

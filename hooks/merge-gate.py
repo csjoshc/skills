@@ -227,8 +227,13 @@ def reason(payload: dict) -> str | None:
             return label
     if GH_GRAPHQL.search(bare) and GRAPHQL_MUTATION.search(command):
         return "GraphQL merge/approve"
-    cwd = str(args.get("workdir") or payload.get("cwd") or os.environ.get("DEVIN_PROJECT_DIR")
-              or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
+    # The tool's own directory wins over the session's: Codex sends `workdir`, OMP's bash `cwd`,
+    # possibly relative. Reading only the session's let a feature-branch rebase in a linked
+    # worktree look like one on the primary checkout's main.
+    session = str(payload.get("cwd") or os.environ.get("DEVIN_PROJECT_DIR")
+                  or os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd())
+    tool_dir = args.get("workdir") or args.get("cwd")
+    cwd = os.path.join(session, os.path.expanduser(str(tool_dir))) if tool_dir else session
     if pushes_to_protected(command, cwd):
         return "git push to a protected branch"
     if overrides_hooks(command, cwd):
