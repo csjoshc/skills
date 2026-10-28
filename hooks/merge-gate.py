@@ -246,7 +246,16 @@ def main() -> int:
         return 0
     print(f"BLOCKED [merge-gate]: {found}. Agents never merge, approve, or change "
           f"{'/'.join(sorted(PROTECTED))}. Do not retry or work around it: ask the user to run "
-          "it in their own terminal (the gh wrapper asks them to confirm) or merge on GitHub.",
+          "it in their own terminal (the gh wrapper asks them to confirm) or merge on GitHub. "
+          "After the user reports success, verify the PR is merged into the repository's current "
+          "default branch before cleanup. If it landed in an intermediate branch, leave its "
+          "worktrees and branches alone. After a final merge, inspect local worktrees and branches "
+          "linked to that PR's pipeline, including intermediate PRs. Establish that each "
+          "candidate's changes reached the default branch and its local branch still points at "
+          "the associated merged PR head. Remove only clean, unlocked worktrees that are not "
+          "current or active working directories, then delete only their local branches. If "
+          "activity or pipeline membership is unclear, leave the candidate untouched and report "
+          "why. Never delete remote branches.",
           file=sys.stderr)
     return 2
 
