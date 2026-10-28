@@ -788,8 +788,8 @@ Observed failure modes in subagent reports:
 - Subagent final report contains words like "SKIPPED" / "marked as"
   / "documented as" without explicit external evidence that the
   skipped path is genuinely the right choice
-- Stage flipped to COMPLETE but `git diff` against the prior
-  checkpoint shows files outside the ticket's declared Files: list
+- Stage flipped to COMPLETE but the before/after source comparison
+  shows unexplained edits or unapproved material scope expansion
 - AC commands the agent claimed to run aren't reproducible from
   the operator's environment (path differs, binary missing, env
   unset)
@@ -802,7 +802,8 @@ Observed failure modes in subagent reports:
 **BLOCK action (gate before next ticket starts):** spawn an
 adversarial reviewer subagent with read-only access to:
 
-- `git diff` against the prior checkpoint commit
+- before/after source snapshots, including uncommitted and untracked work,
+  plus the wave's ownership map (per the canonical reviewer protocol below)
 - the just-completed subagent's final report
 - the artifact files under `tests/integration/artifacts/` (or
   equivalent)
@@ -850,7 +851,7 @@ spec at X" | "files modified outside scope" | etc.>.
 
 Required before next ticket starts:
 - [ ] Invoke the evidence-reviewer procedure on ticket <ID>, providing:
-      git diff vs prior checkpoint, the subagent's final report,
+      before/after source snapshots and ownership, the subagent's final report,
       artifact file paths, ticket ACs.
 - [ ] Reviewer must return VERIFIED. If DRIFT-DETECTED or
       EVIDENCE-INSUFFICIENT, the build subagent (or operator)

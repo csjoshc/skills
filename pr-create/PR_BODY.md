@@ -2,13 +2,19 @@
 
 Section shape adapted from Matt Pocock's `pr` skill (MIT).
 
+## Contents
+
+- PR creation
+- Writing each section
+- Editing PR body after creation (for attaching evidence)
+
 ## PR creation
 
 ````bash
 gh pr create --title "<type>(<scope>): <summary>" --body "$(cat <<'EOF'
 ## Summary
 
-<one or two lines of why, then the smallest visual: diagram, diff-sketch or tree>
+<why and the actual behavioral delta; add a small visual only when it clarifies relationships or sequencing>
 
 ## Evidence
 
@@ -51,10 +57,12 @@ EOF
 
 Skip preambles and keep prose brief.
 Use the repo's domain terms from `GLOSSARY.md` when it has one.
+Present the author's updated account under the [shared contract](../shared/QUALITY_RUBRIC.md#change-quality-pass), using the existing sections below.
+Do not add a second checklist or repeat the original prompt.
 
 ### Summary
 
-Pick the smallest view that makes the key point clear, and put it next to the line of text it supports.
+Apply the contract's Mental map guidance; if a visual helps, pick the smallest useful view and place it next to the point it supports.
 - Logic or an algorithm: pseudocode.
 - Runtime control flow: a call tree (`submitForm` > `createSession` > `persistPrompt`).
 - UI structure: a component tree with the state and module boundaries that matter.
@@ -70,7 +78,7 @@ One visual is usually enough; use more only when each answers a different questi
 
 Show a before and an after.
 Screenshots are the strongest evidence when the change is visual and the environment can take them ([EVIDENCE_UI.md](EVIDENCE_UI.md)).
-Execution evidence comes next: name the exact test that failed before and passes now, plus the runner output ([EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md)).
+Execution evidence comes next: name the relevant checks and before/after outcomes under the contract's Evidence obligation, with runner output ([EVIDENCE_BACKEND.md](EVIDENCE_BACKEND.md)).
 Test Results and Coverage hold the pasted logs from `/tmp/`; drop either sub-section only when there is nothing to paste and say why.
 A bug fix with no correct test seam states that here, as the finding (see verify's regression test rule).
 

@@ -10,6 +10,7 @@ Usage:
     python3 validate.py --transcript <path>
     python3 validate.py --transcript <path> --skill cleanup
     python3 validate.py --transcript <path> --skill pr-review
+    python3 validate.py --transcript <path> --skill pr-review --local
 
 Stdlib-only. Uses a minimal YAML subset parser for REVIEW-LEDGER and
 REVIEW-FINDINGS blocks (flat dicts, lists of dicts with literal-block
@@ -200,6 +201,7 @@ class Transcript:
     findings: list[Finding] = field(default_factory=list)
     ledger: dict[str, Any] | None = None
     gate_lines: list[str] = field(default_factory=list)
+    local: bool = False  # pr-review of an unpushed diff: nothing is posted
     fragment: bool = False  # True when validating an arch-violations catalog
                             # file or other document containing REVIEW-FINDINGS
                             # few-shots but no full transcript envelope.
@@ -239,8 +241,10 @@ def parse_findings_block(block: str) -> list[Finding]:
     return [Finding(fields=item) for item in parsed if isinstance(item, dict)]
 
 
-def parse_transcript(text: str, skill: str, fragment: bool = False) -> Transcript:
-    t = Transcript(text=text, skill=skill, fragment=fragment)
+def parse_transcript(
+    text: str, skill: str, fragment: bool = False, local: bool = False
+) -> Transcript:
+    t = Transcript(text=text, skill=skill, fragment=fragment, local=local)
 
     for m in _PHASE_0_RE.finditer(text):
         t.phase_0_rows.extend(parse_phase_0_table(m.group(1)))
@@ -292,7 +296,7 @@ def gate_lines_present(t: Transcript) -> list[str]:
     required_gates = {"phase-1", "report"}
     if t.skill == "cleanup":
         required_gates.add("phase-0")
-    if t.skill == "pr-review":
+    if t.skill == "pr-review" and not t.local:
         required_gates.add("post")
 
     gate_text = "\n".join(t.gate_lines).lower()
@@ -571,6 +575,10 @@ def main() -> int:
              "blocks but no ledger or gates (auto-detected when path is "
              "under arch-violations/).",
     )
+    parser.add_argument(
+        "--local", action="store_true",
+        help="pr-review of a local diff: no report → post gate is required.",
+    )
     args = parser.parse_args()
 
     transcript_path = Path(args.transcript)
@@ -585,7 +593,7 @@ def main() -> int:
     mode = "fragment" if fragment else "transcript"
     print(f"reviews validator (mode: {mode}, skill: {skill}, yaml backend: {backend})")
     print("=" * 40)
-    transcript = parse_transcript(text, skill=skill, fragment=fragment)
+    transcript = parse_transcript(text, skill=skill, fragment=fragment, local=args.local)
     return run(transcript)
 
 

@@ -53,11 +53,12 @@ Do not read whole ticket bodies in the orchestrator.
   build waves
 - **slice-gate-pending** — in a slice, non-gate tickets COMPLETE and the gate
   (`gate: true` or `0G/1G/2G/3G`) is NEW → independent gate review
-- **mid-build-resume** — exactly one `Stage: BUILD` and no active subagent →
-  resume that ticket
+- **mid-build-resume** — exactly one `Stage: BUILD` and no active subagent or
+  harness run → resume that ticket. A paused harness run is a hint, not state;
+  the ticket `Stage:` decides.
 - **build-unscoped** — `Stage: BUILD` without `.tickets/tdd/toq-<id>.yaml` →
   tdd Phase 0 in that subagent first
-- **all-complete** — every ticket COMPLETE → stop
+- **all-complete** — every ticket COMPLETE → aggregate PR scope/size checkpoint in the drive loop, then stop
 
 ticket-review is optional. Missing critic output is not a stage.
 

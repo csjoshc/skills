@@ -1,0 +1,26 @@
+diff --git a/pricing.py b/pricing.py
+--- a/pricing.py
++++ b/pricing.py
+@@ -1,2 +1,2 @@
+-def total(cents):
++def _format_currency(cents):
+     return f"${cents / 100:.2f}"
+@@ -5,2 +5,6 @@
++def total(cents):
++    return _format_currency(cents)
++
++
+ def receipt(cents):
+-    return f"Total: ${cents / 100:.2f}"
++    return f"Total: {_format_currency(cents)}"
+diff --git a/test_pricing.py b/test_pricing.py
+new file mode 100644
+--- /dev/null
++++ b/test_pricing.py
+@@ -0,0 +1,6 @@
++from pricing import receipt, total
++
++
++def test_currency_formats():
++    assert total(125) == "$1.25"
++    assert receipt(125) == "Total: $1.25"

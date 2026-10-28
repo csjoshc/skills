@@ -1,0 +1,19 @@
+diff --git a/pricing.py b/pricing.py
+--- a/pricing.py
++++ b/pricing.py
+@@ -1,2 +1,2 @@
+ def apply_discount(cents, percent):
+-    return cents
++    return cents * (100 + percent) // 100
+diff --git a/test_pricing.py b/test_pricing.py
+new file mode 100644
+--- /dev/null
++++ b/test_pricing.py
+@@ -0,0 +1,7 @@
++from pricing import apply_discount
++
++
++def test_discount():
++    cents, percent = 1000, 20
++    expected = cents * (100 + percent) // 100
++    assert apply_discount(cents, percent) == expected

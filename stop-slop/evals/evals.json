@@ -72,6 +72,24 @@
       }
     },
     {
+      "id": "hollow-draft-gets-verdict-and-tk",
+      "type": "behavior",
+      "prompt": "Rewrite files/hollow-post.md so it doesn't read like AI wrote it. Put the result in your reply.",
+      "files": [
+        "files/hollow-post.md"
+      ],
+      "expected_behavior": [
+        "Says the draft is hollow or lacks substance before or alongside any rewrite, in a few sentences",
+        "Asks for, or marks with [TK: ...], the missing specifics: which dependency, what happened, how it was caught, what the monitoring improved",
+        "Does not invent a package name, incident, date, metric, or tool that is not in the source",
+        "Drops the closing \"not just a tool. It is a mindset\" kicker"
+      ],
+      "check": {
+        "cmd": "grep -q 'TK' output.txt",
+        "expect_exit": 0
+      }
+    },
+    {
       "id": "trigger-yes-deslop-draft",
       "type": "trigger",
       "prompt": "This blog intro reads like ChatGPT wrote it. Tighten it and strip the AI tells: \"In today's fast-paced world, it's worth noting that teams must leverage robust tooling to navigate the ever-evolving landscape.\"",

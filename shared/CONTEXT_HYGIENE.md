@@ -195,17 +195,17 @@ A 30-second plan prevents 30-minute rework.
 
 Default cycle for implementation turns:
 
-**Read → Analyze → Explain → Propose → (Edit one file → Lint) → Halt**
+**Read → Analyze → Explain → Propose → Edit one coherent slice → Check → Continue or escalate**
 
 | Step | Rule |
 |---|---|
 | Read | Re-read the target file (and implied types/helpers) from disk immediately before editing |
-| Analyze | Name gaps vs the ticket/cycle; if >1 source file is required, stop (discovery halt, see `tdd/WORKFLOW.md`) |
+| Analyze | Name gaps vs the agreed behavior; escalate unexpected subsystem or contract changes (see `tdd/WORKFLOW.md`) |
 | Explain | State the delta in bullets |
 | Propose | Exact edit plan; commit to implementing that plan only |
-| Edit | Prefer **one source file per turn** unless the user explicitly authorized a multi-file batch |
-| Lint | Fix in-file issues; report out-of-file lint and wait |
-| Halt | Do not chain into the next file without user/test signal |
+| Edit | Keep the slice coherent across its declared implementation, tests, and required consumer updates |
+| Check | Run relevant checks; fix regressions introduced by this change and report pre-existing lint without fixing it |
+| Continue or escalate | Continue within agreed scope after checks pass; ask before material scope expansion |
 
 Fidelity: implement the described solution, with no silent shortcuts, renames, or whole-file rewrites to dodge a hard edit. If you deviate, stop and report.
 

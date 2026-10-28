@@ -1,6 +1,8 @@
 # Execution Templates
 
 Subagent briefs. Pointers, not pasted ticket bodies.
+The same text is the per-agent prompt inside a harness run (auto-driver.md,
+Runner selection); the ticket path is the only argument.
 
 ## Contents
 
@@ -20,16 +22,21 @@ You are implementing one ticket. The ticket file is the source of truth.
 
 1. Read the ticket, its Read-First files, any pointers, and the change-quality
    pass in `~/.skills/shared/QUALITY_RUBRIC.md`.
+   Carry its authoring contract from the ticket into implementation and the final report.
 2. Set Stage: BUILD.
 3. Invoke tdd. Phase 0 writes .tickets/tdd/toq-<id>.yaml. Then red-green
    against the ticket ACs. Do not skip Phase 0.
    If the ticket changes frontend UI, invoke `/ui` for visual implementation
    and browser review within ticket scope; keep `/tdd` as owner of AC order.
-4. When ACs are green, invoke verify. Do not claim done until it passes.
-5. Run the project's lint + typecheck. Fix issues in this ticket's files.
-6. Do not commit. Return files touched, per-AC evidence (command + result),
-   and any load-bearing question you could not answer from the ticket.
-7. Set Stage: COMPLETE only when verify passes. Do not start another ticket.
+4. When ACs are green, run the project's lint + typecheck.
+   Fix issues introduced by this change; report pre-existing failures separately.
+5. Review the final diff against the contract, then invoke verify.
+   Do not claim done until it passes.
+6. Do not commit. Return the concise, updated account of the change and
+   per-AC evidence (command + result), with remaining risks or questions.
+   Do not repeat the ticket or substitute a file inventory for the account.
+7. Set Stage: COMPLETE and Completed-At: <today> only when verify passes.
+   Do not start another ticket.
 
 If tdd or verify fails: do not flip COMPLETE.
 Leave Stage: BUILD or FAILED, and report the blocker.

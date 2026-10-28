@@ -8,6 +8,8 @@ description: "Audits an existing repo, package or directory against a code-healt
 Reviews existing source code against a quality rubric with file-cited evidence.
 Maps findings to rubric dimensions (M1–M12 patterns, subjective tiers A–I,
 AI anti-patterns).
+Use this audit for cumulative complexity or explicitly scoped remediation, not after every edit.
+Separate current-change defects from pre-existing debt; findings alone do not authorize expanding an active PR.
 
 **Does NOT post GitHub comments.** For live PR review with inline GitHub
 comments, use the `pr-review` skill.

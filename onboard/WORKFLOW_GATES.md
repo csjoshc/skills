@@ -1,94 +1,38 @@
----
-name: workflow-guard
-description: >-
-  Session-level orchestrator that routes tasks through the correct skill
-  pipeline at each phase. Ensures spec runs before implementation,
-  tdd runs before tests, verify runs before "done", pr-review runs
-  before PR. Prevents enforcement from being purely opt-in. Use at session
-  start and at every phase transition.
----
+# Workflow routing
 
-# workflow-guard
-
-Enforcement only works if it fires at the right moment. This skill is the
-conductor — it watches phase transitions in a session and invokes the
-correct downstream skill so the user doesn't have to remember to do so.
-
-## When to invoke
-
-- At session start, via a link from the project AGENTS.md (every harness loads it)
-- At the start of any new task, before any tool use
-- At every detected phase transition (see Phase map below)
+This is a reference linked from project `AGENTS.md`, not a callable skill or an installed hook.
+Use it when choosing the next phase; it does not require a new pipeline for small tasks.
+Call the Skill tool for the named skill only when its trigger fits.
+Read linked companions as documents, not as skills.
 
 ## Phase map
 
 | Phase trigger (user or agent intent) | Required skill(s) | Gate |
 |---|---|---|
-| "Create ticket / spec / plan for X" | `spec` | AC→test table present; tasks name primary source file + support set |
-| "Implement / write / add X" | `redundancy-watcher` (pre-write), `layer-boundary-critic` (on import add); follow `shared/CONTEXT_HYGIENE.md` turn loop + `tdd/WORKFLOW.md` | No BLOCK unresolved; discovery halt if second source file needed |
-| "Design interface / contract for X" | `tdd` → `INTERFACE_DESIGN.md` (interaction spec) | Contract + interaction expectations stated before impl |
-| "Write guards / type guards for X" | `tdd` (with interface companion) | Guard tests cover valid/invalid contract cases |
-| "Add mocks / factories for X" | `tdd` → `MOCKING.md` / `mock-contract` | Canonical producer-owned doubles; boundary mocks contract-linked |
-| "Write tests for X" | `tdd`, `mock-contract` (if boundary mock) | Tests fail red then green |
-| "Integrate / wire producer→consumer" | `tdd` (integration step of cycle) | Real chain within boundary; mocks only at external edge |
-| "Review / EO&D / compliance check" | `shared/EVIDENCE_REVIEWER.md` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
-| "I'm done / complete / fixed X" | `verify` | `CLAIM_UNVERIFIED.md` absent |
-| "Open / create PR" | `pr-review` self-pass, `create-pr` | No BLOCK from 5 agents |
+| "Create ticket / spec / plan for X" | `spec`; `challenge` when contested or risky | Coherent behavior per ticket, declared files, AC→test table |
+| Small source change | [Change-quality pass](../shared/QUALITY_RUBRIC.md#change-quality-pass); implement directly, `tdd` for test-first work | Scope stated before editing, checked at first working slice |
+| Bug fix / tests / integration | `tdd` | Reproduction or behavioral test fails first, then passes; required consumers updated |
+| Build or change frontend UI | `ui`, preserving a caller's TDD sequence | Requested surface works without unrelated redesign |
+| New interface or boundary mock | `tdd`; read [interface design](../tdd/INTERFACE_DESIGN.md) or [mock contract](../tdd/MOCK_CONTRACT.md) when relevant | Contracts and behavior checked at the boundary |
+| Review a completed ticket | Read [evidence reviewer](../shared/EVIDENCE_REVIEWER.md) | Starting-state comparison includes uncommitted work |
+| Review a branch or PR | `pr-review --local` or `pr-review` | Scope and findings backed by the actual diff |
+| "I'm done / complete / fixed X" | `verify` | Evidence and final source scope checked, unresolved gaps reported |
+| "Open / create PR" | `pr-create` | Aggregate scope/size preflight, then one substantive review |
 | "Fix review comments" | `pr-fix` | Staleness check green |
-| "Clean up / refactor X" | `cleanup` Phase 0 first | Mechanical findings addressed |
+| Audit repo/package health | `cleanup` | Mechanical checks then evidence-backed findings; no automatic remediation |
+| Implement an agreed refactor | Shared change-quality pass; `tdd` for behavior protection | Necessary refactor stays within agreed scope |
 
-## Workflow
+## Boundaries
 
-### Session-start digest
+- `/todo` remains a user-invoked entry for planned multi-ticket work; do not call it automatically for a small edit.
+- Reuse the shared pass at each checkpoint for its specific purpose: initial scope, first-slice expansion, final diff.
+  Do not run a full cleanup audit or PR review at every checkpoint.
+- Cleanup's [redundancy](../cleanup/redundancy-watcher.md) and [layer](../cleanup/layer-boundary-critic.md) companions are detailed audit references.
+  Routine implementation uses the shared pass's reuse and scope checks, not mandatory standalone watcher calls.
+- Escalate unexpected subsystem or contract changes before editing them.
+  A second declared implementation/support file is not itself a blocker.
+- Skills do not grant permission to commit, push, merge, or rewrite history.
+  Preserve the user's authorization boundaries.
 
-```bash
-# Read project context
-test -f AGENTS.md && head -100 AGENTS.md
-test -f STANDARDS.md && head -100 STANDARDS.md
-test -f CLAUDE.md && head -60 CLAUDE.md
-
-# Summarize in one paragraph at session start
-echo "Project: <name>. Layer cake: <list>. Standards source: STANDARDS.md. Key rules: <top 3>."
-```
-
-Persist to `.claude/cache/session-context.md` for later phases.
-
-### Intent classification
-
-Parse the user's message for phase triggers. Classify via keyword match
-plus LLM short-prompt on ambiguous cases. When multiple phases apply,
-route through each sequentially.
-
-### Gate enforcement
-
-For each phase, invoke the listed skills in order. If any skill emits a
-BLOCK or writes `CLAIM_UNVERIFIED.md`, halt and relay the block to the
-user before proceeding.
-
-### Loop
-
-After each phase completes, re-classify the next user message. Never
-assume the user is in the same phase across turns.
-
-## Interaction with hooks
-
-Hooks are edited in place in each tool's settings, not synced. Where workflow-guard is registered as a
-`SessionStart` hook and a `PreToolUse` hook on `Write`/`Edit`, phase
-transitions fire deterministically rather than relying on the agent to
-remember.
-
-## Hard rules
-
-- Never skip a gate. "The user is in a hurry" is not a reason.
-- Never substitute a different skill for the one the phase map names.
-- Never claim a phase complete without the gate's green signal.
-- If a skill is missing from the library, report it and stop — do not
-  improvise an equivalent.
-
-## Output contract
-
-One line per phase transition:
-
-```
-[phase] → invoked <skill>,<skill>,<skill> → <GREEN|BLOCK>
-```
+Installed hook behavior is documented in [Hook principles](../shared/HOOK_PRINCIPLES.md).
+Routing instructions alone do not prove a check ran; report actual verification and any gaps.

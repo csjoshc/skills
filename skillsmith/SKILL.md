@@ -96,7 +96,7 @@ Done when each of the four is present in the skill's steps.
 
 ### Step 7: Stop-slop and caveman integration (prose-producing skills only)
 
-For skills that generate prose output (specs, PRDs, docs, briefs, handoffs, reframes):
+For skills that generate prose output (specs, PRDs, docs, briefs, handoffs):
 - **stop-slop** is mandatory in the skill's Quality Rules or final step: call the Skill tool with `stop-slop` on all prose output.
 - **caveman** is selective: use it only when the skill's output is long agent prose (500+ lines), or the skill's own instructions are verbose enough that token cost matters.
 

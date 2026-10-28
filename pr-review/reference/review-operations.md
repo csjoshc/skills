@@ -6,6 +6,7 @@ checks, standards gathering, traceability execution, and GitHub posting.
 ## Contents
 
 - Pre-flight checks
+- Local mode
 - Diff sizing gate
 - Plan-present pre-flight
 - Standards gathering
@@ -55,14 +56,32 @@ into the same two commands.
 
 ---
 
+## Local Mode
+
+Reviews committed and uncommitted work on the current branch before it is pushed.
+No `gh` calls, no posting.
+
+```bash
+git fetch -q origin
+base=${BASE:-$(git merge-base HEAD "origin/$(git remote show origin | sed -n 's/.*HEAD branch: //p')")}
+git log --oneline "$base"..HEAD   # intent, in place of a PR body
+git diff "$base"                  # committed + staged + unstaged
+git ls-files --others --exclude-standard   # untracked files are part of the change
+```
+
+- Commit messages stand in for the PR body. If they don't explain intent, ask before reviewing.
+- The PR skip rules (closed, draft, already commented) don't apply.
+- Run the tracked-but-ignored check on `git diff --name-only "$base"` plus the untracked list.
+- Plan lookup uses only the local plan step.
+- Validate with `--local`, end at `REVIEW-GATE: phase-1 → report`, and print findings in chat.
+- If the user then opens a PR, rerun in PR mode rather than posting the local transcript.
+
+---
+
 ## Diff Sizing Gate
 
-If the diff exceeds roughly 400 changed lines, emit a batch-size warning and
-recommend splitting the PR before deep review. Large diffs reduce review
-quality and increase false negatives.
-
-Use this as a warning gate, not an automatic hard failure unless your org
-requires it.
+Apply the review-budget and diff-coverage guidance in the [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass) before deep review.
+This also applies to standalone local reviews; reuse a current preflight from `pr-create` instead of repeating it.
 
 ---
 
@@ -188,6 +207,8 @@ gate lines) into a single draft file and run:
 ```bash
 python3 ~/.skills/reviews/validate.py --transcript <draft>.md --skill pr-review
 ```
+
+Local mode adds `--local`, which drops the `report → post` gate requirement.
 
 Exit code `0` is required. If the validator fails:
 

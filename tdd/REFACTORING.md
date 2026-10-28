@@ -1,6 +1,7 @@
 # Refactor Candidates
 
-After TDD cycle, look for:
+After a green TDD cycle, inspect only the current change and refactors necessary for its behavior.
+Report unrelated smells without fixing them.
 
 ## Code Smells
 
@@ -26,8 +27,8 @@ Smell list adapted from mattpocock/skills `code-review` (MIT).
 ## When to Refactor
 
 1. **After GREEN** - Never refactor while tests are failing
-2. **When tests reveal issues** - New code often exposes problems in existing code
-3. **Before adding new behavior** - Clean first, then extend
+2. **When this change introduces issues** - Remove its duplication or unnecessary scaffolding
+3. **Before adding new behavior** - Refactor only when necessary for the requested behavior; keep preparatory changes independently verifiable
 
 ## Refactoring Safety
 
@@ -42,4 +43,4 @@ After each TDD cycle, ask:
 - Is there duplication between tests? → Extract fixture
 - Is test setup complex? → Extract helper functions
 - Are tests coupled to implementation? → Rewrite to test behavior
-- Does existing code look worse after new code? → Refactor existing code too
+- Does the change reveal unrelated problems in existing code? → Report them separately; do not expand this task

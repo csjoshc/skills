@@ -20,7 +20,7 @@ Companion files:
 - Parallel worktrees: [WORKTREES.md](WORKTREES.md) — harness-agnostic isolation for concurrent agent sessions / write subagents; load when onboarding or when parallel branch work is requested.
 - Stacked PRs: [STACKED_PRS.md](STACKED_PRS.md) — **opt-in, NOT default onboarding**; load only when the user explicitly prompts for a stacked-PR strategy (`gh stack` workflow, cascading rebases, AGENTS.md block to merge on request).
 - Symlink map: [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md)
-- Workflow gates (session-level orchestration): [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills fire at which phase. Link it from the project AGENTS.md. Load when setting up the agent loop for a repo, not for file-level onboarding.
+- Workflow routing: [WORKFLOW_GATES.md](WORKFLOW_GATES.md) — which skills and shared checks fit each phase, not an installed orchestrator. Link it from the project AGENTS.md. Load when setting up the agent loop for a repo, not for file-level onboarding.
 - Hook principles: [shared/HOOK_PRINCIPLES.md](../shared/HOOK_PRINCIPLES.md) — read before adding any hook; decision rule and minimal safe catalogue.
 
 ---
@@ -96,7 +96,7 @@ Onboarding must guarantee every project's `AGENTS.md` states that agents never p
 Do it when a commit or push is first attempted in a repo with a GitHub remote, after 0c (a hook framework can replace hooks), and stay silent when the guards are already present.
 
 1. Resolve the effective hooks directory with `git -C <repo> rev-parse --path-format=absolute --git-path hooks`; it honours `core.hooksPath` and worktrees, and without the flag it prints a path relative to the repo.
-2. Check it holds executable `pre-push` and `reference-transaction` stubs that call the shared guards. The facts are in `~/bootstrap/BOM.md#git-guards`; do not restate them here.
+2. Check it holds an executable copy of each stub listed in `~/bootstrap/BOM.md#git-guards`, each calling its shared guard; do not restate the list here.
 3. With the default hooks directory and no hook present, run `git init` in the repo: it re-applies the template and overwrites nothing.
    With a hook present, show the integration and ask first; put the guard ahead of any `exec` or `exit` and keep pre-commit's `.legacy` chaining.
    When `core.hooksPath` points inside the repo (a tracked directory such as `.githooks`), `git init` fills `.git/hooks`, which git then ignores.
@@ -123,6 +123,7 @@ Insertion order is mandatory:
 5. Tokenify block (optional; only on request)
 
 When merging into an existing `AGENTS.md`: keep user sections; append missing parts; deduplicate; preserve headings. Ensure exactly one Git workflow block, placed immediately after the stack preamble, and exactly one Code comments block immediately after it, then exactly one Engineering principles block.
+Reconcile outdated template wording in place: replace "Prefer the shortest solution that is still correct" with the coherent-change wording in [AGENTS_BLOCKS.md](AGENTS_BLOCKS.md), without appending a second principles block or discarding project-specific constraints.
 
 ### Stack-specific preamble (pick one)
 
@@ -218,7 +219,7 @@ context exclusions, and operational rules.
 - [ ] Cross-tool shims (`GEMINI.md`, `.cursorrules`, etc.) exist if multi-tool support was requested or defaulted.
 - [ ] `.claude/skills` is a filtered copy of `~/.skills` for Claude Desktop (the `rsync` command in sync/skills.md, run from the project root). Claude Code CLI uses the global symlink.
 - [ ] Global and Project symlinks audited against [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
-- [ ] The effective hooks directory has the `pre-push` and `reference-transaction` guard stubs (0g).
+- [ ] The effective hooks directory has the stubs listed in `~/bootstrap/BOM.md#git-guards` (0g).
 - [ ] `.worktrees/` (or existing `worktrees/`) is gitignored; `AGENTS.md` includes the Parallel work (git worktrees) block; [`WORKTREES.md`](WORKTREES.md) is the operator playbook.
 
 ---

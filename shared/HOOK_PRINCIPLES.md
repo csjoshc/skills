@@ -32,11 +32,12 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 | Skill / companion | Best trigger | Avoid when | Hook? |
 |---|---|---|---|
-| `verify` | Before PR, before commit of a fix | Mid-TDD loop | **Yes — halt** on PR/commit |
+| `verify` | Before completion, PR, or commit of a fix | Mid-TDD loop | `verify-gate` halts PR/commit only when a failure marker exists |
 | `caveman` | Context > 50%, bulk reports | First reply, specs, errors | No - the agent cannot measure its own context; invoke on demand |
-| `cleanup/WRITE_TIME_GUARD.md` | New file or new export in mature repo | Tests, generated, prototypes | No — call from workflow |
-| `cleanup/LAYER_ENFORCEMENT.md` | Import added AND layer map exists | No layer map | **Advisory** PostToolUse |
-| `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | **Advisory** on test file writes |
+| Shared change-quality pass | Before source edits, first working slice, final diff | Read-only work | No - called by instructions and implementation/completion skills |
+| `cleanup/redundancy-watcher.md` | Detailed redundancy audit | Routine small edits | No - read as a cleanup companion |
+| `cleanup/layer-boundary-critic.md` | Import-boundary audit with a layer map | No layer map | No - read as an audit companion |
+| `tdd/MOCK_CONTRACT.md` | New boundary mock in prod test | Pure-fn tests, spikes | No - read during TDD |
 | `tdd/MUTATION.md` | End of TDD cycle, pre-PR audit | Every save (too slow) | No — on demand |
 | `onboard/WORKFLOW_GATES.md` | First turn of a session | Every prompt | No - link it from the project AGENTS.md, which every harness loads |
 | Self code review | Before `gh pr create` | Draft PRs | No - `pr-create` Phase 0 runs it |
@@ -51,12 +52,10 @@ If any criterion fails, keep it as a skill invoked on demand.
 
 Examples applied:
 
-- `verify` on `git commit` → HIGH cost (false done), CHEAP check
-  (scan recent claims), RARE event → **hook**.
+- `verify-gate` on `git commit` → HIGH cost (shipping past a failed check), CHEAP marker lookup, RARE event → **hook**.
 - `mutation-critic` on every save → HIGH cost (tautological test), but
   EXPENSIVE check (seconds) and FREQUENT event → **skill**.
-- `redundancy-watcher` on every `Write` → moderate cost, cheap-ish
-  check but FREQUENT event → **skill**, invoked from `workflow-guard`.
+- Reuse checks before implementation → codebase search and judgment, not a mechanical violation → **shared change-quality pass**, not a hook on every write.
 
 ## Mechanical rule or judgement call
 
@@ -75,9 +74,8 @@ Reserve `halt` for unambiguous, user-visible harms:
 - `CLAIM_UNVERIFIED.md` present at PR/commit time
 - Upward layer imports with a provided fix suggestion
 
-Everything else is `advisory` — the hook posts a report; the agent or
-user decides. Advisory hooks degrade gracefully; blocking hooks must
-earn their block with a concrete, cheap alternative.
+Everything else belongs in a skill's advisory report, not an advisory harness hook.
+The agent or user decides from the evidence; blocking hooks must earn their block with a concrete, cheap alternative.
 
 ## Hook catalogue
 
@@ -87,6 +85,11 @@ Add a hook only when a real failure mode points to it.
 |---|---|---|---|
 | `verify-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
 | `merge-gate` | `PreToolUse`: shell and MCP merge, approval, protected-branch push and local merge attempts | halt | 5s |
+| `diff-pane` | `Stop`: a worktree has recent unpushed commits not yet shown | side effect for the user, never blocks | returns at once |
+
+`diff-pane` opens the branch diff beside the agent so the user reviews before saying push.
+It is not an advisory hook: it shows nothing to the model, so the no-advisory rule below does not apply.
+One pane per worktree, replaced when a newer commit lands; `AGENT_DIFF_PANE=0` turns it off.
 
 `verify-gate` only catches an agent that ran verify, recorded a failure, and
 tried to ship anyway. It cannot catch an agent that never ran the check;
@@ -101,6 +104,8 @@ Removed hooks and where their intent lives now:
 
 Advisory hooks that only print and exit 0 are not shown to the model on
 some harnesses. Don't add one; make it block, or make it a skill step.
+This covers harness hooks only: a git hook's stderr, such as the `post-checkout`
+main-guard warning, reaches the agent in the tool output.
 
 Anti-examples (do NOT add these):
 
@@ -127,7 +132,9 @@ is fine" is not an override.
 The owner merges and approves in their own terminal, where the `gh` wrapper asks them to confirm, or in the GitHub UI.
 What it blocks and what stays out of scope is listed in the `merge-gate.py` docstring; the code is the single source.
 Land work by pushing a branch, opening a PR and letting the owner merge it; `~/.skills` has no exception.
-On a block the agent asks the owner to run the command themselves and does not retry or work around the gate.
+On a block the agent stages the command for the owner with `~/.skills/shared/scripts/side-pane.sh stage '<cmd>'` and shows it in a code block.
+That call types the command without Enter, so it is the one sanctioned retry; the gate allows it only as a lone single-quoted call, and `side-pane.sh` refuses multi-line text.
+Any other attempt to run the command is a workaround.
 Git probes inside the gate time out at 1s (the hook's budget is 5s), and a timeout blocks.
 
 ## Guard sync
@@ -145,7 +152,7 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
    Use the approved checkout, not an unmerged branch or a copied wrapper in the skills repo.
 2. Inventory installed harnesses from `shared/SYMLINK_MAP.md`, plus other harnesses the owner uses, including OMP and VS Code/Copilot.
    Record the active profile, config source and shell PATH for each; skill discovery does not establish hook support.
-3. Audit the shared wrapper, Git template and `init.templateDir` against bootstrap's BOM.
+3. Audit the shared wrapper, Git template and `init.templateDir` against bootstrap's BOM, including every stub it lists.
    Report the current repository's effective hooks too, but install into other repositories through `/onboard` 0g.
    Reconcile `~/.skills` and `~/bootstrap` here by default, since `/onboard` refuses both as targets.
    Check `core.hooksPath` first, and preserve other hooks; an existing `exec` must not make the guard unreachable.

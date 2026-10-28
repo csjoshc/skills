@@ -27,10 +27,11 @@
       ],
       "expected_behavior": [
         "Keeps existing AGENTS.md content and does not duplicate any block",
-        "Leaves exactly one Git workflow, one Code comments and one Engineering principles section"
+        "Leaves exactly one Git workflow, one Code comments and one Engineering principles section",
+        "Replaces the template's shortest-solution wording with the smallest coherent change that is correct, readable, and complete"
       ],
       "check": {
-        "cmd": "cd existing && test \"$(grep -c '^## Git workflow' AGENTS.md)\" = 1 && test \"$(grep -c '^## Code comments' AGENTS.md)\" = 1 && test \"$(grep -c '^# Engineering principles' AGENTS.md)\" = 1",
+        "cmd": "cd existing && python3 -c 'from pathlib import Path; s=Path(\"AGENTS.md\").read_text(); assert all(s.splitlines().count(h)==1 for h in (\"## Git workflow\", \"## Code comments\", \"# Engineering principles\")); assert \"shortest solution\" not in s; assert \"smallest coherent change that is correct, readable, and complete\" in s; assert \"Keep validation, error handling and auth checks at trust boundaries\" in s'",
         "expect_exit": 0
       }
     },

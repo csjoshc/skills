@@ -27,7 +27,8 @@ Before writing code, in order:
 2. YAGNI: build only what was asked. Add an abstraction once it has a second real use.
 3. DRY: dedupe repeated *knowledge* at the 2nd-3rd real use, not look-alike code.
 4. SOLID: reshape only when a second real consumer or change pressure exists.
-YAGNI wins over DRY/SOLID until then. Prefer the shortest solution that is still correct.
+YAGNI wins over DRY/SOLID until then.
+Prefer the smallest coherent change that is correct, readable, and complete.
 
 Keep validation, error handling and auth checks at trust boundaries, even when they cost lines.
 Touch only what the task needs; match existing style.

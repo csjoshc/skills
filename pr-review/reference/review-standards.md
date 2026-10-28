@@ -3,6 +3,14 @@
 Project coding standards reference for `pr-review`. Each rule has a code for
 citation in review comments.
 
+This is the review-time surface of the standards whose home is
+[`../../STANDARDS.md`](../../STANDARDS.md) (see its Authority map). The topic
+files there are the source of truth: docstring rules (DC) track
+[`standards/docstrings.md`](../../standards/docstrings.md); testing and code
+organization (TS) track [`standards/architecture.md`](../../standards/architecture.md);
+module shape tracks [`standards/modularity.md`](../../standards/modularity.md).
+Change the home topic file first, then update the matching code here.
+
 ## Contents
 
 - 1. Function Declarations (FN)

@@ -183,16 +183,19 @@ def test_order_sends_confirmation_email(): ...
 
 ## Decision Checklist
 
+Size and assertion-count thresholds below prompt inspection, not automatic splitting.
+Keep assertions for one behavior together; extract or split only when it improves isolation or readability within the task.
+
 | Question | Action |
 |----------|--------|
-| Test file > 300 lines? | Split by feature |
+| Test file > 300 lines? | Inspect for unrelated behaviors or difficult navigation |
 | Same test in 2+ places? | Consolidate |
 | Test has no assertions? | Add or delete |
 | Mocking internal classes? | Test via public API |
 | Expected value derived the way the code derives it? | Replace with a known literal |
 | Test name has "how"? | Rename to "what" |
-| One test > 50 lines? | Split |
-| Test setup > 20 lines? | Extract fixture |
+| One test > 50 lines? | Inspect whether it tests multiple independent behaviors |
+| Test setup > 20 lines? | Extract a fixture only when it improves readability or isolation |
 | Tests share mutable state? | Use fresh fixtures |
 | Test always uses dry-run, with no GPU/CI constraint? | Use real backend |
 
@@ -202,13 +205,13 @@ def test_order_sends_confirmation_email(): ...
 
 | Antipattern | Trigger | Solution |
 |-------------|---------|----------|
-| God Test File | > 500 lines | Split by feature |
+| God Test File | Unrelated features hinder navigation | Split by feature |
 | Duplicate Suites | Same tests in 2 dirs | Consolidate |
 | No Assertions | assert missing | Add meaningful assertions |
 | Over-Mocking | Mocking internal classes | Test through public API |
 | Tautological | Expected value recomputed like the code | Use an independent known value |
 | Generic Names | "test_1", "test_func" | Name describe behavior |
-| Multi-Behavior | > 3 assertions | Split into separate tests |
+| Multi-Behavior | Independent behaviors, not assertion count | Split into separate tests |
 | Fat Fixtures | Excessive setup | Create focused fixtures |
 | Conditional Logic | if/else in tests | Split into separate tests |
 | Dry-Run Dependency | Always backend="dry_run" | Use real backend for feature tests |
