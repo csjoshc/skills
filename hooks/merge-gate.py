@@ -19,6 +19,7 @@ Allowed: a lone `side-pane.sh stage '<cmd>'`, which types cmd unrun for the user
 Out of scope: programs that call git or the API themselves, and git reset --hard.
 A git probe that times out blocks (fail closed).
 """
+from __future__ import annotations
 
 import json
 import os
@@ -248,7 +249,9 @@ def reason(payload: dict) -> str | None:
         return "git push to a protected branch"
     if overrides_hooks(command, cwd):
         return "overriding core.hooksPath"
-    return "local git history change on a protected branch" if moves_protected(command, cwd) else None
+    if moves_protected(command, cwd):
+        return f"local git history change on a protected branch (hook cwd: {cwd})"
+    return None
 
 
 def main() -> int:
