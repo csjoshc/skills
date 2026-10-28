@@ -99,6 +99,7 @@ def test_merge_base_into_feature_worktree_is_allowed(primary_with_feature_worktr
 
 
 def test_merge_into_primary_main_is_still_blocked(primary_with_feature_worktree: Path) -> None:
+    # red-first: exempt this characterization of the protected-branch policy.
     assert in_tool_dir("git merge feat", primary_with_feature_worktree, {}) == 2
 
 
