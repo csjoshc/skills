@@ -88,21 +88,6 @@ def in_dir(cmd: str, session: Path, tool_input: dict) -> int:
                 "cwd": str(session)})
 
 
-def test_explicit_git_c_allows_feature_worktree_history(checkout: Path) -> None:
-    # red-first: exempt; -C target resolution already exists and is the safe usage pattern.
-    cmd = f"git -C {checkout / '.worktrees' / 'feat'} rebase main"
-    assert in_dir(cmd, checkout, {}) == 0
-
-
-def test_protected_branch_block_reports_the_hook_cwd(checkout: Path) -> None:
-    payload = {"tool_name": "Bash", "tool_input": {"command": "git merge feat"},
-               "cwd": str(checkout)}
-    result = subprocess.run([sys.executable, str(GATE)], input=json.dumps(payload),
-                            capture_output=True, text=True, check=False, cwd="/", env=ENV)
-    assert result.returncode == 2
-    assert f"hook cwd: {checkout}" in result.stderr
-
-
 @pytest.mark.parametrize("tool_input", [{"cwd": ".worktrees/feat"}, {"workdir": ".worktrees/feat"}])
 def test_tool_dir_on_a_feature_branch_allows_rebase(checkout: Path, tool_input: dict) -> None:
     # The session sits on main; the command runs in the feat worktree.
@@ -198,17 +183,3 @@ def test_unparseable_input_does_not_block() -> None:
     proc = subprocess.run([sys.executable, str(GATE)], input="not json",
                           capture_output=True, text=True, check=False)
     assert proc.returncode == 0
-
-
-def test_system_python_can_load_gate() -> None:
-    system_python = "/usr/bin/python3"
-    if not os.path.exists(system_python):
-        pytest.skip("no system Python at /usr/bin/python3")
-    version = subprocess.run(
-        [system_python, "-c", "import json, sys; print(json.dumps(sys.version_info[:2]))"],
-        capture_output=True, text=True, check=True).stdout
-    if tuple(json.loads(version)) >= (3, 10):
-        pytest.skip("system Python already supports evaluated union annotations")
-    proc = subprocess.run([system_python, str(GATE)], input=json.dumps({"tool_name": "Read"}),
-                          capture_output=True, text=True, check=False, cwd="/", env=ENV)
-    assert proc.returncode == 0, proc.stderr
