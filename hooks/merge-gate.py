@@ -17,6 +17,7 @@ Allowed: git pull --ff-only|--rebase, and --abort/--quit/--continue/--skip.
 Out of scope: programs that call git or the API themselves, and git reset --hard.
 A git probe that times out blocks (fail closed).
 """
+from __future__ import annotations
 
 import json
 import os
