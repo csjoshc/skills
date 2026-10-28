@@ -25,15 +25,15 @@ correct downstream skill so the user doesn't have to remember to do so.
 | Phase trigger (user or agent intent) | Required skill(s) | Gate |
 |---|---|---|
 | "Create ticket / spec / plan for X" | `spec` | AC→test table present; tasks name primary source file + support set |
-| "Implement / write / add X" | `redundancy-watcher` (pre-write), `layer-boundary-critic` (on import add); follow `shared/CONTEXT_HYGIENE.md` turn loop + `tdd/WORKFLOW.md` | No BLOCK unresolved; discovery halt if second source file needed |
-| "Design interface / contract for X" | `tdd` → `INTERFACE_DESIGN.md` (interaction spec) | Contract + interaction expectations stated before impl |
-| "Write guards / type guards for X" | `tdd` (with interface companion) | Guard tests cover valid/invalid contract cases |
-| "Add mocks / factories for X" | `tdd` → `MOCKING.md` / `mock-contract` | Canonical producer-owned doubles; boundary mocks contract-linked |
-| "Write tests for X" | `tdd`, `mock-contract` (if boundary mock) | Tests fail red then green |
+| "Implement / write / add X" | `cleanup/redundancy-watcher.md` (pre-write), `cleanup/layer-boundary-critic.md` (on import add); follow `shared/CONTEXT_HYGIENE.md` turn loop + `tdd/WORKFLOW.md` | No BLOCK unresolved; discovery halt if second source file needed |
+| "Design interface / contract for X" | `tdd` → `tdd/INTERFACE_DESIGN.md` (interaction spec) | Contract + interaction expectations stated before impl |
+| "Write guards / type guards for X" | `tdd` (with `tdd/INTERFACE_DESIGN.md`) | Guard tests cover valid/invalid contract cases |
+| "Add mocks / factories for X" | `tdd` → `tdd/MOCKING.md` / `tdd/MOCK_CONTRACT.md` | Canonical producer-owned doubles; boundary mocks contract-linked |
+| "Write tests for X" | `tdd`, `tdd/MOCK_CONTRACT.md` (if boundary mock) | Tests fail red then green |
 | "Integrate / wire producer→consumer" | `tdd` (integration step of cycle) | Real chain within boundary; mocks only at external edge |
 | "Review / EO&D / compliance check" | `shared/EVIDENCE_REVIEWER.md` or `pr-review` (`Mode: Reviewer`) | EO&D from disk, not checkbox status |
 | "I'm done / complete / fixed X" | `verify` | `CLAIM_UNVERIFIED.md` absent |
-| "Open / create PR" | `pr-review` self-pass, `create-pr` | No BLOCK from 5 agents |
+| "Open / create PR" | `pr-review` self-pass, `pr-create` | No BLOCK from 5 agents |
 | "Fix review comments" | `pr-fix` | Staleness check green |
 | "Clean up / refactor X" | `cleanup` Phase 0 first | Mechanical findings addressed |
 
@@ -61,9 +61,11 @@ route through each sequentially.
 
 ### Gate enforcement
 
-For each phase, invoke the listed skills in order. If any skill emits a
-BLOCK or writes `CLAIM_UNVERIFIED.md`, halt and relay the block to the
-user before proceeding.
+The advertised skill catalog lists `SKILL.md` entries; companion instructions such as
+`cleanup/redundancy-watcher.md` are not separate catalog entries. Resolve each reference against
+its exact path in `~/.skills` before treating it as missing.
+For each phase, invoke the listed instructions in order. If any emits a BLOCK or writes
+`CLAIM_UNVERIFIED.md`, halt and relay the block to the user before proceeding.
 
 ### Loop
 
@@ -82,13 +84,12 @@ remember.
 - Never skip a gate. "The user is in a hurry" is not a reason.
 - Never substitute a different skill for the one the phase map names.
 - Never claim a phase complete without the gate's green signal.
-- If a skill is missing from the library, report it and stop — do not
-  improvise an equivalent.
+- If a referenced skill or companion file is missing at its exact path, report it and stop; do not improvise an equivalent.
 
 ## Output contract
 
 One line per phase transition:
 
 ```
-[phase] → invoked <skill>,<skill>,<skill> → <GREEN|BLOCK>
+[phase] → invoked <skill or companion path> → <GREEN|BLOCK>
 ```
