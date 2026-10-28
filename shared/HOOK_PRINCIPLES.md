@@ -174,10 +174,20 @@ Retire the older bootstrap repo-crawling installation path in favor of BOM recon
 | Claude Code | `hooks.PreToolUse` in the active profile's `settings.json` | Matcher `^(Bash|mcp__.*)$`; command receives `tool_name` and `tool_input`; exit 2 blocks |
 | Devin CLI | `hooks.PreToolUse` in `~/.config/devin/config.json` | Matcher `^(exec|write_to_process|mcp_call_tool|mcp__.*)$`; same command payload and exit 2. Verified live 2026-10-22 for `write_to_process` |
 | OMP | Extension `merge-gate.ts` in the active agent dir's `extensions/`, a symlink to `hooks/adapters/omp/merge-gate.ts`; default `~/.omp/agent`, or wherever `PI_CODING_AGENT_DIR` points | `pi.on("tool_call")` gets `{toolName, input}` and `ctx.cwd`; return `{block, reason}`; a throw or timeout also blocks. Shell is `bash`, MCP is `mcp__<server>_<tool>`. Verified live 2026-10-22 with `omp -p -e` |
-| Codex, Cursor, OpenCode, pi, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
+| Codex | `hooks.PreToolUse` in `~/.codex/hooks.json`; command `/bin/sh <abs>/hooks/adapters/codex/merge-gate.sh` | Matcher `^(Bash|mcp__.*)$`; the adapter translates the gate's exit 2 into `hookSpecificOutput.permissionDecision: deny` because Codex fails open on a nonzero hook exit or unparseable output; every adapter failure path answers deny. MCP tools arrive as `mcp__<server>__<tool>`. Verified live 2026-10-22 on `codex exec` 0.163.0 |
+| OpenCode | Plugin file in `~/.config/opencode/plugins/`, symlinked to `hooks/adapters/opencode/merge-gate.ts` | V2 plugin hooks `execute.before` and throws to block; the hook fires for shell, built-in, MCP and code-mode inner tool calls. Shell is `shell`, MCP flattens to `<server>_<tool>` or `<server>.<tool>`. Every adapter failure path blocks, so `--auto` and permission prompts cannot bypass it. Verified live 2026-10-22 on 2.0.32 |
+| Cursor, pi, Antigravity, VS Code/Copilot, other installed harnesses | Resolve from the installed version's documentation | Until an adapter is implemented and demonstrated, report `native gate unverified` rather than copying Claude's schema |
 
-Both supported registrations invoke `python3` with the absolute path to `~/.skills/hooks/merge-gate.py`.
-Quote the path for the harness's command shell.
+Codex trusts a hook definition by hash and skips an untrusted one silently: after installing, changing or re-pointing a Codex registration, run `/hooks` once in a real session.
+An untrusted hook is not partial protection; it is no protection.
+`--dangerously-bypass-hook-trust` removes the check by design, so treat it as a deliberate bypass, not a testing flag.
+
+Codex hooks receive the session `cwd`; a unified-exec call's separate `workdir` is not included in the payload observed by this gate.
+For a Git operation targeting another checkout, use `git -C <checkout> <subcommand>` so the gate classifies that checkout instead of the session repository.
+Without an explicit `-C`, a history-changing command is judged against the session `cwd` and remains blocked when that is a protected branch.
+
+Native registrations resolve the same `hooks/merge-gate.py` policy script by absolute path.
+Adapters translate each harness's event and deny contract instead of maintaining another policy parser.
 Devin may also import Claude hooks; inspect effective registrations before adding a second copy.
 A launcher that sets a config-dir variable (`CLAUDE_CONFIG_DIR`, `PI_CODING_AGENT_DIR`) or a profile has its own settings and extensions.
 Register the gate in every active one, not only the default; the dir comes from the launcher, so read it before assuming a path.
@@ -186,6 +196,8 @@ For another hook-capable harness, adapt only the event payload and deny response
 Adapters live in `hooks/adapters/<harness>/` and are linked into the harness, never copied.
 If no blocking hook is supported, record that limitation and retain shared CLI coverage.
 Windows-native shells need a separately verified wrapper integration; the macOS bootstrap links are not Windows coverage.
+The Codex and OpenCode adapters are macOS/Linux verified only: neither has been exercised on Windows, and both assume `python3` on PATH.
+Codex Cloud and OpenCode remote sessions run no local hooks at all; only server-side branch protection covers those.
 
 ### Evidence and limits
 
@@ -194,6 +206,7 @@ Use `missing`, `registered / unverified`, `verified`, or `unsupported` only when
 If testing is deferred, leave live evidence `deferred`; do not run a repair implicitly.
 When verification is authorized, use local throwaway repositories and a stub `gh`, then a fresh-session harmless blocked command.
 Do not send a real merge, approval or push as a probe.
+When no usable model is available, point the harness at a local stub that scripts one tool call: the hook pipeline, tool router and sandbox stay real, so a blocked command still proves the wiring.
 Repeat the audit to confirm the approved repair proposes no further edits.
 
 A terminal is not proof of a human: agents can allocate PTYs.
