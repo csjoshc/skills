@@ -120,6 +120,20 @@ def test_github_mcp_merge_and_approve_are_blocked() -> None:
         "arguments": {"event": "COMMENT"}}}) == 0
 
 
+def test_merge_block_explains_safe_post_merge_cleanup() -> None:
+    proc = subprocess.run([sys.executable, str(GATE)],
+                          input=json.dumps({"tool_name": "exec", "tool_input": {
+                              "command": "gh pr merge 55 --squash"}}),
+                          capture_output=True, text=True, check=False, cwd="/", env=ENV)
+
+    assert proc.returncode == 2
+    assert "After the user reports success" in proc.stderr
+    assert "merged into the repository's current default branch" in proc.stderr
+    assert "If it landed in an intermediate branch" in proc.stderr
+    assert "clean, unlocked worktrees" in proc.stderr
+    assert "Never delete remote branches" in proc.stderr
+
+
 MERGE = "gh pr merge 43 --repo o/r && GH_TOKEN=$(gh auth token --user u) gh pr merge 46"
 
 
