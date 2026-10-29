@@ -54,7 +54,7 @@ class Base(unittest.TestCase):
         return json.loads(self.paths[target].read_text())
 
     def run_sync(self, *extra, path=None):
-        env = {"HOME": str(self.home), "PATH": path or "/usr/bin:/bin"}
+        env = {"HOME": str(self.home), "USERPROFILE": str(self.home), "PATH": path or "/usr/bin:/bin"}
         return subprocess.run([sys.executable, "-I", str(SCRIPT), "--master", str(self.master),
                                "--npx", NPX, "--ignore-running", *extra],
                               capture_output=True, text=True, env=env)
