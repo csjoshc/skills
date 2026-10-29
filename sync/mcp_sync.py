@@ -571,7 +571,8 @@ def sync(master, targets, dry, strict=False, npx=None, check_apps=True, out=prin
                 continue
             command = entry.get("command", [])
             argv = ([command] if isinstance(command, str) else command) + entry.get("args", [])
-            if any(isinstance(arg, str) and Path(arg).name == "credential_exec.py" for arg in argv):
+            if any(isinstance(arg, str) and os.path.normcase(Path(arg).name) == "credential_exec.py"
+                   for arg in argv):
                 out(f"{t.name}: scoped readers require native reconciliation; nothing written")
                 return 1
         doc, actions = project(master, t, existing, npx, report)

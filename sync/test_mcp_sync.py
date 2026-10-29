@@ -65,6 +65,26 @@ class Base(unittest.TestCase):
 
 
 class ScopedReconciliation(Base):
+    def test_reader_guard_follows_native_filename_case_rules(self):
+        module = runpy.run_path(str(SCRIPT))
+        target = module["Target"]("cursor", self.paths["cursor"], "mcpServers", module["to_cursor"])
+        master = {"mcpServers": {"github": {"command": "plain-tool"}}}
+        for filename in ("credential_exec.py", "CREDENTIAL_EXEC.PY"):
+            with self.subTest(filename=filename):
+                self.put("cursor", {"mcpServers": {"github": {
+                    "command": "python", "args": ["-I", str(self.home / filename)],
+                }}})
+                before = self.paths["cursor"].read_bytes()
+                result = module["sync"](master, [target], False, npx=NPX,
+                                        check_apps=False, out=lambda message: None)
+                if filename == "credential_exec.py" or os.name == "nt":
+                    self.assertEqual(result, 1)
+                    self.assertEqual(self.paths["cursor"].read_bytes(), before)
+                    self.assertEqual(self.backups("cursor"), [])
+                else:
+                    self.assertEqual(result, 0)
+                    self.assertEqual(self.get("cursor")["mcpServers"]["github"]["command"], "plain-tool")
+
     def test_shipped_template_requires_reconciliation_on_a_new_machine(self):
         self.set_master(json.loads((HERE / "references/mcp.example.json").read_text()))
         result = self.run_sync("--targets", "claude")
