@@ -64,6 +64,45 @@ class Base(unittest.TestCase):
         return list(p.parent.glob(p.name + ".bak.*"))
 
 
+class ScopedReconciliation(Base):
+    def test_declared_credential_ownership_requires_native_reconciliation(self):
+        master = json.loads(json.dumps(MASTER))
+        master["mcpServers"]["github"]["credentialSource"] = "work"
+        self.set_master(master)
+        self.put("claude", {"mcpServers": {"mine": {"command": "keep"}}})
+        before = self.paths["claude"].read_bytes()
+        for flags in [(), ("--dry-run",)]:
+            with self.subTest(flags=flags):
+                result = self.run_sync("--targets", "claude", *flags)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("reconciliation", result.stdout)
+                self.assertEqual(self.paths["claude"].read_bytes(), before)
+                self.assertEqual(self.backups("claude"), [])
+
+    def test_scoped_native_reader_blocks_the_whole_batch_without_writes(self):
+        for target, root, entry in [
+            ("cursor", "mcpServers", {
+                "command": "/usr/bin/python3",
+                "args": ["-I", "/private/shared/credential_exec.py", "--descriptor", "opaque"],
+            }),
+            ("opencode", "mcp", {
+                "type": "local",
+                "command": ["/usr/bin/python3", "-I", "/private/shared/credential_exec.py",
+                            "--file", "/private/work.env", "--var", "TOKEN", "--", "/bin/tool"],
+            }),
+        ]:
+            with self.subTest(target=target):
+                self.put("claude", {"mcpServers": {"mine": {"command": "keep"}}})
+                self.put(target, {root: {"github": entry}, "unrelated": {"keep": True}})
+                paths = [self.paths["claude"], self.paths[target]]
+                before = [(path.read_bytes(), path.stat().st_mode) for path in paths]
+                result = self.run_sync("--targets", f"claude,{target}")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("reconciliation", result.stdout)
+                self.assertEqual([(path.read_bytes(), path.stat().st_mode) for path in paths], before)
+                self.assertEqual(self.backups("claude") + self.backups(target), [])
+
+
 class Translation(Base):
     def test_claude_keeps_dollar_brace_and_strips_extensions(self):
         r = self.run_sync("--targets", "claude")

@@ -3,13 +3,17 @@
 
 **Version:** 3.0.0
 
+**Summary:** Reconcile one native MCP consumer at a time from local definitions and private-pack drop-ins.
+Keep credentials in the declared owning store, preserve native authentication and permissions, and verify the final binding through that consumer before retiring its old dependencies.
+Bootstrap prepares definitions and skill links; it does not deploy native MCP bindings.
+
 ## Contents
 
 - Master store schema
 - New machine: the template and drop-ins
 - Critical rules
 - Claude Code scope model
-- Standard workflows (full sync, toggle, project onboarding)
+- Standard workflows (native reconciliation, toggle, project onboarding)
 - Target-specific transforms
 - Verification
 - Common failure modes
@@ -19,7 +23,9 @@
 - Verification checklist
 
 ## Context
-MCP configurations are fragmented across different tools. This skill unifies them using `~/.secrets/mcp.json` as the authoritative source, then projects entries into each tool's native format — **not a blind copy**. Tool-specific schemas, file locations, and validation rules must be respected or the tool will silently reject the whole config.
+`~/.secrets/mcp.json` and private-pack drop-ins declare server intent.
+Each native binding adds the consumer's approved account, permissions and launch shape.
+Reconcile those together; copying another harness's whole config can overwrite authentication or local settings.
 
 ## Master store schema (`~/.secrets/mcp.json`)
 
@@ -36,13 +42,16 @@ MCP configurations are fragmented across different tools. This skill unifies the
       "enabled": true | false,    // sync MCP extension — NOT synced to targets
       "allowedTools": [ ... ],    // sync MCP extension — NOT synced to targets
       "personal": true,           // sync MCP extension: opts the server in to Codex (personal only)
+      "credentialSource": "work",
       "names": { "<target>": "<name>" }  // sync MCP extension: name this tool already uses for the server
     }
   }
 }
 ```
 
-`enabled`, `allowedTools`, `personal` and `names` are **sync MCP extensions**. They must be stripped before writing to any target config — most tools' JSON schemas reject unknown fields or load a schema-invalid file as empty.
+`enabled`, `allowedTools`, `personal`, `credentialSource` and `names` are definition metadata, not native MCP fields.
+`credentialSource` selects work or personal ownership; it never selects an inherited environment fallback.
+Omit it only for credential-free or native-authentication bindings.
 
 ## New machine: the template and drop-ins
 
@@ -51,14 +60,17 @@ The repo tracks a clean copy, [references/mcp.example.json](references/mcp.examp
 
 1. `mkdir -p ~/.secrets && chmod 700 ~/.secrets`, then `cp ~/.skills/sync/references/mcp.example.json ~/.secrets/mcp.json && chmod 600 ~/.secrets/mcp.json`.
 2. Keep the servers you use, set `enabled`, and replace the example URL.
-3. Every `${VAR}` needs a line in `~/.config/secrets/work.env`. Run `./bootstrap.sh --secrets` in `~/bootstrap` to create that file from its template.
-4. `python3 ~/.skills/sync/mcp_sync.py --dry-run`, then without `--dry-run`.
+3. Declare credential ownership explicitly.
+   A private pack registers its variable-name templates through bootstrap's existing overlay convention; values stay outside repositories.
+   `./bootstrap.sh --secrets` preserves values while preparing the owning work/personal stores.
+4. Reconcile one approved consumer using the workflow below and bootstrap's `docs/operations.md#secrets`.
 
 Servers that belong to another repo do not go in the master.
 Put them in `~/.secrets/mcp.d/*.json`, which has the same schema and is read after the master in file-name order.
 A server with the same name as one in the master replaces it.
 For example, `ln -s ~/path/to/private-repo/mcp.work.json ~/.secrets/mcp.d/work.json` adds a private repo's server file without copying it.
-Drop-ins go through the same refusal of literal secrets as the master, and a drop-in that is not valid JSON stops the run before anything is written.
+Drop-ins contain references, not values.
+Validate the merged definitions before editing a consumer; an invalid definition is a blocker, not permission to use stale or inherited credentials.
 
 ## Critical rules (learned the hard way)
 
@@ -88,23 +100,26 @@ Precedence when the same name appears in multiple scopes: **Local → Project �
 
 ## Standard workflows
 
-### 1. Full sync (master → all targets)
+### 1. Named-consumer reconciliation
 
-1. `python3 ~/.skills/sync/mcp_sync.py --dry-run` and read the key paths it lists.
-2. Run it again without `--dry-run`. Use `--targets claude,opencode,...` to limit it and `--strict` to fail on any literal secret.
-3. Run the verification commands (§Verification).
+1. Identify the actual launcher, effective config/import roots, account, owning credential store and approved read-only operation.
+   Wrapper profiles are separate rows; do not infer their roots from the base CLI.
+2. Review an entry-level diff and rollback path, preserving unrelated fields, permissions, native authentication and private modes.
+   Keep secret values out of arguments, configuration and evidence.
+3. Test the exact launch definition, then refresh the affected native consumer with approval and capture an actual tool result.
+   Discovery, transport success and native activation are separate evidence.
+4. Exercise missing credentials in an isolated synthetic candidate, and reconcile again to prove a no-op.
+   Check that bootstrap, private-pack setup and sync will not overwrite the final binding.
+5. Record final binding identity, attempt, outcome and remaining blocker in the private BOM or one current local handoff.
+   Before approved retirement, audit every known reader of the old helper, credential store and transport.
 
-The script reads the master, drops `enabled: false` servers, strips `enabled` and `allowedTools`, sets an explicit `type`, and merges into each target.
-It keeps tool-only servers and unrelated keys, writes through a temp file and atomic rename, keeps the file's mode, and saves `<file>.bak.<ts>` (mode 600) before changing anything.
-It also removes a stray `mcpServers` from `~/.claude/settings.json`.
-Cursor, VS Code and Claude Desktop are skipped with a message while the app is running, because the app rewrites its own file on exit (`--ignore-running` overrides).
-Tests: `python3 -I ~/.skills/sync/test_mcp_sync.py`.
-Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
+The legacy `mcp_sync.py` refuses a batch containing declared credential ownership or existing `credential_exec.py` readers before writing any target.
+Its format tests remain available through `python3 -I ~/.skills/sync/test_mcp_sync.py`; they are not permission to regenerate migrated consumers.
 
 ### 2. Toggle a server
 
-- **Global disable:** set `enabled: false` in `~/.secrets/mcp.json`, then re-run full sync. Sync removes the entry from all targets.
-- **Global enable:** set `enabled: true` (or remove the field), re-run sync.
+- **Global intent:** change `enabled` in the owning definition, then reconcile each affected consumer individually.
+- **Consumer-only change:** use that consumer's native enable/disable mechanism without changing other profiles.
 - **Project-only override:** add/remove the entry in the project's `.mcp.json` (or `projects["<abs-path>"].mcpServers` for a personal local-scope override). Do not modify the master.
 
 ### 3. Project onboarding
@@ -114,7 +129,9 @@ Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
 - For non-Claude tools (OpenCode, Cursor), see target-specific paths in [GLOBAL_MCP.md](references/GLOBAL_MCP.md).
 - Add project-local personal configs (`.claude/settings.local.json`) to `.gitignore`.
 
-## Target-specific transforms
+## Target-specific formats
+
+These paths and schema differences inform reconciliation; legacy projection behavior is not a deployment recipe for scoped readers.
 
 ### Claude Code (`~/.claude.json`)
 - Key: root `.mcpServers`
@@ -144,16 +161,14 @@ Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
 - Fresh files are created with mode 600, and an existing file keeps its mode. A `.bak.<ts>` copy is saved before any change.
 
 ### Claude Desktop, Cursor and VS Code
-- GUI apps launched from the Dock do not inherit the shell env, so a server that uses a `${VAR}` becomes a wrapper: `command: /bin/zsh`, `args: ["-c", "set -a; . \"$HOME/.config/secrets/work.env\"; exec <command and args, shell-quoted>"]`.
-- A secret env entry whose name equals the variable is dropped from `env` because the sourced file exports it.
-  A renamed one is assigned inside the script.
-- Desktop is stdio-only: a `url` server runs as `npx -y mcp-remote <url> --header "Name:$VAR"`, with the node bin dir put on `PATH`.
-  Cursor does the same only when the header needs a variable.
-  The npx path is taken from the master (`--npx` overrides).
+- GUI apps launched from the Dock do not inherit shell exports.
+  Use the scoped startup helper with explicit owning-store and variable references, not a wrapper that sources the whole store.
+- Where a remote server needs a stdio bridge, retain the reviewed installed bridge and literal header references.
+  Replacing a bridge or runtime path needs its own verification before removing the old dependency.
 - Files: `~/Library/Application Support/Claude/claude_desktop_config.json` (no `type`) and `~/.cursor/mcp.json` (`type: stdio`). Root key `mcpServers`.
-- VS Code (`~/Library/Application Support/Code/User/mcp.json`) uses the same wrappers under the root key `servers`, with `type` on every entry.
+- VS Code (`~/Library/Application Support/Code/User/mcp.json`) uses root key `servers`, with `type` on every entry.
   Its settings-sync copies under `agentPlugins/*/.mcp.json` are generated by VS Code, so sync leaves them alone.
-- Quit and reopen the app after a sync.
+- Refresh the affected native connection with approval; a saved config does not prove the running app loaded it.
 
 ### Per-target server names
 - A tool may already keep a server under another name. Set `"names": {"<target>": "<name>"}` on the master entry, for example `"names": {"vscode": "Docs-Server"}`.
@@ -168,7 +183,7 @@ Mutation check: `python3 -I ~/.skills/sync/mutants_mcp_sync.py`.
 
 ### Oh My Pi (OMP)
 - User config: `~/.omp/agent/mcp.json`, root key `mcpServers`.
-- Run `python3 ~/.skills/sync/mcp_sync.py --targets omp` (`--dry-run` first).
+- Reconcile the effective OMP agent directory, including a wrapper-selected `PI_CODING_AGENT_DIR`, without replacing local model/authentication settings.
 - OMP uses typed `stdio`, `http` and `sse` entries with `command`/`args`/`env` or `url`/`headers`.
 - `${VAR}` references stay as references in `env` and `headers`; keep credential values in the environment and out of the master file.
 - Existing OMP-only servers and OMP fields such as `enabled`, `timeout`, `auth`, `oauth`, `instructions` and `requestIdFormat` are preserved when a shared entry is updated.
@@ -227,13 +242,14 @@ Tests: `python3 -I shared/test_credential_exec.py` runs synthetic child processe
 
 No harness is automatically migrated by installing this helper.
 Reconcile one native entry, preserve account/tool permissions and unrelated configuration, then verify a real read-only operation with approval.
-Full sync must remain paused during migration: the legacy generator below can replace a manually reconciled entry.
+The legacy generator refuses scoped readers; native reconciliation is their only deployment path.
 
 ### Legacy generator
 
 - The master holds `${VAR}` placeholders only.
   Values live in `~/.config/secrets/work.env` (dir 700, file 600), outside every repo.
-- To add a secret: add `NAME=` to the repo template `secrets/work.env.example` in `~/bootstrap`, set it in `work.env`, put `${NAME}` in the master, then run `mcp_sync.py`.
+- Work-specific variable-name templates belong to the private pack's bootstrap overlays.
+  Reconcile consumers after the owner fills the value in the declared store; do not add employer inventory to public templates.
 - To rotate, see [Rotating a token](#rotating-a-token).
 - A literal in a secret-named env/header field is refused by every target.
   Use `--strict` to make that a failure.
@@ -241,32 +257,18 @@ Full sync must remain paused during migration: the legacy generator below can re
 
 ## Rotating a token
 
-For scoped startup, update the owning file and relaunch only its consumer with approval; do not source credentials into the parent harness or global shell.
-The steps below describe legacy bindings that have not been reconciled.
-
-Rotation touches one file.
-Every target holds a reference to the variable, never the value, so no config needs editing and `mcp_sync.py` does not need to run.
-
-1. Issue the new token in the provider (GitHub, Atlassian, your MCP provider) and revoke the old one.
-2. Edit the value in `~/.config/secrets/work.env`. Keep the file at mode 600.
-   A derived line such as `REMOTE_MCP_AUTH="Prefix ${REMOTE_MCP_TOKEN}"` follows the token, so only the token line changes.
-3. Restart each tool so it re-reads the value, starting it from a shell that sourced `work.env`.
-
-| Tool | How it gets the value | What to do after rotating |
-|---|---|---|
-| Codex | Not used: Codex holds no `work.env` secrets by design | Nothing to rotate. |
-| Claude Code | `${VAR}` expanded from its own environment at startup | Exit and relaunch from a fresh shell. |
-| opencode | `{env:VAR}` expanded by the shared service | Run `opencode service restart` from a fresh shell. |
-| Cursor, Claude Desktop, VS Code | A `/bin/zsh -c` wrapper sources `work.env` when the server spawns | Reload the MCP server or restart the app. No shell is needed. |
-
-Check afterwards with `python3 -I mcp_sync.py --dry-run`: every target should report `unchanged`.
-A new variable is a different job: follow "To add a secret" above.
+Update the binding's owning store, not a canary copy or inherited shell export.
+Keep private-file modes at 600 and the directory at 700.
+With approval, relaunch only affected consumers and verify their actual identity and read-only operation.
+Obtain approval to revoke the old credential only after every affected reader passes.
+Native OAuth and model-account authentication stay with their native owner; do not copy their stores between profiles.
+No generator run is needed for a value rotation.
 
 ## Harness coverage
 
 Skills and MCP servers sync to different sets of tools, because each tool reads them from different places.
 
-| Tool | Skills (`sync.py`) | MCP servers (`mcp_sync.py`) |
+| Tool | Skills (`sync.py`) | Native MCP reconciliation |
 |---|---|---|
 | Claude Code | yes | yes |
 | opencode | yes | yes |
@@ -277,14 +279,17 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
 | Copilot | yes | no |
 
-If a tool in the "no" column needs a master server, add a target in `mcp_sync.py` rather than copying values by hand.
+Devin uses its dedicated MCP config files; inspect project overrides as well as the user config.
+Gateway wrappers select their roots through private-pack launchers and require their own verification rows.
+For another installed consumer, use its documented native format rather than adding a bulk generator target or copying secret values.
 
 ## Verification checklist
 
 - [ ] `~/.secrets/mcp.json` is valid JSON and follows the master schema.
 - [ ] `~/.claude/settings.json` does NOT contain an `mcpServers` key.
-- [ ] `mcp_sync.py --dry-run` lists no key-path changes.
+- [ ] Reconciliation of the final native entry is a no-op; approved account, permissions and unrelated fields are preserved.
 - [ ] `~/.codex/config.toml` still parses (`python3 -c 'import tomllib,sys;tomllib.load(open(sys.argv[1],"rb"))' ~/.codex/config.toml`).
-- [ ] No target file contains a literal secret value (grep each `work.env` value, expect 0 hits).
+- [ ] Credential fields contain references only; never put secret values in search commands or output.
 - [ ] `claude mcp list` shows each enabled server as "✓ Connected".
-- [ ] Subprocess E2E test on at least one server returns a real tool result.
+- [ ] Every changed consumer has a fresh native read-only result tied to its final binding; transport-only and blocked rows remain explicit.
+- [ ] All known readers have moved before any old helper, canary store, bridge or evidence is retired with approval.

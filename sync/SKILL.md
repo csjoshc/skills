@@ -11,8 +11,8 @@ For a named mode, read its file below.
 | Task | Read | Master store |
 |---|---|---|
 | Sync, audit or ingest skills; fix broken or stale links | [skills.md](skills.md) (run `sync.py`) | `~/.skills` |
-| Sync, toggle or onboard MCP servers (Claude, Codex, OpenCode, Cursor, OMP and more) | [mcp.md](mcp.md) | `~/.secrets/mcp.json` and `~/.secrets/mcp.d/` |
-| Rotate or add a token or API key | [mcp.md#rotating-a-token](mcp.md#rotating-a-token) | `~/.config/secrets/work.env` |
+| Reconcile, toggle or onboard one native MCP consumer | [mcp.md](mcp.md) | `~/.secrets/mcp.json` and private-pack `~/.secrets/mcp.d/` definitions |
+| Rotate or add a token or API key | [mcp.md#rotating-a-token](mcp.md#rotating-a-token) | The binding's declared work or personal credential store |
 | Sync or audit guard hooks (`/sync hooks`) | [../shared/HOOK_PRINCIPLES.md#guard-sync](../shared/HOOK_PRINCIPLES.md#guard-sync) | `~/.skills/hooks/` and bootstrap's `BOM.md` |
 
 With no mode specified, include the guard audit alongside skill-link discovery.
@@ -21,6 +21,8 @@ Per-repo git hooks belong to `/onboard` (step 0g); sync installs them only in `~
 An audit writes nothing; repair preserves unrelated settings and asks before replacing conflicting configuration.
 Report registration separately from live enforcement, and leave unverified harnesses explicit.
 Sync does not authorize commits, pushes, merges, service restarts or removal of old history.
+MCP changes use the named-consumer reconciliation workflow, not bulk generation.
+Track wrapper profiles separately from their base agents and retain old dependencies until every reader has moved.
 
 Shared path table: [../shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md).
 Pinned upstream skills: [skill-sources.json](skill-sources.json); `sync.py` installs these before harness link repair.
