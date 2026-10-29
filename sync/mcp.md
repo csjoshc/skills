@@ -208,8 +208,10 @@ Run ALL of the following after a sync — pure file-write success is not proof.
      --allowedTools "mcp__<server>__<toolname>" \
      --output-format json
    ```
-   A successful `"subtype":"success"` with a non-empty `result` field proves end-to-end: config parsed, server reachable, tool invoked, result returned.
-4. For other tools: restart the tool and confirm the server appears in its UI / MCP panel.
+   Verify the actual requested native tool result and expected identity, tied to the intended consumer/profile and final binding.
+   A successful CLI exit, `"subtype":"success"` or non-empty assistant `result` is insufficient.
+4. For other tools: refresh the intended consumer/profile with approval and verify the same native tool-result evidence.
+   Discovery/connectivity checks and UI / MCP-panel registration do not prove native success.
 
 ## Common failure modes and fixes
 
