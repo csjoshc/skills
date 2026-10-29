@@ -47,8 +47,7 @@ IS_WINDOWS = OS_TYPE == OS.WINDOWS
 
 HOME = Path.home()
 SKILLS_DIR = HOME / ".skills"
-# A whole-store link hides local OMP skills and root docs (Devin); Codex also needs .system.
-PER_SKILL_LINK_PLATFORMS = {"codex", "omp", "devin"}
+# Per-skill links preserve native private definitions and Codex's .system directory.
 LOG_FILE = SKILLS_DIR / "sync.log"
 
 
@@ -124,7 +123,7 @@ PLATFORMS = {
     ),
     "copilot": PlatformConfig(
         name="Copilot",
-        skills_symlink=HOME / ".vscode" / "skills",
+        skills_symlink=HOME / ".copilot" / "skills",
         permission_type="trust",
         platform_key="copilot",
     ),
@@ -261,7 +260,9 @@ def audit_symlink(
 
     symlink_path = config.skills_symlink
 
-    if not symlink_path.parent.exists():
+    if not symlink_path.parent.exists() and not (
+        platform_key == "copilot" and (HOME / ".vscode").is_dir()
+    ):
         result.symlink_status = Status.NOT_INSTALLED
         result.symlink_details = (
             f"Parent directory {symlink_path.parent} does not exist"
@@ -276,62 +277,43 @@ def audit_symlink(
         return result
 
     # Real directory of per-skill symlinks (see SYMLINK_MAP.md)
-    if platform_key in PER_SKILL_LINK_PLATFORMS:
-        if is_symlink(symlink_path):
-            result.symlink_status = Status.WRONG_TARGET
-            result.symlink_details = (
-                f"{config.name} skills must be a real directory of per-skill symlinks, "
-                "not a single symlink to ~/.skills"
-            )
-            logger.warn(f"{config.name}: Skills path is a full symlink (unsafe)")
-            return result
-
-        if not symlink_path.is_dir():
-            result.symlink_status = Status.BROKEN
-            result.symlink_details = f"{config.name} skills path is not a directory"
-            logger.warn(f"{config.name}: Skills path is not a directory")
-            return result
-
-        missing = []
-        for skill_dir in SKILLS_DIR.iterdir():
-            if not skill_dir.is_dir() or skill_dir.name.startswith("."):
-                continue
-            if not (skill_dir / "SKILL.md").is_file():
-                continue
-            link = symlink_path / skill_dir.name
-            if not link.exists() and not link.is_symlink():
-                missing.append(skill_dir.name)
-
-        if missing:
-            result.symlink_status = Status.BROKEN
-            result.symlink_details = (
-                f"Missing per-skill links: {', '.join(sorted(missing)[:8])}"
-                + ("…" if len(missing) > 8 else "")
-            )
-            logger.warn(f"{config.name}: {len(missing)} master skill(s) not linked")
-            return result
-
-        result.symlink_status = Status.SYNCED
-        result.symlink_details = "per-skill symlinks → ~/.skills/<name>"
-        logger.info(f"{config.name}: Per-skill symlinks OK")
-        return result
-
-    if not is_symlink(symlink_path):
-        result.symlink_status = Status.BROKEN
-        result.symlink_details = "Exists as real directory, not symlink"
-        logger.warn(f"{config.name}: Skills path is a real directory, not a symlink")
-        return result
-
-    target = get_symlink_target(symlink_path)
-    if target != SKILLS_DIR:
+    if is_symlink(symlink_path):
         result.symlink_status = Status.WRONG_TARGET
-        result.symlink_details = f"Points to {target}, expected {SKILLS_DIR}"
-        logger.warn(f"{config.name}: Symlink points to {target}, expected {SKILLS_DIR}")
+        result.symlink_details = (
+            f"{config.name} skills must be a real directory of per-skill symlinks, "
+            "not a single symlink to ~/.skills"
+        )
+        logger.warn(f"{config.name}: Skills path is a full symlink (unsafe)")
+        return result
+
+    if not symlink_path.is_dir():
+        result.symlink_status = Status.BROKEN
+        result.symlink_details = f"{config.name} skills path is not a directory"
+        logger.warn(f"{config.name}: Skills path is not a directory")
+        return result
+
+    missing = []
+    for skill_dir in SKILLS_DIR.iterdir():
+        if not skill_dir.is_dir() or skill_dir.name.startswith("."):
+            continue
+        if not (skill_dir / "SKILL.md").is_file():
+            continue
+        link = symlink_path / skill_dir.name
+        if not link.exists() and not link.is_symlink():
+            missing.append(skill_dir.name)
+
+    if missing:
+        result.symlink_status = Status.BROKEN
+        result.symlink_details = (
+            f"Missing per-skill links: {', '.join(sorted(missing)[:8])}"
+            + ("…" if len(missing) > 8 else "")
+        )
+        logger.warn(f"{config.name}: {len(missing)} master skill(s) not linked")
         return result
 
     result.symlink_status = Status.SYNCED
-    result.symlink_details = f"→ {SKILLS_DIR}"
-    logger.info(f"{config.name}: Skills symlink OK")
+    result.symlink_details = "per-skill symlinks → ~/.skills/<name>"
+    logger.info(f"{config.name}: Per-skill symlinks OK")
     return result
 
 
@@ -340,16 +322,7 @@ def repair_symlink(config: PlatformConfig, logger: Logger) -> bool:
     # Codex keeps system-managed skills under ~/.codex/skills/.system and
     # must remain a real directory of per-skill symlinks — never a single
     # symlink to ~/.skills (that shadows .system and risks rmtree of it).
-    if config.platform_key in PER_SKILL_LINK_PLATFORMS:
-        return sync_per_skill_links(config, logger)
-
-    logger.info(f"Repairing {config.name} skills symlink...")
-    success = create_symlink(config.skills_symlink, SKILLS_DIR)
-    if success:
-        logger.info(f"  Created: {config.skills_symlink} → {SKILLS_DIR}")
-    else:
-        logger.error(f"  Failed to create symlink for {config.name}")
-    return success
+    return sync_per_skill_links(config, logger)
 
 
 def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
@@ -362,6 +335,9 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     logger.info(f"Syncing {config.name} per-skill symlinks...")
 
     if links_dir.is_symlink():
+        if links_dir.resolve() != SKILLS_DIR.resolve():
+            logger.error(f"{config.name}: reconcile the foreign skills root before syncing")
+            return False
         logger.warn(
             f"{config.name} skills path is a symlink to the master store; "
             "converting to a real directory with per-skill links."
@@ -677,6 +653,19 @@ def main():
     verbose = not args.quiet
     logger = Logger(verbose=verbose, log_file=LOG_FILE)
 
+    external = sorted(
+        skill.name for skill in SKILLS_DIR.iterdir()
+        if not skill.name.startswith(".") and (skill / "SKILL.md").is_file()
+        and not (skill / "SKILL.md").resolve().is_relative_to(SKILLS_DIR.resolve())
+    ) if SKILLS_DIR.is_dir() else []
+    if external:
+        logger.error(
+            "External skill definitions in the shared store: " + ", ".join(external)
+            + ". Reconcile approved native consumer links, then retire these shared imports; "
+            "nothing synced."
+        )
+        return 1
+
     if args.project:
         project_dir = Path(args.project).resolve()
         logger.info(f"Adding project symlink for: {project_dir}")
@@ -694,6 +683,10 @@ def main():
         retire_pi_skill_links(HOME, logger)
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
+    return int(not args.audit and any(
+        result.symlink_status in (Status.BROKEN, Status.WRONG_TARGET, Status.MISSING)
+        for result in results
+    ))
 
 
 if __name__ == "__main__":

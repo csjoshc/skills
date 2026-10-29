@@ -1,6 +1,8 @@
 """Tests for per-skill link platforms (Codex and OMP). Run: python3 -I test_sync_skill_links.py"""
 import importlib.util
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,6 +40,9 @@ class TestOmpSkillLink(unittest.TestCase):
             sync.HOME / ".omp" / "agent" / "skills",
         )
 
+    def test_copilot_uses_native_personal_skills_path(self):
+        self.assertEqual(sync.PLATFORMS["copilot"].skills_symlink, sync.HOME / ".copilot/skills")
+
     def test_shared_skill_links_leave_omp_local_skills_unchanged(self):
         before = (self.omp / "tdd" / "SKILL.md").read_bytes()
         local = self.omp / "local-only" / "SKILL.md"
@@ -54,6 +59,98 @@ class TestOmpSkillLink(unittest.TestCase):
         self.assertEqual((self.omp / "caveman").resolve(), (self.master / "caveman").resolve())
         self.assertEqual(sync.audit_symlink("omp", self.cfg, Quiet()).symlink_status,
                          sync.Status.SYNCED)
+
+
+class TestPrivateSkillBoundary(unittest.TestCase):
+    def test_foreign_native_root_is_preserved_and_reported_as_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            (home / ".skills").mkdir()
+            private = home / "private-pack/skills"
+            private.mkdir(parents=True)
+            native = home / ".config/devin/skills"
+            native.parent.mkdir(parents=True)
+            native.symlink_to(private)
+            result = subprocess.run(
+                [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
+                env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                capture_output=True, text=True, timeout=10, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(native.readlink(), private)
+            self.assertIn("foreign skills root", result.stdout)
+
+    def test_missing_link_audit_preserves_success_status_without_repair(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            skill = home / ".skills/public"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("public definition\n")
+            (home / ".claude").mkdir()
+            result = subprocess.run(
+                [sys.executable, "-B", str(Path(__file__).with_name("sync.py")), "--audit"],
+                env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                capture_output=True, text=True, timeout=10, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertFalse((home / ".claude/skills").exists())
+
+    def test_shared_vendor_links_sync_without_touching_native_private_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            master = home / ".skills"
+            vendor = master / ".vendor/public/package"
+            vendor.mkdir(parents=True)
+            (vendor / "SKILL.md").write_text("public definition\n")
+            (master / "public").symlink_to(vendor)
+            private = home / "private-pack/work-only"
+            private.mkdir(parents=True)
+            (private / "SKILL.md").write_text("private definition\n")
+            natives = [home / path for path in (
+                ".omp/agent/skills", ".claude/skills", ".cursor/skills",
+                ".config/opencode/skills", ".copilot/skills", ".config/devin/skills",
+            )]
+            for native in natives:
+                native.mkdir(parents=True)
+                (native / "work-only").symlink_to(private)
+            result = subprocess.run(
+                [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
+                env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                capture_output=True, text=True, timeout=10, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for native in natives:
+                self.assertFalse(native.is_symlink())
+                self.assertEqual((native / "public").resolve(), vendor.resolve())
+                self.assertEqual((native / "work-only").resolve(), private.resolve())
+            self.assertFalse((master / "work-only").exists())
+
+    def test_cli_refuses_external_definitions_before_linking_any_consumer(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            master = home / ".skills"
+            master.mkdir()
+            private = home / "private-pack/skills/work-only"
+            private.mkdir(parents=True)
+            (private / "SKILL.md").write_text("private definition\n")
+            (master / "work-only").symlink_to(private)
+            (home / ".codex/skills/.system").mkdir(parents=True)
+            project = home / "project"
+            project.mkdir()
+            for args in ([], ["--audit"], ["--project", str(project)]):
+                with self.subTest(args=args):
+                    result = subprocess.run(
+                        [sys.executable, "-B", str(Path(__file__).with_name("sync.py")), *args],
+                        env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                        capture_output=True, text=True, timeout=10, check=False,
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("native", result.stdout)
+                    self.assertFalse((home / ".codex/skills/work-only").is_symlink())
+                    self.assertFalse((project / ".skills").is_symlink())
+                    self.assertTrue((master / "work-only").is_symlink())
+                    self.assertTrue((home / ".codex/skills/.system").is_dir())
+
 
 if __name__ == "__main__":
     unittest.main()

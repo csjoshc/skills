@@ -1,25 +1,16 @@
-name: MCP credential preservation
+name: Scoped credential boundaries
 
 on:
   push:
     branches: [main]
-    paths: ['sync/**', 'shared/credential_exec.py', 'shared/test_credential_exec.py', '.github/workflows/mcp-contracts.yml']
+    paths: ['sync/**', 'confluence/**', 'shared/credential_exec.py', 'shared/test_credential_exec.py', '.github/workflows/mcp-contracts.yml']
   pull_request:
-    paths: ['sync/**', 'shared/credential_exec.py', 'shared/test_credential_exec.py', '.github/workflows/mcp-contracts.yml']
+    paths: ['sync/**', 'confluence/**', 'shared/credential_exec.py', 'shared/test_credential_exec.py', '.github/workflows/mcp-contracts.yml']
 
 permissions:
   contents: read
 
 jobs:
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - name: Native Windows scoped-reader preservation
-        run: python -I sync/test_mcp_sync.py ScopedReconciliation
   linux:
     runs-on: ubuntu-24.04
     steps:
@@ -27,9 +18,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Install legacy-format test prerequisite
-        run: sudo apt-get update && sudo apt-get install -y zsh
-      - name: MCP preservation and legacy-format contracts
-        run: python -I sync/test_mcp_sync.py
       - name: Scoped credential process boundary
         run: python -B -I shared/test_credential_exec.py
+      - name: Confluence scoped REST operation
+        run: bash confluence/scripts/test_confluence_env.sh
+      - name: Shared and native skill ownership
+        run: python -B -I sync/test_sync_skill_links.py

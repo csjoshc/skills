@@ -11,7 +11,8 @@ done
 if [ -n "$_cd_missing" ]; then
   echo "confluence: missing:$_cd_missing" >&2
   echo "Set them in ~/.config/secrets/work.env (run ./bootstrap.sh --secrets in ~/bootstrap" \
-       "to create it) and open a new shell." >&2
+       "to create it), then launch this operation through ~/.skills/shared/credential_exec.py" \
+       "with --var CONFLUENCE_URL --var CONFLUENCE_USERNAME --var CONFLUENCE_API_TOKEN." >&2
   unset _cd_missing _cd_v
   return 1 2>/dev/null || exit 1
 fi

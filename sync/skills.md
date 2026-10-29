@@ -20,7 +20,7 @@ The user maintains a "Universal Skills" directory at `~/.skills`. This is the au
 
 1. **Identify New Skills:** Scan the current working directory and common skill locations for any `.md` files that are NOT yet present in `~/.skills`.
 2. **Ingest:** If a new skill is found, copy it to `~/.skills` after confirming with the user.
-3. **Audit Symlinks:** Verify that each platform path is a **symlink** to `~/.skills`.
+3. **Audit Symlinks:** Verify per-skill links to public definitions in `~/.skills`, preserving native private entries.
 4. **Propagate Removals (Audit Stale):** 
    - Identify broken symlinks in platform paths (pointing to deleted master skills).
    - Identify files in "Local-only" platforms that have been deleted from the master `~/.skills` store.
@@ -35,6 +35,12 @@ Before running the sync audit, review these companion files for authoritative sy
 ## Execution Steps
 
 ### Step 0: Pinned upstream skills
+
+The shared store contains public definitions, including pinned packages under its own `.vendor/`.
+Private pack skills stay in the pack and are linked only into approved native consumer roots.
+Before any sync or project-link action, `sync.py` refuses external skill imports still present in the shared store.
+Reconcile their permitted native readers, verify those readers, then obtain approval to remove the old shared imports and any disallowed consumer links.
+Keep Codex personal-only and preserve native private links outside the shared store.
 
 Run `python3 ~/.skills/sync/sync.py` to install missing pinned sources before repairing harness links.
 Run it with `--audit` for a read-only check that performs no clone, fetch or checkout.
@@ -63,7 +69,7 @@ Tests: `python3 -I ~/.skills/sync/test_skill_sources.py` uses real local Git rep
 
 ### Step 2: The "Master Sync"
 
-- **New Skills:** If a skill exists in the local project but not in `~/.skills`, offer to `cp` it to the master directory.
+- **New Skills:** Offer to copy a missing public skill to `~/.skills`; private definitions remain in their owning pack or native consumer root.
 - **Stale Skills:** If a skill is missing from `~/.skills` but still exists in a local-only or non-symlinked folder, offer to `rm` it.
 - **Broken Links:** If a symlink exists but its target in `~/.skills` is gone, offer to remove the broken link.
 
@@ -73,28 +79,21 @@ For global symlinks, refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) 
 
 For each path:
 1. Check whether it is a **symlink** (and where it points) or a **regular directory/file**
-2. If a path is a physical directory instead of a symlink, alert the user that the platform is "Out of Sync"
-3. Propose a migration: Move physical files to `~/.skills` and replace with a symlink: `ln -sf ~/.skills [target_path]`
+2. Expect a real native directory containing per-skill links; a whole-store symlink needs migration.
+3. Reconcile public definitions with `~/.skills`; preserve private definitions in approved native roots rather than moving them into the shared store.
 
 **Codex exception (per-skill symlinks):** `~/.codex/skills/` is a real directory containing per-skill symlinks because Codex installs system-managed skills under `.system/` (`imagegen`, `openai-docs`, `slides`, `spreadsheets`, etc.). Do NOT replace it with a single symlink to `~/.skills` — that shadows `.system` and `sync.py` must never `rmtree` it.
 
-`sync/sync.py` handles Codex, OMP and Devin (`PER_SKILL_LINK_PLATFORMS`) specially: audit expects a real directory; repair adds or fixes per-skill links and removes broken links while preserving local entries. Codex's `.system/` is preserved. OMP and Devin get per-skill links so their loaders never see root `.md` files.
+`sync/sync.py` uses per-skill links for every supported consumer.
+Repair converts a whole-store link only when it points to `~/.skills`, then adds or fixes public skill links while preserving native entries and Codex's `.system/`.
+A foreign root is a reconciliation blocker, not permission to replace it.
 
 OMP reads skills from `~/.omp/agent/skills`. Shared skills are linked individually from `~/.skills`; OMP-local skills remain in place. Run `python3 ~/.skills/sync/sync.py --audit` to inspect the path and `python3 ~/.skills/sync/sync.py` to repair it.
 
-Manual equivalent for Codex:
+Use the canonical sync command for Codex so the shared-store ownership check runs before linking:
 
 ```bash
-# Add per-skill symlinks for any master skill missing from codex
-cd ~/.skills && for d in */; do
-  name="${d%/}"
-  if [ -f "$d/SKILL.md" ] && [ ! -e "$HOME/.codex/skills/$name" ]; then
-    ln -s "$HOME/.skills/$name" "$HOME/.codex/skills/$name"
-  fi
-done
-
-# Detect broken symlinks (master skill renamed/deleted)
-find ~/.codex/skills -maxdepth 1 -type l ! -exec test -e {} \; -print
+python3 ~/.skills/sync/sync.py
 ```
 
 If `.system/` is missing, open Codex Desktop or run the Codex CLI once — it reinstalls embedded system skills automatically.
@@ -109,14 +108,17 @@ Refer to [shared/SYMLINK_MAP.md](../shared/SYMLINK_MAP.md) to determine:
 **Claude Code (project-level) — copy, not symlink:** Claude Desktop is sandboxed and cannot follow symlinks outside the workspace. Use the filtered copy below instead of a symlink (about 2 MB; a plain `cp -r` drags in `.git`, eval runs and mirrors, over 30 MB).
 
 ```bash
-rsync -aL --delete --exclude='.git' --exclude='.vendor' --exclude='.backup' --exclude='synced' --exclude='.trash' --exclude='__pycache__' --exclude='evals/runs' --exclude='*.log' --exclude='/master' ~/.skills/ .claude/skills/
+python3 ~/.skills/sync/sync.py --audit &&
+  rsync -aL --exclude='.git' --exclude='.vendor' --exclude='.backup' --exclude='synced' --exclude='.trash' --exclude='__pycache__' --exclude='evals/runs' --exclude='*.log' --exclude='/master' ~/.skills/ .claude/skills/
 ```
 
-Run it from the project root. During sync, compare `.claude/skills` contents against `~/.skills` and re-copy if stale. The global symlink (`~/.claude/skills → ~/.skills`) is unaffected.
+Run it from the project root.
+During sync, compare the managed public copies against `~/.skills`; remove stale public copies only with approval, preserving project-private content.
+Global `~/.claude/skills` remains a separate directory of per-skill links.
 `-L` materializes upstream skill links inside the sandboxed project copy; excluding `.vendor` keeps the upstream repository and Git metadata out.
 
 For VS Code workspaces specifically:
-- Global skills are available via `~/.vscode/skills`
+- Global Copilot skills are available via native `~/.copilot/skills`; `~/.vscode/skills` is not a native personal discovery root.
 - Project-level `.vscode/skills` can provide local overrides or discovery
 - Use `.vscode/settings.json` to prioritize: `"github.copilot.advanced": { "instructionsPath": ".vscode/skills" }`
 

@@ -16,7 +16,7 @@ For a named mode, read its file below.
 | Sync or audit guard hooks (`/sync hooks`) | [../shared/HOOK_PRINCIPLES.md#guard-sync](../shared/HOOK_PRINCIPLES.md#guard-sync) | `~/.skills/hooks/` and bootstrap's `BOM.md` |
 
 With no mode specified, include the guard audit alongside skill-link discovery.
-Hook reconciliation is agent-assisted; `sync.py` and `mcp_sync.py` do not install hooks.
+Hook reconciliation is agent-assisted; `sync.py` does not install hooks.
 Per-repo git hooks belong to `/onboard` (step 0g); sync installs them only in `~/.skills` and `~/bootstrap`.
 An audit writes nothing; repair preserves unrelated settings and asks before replacing conflicting configuration.
 Report registration separately from live enforcement, and leave unverified harnesses explicit.

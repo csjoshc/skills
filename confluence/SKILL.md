@@ -30,11 +30,17 @@ node ~/.skills/diagram/scripts/render.mjs diagram.mmd --for confluence
 
 ### 2. Upload as attachment via REST API
 
-The token, URL and username come from the environment only: `CONFLUENCE_API_TOKEN`, `CONFLUENCE_URL` (Cloud, ends in `/wiki`) and `CONFLUENCE_USERNAME` in `~/.config/secrets/work.env` (loaded by every new shell).
-If one is missing, run `./bootstrap.sh --secrets` in `~/bootstrap` and fill in the file.
-The helper below checks all three, stops with a clear message if one is missing, and defines `confluence_curl`, which passes the credentials to curl on a pipe so the token never shows in `ps`.
+Launch each approved operation with only `CONFLUENCE_API_TOKEN`, `CONFLUENCE_URL` (Cloud, ends in `/wiki`) and `CONFLUENCE_USERNAME` from its owning credential store.
+The example uses the work store; substitute the explicitly approved store for another account.
+If a required value is missing, run `./bootstrap.sh --secrets` in `~/bootstrap` and fill in that store.
+`credential_exec.py` fails before launching Bash when a value is missing and keeps unrelated credentials out of the child environment.
+The sourced REST helper passes authentication to curl through a pipe, not process arguments.
 
 ```bash
+python3 -I ~/.skills/shared/credential_exec.py \
+  --file ~/.config/secrets/work.env \
+  --var CONFLUENCE_URL --var CONFLUENCE_USERNAME --var CONFLUENCE_API_TOKEN -- \
+  bash --noprofile --norc <<'BASH'
 . ~/.skills/confluence/scripts/confluence_env.sh || exit 1
 
 confluence_curl -X PUT \
@@ -42,11 +48,14 @@ confluence_curl -X PUT \
   -F "file=@diagram.svg" \
   -F "comment=Diagram" \
   "$CONFLUENCE_URL/rest/api/content/<page_id>/child/attachment"
+BASH
 ```
 
 ### 3. Embed inline
 
-Fetch the page in storage format, edit the body, then PUT it back with the version bumped by one:
+Fetch the page in storage format, edit the body, then PUT it back with the version bumped by one.
+For each fetch or approved publish, reuse the scoped launch above and replace its upload command with the relevant command below.
+Keep `. confluence_env.sh` inside that child shell; the parent shell never loads the store.
 
 ```bash
 confluence_curl "$CONFLUENCE_URL/rest/api/content/<page_id>?expand=body.storage,version" > page.json
