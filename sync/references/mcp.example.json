@@ -1,7 +1,8 @@
 {
-  "_readme": "Template for ~/.secrets/mcp.json. Copy it there, keep only the servers you use, and never put a literal token in it: every secret is a ${VAR} placeholder whose value lives in ~/.config/secrets/work.env. enabled, allowedTools and personal stay in this file and are never written to a tool. Only servers with personal set to true and no ${VAR} are written to Codex, which is personal only. Servers that belong to another repo go in ~/.secrets/mcp.d/*.json instead. See mcp.md.",
+  "_readme": "Template for ~/.secrets/mcp.json. Keep only the servers you use. Authenticated servers declare credentialSource as work or personal; values stay in that owning store and definitions contain ${VAR} references only. Reconcile one native consumer at a time using ~/.skills/sync/mcp.md, not the legacy generator. Definition metadata is not copied into native configs. Codex remains personal-only with no work credentials. Private-pack definitions belong in ~/.secrets/mcp.d/*.json.",
   "mcpServers": {
     "github": {
+      "credentialSource": "work",
       "type": "stdio",
       "command": "docker",
       "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
@@ -9,6 +10,7 @@
       "enabled": true
     },
     "example-http": {
+      "credentialSource": "work",
       "type": "http",
       "url": "https://mcp.example.com/mcp",
       "headers": { "Authorization": "${EXAMPLE_MCP_AUTH}" },

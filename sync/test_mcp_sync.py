@@ -1,6 +1,6 @@
 """Run: python3 -I ~/.skills/sync/test_mcp_sync.py
 Every case uses a temp HOME and fake values; no real config is read or written."""
-import json, os, re, stat, subprocess, sys, tempfile, tomllib, unittest
+import json, os, re, runpy, stat, subprocess, sys, tempfile, tomllib, unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -65,6 +65,13 @@ class Base(unittest.TestCase):
 
 
 class ScopedReconciliation(Base):
+    def test_shipped_template_requires_reconciliation_on_a_new_machine(self):
+        self.set_master(json.loads((HERE / "references/mcp.example.json").read_text()))
+        result = self.run_sync("--targets", "claude")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("reconciliation", result.stdout)
+        self.assertFalse(self.paths["claude"].exists())
+
     def test_declared_credential_ownership_requires_native_reconciliation(self):
         master = json.loads(json.dumps(MASTER))
         master["mcpServers"]["github"]["credentialSource"] = "work"
@@ -712,10 +719,11 @@ class Template(Base):
     EXAMPLE = HERE / "references" / "mcp.example.json"
 
     def test_example_master_is_valid_and_strict_clean(self):
-        self.master = self.EXAMPLE
-        r = self.run_sync("--strict", "--dry-run")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertNotIn("refused", r.stdout)
+        module = runpy.run_path(str(SCRIPT))
+        report = module["Report"]()
+        for name, entry in json.loads(self.EXAMPLE.read_text())["mcpServers"].items():
+            module["clean_server"](name, entry, report)
+        self.assertEqual(report.refusals, [])
 
     def test_example_holds_only_placeholders_and_no_employer_data(self):
         text = self.EXAMPLE.read_text()
