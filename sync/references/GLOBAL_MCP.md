@@ -1,63 +1,50 @@
 # Global MCP Configuration Map
 
-Authoritative target list for sync. Master store: `~/.secrets/mcp.json` (never edited by downstream tools), plus any `~/.secrets/mcp.d/*.json` drop-ins.
+**Summary:** Native config locations for [named-consumer reconciliation](../mcp.md#1-named-consumer-reconciliation), not a bulk-write target list.
+Definitions live in `~/.secrets/mcp.json` and private-pack `~/.secrets/mcp.d/*.json` drop-ins.
 Start a new master from [mcp.example.json](mcp.example.json).
+Inspect the effective config root before editing; wrapper profiles can use a different root from the base CLI.
 
 ## Target table
 
 | Tool / Platform | Config Path | Root Key | Transports Supported | Toggle Approach |
 | :--- | :--- | :--- | :--- | :--- |
-| **Master store** | `~/.secrets/mcp.json` | `mcpServers` | any | Set `enabled: true/false`; re-run sync |
+| **Master store** | `~/.secrets/mcp.json` | `mcpServers` | any | Change intent, then reconcile each affected consumer |
+| **Devin** | `~/.config/devin/mcp_config.json`; project `.devin/mcp_config.json` | `mcpServers` | stdio, http | Preserve native permissions and inspect project overrides |
 | **Claude Code (CLI)** — user scope | `~/.claude.json` | root `mcpServers` | stdio, http, sse | Remove entry (no `enabled` field support) |
 | **Claude Code (CLI)** — local scope | `~/.claude.json` | `projects["<abs-path>"].mcpServers` | stdio, http, sse | Remove entry |
 | **Claude Code (CLI)** — project scope | `<repo>/.mcp.json` | `mcpServers` | stdio, http, sse | Remove entry; commit to VCS |
 | **Claude Code — settings file** | `~/.claude/settings.json` | **NEVER `mcpServers`** | N/A | Prune this key defensively — schema violation |
 | **Claude Desktop** | `~/Library/Application Support/Claude/claude_desktop_config.json` | `mcpServers` | stdio only (http via `mcp-remote`) | Remove entry |
 | **Cursor** | `~/.cursor/mcp.json` | `mcpServers` | stdio, http, sse | Remove entry or set `"enabled": false` |
+| **VS Code** | `~/Library/Application Support/Code/User/mcp.json` | `servers` | stdio, http | Reconcile the selected user-data directory |
+| **OMP** | `~/.omp/agent/mcp.json`, or the selected `PI_CODING_AGENT_DIR` | `mcpServers` | stdio, http | Reconcile base and wrapper profiles separately |
 | **Cline (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Roo Code (VS Code)** | `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json` | `mcpServers` | stdio, http, sse | `"enabled": false` supported |
 | **Zed Editor** | `~/.config/zed/settings.json` | `context_servers` | stdio | Remove entry |
-| **Codex** (app, CLI, IDE), personal only | `~/.codex/config.toml` | `mcp_servers` (TOML tables) | stdio, http | Only servers marked `"personal": true` and with no `${VAR}`; no `type`, headers are `http_headers` |
+| **Codex** (app, CLI, IDE), personal only | `~/.codex/config.toml` | `mcp_servers` (TOML tables) | stdio, http | Preserve personal bindings; exclude work MCPs and work credential references |
 | **OpenCode** | `~/.config/opencode/opencode.json` | `mcp` | stdio, http | `"enabled": false` supported; `command` is an **array** |
 
 ## Secret references per target
 
-The master holds `${VAR}` placeholders only. `mcp_sync.py` writes each target's own reference form.
-The values live in `~/.config/secrets/work.env` (mode 600), never in a tool config.
-
-| Target | Form written | Where the value comes from |
-| :--- | :--- | :--- |
-| Claude Code | `${VAR}` | Shell env of the process that starts `claude` |
-| OpenCode | `{env:VAR}` | Shell env of the opencode process or service |
-| Cursor, Claude Desktop | `/bin/zsh -c 'set -a; . "$HOME/.config/secrets/work.env"; exec ...'` | The wrapper sources `work.env`, because Dock-launched apps do not inherit shell env |
-
-Codex is not in this table: it never receives a secret reference.
-
-A header that needs a prefix, such as `Bearer <token>`, is built once in `work.env` (for example `REMOTE_MCP_AUTH`) so every target can use a whole-value reference.
-A literal in a secret-named field is refused, never written.
+Definitions contain references and explicit `credentialSource: work|personal` ownership.
+For file-backed credentials, use [scoped startup](../mcp.md#scoped-startup-for-an-individually-reconciled-consumer) so only named variables reach the child process.
+Keep values in the owning private store, not native config, parent shell exports or a whole-file sourcing wrapper.
+Preserve native OAuth and account stores rather than translating them into file-backed credentials.
+Codex receives no work credentials.
 
 ## Transport whitelist per tool
 
-- **Claude Desktop**: stdio only, so a `url` server is proxied through `npx mcp-remote`.
+- **Claude Desktop**: these local entries use stdio; use the reviewed installed bridge for remote servers.
 - **Zed**: stdio only; skip URL servers.
-- **All others**: full stdio + http + sse.
+- **Other consumers**: verify transport support against the installed native schema.
 
-## Required canonical schema for each target entry
+## Native schema
 
-Always emit `type` explicitly; newer tools require it.
-
-```jsonc
-// stdio
-{ "type": "stdio", "command": "<bin>", "args": ["..."], "env": { "K": "v" } }
-
-// http (preferred over sse)
-{ "type": "http", "url": "https://...", "headers": { "Authorization": "Bearer ..." } }
-
-// sse (legacy — deprecated in Claude Code)
-{ "type": "sse", "url": "https://...", "headers": { "..." : "..." } }
-```
-
-Do NOT emit: `enabled`, `allowedTools`, or any other field not in the tool's public schema. These are sync MCP extensions and live only in the master store.
+Use the installed consumer's schema, not one shared entry shape.
+For example, OpenCode local entries use a command array; Claude-style stdio entries use `command` and `args`.
+Keep definition metadata, including credential ownership, out of native entries.
+See [target-specific formats](../mcp.md#target-specific-formats).
 
 ## Claude Code specifics
 
@@ -69,26 +56,9 @@ Do NOT emit: `enabled`, `allowedTools`, or any other field not in the tool's pub
   - `enabledMcpjsonServers: ["memory", "github"]` — allowlist specific project servers
   - `disabledMcpjsonServers: ["filesystem"]` — blocklist specific project servers
 
-## Verification commands
+## Verification
 
-```bash
-# Health check (Claude Code)
-claude mcp list
-
-# Per-server parse check
-claude mcp get <name>
-
-# End-to-end subprocess test — proves tool invocation works
-claude -p "Use <server> MCP to run <toolname> with ..." \
-  --allowedTools "mcp__<server>__<toolname>" \
-  --output-format json
-```
-
-Successful output has `"subtype":"success"` and a non-empty `"result"`.
-
-## Safety checklist before every sync
-
-1. Dry run: `python3 ~/.skills/sync/mcp_sync.py --dry-run` (lists key paths, no values). Real runs write a `.bak.<ts>` copy first.
-2. Validate master: `jq empty ~/.secrets/mcp.json`.
-3. Confirm no `mcpServers` key will leak into `~/.claude/settings.json`.
-4. After sync: `claude mcp list` and at least one subprocess E2E test.
+`claude mcp list` checks discovery/connectivity; `claude mcp get <name>` checks the selected definition.
+Neither proves an authenticated native tool call.
+A successful CLI exit or non-empty assistant summary is also insufficient: verify the actual requested tool result, expected identity and final binding.
+Follow the [reconciliation workflow](../mcp.md#1-named-consumer-reconciliation) for entry-level rollback, missing-credential checks, native activation and retirement gates.

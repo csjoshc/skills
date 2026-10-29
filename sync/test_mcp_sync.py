@@ -1,6 +1,6 @@
 """Run: python3 -I ~/.skills/sync/test_mcp_sync.py
 Every case uses a temp HOME and fake values; no real config is read or written."""
-import json, os, re, stat, subprocess, sys, tempfile, tomllib, unittest
+import json, os, re, runpy, stat, subprocess, sys, tempfile, tomllib, unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -54,7 +54,7 @@ class Base(unittest.TestCase):
         return json.loads(self.paths[target].read_text())
 
     def run_sync(self, *extra, path=None):
-        env = {"HOME": str(self.home), "PATH": path or "/usr/bin:/bin"}
+        env = {"HOME": str(self.home), "USERPROFILE": str(self.home), "PATH": path or "/usr/bin:/bin"}
         return subprocess.run([sys.executable, "-I", str(SCRIPT), "--master", str(self.master),
                                "--npx", NPX, "--ignore-running", *extra],
                               capture_output=True, text=True, env=env)
@@ -62,6 +62,72 @@ class Base(unittest.TestCase):
     def backups(self, target):
         p = self.paths[target]
         return list(p.parent.glob(p.name + ".bak.*"))
+
+
+class ScopedReconciliation(Base):
+    def test_reader_guard_follows_native_filename_case_rules(self):
+        module = runpy.run_path(str(SCRIPT))
+        target = module["Target"]("cursor", self.paths["cursor"], "mcpServers", module["to_cursor"])
+        master = {"mcpServers": {"github": {"command": "plain-tool"}}}
+        for filename in ("credential_exec.py", "CREDENTIAL_EXEC.PY"):
+            with self.subTest(filename=filename):
+                self.put("cursor", {"mcpServers": {"github": {
+                    "command": "python", "args": ["-I", str(self.home / filename)],
+                }}})
+                before = self.paths["cursor"].read_bytes()
+                result = module["sync"](master, [target], False, npx=NPX,
+                                        check_apps=False, out=lambda message: None)
+                if filename == "credential_exec.py" or os.name == "nt":
+                    self.assertEqual(result, 1)
+                    self.assertEqual(self.paths["cursor"].read_bytes(), before)
+                    self.assertEqual(self.backups("cursor"), [])
+                else:
+                    self.assertEqual(result, 0)
+                    self.assertEqual(self.get("cursor")["mcpServers"]["github"]["command"], "plain-tool")
+
+    def test_shipped_template_requires_reconciliation_on_a_new_machine(self):
+        self.set_master(json.loads((HERE / "references/mcp.example.json").read_text()))
+        result = self.run_sync("--targets", "claude")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("reconciliation", result.stdout)
+        self.assertFalse(self.paths["claude"].exists())
+
+    def test_declared_credential_ownership_requires_native_reconciliation(self):
+        master = json.loads(json.dumps(MASTER))
+        master["mcpServers"]["github"]["credentialSource"] = "work"
+        self.set_master(master)
+        self.put("claude", {"mcpServers": {"mine": {"command": "keep"}}})
+        before = self.paths["claude"].read_bytes()
+        for flags in [(), ("--dry-run",)]:
+            with self.subTest(flags=flags):
+                result = self.run_sync("--targets", "claude", *flags)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("reconciliation", result.stdout)
+                self.assertEqual(self.paths["claude"].read_bytes(), before)
+                self.assertEqual(self.backups("claude"), [])
+
+    def test_scoped_native_reader_blocks_the_whole_batch_without_writes(self):
+        for target, root, entry in [
+            ("cursor", "mcpServers", {
+                "command": "/usr/bin/python3",
+                "args": ["-I", "/private/shared/credential_exec.py", "--descriptor", "opaque"],
+            }),
+            ("opencode", "mcp", {
+                "type": "local",
+                "command": ["/usr/bin/python3", "-I", "/private/shared/credential_exec.py",
+                            "--file", "/private/work.env", "--var", "TOKEN", "--", "/bin/tool"],
+            }),
+        ]:
+            with self.subTest(target=target):
+                self.put("claude", {"mcpServers": {"mine": {"command": "keep"}}})
+                self.put(target, {root: {"github": entry}, "unrelated": {"keep": True}})
+                paths = [self.paths["claude"], self.paths[target]]
+                before = [(path.read_bytes(), path.stat().st_mode) for path in paths]
+                result = self.run_sync("--targets", f"claude,{target}")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("reconciliation", result.stdout)
+                self.assertEqual([(path.read_bytes(), path.stat().st_mode) for path in paths], before)
+                self.assertEqual(self.backups("claude") + self.backups(target), [])
 
 
 class Translation(Base):
@@ -673,10 +739,11 @@ class Template(Base):
     EXAMPLE = HERE / "references" / "mcp.example.json"
 
     def test_example_master_is_valid_and_strict_clean(self):
-        self.master = self.EXAMPLE
-        r = self.run_sync("--strict", "--dry-run")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertNotIn("refused", r.stdout)
+        module = runpy.run_path(str(SCRIPT))
+        report = module["Report"]()
+        for name, entry in json.loads(self.EXAMPLE.read_text())["mcpServers"].items():
+            module["clean_server"](name, entry, report)
+        self.assertEqual(report.refusals, [])
 
     def test_example_holds_only_placeholders_and_no_employer_data(self):
         text = self.EXAMPLE.read_text()
