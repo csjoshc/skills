@@ -80,6 +80,7 @@ Checklist:
 - [ ] 1.3 If on main with uncommitted or unpushed changes → create feature branch
 - [ ] 1.4 If already on feature branch → continue on it
 - [ ] 1.5 Verify no secrets in staged files (.env, credentials, tokens)
+- [ ] 1.6 Verify account, destination and transport (GIT_PREP.md#portable-github-authentication)
 ```
 
 Branch name: `<type>/<short-description>`, lowercase with hyphens, max 50 chars, derived from the actual diff.
@@ -92,7 +93,7 @@ Checklist:
 - [ ] 2.1 Stage all relevant files (exclude secrets, build artifacts)
 - [ ] 2.2 Write commit message from diff analysis (why, not what)
 - [ ] 2.3 Commit using HEREDOC format
-- [ ] 2.4 Push branch to remote with -u flag
+- [ ] 2.4 With explicit push approval, push the feature branch through the verified transport
 ```
 
 Commit message: `type(scope): summary` under 72 chars, body explains why. Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `chore`.
