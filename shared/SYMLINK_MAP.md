@@ -14,15 +14,12 @@ All paths symlink to the master store at `~/.skills`.
 | **Claude Code** | `~/.claude/skills` | `~/.skills` |
 | **Antigravity** | `~/.gemini/antigravity/skills` | `~/.skills` |
 | **OpenCode** | `~/.config/opencode/skills` | `~/.skills` |
-| **pi** (`pi_agent_rust`) | `~/.pi/agent/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
 | **Devin CLI** | `~/.config/devin/skills/<name>` | `~/.skills/<name>` (per-skill, see Devin note) |
 | **ChatGPT** | `~/Documents/ChatGPT/CustomInstructions` | `~/.skills` (manual sync) |
 
 **Note:** If a path does not exist, create parent directories before symlinking.
 
-**pi note:** pi treats every markdown file in its skills folder as a skill, so a single symlink to `~/.skills` made it warn about the root `.md` files (`AGENTS.md`, `GEMINI.md`, `PLAYBOOK.md`, `STANDARDS.md`). pi's skills path is therefore a real directory of per-skill symlinks, kept by `sync/sync.py` the same way as Codex's. The global memory file needs no link, because pi already reads `~/AGENTS.md` as an ancestor of any directory under `$HOME`.
-
-**Devin note:** Devin CLI scans `~/.config/devin/skills` (also `~/.agents/skills`); its `.claude` import covers commands, subagents and hooks, not skills, so `~/.claude/skills` is invisible to it. Per-skill links keep the root `.md` files out of its loader, like pi.
+**Devin note:** Devin CLI scans `~/.config/devin/skills` (also `~/.agents/skills`); its `.claude` import covers commands, subagents and hooks, not skills, so `~/.claude/skills` is invisible to it. Per-skill links keep the root `.md` files out of its loader.
 
 ### Codex exception: per-skill symlinks
 

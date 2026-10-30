@@ -425,29 +425,6 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     return True
 
 
-def retire_pi_skill_links(home: Path, logger: Logger) -> int:
-    """Remove only shared-store symlinks from retired Pi skill directories."""
-    removed = 0
-    skills_root = SKILLS_DIR.resolve()
-    for directory in (home / ".pi/agent/skills",):
-        if not directory.is_dir() or directory.is_symlink():
-            continue
-        for entry in directory.iterdir():
-            if not entry.is_symlink():
-                continue
-            try:
-                target = entry.resolve(strict=True)
-                expected = (skills_root / entry.name).resolve(strict=True)
-            except (OSError, ValueError):
-                continue
-            if target != expected or not (expected / "SKILL.md").is_file():
-                continue
-            entry.unlink()
-            removed += 1
-            logger.info(f"Removed retired Pi skills link: {entry}")
-    return removed
-
-
 # ─── Permission Config Audit ────────────────────────────────────────────────
 
 
@@ -690,8 +667,6 @@ def main():
     if source_result.returncode:
         return source_result.returncode
 
-    if not args.audit:
-        retire_pi_skill_links(HOME, logger)
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
 
