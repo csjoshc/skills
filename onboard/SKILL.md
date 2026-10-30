@@ -13,7 +13,7 @@ If the resolved root equals `$HOME` or sits under `~/.skills`, stop and ask for 
 Their git guards are reconciled by `/sync hooks`, not here.
 
 Memory needs no per-repo setup (rules in `~/AGENTS.md`, files made on demand by the `memory` skill).
-Don't add `.memory.md` or memory entries to a repo's `.gitignore`, and don't create memory files during onboarding.
+Don't add `.agent-local/` or memory entries to a repo's `.gitignore`, and don't create memory files during onboarding.
 
 Companion files:
 - Windows notes: [WINDOWS.md](WINDOWS.md)

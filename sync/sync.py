@@ -325,6 +325,7 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     adds/repairs symlinks for master skills that have SKILL.md.
     """
     links_dir = config.skills_symlink
+    skills_root = SKILLS_DIR.resolve()
     logger.info(f"Syncing {config.name} per-skill symlinks...")
 
     if links_dir.is_symlink():
@@ -353,9 +354,12 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
         if link_path.is_symlink():
             try:
                 current = link_path.resolve()
-            except OSError:
+            except (OSError, RuntimeError):
                 current = None
             if current != expected:
+                if current is None or not current.is_relative_to(skills_root):
+                    logger.debug(f"  Preserving native symlink: {link_path.name}")
+                    continue
                 link_path.unlink()
                 os.symlink(expected, link_path)
                 repaired += 1
@@ -375,7 +379,12 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     stale = []
     for entry in links_dir.iterdir():
         if entry.is_symlink() and not entry.exists():
-            stale.append(entry)
+            try:
+                target = entry.resolve()
+            except (OSError, RuntimeError):
+                continue
+            if target.is_relative_to(skills_root):
+                stale.append(entry)
     for entry in stale:
         entry.unlink()
         logger.info(f"  Removed broken: {entry.name}")
@@ -392,29 +401,6 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
         f"  {config.name} sync done (added={added}, repaired={repaired}, stale_removed={len(stale)})"
     )
     return True
-
-
-def retire_pi_skill_links(home: Path, logger: Logger) -> int:
-    """Remove only shared-store symlinks from retired Pi skill directories."""
-    removed = 0
-    skills_root = SKILLS_DIR.resolve()
-    for directory in (home / ".pi/agent/skills",):
-        if not directory.is_dir() or directory.is_symlink():
-            continue
-        for entry in directory.iterdir():
-            if not entry.is_symlink():
-                continue
-            try:
-                target = entry.resolve(strict=True)
-                expected = (skills_root / entry.name).resolve(strict=True)
-            except (OSError, ValueError):
-                continue
-            if target != expected or not (expected / "SKILL.md").is_file():
-                continue
-            entry.unlink()
-            removed += 1
-            logger.info(f"Removed retired Pi skills link: {entry}")
-    return removed
 
 
 # ─── Permission Config Audit ────────────────────────────────────────────────
@@ -672,8 +658,6 @@ def main():
     if source_result.returncode:
         return source_result.returncode
 
-    if not args.audit:
-        retire_pi_skill_links(HOME, logger)
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
     return int(not args.audit and any(

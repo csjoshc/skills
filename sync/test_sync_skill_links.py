@@ -62,6 +62,39 @@ class TestOmpSkillLink(unittest.TestCase):
 
 
 class TestPrivateSkillBoundary(unittest.TestCase):
+    def test_repairs_only_shared_links_and_preserves_native_private_entries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary).resolve()
+            master = home / ".skills"
+            native = home / ".claude/skills"
+            native.mkdir(parents=True)
+            for name in ("shared", "new-public", "wrong"):
+                skill = master / name
+                skill.mkdir(parents=True)
+                (skill / "SKILL.md").write_text("public definition\n")
+            private = home / "private-pack/shared"
+            private.mkdir(parents=True)
+            (private / "SKILL.md").write_text("private override\n")
+            offline = home / "private-pack/offline"
+            (native / "shared").symlink_to(private)
+            (native / "offline").symlink_to(offline)
+            (native / "stale").symlink_to(master / "removed")
+            (native / "wrong").symlink_to(master / "shared")
+            for _ in range(2):
+                result = subprocess.run(
+                    [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
+                    env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                    capture_output=True, text=True, timeout=10, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for name, target in (("shared", private), ("offline", offline)):
+                    with self.subTest(name=name):
+                        self.assertTrue((native / name).is_symlink())
+                        self.assertEqual((native / name).readlink(), target)
+                self.assertEqual((native / "new-public").resolve(), master / "new-public")
+                self.assertEqual((native / "wrong").resolve(), master / "wrong")
+                self.assertFalse((native / "stale").is_symlink())
+
     def test_foreign_native_root_is_preserved_and_reported_as_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
