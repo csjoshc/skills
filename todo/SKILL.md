@@ -17,7 +17,7 @@ emits the next-stage prompt without driving.
   stage, then invokes `/todo manual` again.
 
 `/todo status` prints state without driving. `/todo handoff` writes
-`.handoff/<slug>.md` via the handoff skill and replies with its path plus a
+`.agent-local/handoff/<slug>.md` via the handoff skill and replies with its path plus a
 few sentences.
 
 For a small, already-scoped change that fits one session, skip `/todo` and use
@@ -32,7 +32,7 @@ Build: subagent per ticket; /tdd + /verify; Stage NEW → BUILD → COMPLETE
 ```
 
 The DAG and tickets on disk are the guardrails against drift.
-`.plan/` owns order; `.tickets/` owns scope, ACs and Stage.
+`.agent-local/plan/` owns order; `.agent-local/tickets/` owns scope, ACs and Stage.
 ticket-review is optional and never a build gate.
 See [references/state-detection.md](references/state-detection.md).
 
@@ -55,7 +55,7 @@ Follow [references/auto-driver.md](references/auto-driver.md).
 For a ticket whose scope changes frontend UI, the BUILD subagent calls the
 Skill tool with `ui` while preserving ticket ACs, `/tdd`, and `/verify`.
 
-Never commit `.plan/` or `.tickets/` and never push. Require a clean working
+Never commit `.agent-local/plan/` or `.agent-local/tickets/` and never push. Require a clean working
 tree before the first source change; if it is dirty, ask the user to commit,
 stash, or choose a separate worktree.
 
@@ -85,7 +85,7 @@ blockers, and the next action.
 Count only `Stage: COMPLETE` as complete.
 Report integration gates separately; exclude them from the implementation total.
 
-Derive progress from `.tickets/` and `.plan/` on each run.
+Derive progress from `.agent-local/tickets/` and `.agent-local/plan/` on each run.
 No progress files, history, percentages, graphical bars, or generated diagrams.
 
 Driving: short status, then either the next halt question or "pipeline done".

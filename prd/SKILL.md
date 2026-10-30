@@ -165,12 +165,12 @@ For each gate, present:
 
 Two durable artifacts written to disk:
 
-1. **`.plan/PRD.md`** — PRD draft with explicit assumptions and unresolved
+1. **`.agent-local/plan/PRD.md`** — PRD draft with explicit assumptions and unresolved
    questions.
-2. **`.plan/task-sequence.md`** — ordered task placeholders (title +
+2. **`.agent-local/plan/task-sequence.md`** — ordered task placeholders (title +
    one-line intent + dependencies + 2–3 invariant ACs). **Placeholders, not
    tickets.** `spec` consumes these and expands each into
-   `.tickets/NN-<slug>.md`.
+   `.agent-local/tickets/NN-<slug>.md`.
 
 Plus session-only outputs:
 - Follow-up question pack for unresolved blockers

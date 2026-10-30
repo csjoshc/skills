@@ -1,13 +1,13 @@
 ---
 name: ticket-review
-description: "Audits .tickets/ before build for dependency, security and scope blockers. Use when checking ticket readiness before implementation."
+description: "Audits .agent-local/tickets/ before build for dependency, security and scope blockers. Use when checking ticket readiness before implementation."
 ---
 
 # ticket-review
 
 Optional specialist review for ticket readiness, dependency safety, and standards alignment.
 It does not write code, and it is not a `/todo` pipeline gate.
-Use it when the user asks for a pre-build audit of `.tickets/`.
+Use it when the user asks for a pre-build audit of `.agent-local/tickets/`.
 
 ## Quick Start
 
@@ -63,7 +63,7 @@ FAIL T-2: <reasons, semicolon separated>
 - WARN Pattern 10: <finding>. Fix: <remediation>.
 ```
 
-Write `.plan/critic-report.md` only if the user asks to persist the audit.
+Write `.agent-local/plan/critic-report.md` only if the user asks to persist the audit.
 
 ## Assumptions and Escalation
 

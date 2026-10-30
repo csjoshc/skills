@@ -1,6 +1,6 @@
 ---
 name: challenge
-description: "Adversarial interrogation of a plan before building: challenges choices, names anti-patterns, writes .plan/PRD.md and task-sequence.md. Fast Mode by default, escalating for large or risky work. Use when stakes are high, requirements are contested, or plans keep getting rebuilt."
+description: "Adversarial interrogation of a plan before building: challenges choices, names anti-patterns, writes .agent-local/plan/PRD.md and task-sequence.md. Fast Mode by default, escalating for large or risky work. Use when stakes are high, requirements are contested, or plans keep getting rebuilt."
 ---
 
 # challenge
@@ -64,7 +64,7 @@ If the user asks to skip the remaining questions, push back once: list the
 unresolved assumptions, what closes each, and the concrete risk of proceeding.
 If they still want to proceed, comply. Record each open item in the ledger as
 `Deferred (user override)` with a named validation ticket, and repeat the list
-at the top of `.plan/PRD.md` so downstream skills see it.
+at the top of `.agent-local/plan/PRD.md` so downstream skills see it.
 
 ---
 
@@ -162,13 +162,13 @@ Antiplan's output boundary:
 
 1. **Interrogation transcript** — resolved decisions with justification
 2. **Brownfield research artifact** (brownfield only) — reviewed by user
-3. **PRD** — written to `.plan/PRD.md`. §1 through §17 including §8b
+3. **PRD** — written to `.agent-local/plan/PRD.md`. §1 through §17 including §8b
    Implementation Topology and §8c Risk Surface. Template:
    `~/.skills/shared/PRD_TEMPLATES.md`.
-4. **Task sequence** — written to `.plan/task-sequence.md`. Ordered graph +
+4. **Task sequence** — written to `.agent-local/plan/task-sequence.md`. Ordered graph +
    per-task placeholder (YAML frontmatter + 1-paragraph scope + 2–3 invariant
    ACs). Placeholders, not tickets — `spec` expands them into
-   `.tickets/NN-<slug>.md` per `shared/TICKET_CONTRACT.md`.
+   `.agent-local/tickets/NN-<slug>.md` per `shared/TICKET_CONTRACT.md`.
    To inspect pipeline progress, tell the user to run `/todo status`.
 5. **Requirements Coverage Report** — feature/AC cross-check, non-goals leak
 6. **Implementation Readiness Checklist** (PRD §17) — final gate before handoff
@@ -214,9 +214,9 @@ three durable artifacts:
 
 ```
 Please read:
-- .plan/brownfield-context.md   (or the GREENFIELD-CONTEXT block)
-- .plan/PRD.md
-- .plan/task-sequence.md
+- .agent-local/plan/brownfield-context.md   (or the GREENFIELD-CONTEXT block)
+- .agent-local/plan/PRD.md
+- .agent-local/plan/task-sequence.md
 
 Use these as the complete basis for spec expansion.
 ```

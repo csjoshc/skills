@@ -10,12 +10,12 @@
         "files/limiter.py"
       ],
       "expected_behavior": [
-        "Writes exactly one markdown file under .handoff/ whose name is a kebab-case slug, not plan-<slug>.md",
+        "Writes exactly one markdown file under .agent-local/handoff/ whose name is a kebab-case slug, not plan-<slug>.md",
         "That file includes Goal, Current state and Next action, and points at notes.md and limiter.py by absolute path",
         "The chat reply is the handoff file's absolute path plus a few sentences, not a fenced paste-ready prompt and not a second plan file"
       ],
       "check": {
-        "cmd": "test $(find .handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .handoff/plan-*.md >/dev/null 2>&1 && ! grep -q '```markdown' output.txt && grep -qE '/.handoff/[^/]+\\.md' output.txt",
+        "cmd": "test $(find .agent-local/handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .agent-local/handoff/plan-*.md >/dev/null 2>&1 && ! grep -q '```markdown' output.txt && grep -qE '/.agent-local/handoff/[^/]+\\.md' output.txt",
         "expect_exit": 0
       }
     },
@@ -27,12 +27,12 @@
         "files/spec.md"
       ],
       "expected_behavior": [
-        "The .handoff/*.md file points at spec.md by absolute path with one line on why it matters",
+        "The .agent-local/handoff/*.md file points at spec.md by absolute path with one line on why it matters",
         "Does not copy the 10k-row cap, UTF-8 rule or filename-date rule into the handoff body",
         "Chat reply does not include a paste-ready markdown code block of the handoff"
       ],
       "check": {
-        "cmd": "f=$(find .handoff -name '*.md' | head -1); test -n \"$f\" && grep -q 'spec.md' \"$f\" && ! grep -q '10k' \"$f\" && ! grep -q '```markdown' output.txt",
+        "cmd": "f=$(find .agent-local/handoff -name '*.md' | head -1); test -n \"$f\" && grep -q 'spec.md' \"$f\" && ! grep -q '10k' \"$f\" && ! grep -q '```markdown' output.txt",
         "expect_exit": 0
       }
     },
@@ -44,12 +44,12 @@
         "files/greet.py"
       ],
       "expected_behavior": [
-        "Writes one .handoff/*.md whose next action is renaming hello() to hi() in greet.py",
+        "Writes one .agent-local/handoff/*.md whose next action is renaming hello() to hi() in greet.py",
         "Omits a Verification section, or says none is needed",
-        "Does not create .handoff/plan-*.md"
+        "Does not create .agent-local/handoff/plan-*.md"
       ],
       "check": {
-        "cmd": "test $(find .handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .handoff/plan-*.md >/dev/null 2>&1 && f=$(find .handoff -name '*.md' | head -1); ! grep -qiE '^## Verification' \"$f\" || grep -qiE 'none|not needed|skip' \"$f\"",
+        "cmd": "test $(find .agent-local/handoff -name '*.md' | wc -l | tr -d ' ') -eq 1 && ! ls .agent-local/handoff/plan-*.md >/dev/null 2>&1 && f=$(find .agent-local/handoff -name '*.md' | head -1); ! grep -qiE '^## Verification' \"$f\" || grep -qiE 'none|not needed|skip' \"$f\"",
         "expect_exit": 0
       }
     },

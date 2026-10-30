@@ -48,7 +48,7 @@ human) must self-audit the brief for these failure modes:**
      final report).
 5. **Scope guardrails:**
    - The brief explicitly enumerates files the subagent may NOT
-     touch (other tickets' files, .plan/, etc.).
+     touch (other tickets' files, .agent-local/plan/, etc.).
    - The brief instructs DO NOT run git commands.
 
 If running the audit by hand is too heavy at scale, spawn a

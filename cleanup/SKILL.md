@@ -26,7 +26,7 @@ Do not offer to post them yourself.
 - Holistic code-health checks across a repo
 - Remediation planning after a quality gate failure
 
-**Not for:** editing `.tickets/*.md`, epic splits, implementation specs → use
+**Not for:** editing `.agent-local/tickets/*.md`, epic splits, implementation specs → use
 `ticket-review`. Not for posting GitHub review comments → use `pr-review`.
 
 ---
@@ -83,7 +83,7 @@ Load on demand:
 
 Run deterministic checks before any LLM-driven reasoning. A later subjective judgment cannot dismiss a Phase 0 row; only an explicit OVERRIDDEN with justification can.
 The full tool table (unused imports and exports, file size, complexity, duplication, import cycles, layer boundaries, redundancy, dead branches, commented-out blocks, scope-leak vocabulary, cycle-coupled paths, runtime-coupled names, tracked-but-ignored files, inline lookup tables): [PHASE0_CHECKS.md](PHASE0_CHECKS.md). Read it before running the pass.
-Two rules to remember: every tracked-but-ignored path (`git ls-files -ci --exclude-standard`, plus `git ls-files .plan .tickets .handoff`) is HIGH, and scope-leak and cycle-coupled hits follow `~/.skills/shared/SKILL_NOISE_TERMS.md`.
+Two rules to remember: every tracked-but-ignored path (`git ls-files -ci --exclude-standard`, plus `git ls-files .agent-local/plan .agent-local/tickets .agent-local/handoff`) is HIGH, and scope-leak and cycle-coupled hits follow `~/.skills/shared/SKILL_NOISE_TERMS.md`.
 
 Emit the output in the `REVIEW-PHASE-0` block (schema: [`~/.skills/reviews/schemas.md`](../reviews/schemas.md)):
 
@@ -179,7 +179,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 
 | In scope                    | Out of scope                                     |
 | --------------------------- | ------------------------------------------------ |
-| Source code audits          | Editing `.tickets/*.md` → ticket-review          |
+| Source code audits          | Editing `.agent-local/tickets/*.md` → ticket-review          |
 | Package / directory audits  | Live PR comments on GitHub → pr-review           |
 | Architecture pattern checks | Visual UI validation → ui / chrome-devtools |
 

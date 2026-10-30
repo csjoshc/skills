@@ -15,16 +15,16 @@ Runner selection); the ticket path is the only argument.
 ```
 You are implementing one ticket. The ticket file is the source of truth.
 
-**Ticket:** <absolute path to .tickets/<NNN-slug>.md>
+**Ticket:** <absolute path to .agent-local/tickets/<NNN-slug>.md>
 **PRD (if present):** <absolute path>
-**DAG (if present):** <absolute path to .plan/task-sequence.md>
+**DAG (if present):** <absolute path to .agent-local/plan/task-sequence.md>
 **Exploration notes (if present):** <absolute path outside the repo>
 
 1. Read the ticket, its Read-First files, any pointers, and the change-quality
    pass in `~/.skills/shared/QUALITY_RUBRIC.md`.
    Carry its authoring contract from the ticket into implementation and the final report.
 2. Set Stage: BUILD.
-3. Invoke tdd. Phase 0 writes .tickets/tdd/toq-<id>.yaml. Then red-green
+3. Invoke tdd. Phase 0 writes .agent-local/tickets/tdd/toq-<id>.yaml. Then red-green
    against the ticket ACs. Do not skip Phase 0.
    If the ticket changes frontend UI, invoke `/ui` for visual implementation
    and browser review within ticket scope; keep `/tdd` as owner of AC order.
@@ -51,7 +51,7 @@ question. Do not guess Tier 3.
 You are resuming a ticket whose Stage is BUILD.
 
 **Ticket:** <absolute path>
-**TOQ (if exists):** <absolute path to .tickets/tdd/toq-<id>.yaml>
+**TOQ (if exists):** <absolute path to .agent-local/tickets/tdd/toq-<id>.yaml>
 **PRD / DAG (if present):** <absolute paths>
 
 1. Read the ticket and TOQ. If no TOQ, run tdd Phase 0 first.
@@ -71,7 +71,7 @@ The gate ticket is NEW.
 
 **Gate ticket:** <absolute path>
 **Slice tickets:** <absolute paths>
-**PRD parity / demo policy:** .plan/PRD.md (if present)
+**PRD parity / demo policy:** .agent-local/plan/PRD.md (if present)
 
 1. Collect the gate's proof artifact to the path the ticket names.
 2. Independent review (subagent or fresh session; inline only if needed,

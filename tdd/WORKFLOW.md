@@ -14,7 +14,7 @@ Slicing patterns and risk-first ordering: [references/slicing.md](references/sli
 ## 0. Scoping (deterministic) - ticket builds only
 
 Skip for bug fixes and ad-hoc work with no ticket (see SKILL.md). Otherwise run **before** Planning. Loads [SCOPING.md](./SCOPING.md) and produces the
-ranked Test Obligation Queue at `.tickets/tdd/toq-<ticket-id>.yaml`.
+ranked Test Obligation Queue at `.agent-local/tickets/tdd/toq-<ticket-id>.yaml`.
 
 Inputs are pulled from the ticket runner envelope (ticket path, diff base, registry
 path) or discovered from the working tree. Signal collection (diff, blast radius,

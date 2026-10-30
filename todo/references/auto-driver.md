@@ -30,7 +30,7 @@ ticket-review is optional. Do not wait on a critic report.
 ## Build waves
 
 1. Confirm the source worktree is clean before the first source change. Ignore
-   `.plan/`, `.tickets/`, and other local planning artifacts. If unrelated
+   `.agent-local/plan/`, `.agent-local/tickets/`, and other local planning artifacts. If unrelated
    source changes exist, stop and ask.
 2. **Next wave.** From the DAG, take tickets whose `Depends-On` are COMPLETE.
    Lite mode: one ticket at a time unless `Depends-On` is explicit.
@@ -54,7 +54,7 @@ ticket-review is optional. Do not wait on a critic report.
    the before-state, not new drift. In a harness run the reviewer is the
    final phase; its verdict is the run's result.
 6. **Gate.** ALL VERIFIED → optional ticket-scoped checkpoint commit (never
-   add `.plan/` or `.tickets/`; never push). ANY drift or missing evidence → **HALT**.
+   add `.agent-local/plan/` or `.agent-local/tickets/`; never push). ANY drift or missing evidence → **HALT**.
 7. **Loop.** At slice boundaries and before final completion, apply the
    [change-quality pass](../../shared/QUALITY_RUBRIC.md#change-quality-pass)
    review budget to the aggregate proposed PR, not only the latest ticket.
@@ -70,7 +70,7 @@ pipeline, the harness owns execution. Nothing below depends on one vendor.
 
 - The run is a throwaway compiled view of the current wave: ready tickets,
   `Files:` grouping, then the reviewer phase. Regenerate it on every drive.
-  Never write it under `.plan/` or `.tickets/`; the tickets are the only
+  Never write it under `.agent-local/plan/` or `.agent-local/tickets/`; the tickets are the only
   durable state and the only resume point.
 - Phase prompts are the briefs in execution-templates.md with the ticket path
   as the argument. No ticket bodies inside the script. Where the runner types
@@ -124,5 +124,5 @@ operator-interrupt>
 - Flip `Stage:` in the parent; only the BUILD subagent writes COMPLETE
 - Skip evidence review
 - Bypass challenge sign-off when challenge is in use
-- Commit `.plan/` or `.tickets/`
+- Commit `.agent-local/plan/` or `.agent-local/tickets/`
 - Persist a harness run script as a planning artifact, or treat it as state

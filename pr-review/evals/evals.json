@@ -83,7 +83,7 @@
         "files/blocks.py"
       ],
       "expected_behavior": [
-        "Reports .plan/x.md appearing in the diff as a REVIEW-FINDINGS entry with severity HIGH or CRITICAL and source tool-flagged",
+        "Reports .agent-local/plan/x.md appearing in the diff as a REVIEW-FINDINGS entry with severity HIGH or CRITICAL and source tool-flagged",
         "Recommends removing it from the PR (git rm --cached, keep it ignored) rather than reviewing its contents"
       ],
       "check": {

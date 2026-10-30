@@ -258,7 +258,7 @@ development labels. Forbidden patterns (case-insensitive):
 - Gate IDs: `\d+G\d*`, `\d+A\d*`, `\(\d+G\)`, "demo gate"
 - Slice IDs: `Slice \d+`, `slice-\d+`, `slice_\d+`
 - Anti-pattern codes: `AP-\d+`
-- Ticket-file paths: `\.tickets/[^ )"]+`
+- Ticket-file paths: `\.agent-local/tickets/[^ )"]+`
 
 These labels are temporary local artifacts that point nowhere from a
 public branch; they rot as soon as the slice ships. When the rationale is
@@ -276,7 +276,7 @@ block comments, docstrings, and JSDoc.
 
 - `docs/ADR-*.md` and other ADR / RFC files under `docs/`
 - PR descriptions and commit messages
-- Files under `.tickets/`, `.plan/`, `.handoff/`: exempt because they are
+- Files under `.agent-local/tickets/`, `.agent-local/plan/`, `.agent-local/handoff/`: exempt because they are
   never committed. If one appears in a PR diff, that is itself a HIGH
   finding (see the tracked-but-ignored pre-flight check in
   `review-operations.md`).

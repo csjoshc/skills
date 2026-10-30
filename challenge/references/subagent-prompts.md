@@ -31,7 +31,7 @@ Main Agent
   ├─→ [1] Launch Planner subagent → produces DAG v1
   │
   ├─→ [2] Launch Challenger subagent → produces challenge report
-  │       (writes .plan/challenger-report.md — option 3 evidence)
+  │       (writes .agent-local/plan/challenger-report.md — option 3 evidence)
   │
   ├─→ [3] Launch Planner subagent (resumed or new) → reconciles → DAG v2
   │
@@ -40,7 +40,7 @@ Main Agent
   │       └─ Escalated items remain → present to user for decision
   │
   ├─→ [5] Launch Coverage Auditor subagent (Standard/Heavy only) →
-  │       writes .plan/coverage-audit.md — option 4 transcript-vs-PRD diff.
+  │       writes .agent-local/plan/coverage-audit.md — option 4 transcript-vs-PRD diff.
   │       See references/coverage-auditor.md for the prompt.
   │
   ├─→ [6] Main agent answers the pre-handoff authoring questions

@@ -15,23 +15,23 @@ Scan the repo root for these paths:
 
 | Path | Meaning |
 | --- | --- |
-| `.plan/brownfield-context.md` | challenge Phase 0 done (brownfield) |
-| `.plan/PRD.md` | challenge Phases 1–2 done |
-| `.plan/task-sequence.md` | DAG: ticket ids, deps, one-line intent |
-| `.plan/challenger-report.md` | challenge Challenger ran |
-| `.plan/coverage-audit.md` | challenge Coverage Auditor ran |
-| `.tickets/*.md` | spec has run |
-| Any `.tickets/*.md` with `Stage: BUILD` | a ticket build has started |
-| Any `.tickets/*.md` with `Stage: COMPLETE` | a ticket build has finished |
-| `.tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
+| `.agent-local/plan/brownfield-context.md` | challenge Phase 0 done (brownfield) |
+| `.agent-local/plan/PRD.md` | challenge Phases 1–2 done |
+| `.agent-local/plan/task-sequence.md` | DAG: ticket ids, deps, one-line intent |
+| `.agent-local/plan/challenger-report.md` | challenge Challenger ran |
+| `.agent-local/plan/coverage-audit.md` | challenge Coverage Auditor ran |
+| `.agent-local/tickets/*.md` | spec has run |
+| Any `.agent-local/tickets/*.md` with `Stage: BUILD` | a ticket build has started |
+| Any `.agent-local/tickets/*.md` with `Stage: COMPLETE` | a ticket build has finished |
+| `.agent-local/tickets/tdd/toq-<ticket-id>.yaml` | /tdd Phase 0 has scoped this ticket |
 
 Use file-search and read tools for path discovery and `Stage:` lines.
 Do not read whole ticket bodies in the orchestrator.
 
 ## Pipeline modes
 
-- **Full** - `.plan/task-sequence.md` exists.
-- **Lite** - `.tickets/*.md` exist but no DAG. Skip challenge and orphan-ticket
+- **Full** - `.agent-local/plan/task-sequence.md` exists.
+- **Lite** - `.agent-local/tickets/*.md` exist but no DAG. Skip challenge and orphan-ticket
   rules. Readiness uses `Depends-On` (or a `Dependencies:` line), else numeric
   filename order.
 
@@ -56,7 +56,7 @@ Do not read whole ticket bodies in the orchestrator.
 - **mid-build-resume** — exactly one `Stage: BUILD` and no active subagent or
   harness run → resume that ticket. A paused harness run is a hint, not state;
   the ticket `Stage:` decides.
-- **build-unscoped** — `Stage: BUILD` without `.tickets/tdd/toq-<id>.yaml` →
+- **build-unscoped** — `Stage: BUILD` without `.agent-local/tickets/tdd/toq-<id>.yaml` →
   tdd Phase 0 in that subagent first
 - **all-complete** — every ticket COMPLETE → aggregate PR scope/size checkpoint in the drive loop, then stop
 
@@ -65,11 +65,11 @@ ticket-review is optional. Missing critic output is not a stage.
 ## Staleness warnings (non-blocking)
 
 - `PRD.md` newer than `task-sequence.md` → DAG may be stale
-- `task-sequence.md` newer than any `.tickets/*.md` → tickets may be stale
+- `task-sequence.md` newer than any `.agent-local/tickets/*.md` → tickets may be stale
 - `task-sequence.md` newer than `challenger-report.md` → Challenger may be stale
 - `PRD.md` or DAG newer than `coverage-audit.md` → Coverage may be stale
-- Full mode: `.tickets/*.md` whose id is not in the DAG → orphan
+- Full mode: `.agent-local/tickets/*.md` whose id is not in the DAG → orphan
 - Ticket newer than its TOQ → re-scope before the next RED cycle
 - HEAD past a BUILD ticket's TOQ `diff_base` → re-scope
-- `.plan/brownfield-context.md` has a non-empty `open_questions` list →
+- `.agent-local/plan/brownfield-context.md` has a non-empty `open_questions` list →
   confirm they are answered or ticketed

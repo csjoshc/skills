@@ -75,7 +75,7 @@
       "prompt": "Run a cleanup audit on this repo and paste the full report.",
       "files": [
         "files/AGENTS.md",
-        "files/.plan/x.md",
+        "files/.agent-local/plan/x.md",
         "files/src/util/strings.py",
         "files/src/infra/db.py",
         "files/src/infra/http_client.py",
@@ -83,11 +83,11 @@
         "files/src/services/report_service.py"
       ],
       "expected_behavior": [
-        "Reports the tracked .plan/x.md in the REVIEW-PHASE-0 block as a tracked-but-ignored row with severity HIGH",
-        "Suggests untracking it (git rm --cached) and ignoring .plan/, not deleting the notes or treating them as source to refactor"
+        "Reports the tracked .agent-local/plan/x.md in the REVIEW-PHASE-0 block as a tracked-but-ignored row with severity HIGH",
+        "Suggests untracking it (git rm --cached) and ignoring .agent-local/plan/, not deleting the notes or treating them as source to refactor"
       ],
       "check": {
-        "cmd": "grep -E '\\.plan/x\\.md' output.txt | grep -q HIGH",
+        "cmd": "grep -E '\\.agent-local/plan/x\\.md' output.txt | grep -q HIGH",
         "expect_exit": 0
       }
     },

@@ -55,10 +55,10 @@ Phase detail, discovery halt and bug-fix procedure: [WORKFLOW.md](WORKFLOW.md). 
 Pick the path first:
 
 - **Bug fix** - skip to the Prove-It steps below. No TOQ.
-- **No ticket** (ad-hoc feature or change) - skip Phase 0. List up to 5 behaviors to test, in order, in chat; start once the user confirms (or right away if they already said go). Nothing is written to `.tickets/`.
-- **Ticket build** (a `.tickets/*.md` is in scope) - run every phase below.
+- **No ticket** (ad-hoc feature or change) - skip Phase 0. List up to 5 behaviors to test, in order, in chat; start once the user confirms (or right away if they already said go). Nothing is written to `.agent-local/tickets/`.
+- **Ticket build** (a `.agent-local/tickets/*.md` is in scope) - run every phase below.
 
-0. **Scoping (ticket builds).** Load [SCOPING.md](SCOPING.md); it produces the ranked Test Obligation Queue (TOQ) at `.tickets/tdd/toq-<ticket-id>.yaml`. Signals are deterministic; the model only ranks and shapes. Reuse a fresh TOQ.
+0. **Scoping (ticket builds).** Load [SCOPING.md](SCOPING.md); it produces the ranked Test Obligation Queue (TOQ) at `.agent-local/tickets/tdd/toq-<ticket-id>.yaml`. Signals are deterministic; the model only ranks and shapes. Reuse a fresh TOQ.
 1. **Planning.** Present the TOQ (or the inline list) and have the user confirm, reprioritize or reject entries. Caps: top 5 unit, 3 integration, 1 e2e per ticket; the rest is deferred, not discarded.
 2. **Tracer bullet.** Take the top TOQ entry, write ONE test for its `done_when`, make it pass.
 3. **Incremental loop.** One TOQ entry at a time, in score order. While iterating, run only `TOQ[i].target` plus its `existing_tests`; run the full suite once at end of ticket, before Stage COMPLETE.
