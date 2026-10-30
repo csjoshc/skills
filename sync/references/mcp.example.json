@@ -1,14 +1,6 @@
 {
   "_readme": "Template for ~/.secrets/mcp.json. Keep only the servers you use. Authenticated servers declare credentialSource as work or personal; values stay in that owning store and definitions contain ${VAR} references only. Reconcile one native consumer at a time using ~/.skills/sync/mcp.md, not the legacy generator. Definition metadata is not copied into native configs. Codex remains personal-only with no work credentials. Private-pack definitions belong in ~/.secrets/mcp.d/*.json.",
   "mcpServers": {
-    "github": {
-      "credentialSource": "work",
-      "type": "stdio",
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
-      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}" },
-      "enabled": true
-    },
     "example-http": {
       "credentialSource": "work",
       "type": "http",

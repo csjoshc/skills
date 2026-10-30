@@ -26,6 +26,8 @@ Bootstrap prepares definitions and skill links; it does not deploy native MCP bi
 `~/.secrets/mcp.json` and private-pack drop-ins declare server intent.
 Each native binding adds the consumer's approved account, permissions and launch shape.
 Reconcile those together; copying another harness's whole config can overwrite authentication or local settings.
+GitHub has no MCP server here: agents use `gh` and `gh api`.
+That keeps one auth path per account (`GH_CONFIG_DIR`), skips a ~25k-token tool schema and keeps merges as visible shell commands (2026-10-30).
 
 ## Master store schema (`~/.secrets/mcp.json`)
 

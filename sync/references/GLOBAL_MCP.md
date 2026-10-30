@@ -53,7 +53,7 @@ See [target-specific formats](../mcp.md#target-specific-formats).
 - `~/.claude/settings.json` is for hooks, model, permissions — not MCP. Placing `mcpServers` there causes schema validation to fail and silently breaks user-scope MCP loading.
 - Approval flags in settings (valid there):
   - `enableAllProjectMcpServers: true` — auto-approve all `.mcp.json` servers
-  - `enabledMcpjsonServers: ["memory", "github"]` — allowlist specific project servers
+  - `enabledMcpjsonServers: ["memory", "playwright"]` — allowlist specific project servers
   - `disabledMcpjsonServers: ["filesystem"]` — blocklist specific project servers
 
 ## Verification
