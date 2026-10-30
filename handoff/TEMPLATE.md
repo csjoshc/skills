@@ -1,6 +1,6 @@
 # Handoff file
 
-Write this to `<workspace>/.handoff/<slug>.md`. Drop empty sections. Add Verification only when a named check is needed.
+Write this to `<workspace>/.agent-local/handoff/<slug>.md`. Drop empty sections. Add Verification only when a named check is needed.
 
 ```markdown
 # <short title>
@@ -37,7 +37,7 @@ Address the next session: "Read...", "Implement...", "Keep...".
 
 ## Before sending
 
-- [ ] One file at `.handoff/<slug>.md`
+- [ ] One file at `.agent-local/handoff/<slug>.md`
 - [ ] Chat reply is that file's absolute path plus a few sentences on what to do next
 - [ ] No paste-ready prompt block and no second plan file
 - [ ] Goal, current state and next action are explicit

@@ -279,7 +279,7 @@ violation is gone, the criterion is NO.
 
 **Finding shape:** always `category: Architectural Drift` with
 `decidable_at` set (typically `design` or `both`). `proof:` must cite the
-plan artifact (`.tickets/PRD.md §ARCHITECTURE-DECISIONS`, PR body link,
+plan artifact (`.agent-local/tickets/PRD.md §ARCHITECTURE-DECISIONS`, PR body link,
 or similar) or contain `no-plan-available` verbatim.
 
 ---

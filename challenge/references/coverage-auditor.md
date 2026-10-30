@@ -51,8 +51,8 @@ The main agent must pass:
    decision summary used by the Planner, but ONLY if no requirements were
    raised after compression). For sessions with mid-stream re-synthesis,
    pass the full raw transcript.
-2. **PRD path** — `.plan/PRD.md` (final post-reconciliation version)
-3. **Task-sequence path** — `.plan/task-sequence.md`
+2. **PRD path** — `.agent-local/plan/PRD.md` (final post-reconciliation version)
+3. **Task-sequence path** — `.agent-local/plan/task-sequence.md`
 4. **Rubric path** — `~/.skills/challenge/rubric.yaml` (for AP cross-reference)
 
 If the transcript file does not exist on disk, the main agent must dump
@@ -81,8 +81,8 @@ You are NOT helpful. You do NOT suggest fixes. You report findings.
 You will receive file paths only. Read each file with the Read tool:
 
 1. TRANSCRIPT_PATH — raw interrogation log
-2. PRD_PATH — .plan/PRD.md
-3. TASKS_PATH — .plan/task-sequence.md
+2. PRD_PATH — .agent-local/plan/PRD.md
+3. TASKS_PATH — .agent-local/plan/task-sequence.md
 4. RUBRIC_PATH — challenge/rubric.yaml (anti-pattern IDs)
 
 Do NOT read any other files. Do NOT consult prior conversation. Your
@@ -190,7 +190,7 @@ read the transcript).
 
 ## After the auditor returns
 
-Save the report to `.plan/coverage-audit.md`. Then answer the
+Save the report to `.agent-local/plan/coverage-audit.md`. Then answer the
 pre-handoff questions in SKILL.md against this report, the
 challenger report, the PRD, and the task sequence.
 

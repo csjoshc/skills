@@ -253,7 +253,7 @@ rules:
       - Committed paths matching `proof/<N>G<n>-*`, `proof/[Ss]lice-<n>/`, `evidence/<cycle-slug>/`, or any artifact root whose top-level directory contains a gate ID, slice number, or ticket-ish slug
       - Scripts named `scripts/verify-<ticket-id>.sh`, `scripts/test-<gate-slug>.sh`, `tools/<cycle>-smoke.sh`
       - Test files like `tests/tickets/test_T732_*.py`, `tests/<cycle>/test_*.py` (a `tests/tickets/` directory is itself an AP-24 marker — tests should live by their type, not their ticket)
-      - Doc filenames `docs/PRD-<cycle>.md`, `docs/<gate>-cutover.md` kept in the long-lived `docs/` tree instead of `.plan/` or `.tickets/`
+      - Doc filenames `docs/PRD-<cycle>.md`, `docs/<gate>-cutover.md` kept in the long-lived `docs/` tree instead of `.agent-local/plan/` or `.agent-local/tickets/`
       - e2e configs that hardcode `PROOF_DIR = "../proof/<gate-slug>/..."` in playwright/jest/cypress configs instead of taking the path from env
       - Diff stats that show a new top-level directory whose name encodes the ticket lifecycle (e.g. `ui-cycle/`, `IG-N/`) rather than the feature
 

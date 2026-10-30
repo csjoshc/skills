@@ -1,6 +1,6 @@
 ---
 name: spec
-description: "Turns a defined feature or .plan/PRD.md into vertical-slice tickets under .tickets/ with ACs, ADRs and test obligations. Use when requirements are clear and need an engineering breakdown."
+description: "Turns a defined feature or .agent-local/plan/PRD.md into vertical-slice tickets under .agent-local/tickets/ with ACs, ADRs and test obligations. Use when requirements are clear and need an engineering breakdown."
 ---
 
 # spec
@@ -16,9 +16,9 @@ You generate first, flag assumptions inline. Every decision the user didn't spec
 ```
 
 A pasted feature description starts Lite mode and writes tickets under
-`.tickets/` without creating `.plan/` artifacts.
+`.agent-local/tickets/` without creating `.agent-local/plan/` artifacts.
 
-When `.plan/PRD.md` and `.plan/task-sequence.md` exist, treat them as approved
+When `.agent-local/plan/PRD.md` and `.agent-local/plan/task-sequence.md` exist, treat them as approved
 inputs and expand each stub into one ticket. This is the normal `/todo` handoff.
 Do not duplicate or re-debate the plan. Apply AP-25 naming review as described
 in [references/upstream-input.md](references/upstream-input.md).
@@ -48,7 +48,7 @@ tickets; do not repeat their contents as a second plan.
 
 Full templates, field lists and rules: read [references/ticket-template.md](references/ticket-template.md) before drafting or editing any ticket body. Worked examples: [EXAMPLE.md](EXAMPLE.md).
 
-### Ticket files (`.tickets/*.md`)
+### Ticket files (`.agent-local/tickets/*.md`)
 
 Every ticket file follows [`../shared/TICKET_CONTRACT.md`](../shared/TICKET_CONTRACT.md); don't restate its schema in tickets or here.
 Write `Stage: NEW`. The BUILD subagent flips Stage when it starts.
@@ -96,7 +96,7 @@ Before delegating any ticket to a subagent, run the audit in [references/brief-a
 Read only when the situation matches:
 
 - [references/ticket-template.md](references/ticket-template.md): drafting or editing any ticket body (required)
-- [references/upstream-input.md](references/upstream-input.md): `.plan/` inputs exist, AP-25 naming test
+- [references/upstream-input.md](references/upstream-input.md): `.agent-local/plan/` inputs exist, AP-25 naming test
 - [references/brief-audit.md](references/brief-audit.md): before delegating a ticket
 - [references/deploy-time-acs.md](references/deploy-time-acs.md): Dockerfile, helm or entrypoint tickets
 - [references/artifact-hygiene.md](references/artifact-hygiene.md): paths, names, docs-to-update

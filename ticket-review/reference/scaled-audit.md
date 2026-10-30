@@ -25,7 +25,7 @@ For each ticket (in parallel where possible):
       with ≤2-line evidence and the fix; no PASS lines.
 
 Parent ticket-review aggregates verdicts into a single
-`.plan/critic-report.md`. Subagents that return BLOCKER halt the
+`.agent-local/plan/critic-report.md`. Subagents that return BLOCKER halt the
 parent until the user resolves.
 ```
 

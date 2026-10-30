@@ -558,7 +558,7 @@ cycle closes.
    `SKILL_NOISE_TERMS` grep set; any hit must be paired with a
    prose explanation of *why*, not just the label.
 4. Require a `## Docs to Update` section in the ticket body whenever
-   the ticket changes a surface mentioned outside `.tickets/` (run
+   the ticket changes a surface mentioned outside `.agent-local/tickets/` (run
    the locator grep from spec's *Docs to Update* section to
    confirm there are no untracked references).
 

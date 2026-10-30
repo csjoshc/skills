@@ -13,8 +13,8 @@ Before stating what a skill does or advising that a step be skipped, read that s
 | Build a defined feature (a few tickets) | `/todo` or `/todo spec <feature>` *(typed)* | Bare `/todo` drives spec then subagent builds. |
 | Build something risky, contested or large | `/todo start <feature>` *(typed)* | challenge runs Fast Mode first and escalates only if needed. |
 | Explore a fuzzy idea | `/prd` *(typed)* | Collaborative, not adversarial. |
-| Resume or hand off mid-pipeline | `/todo`, `/todo handoff` *(typed)* | Reads state from `.plan/` and `.tickets/`. Bare `/todo` drives. |
-| Move work to a new harness, directory or colleague | `handoff` | Writes `.handoff/<slug>.md`; replies with the path. |
+| Resume or hand off mid-pipeline | `/todo`, `/todo handoff` *(typed)* | Reads state from `.agent-local/plan/` and `.agent-local/tickets/`. Bare `/todo` drives. |
+| Move work to a new harness, directory or colleague | `handoff` | Writes `.agent-local/handoff/<slug>.md`; replies with the path. |
 | Claim "done" | `verify` | Inside a red-green loop the failing test is the evidence; use it at the end. |
 | Open a PR | `pr-create` | |
 | Self-check your branch | the harness's built-in code review | Cheaper than pr-review. |

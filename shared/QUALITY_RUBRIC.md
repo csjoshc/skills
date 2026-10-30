@@ -3,7 +3,7 @@
 **Audience:** Engineers implementing or reviewing source changes and auditing codebases.
 
 The change-quality pass also guides planned source work.
-The remaining code-health rubric does not grade ticket prose; use `ticket-review` for `.tickets/*.md`.
+The remaining code-health rubric does not grade ticket prose; use `ticket-review` for `.agent-local/tickets/*.md`.
 
 **Precedence:** Organization review packet overrides this file. Then
 Architecture Decisions / `AGENTS.md`. This rubric fills gaps.

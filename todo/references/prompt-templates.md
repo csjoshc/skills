@@ -19,10 +19,10 @@ Invoke challenge for this feature:
 
 **Feature:** <feature description>
 **Working directory:** <pwd>
-**Artifact dir:** .plan/
+**Artifact dir:** .agent-local/plan/
 
 Let challenge pick its mode (Fast Mode by default). If it escalates, write
-brownfield-context.md, PRD.md and task-sequence.md into .plan/ and stop
+brownfield-context.md, PRD.md and task-sequence.md into .agent-local/plan/ and stop
 after Phase 3. Do not emit fleshed ticket bodies.
 ```
 
@@ -34,9 +34,9 @@ Invoke spec for this defined feature (no challenge PRD):
 **Feature:** <feature description>
 **Working directory:** <pwd>
 
-Write one ticket per independently testable slice to .tickets/NNN-slug.md.
+Write one ticket per independently testable slice to .agent-local/tickets/NNN-slug.md.
 Each ticket follows ~/.skills/shared/TICKET_CONTRACT.md with Stage: NEW.
-Do not write .plan/.
+Do not write .agent-local/plan/.
 ```
 
 ### challenge-resume
@@ -44,7 +44,7 @@ Do not write .plan/.
 ```
 Resume challenge. Treat these as approved inputs; do not re-derive them:
 
-- <existing .plan/ files with absolute paths>
+- <existing .agent-local/plan/ files with absolute paths>
 
 Continue from <detected phase>.
 ```
@@ -55,16 +55,16 @@ Continue from <detected phase>.
 Invoke spec.
 
 **Inputs:**
-- .plan/PRD.md
-- .plan/task-sequence.md
-- .plan/brownfield-context.md (if present)
+- .agent-local/plan/PRD.md
+- .agent-local/plan/task-sequence.md
+- .agent-local/plan/brownfield-context.md (if present)
 
-For every stub in task-sequence.md, write one .tickets/NNN-slug.md following
+For every stub in task-sequence.md, write one .agent-local/tickets/NNN-slug.md following
 ~/.skills/shared/TICKET_CONTRACT.md. Stage: NEW. One coherent behavior per ticket,
 including its implementation files, tests, and required consumer updates.
 ```
 
 ### handoff
 
-Write `.handoff/<slug>.md` via the handoff skill. Reply with its absolute
+Write `.agent-local/handoff/<slug>.md` via the handoff skill. Reply with its absolute
 path and 2-4 sentences. Do not paste the file.

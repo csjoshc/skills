@@ -41,7 +41,7 @@ If the PR description is too weak to explain intent, edge cases, and
 integration points, request clarification before continuing.
 
 Tracked-but-ignored check (`source: tool-flagged`, severity HIGH for any hit).
-Planning dirs (`.plan/`, `.tickets/`, `.handoff/`) and gitignored paths
+Planning dirs (`.agent-local/plan/`, `.agent-local/tickets/`, `.agent-local/handoff/`) and gitignored paths
 must never appear in a PR diff:
 
 ```bash
@@ -93,12 +93,12 @@ Architectural-Drift lens's behavior.
 
 Look in this order; stop on first match:
 
-1. **PR body** — any link matching `*/PRD.md`, `*.tickets/*`, `*PLAN.md`,
+1. **PR body** — any link matching `*/PRD.md`, `*.agent-local/tickets/*`, `*PLAN.md`,
    or text containing `ARCHITECTURE-DECISIONS` / `challenge`.
 2. **Linked tickets** — any linked issue whose body contains an
    `ARCHITECTURE-DECISIONS` fenced block.
-3. **Local plan** — `.tickets/PRD.md`, `.plan/**/PRD.md` or
-   `.plan/**/task-sequence.md` in the reviewer's local checkout. Planning
+3. **Local plan** — `.agent-local/tickets/PRD.md`, `.agent-local/plan/**/PRD.md` or
+   `.agent-local/plan/**/task-sequence.md` in the reviewer's local checkout. Planning
    dirs are never committed, so do not look for them on the PR branch; a
    planning file in the PR diff is itself a finding (see pre-flight).
 

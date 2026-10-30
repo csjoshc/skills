@@ -15,7 +15,7 @@ Runs **before** user-approval Planning. Turns "which tests?" into a deterministi
 ranking problem. Model ranks and shapes candidates; it does **not** invent scope
 from prose.
 
-Output: `.tickets/tdd/toq-<ticket-id>.yaml` — the ranked, bounded queue the RED
+Output: `.agent-local/tickets/tdd/toq-<ticket-id>.yaml` — the ranked, bounded queue the RED
 loop will execute.
 
 ---
@@ -25,10 +25,10 @@ loop will execute.
 | Input | Source | Required |
 |---|---|---|
 | `diff_base` | ticket runner envelope, else `git merge-base HEAD main` | yes |
-| `ticket_path` | ticket runner envelope (`.tickets/NNN-slug.md`) | yes |
+| `ticket_path` | ticket runner envelope (`.agent-local/tickets/NNN-slug.md`) | yes |
 | `risk_registry` | repo root `.risk-registry.yaml` | optional |
-| `prd_path` | `.tickets/prep/prd.md` (for Risk Surface fallback) | optional |
-| `flake_log` | `.tickets/tdd/flake-log.jsonl` | optional |
+| `prd_path` | `.agent-local/tickets/prep/prd.md` (for Risk Surface fallback) | optional |
+| `flake_log` | `.agent-local/tickets/tdd/flake-log.jsonl` | optional |
 
 Missing optionals degrade to defaults — never error.
 
@@ -59,7 +59,7 @@ the TOQ assembly buffer.
    count per file. Capped at 10 for scoring.
 
 5. **Failure history**
-   If `.tickets/tdd/flake-log.jsonl` exists, count prior failures per file.
+   If `.agent-local/tickets/tdd/flake-log.jsonl` exists, count prior failures per file.
    Schema: `{"ts": iso, "test": str, "target": str, "outcome": "fail|flake"}`.
 
 6. **Existing tests**
@@ -151,10 +151,10 @@ the queue ahead of any `level: unit|integration|e2e` entry.
 
 ## Output schema
 
-`.tickets/tdd/toq-<ticket-id>.yaml`:
+`.agent-local/tickets/tdd/toq-<ticket-id>.yaml`:
 
 ```yaml
-ticket: .tickets/042-bulk-archive.md
+ticket: .agent-local/tickets/042-bulk-archive.md
 diff_base: origin/main
 generated_at: 2026-04-23T14:05:00Z
 change_summary: >
@@ -230,7 +230,7 @@ deferred:
 7. Apply bounding rules; mark overflow as deferred.
 8. Apply refactor prepend if applicable.
 9. Set mutation_candidate flags.
-10. Write .tickets/tdd/toq-<ticket-id>.yaml.
+10. Write .agent-local/tickets/tdd/toq-<ticket-id>.yaml.
 11. Hand to Planning: present TOQ for user confirm / reprioritize / reject.
 ```
 

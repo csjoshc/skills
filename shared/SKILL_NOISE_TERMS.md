@@ -13,7 +13,7 @@ that a downstream reader (or external contributor) will encounter. Specifically:
 - **PR titles / bodies** — visible to anyone with repo access.
 
 Presence of any of these in a committed diff is a `scope-leak` finding. They belong in
-`.tickets/`, `.plan/`, planning artifacts, commit messages, or PR-thread comments — never in
+`.agent-local/tickets/`, `.agent-local/plan/`, planning artifacts, commit messages, or PR-thread comments — never in
 the long-lived tree.
 
 > **Used by**: `pr-review`, `cleanup`, `pr-create` (pre-flight grep), `onboard` (fork audit), `ticket-review` (build-stage scan)
@@ -33,7 +33,7 @@ the long-lived tree.
 | `IG-*` (e.g. `IG-7G4`) | Integration Gate ID pattern |
 | `\d+G\d+\b` (e.g. `7G4`, `4G1`, `6G1`) | Bare gate ID pattern (without `IG-` prefix) — leaks as path slugs and script names |
 | `<n>G-<slug>-cycle` (e.g. `7G-ui-cycle`, `3G-rerun-screenshots`) | Cycle-slug pattern used in `proof/`, `evidence/`, and test-artifact paths |
-| `Slice \d+` | Spec-writer decomposition index (kept in `.tickets/`, not in code/docs) |
+| `Slice \d+` | Spec-writer decomposition index (kept in `.agent-local/tickets/`, not in code/docs) |
 | `cycle:` as a prose label | Skill sprint-cycle reference |
 | `cycle-close` in commit/PR titles | Skill sprint-closure marker |
 
@@ -151,7 +151,7 @@ For each hit, record a `scope-leak` finding:
 - **MEDIUM** — CI YAML, Makefile target name, doc page title/anchor, image filename, Mermaid node label.
 - **LOW** — one-off inline comment, log message at DEBUG, scratch fixture inside `tests/`.
 
-Finding text: `"<term>" is skill-internal scaffolding vocabulary — strip from committed artifacts; keep in .tickets/, commit message, or PR-thread comments.`
+Finding text: `"<term>" is skill-internal scaffolding vocabulary — strip from committed artifacts; keep in .agent-local/tickets/, commit message, or PR-thread comments.`
 
 ### Why this matters
 

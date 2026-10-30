@@ -1,6 +1,6 @@
 # Ticket contract
 
-The one definition of a `.tickets/NNN-slug.md` file.
+The one definition of a `.agent-local/tickets/NNN-slug.md` file.
 spec writes it; `/tdd` and `/todo` read it.
 No other file restates this schema; link here instead.
 

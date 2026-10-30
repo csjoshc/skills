@@ -27,7 +27,7 @@ A killed mutant does not establish an independent basis for the expected result.
 ## When to invoke
 
 - **Auto-fire** after the `tdd` green step for any TOQ entry with
-  `mutation_candidate: true` (set in `.tickets/tdd/toq-<ticket-id>.yaml` when
+  `mutation_candidate: true` (set in `.agent-local/tickets/tdd/toq-<ticket-id>.yaml` when
   tier is T1 AND score > 60 — see `./SCOPING.md`). This is the
   default path; no opt-in required.
 - After `tdd` green step for any other entry, **optional** — invoke on demand

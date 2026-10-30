@@ -3,8 +3,8 @@
 ## With `/todo`
 
 Full mode: challenge → spec → ticket-review → build.
-Ticket Critic reviews existing `.tickets/*.md` after spec and writes
-`.plan/critic-report.md`.
+Ticket Critic reviews existing `.agent-local/tickets/*.md` after spec and writes
+`.agent-local/plan/critic-report.md`.
 
 Lite mode: spec creates tickets directly. Ticket Critic is optional;
 `/todo` may route directly to build.

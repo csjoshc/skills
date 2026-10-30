@@ -11,7 +11,7 @@ every future PR.
 The patterns from
 `~/.skills/shared/SKILL_NOISE_TERMS.md` (`../shared/SKILL_NOISE_TERMS.md`)
 — ADR labels, ticket IDs, Constitution principles, gate / slice /
-cycle slugs — belong in `.tickets/`, `.plan/`, and commit messages,
+cycle slugs — belong in `.agent-local/tickets/`, `.agent-local/plan/`, and commit messages,
 **not** in committed source, docstrings, doc bodies, config
 filenames, or test artifact paths. Run:
 
@@ -19,7 +19,7 @@ filenames, or test artifact paths. Run:
 # Exclude planning artifacts and historical proof; keep the noise.
 git grep -nE '(ADR-[A-Z0-9-]+|T-[0-9]{3,}|FR-[0-9]+|NFR-[0-9]+|RISK-[0-9]+|IG-[0-9]+G[0-9]*|[0-9]+G[0-9]+|Slice [0-9]+|Constitution P[0-9]+|AP-[0-9]+|Pattern [0-9]+)' \
   -- '*.py' '*.ts' '*.tsx' '*.js' '*.mjs' '*.sh' '*.md' '*.mmd' '*.yaml' '*.yml' '*.json' '*.toml' \
-  ':!.tickets' ':!.plan' ':!.handoff' ':!proof/' ':!docs/ADR-*'
+  ':!.agent-local/tickets' ':!.agent-local/plan' ':!.agent-local/handoff' ':!proof/' ':!docs/ADR-*'
 ```
 
 For every hit, classify:

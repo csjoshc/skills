@@ -92,7 +92,7 @@
       "type": "behavior",
       "prompt": "/todo handoff so I can continue in a new chat.",
       "expected_behavior": [
-        "Writes one .handoff/<slug>.md file",
+        "Writes one .agent-local/handoff/<slug>.md file",
         "Replies with the absolute path and a few sentences",
         "Does not emit a fenced paste-ready prompt of the handoff"
       ]

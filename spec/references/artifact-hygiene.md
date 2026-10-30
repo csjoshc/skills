@@ -26,7 +26,7 @@ A spec must never instruct the author to commit any of:
 - `scripts/verify-T-732.sh`, `scripts/verify-6g1.sh` — verify-script names tied to a ticket
 - `proof/gate-7-cycle/`, `evidence/Slice-3/` — artifact directories named after a gate
 - `tests/tickets/<ticket-id>.py` — test files named after the ticket
-- `docs/PRD-<cycle>.md` referenced as a long-lived doc — these belong in `.plan/`
+- `docs/PRD-<cycle>.md` referenced as a long-lived doc — these belong in `.agent-local/plan/`
 
 These names rot the moment the ticket closes or the gate is renamed.
 Use names that describe the *test scope* or *feature*:

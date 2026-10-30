@@ -1130,7 +1130,7 @@ the long-lived tree where it has no audience.
   itself an AP-24 marker — tests should live by their *type*, not
   their *ticket*)
 - Doc filenames `docs/PRD-<cycle>.md`, `docs/<gate>-cutover.md` kept
-  in the long-lived `docs/` tree instead of `.plan/` or `.tickets/`
+  in the long-lived `docs/` tree instead of `.agent-local/plan/` or `.agent-local/tickets/`
 - e2e configs that hardcode `PROOF_DIR = "../proof/<gate-slug>/..."`
   in playwright/jest/cypress configs instead of taking the path from
   env
@@ -1167,11 +1167,11 @@ the long-lived tree where it has no audience.
   cycle.
 - **`tests/tickets/` is gitignored.** Tests live by *type*
   (`tests/unit/`, `tests/infra/`, `tests/docs/`). A ticket-named
-  test file is a planning artifact that belongs in `.tickets/` or
+  test file is a planning artifact that belongs in `.agent-local/tickets/` or
   inline in the ticket spec, not committed to source.
 - **No verify-script-per-ticket.** If a ticket genuinely needs a
   one-off verify script, the spec captures the commands inline; the
-  script itself stays in `.tickets/<ticket>/verify.sh` (gitignored)
+  script itself stays in `.agent-local/tickets/<ticket>/verify.sh` (gitignored)
   or in the ticket body, not in committed `scripts/`.
 
 ## AP-25: Vendor Coupling in Agnostic Identifier

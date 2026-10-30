@@ -32,7 +32,7 @@ elif rule == "gift-test-gap":
     )
 elif rule == "plan-leak":
     ok = any(
-        ".plan/x.md" in i and re.search(r"severity:\s*(HIGH|CRITICAL)", i)
+        ".agent-local/plan/x.md" in i and re.search(r"severity:\s*(HIGH|CRITICAL)", i)
         for i in items
     )
 else:

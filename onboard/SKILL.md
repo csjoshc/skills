@@ -229,7 +229,7 @@ context exclusions, and operational rules.
 - Future stacks (Rust, Go, Java, etc.) become new labeled blocks in [STACK_PREAMBLES.md](STACK_PREAMBLES.md), not ad hoc edits.
 - Exact patterns live in this skill and its companions; copy blocks verbatim. The `AGENTS.md` exclusion list is a soft ignore for tools without an ignore file.
 - Never replace a user's `AGENTS.md` / `.cursorignore` / `.cursorrules` / `STANDARDS.md` wholesale; merge and dedupe.
-- When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Codex), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use `/todo` for `.tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
+- When a user switches tools mid-session (e.g. rate-limited on Claude, jumps to Codex), the new agent reads `AGENTS.md` (or its shim) automatically — no manual re-onboarding needed for baseline project knowledge. Use `/todo` for `.agent-local/tickets/` workflow and `Stage:` transitions when continuing across sessions or agents.
 - **Nested layouts:** Do not conclude "npm only" just because the workspace root lacks `package.json`; nested `package.json` still means npm. Same for Python manifests or backend `.py` trees under a subfolder.
 - **STANDARDS.md lifecycle:**
   - Global index and topic files live in `~/.skills`; they are not recreated per project

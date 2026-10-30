@@ -1,6 +1,6 @@
 # Super-Prompts
 
-## Harden Tickets Under `.tickets/`
+## Harden Tickets Under `.agent-local/tickets/`
 
 Use when the user wants markdown tickets upgraded in place:
 
@@ -11,7 +11,7 @@ Use ticket-review (this skill) for Stage gate and 10 patterns.
 Read spec and tdd skills for structure and test-first discipline.
 Read ~/.cursor/rules/cleanup/QUALITY_RUBRIC.md for checkable AC tied to mechanical (M1–M12) and subjective tiers—do not run the cleanup codebase-audit workflow unless also asked to review code.
 
-For each ticket in .tickets/ (or paths named):
+For each ticket in .agent-local/tickets/ (or paths named):
 1. Stage header valid; dependencies and Architecture Decisions alignment.
 2. If BUILD implied: explicit TDD, Verification commands, Self-review checklist.
 3. >5 production files → split 01a/01b…; parent epic per the ticket runner's format.
@@ -27,7 +27,7 @@ Backend: pytest (or project standard) for contracts and unhappy paths.
 When the user wants **new** tickets from an audit report (adapt repo root):
 
 ```
-Create actionable tasks in .tickets/ using the project's ticket shape, spec and ticket-review discipline.
+Create actionable tasks in .agent-local/tickets/ using the project's ticket shape, spec and ticket-review discipline.
 
 Each ticket: explicit target file list (≤5 files), AGENTS.md/Architecture Decisions alignment, checkable AC, Verification commands, TDD where implementation is implied.
 
