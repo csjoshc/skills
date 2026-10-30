@@ -181,7 +181,7 @@ cross-cutting concern (logging, config, errors, file I/O).
 | --------------------------- | ------------------------------------------------ |
 | Source code audits          | Editing `.agent-local/tickets/*.md` → ticket-review          |
 | Package / directory audits  | Live PR comments on GitHub → pr-review           |
-| Architecture pattern checks | Visual UI validation → ui / chrome-devtools |
+| Architecture pattern checks | Visual UI validation → ui / browser |
 
 ---
 
