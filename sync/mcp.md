@@ -113,8 +113,8 @@ Precedence when the same name appears in multiple scopes: **Local → Project �
 5. Record final binding identity, attempt, outcome and remaining blocker in the private BOM or one current local handoff.
    Before approved retirement, audit every known reader of the old helper, credential store and transport.
 
-The legacy `mcp_sync.py` refuses a batch containing declared credential ownership or existing `credential_exec.py` readers before writing any target.
-Its format tests remain available through `python3 -I ~/.skills/sync/test_mcp_sync.py`; they are not permission to regenerate migrated consumers.
+There is no bulk MCP writer.
+Native bindings are reconciled individually; `sync.py` manages shared skills, not MCP configuration.
 
 ### 2. Toggle a server
 
@@ -131,7 +131,7 @@ Its format tests remain available through `python3 -I ~/.skills/sync/test_mcp_sy
 
 ## Target-specific formats
 
-These paths and schema differences inform reconciliation; legacy projection behavior is not a deployment recipe for scoped readers.
+These paths and schema differences inform reconciliation of the installed consumer.
 
 ### Claude Code (`~/.claude.json`)
 - Key: root `.mcpServers`
@@ -139,26 +139,21 @@ These paths and schema differences inform reconciliation; legacy projection beha
 - Strip: `enabled`, `allowedTools`
 - Also: ensure `~/.claude/settings.json` has NO `mcpServers` key (schema violation).
 
-- Entries keep `${VAR}` references as they are; Claude Code expands them from the shell env at start.
-- `mcp-atlassian` gets its `allowedTools` as `--enabled-tools a,b,c` in `args` (Claude Code only).
+- File-backed stdio credentials enter through the scoped startup helper, not the parent Claude process.
+- Preserve the server's reviewed tool allowlist, such as `--enabled-tools a,b,c` for `mcp-atlassian`.
 
 ### Codex (`~/.codex/config.toml`)
-- **Personal only.** Codex gets a server only when the master marks it `"personal": true`. The default is that nothing reaches it, so a new work server can never leak in by being added to the master.
-- A server that needs `work.env` (any `${VAR}` in its command, args, url, env or headers) is never written to Codex, even if it is marked personal. The run says so and skips it.
-  A server in the master that is not marked personal but already sits in Codex's file is left alone and flagged in the output, so you can remove it by hand.
-- Mark only servers with no secret, such as a browser-automation server. Work servers stay out.
+- **Personal only.** Reconcile only explicitly approved personal bindings; work servers and work credential references stay out.
+  A definition's `"personal": true` flag is not evidence of the actual account or credential owner.
+  File-backed personal credentials use the same scoped startup boundary with an explicitly personal store.
 - The Codex app, CLI and IDE extension share this file. Servers are `[mcp_servers.<name>]` tables, with `[mcp_servers.<name>.env]` for env.
-- The file also holds `model`, project trust and servers Codex manages itself, so sync edits only the tables of servers whose projected value changed.
-  Everything else stays byte for byte, including comments and hand formatting.
-  A changed server is rewritten where its first table was, and a new one goes at the end.
-- Before writing, the result is parsed back and must equal the planned config exactly. If it does not, nothing is written, for any target, and the run exits 1.
-  An unreadable `config.toml` stops the run the same way.
-  With no personal server to write, no file is created.
+- Preserve `model`, project trust, native authentication, comments and unrelated server tables.
+  Review an entry-level diff and rollback copy; parse the candidate TOML before replacing the live file.
 - Codex has no `type` field, and a url server's headers are `http_headers`.
-- Per-server Codex keys such as `startup_timeout_sec`, `tool_timeout_sec`, `enabled_tools` and `tools.*` are kept when the server is updated.
-- `allowedTools` is not written to Codex, as for every target. Codex can enforce a list with `enabled_tools` if you want it later.
-- Codex is not skipped while running, because its app does not rewrite this file on exit. Restart Codex after a sync.
-- Fresh files are created with mode 600, and an existing file keeps its mode. A `.bak.<ts>` copy is saved before any change.
+- Preserve per-server keys such as `startup_timeout_sec`, `tool_timeout_sec`, `enabled_tools` and `tools.*`.
+  Definition metadata such as `allowedTools` is not a native field; use the installed consumer's permission mechanism.
+- Refresh the affected Codex consumer with approval and verify a native tool result.
+  Keep new files and rollback copies private, and preserve existing restrictive modes.
 
 ### Claude Desktop, Cursor and VS Code
 - GUI apps launched from the Dock do not inherit shell exports.
@@ -175,22 +170,23 @@ These paths and schema differences inform reconciliation; legacy projection beha
 
 ### Per-target server names
 - A tool may already keep a server under another name. Set `"names": {"<target>": "<name>"}` on the master entry, for example `"names": {"vscode": "Docs-Server"}`.
-- Sync writes that server under the mapped name in that target only, and finds an existing entry with that name, so it is updated in place, never duplicated, and not listed as tool-only.
+- Use the mapped name when reconciling that consumer's existing entry rather than creating a duplicate.
 - The master and the other targets keep the master name, since Claude Code permissions and tool prefixes depend on it.
-- A disabled master server (`enabled: false`) is removed from the target like in the other targets, under its mapped name if it has one.
-  Servers that exist only in that tool are left alone.
-- `names` is an sync extension and is never written to a tool.
+- Apply disabled intent through the consumer's native toggle or entry removal, under its mapped name.
+  Leave unrelated consumer-only servers alone.
+- `names` is definition metadata and is never written to a tool.
 
 ### Cline, Roo
-- Root key `mcpServers`. Not synced by `mcp_sync.py`; check tool docs per major-version change.
+- Root key `mcpServers`; check the installed schema before reconciliation.
 
 ### Oh My Pi (OMP)
 - User config: `~/.omp/agent/mcp.json`, root key `mcpServers`.
 - Reconcile the effective OMP agent directory, including a wrapper-selected `PI_CODING_AGENT_DIR`, without replacing local model/authentication settings.
 - OMP uses typed `stdio`, `http` and `sse` entries with `command`/`args`/`env` or `url`/`headers`.
-- `${VAR}` references stay as references in `env` and `headers`; keep credential values in the environment and out of the master file.
+- File-backed stdio credentials enter through the scoped startup helper; native OAuth remains with OMP.
 - Existing OMP-only servers and OMP fields such as `enabled`, `timeout`, `auth`, `oauth`, `instructions` and `requestIdFormat` are preserved when a shared entry is updated.
-- A new target file is mode `0600`; an existing file keeps its mode. OMP reads its MCP config on startup, so restart it after a sync.
+- Keep new files private and preserve existing restrictive modes.
+  Refresh OMP with approval after reconciliation; a written file alone does not prove activation.
 
 ### Zed
 - Root key `context_servers` (different!).
@@ -206,7 +202,8 @@ These paths and schema differences inform reconciliation; legacy projection beha
 
 ## Verification
 
-Run ALL of the following after a sync — pure file-write success is not proof.
+After reconciliation, verify the changed consumer; file-write success is not proof.
+For Claude Code:
 
 1. `claude mcp list` — every enabled server must show "✓ Connected". "Failed to connect" means the entry is valid but the runtime isn't working (docker daemon, network, VPN, token, etc.).
 2. `claude mcp get <name>` — verifies Claude Code parsed the entry.
@@ -227,8 +224,8 @@ Run ALL of the following after a sync — pure file-write success is not proof.
 | --- | --- | --- |
 | `claude mcp list` shows only claude.ai-hosted connectors | `mcpServers` in `~/.claude/settings.json` causing schema-validation failure | Delete `.mcpServers` from `settings.json`; MCP belongs in `~/.claude.json` |
 | URL server fails to connect | Missing `"type"` field | Add `"type": "http"` (or `"sse"`) |
-| `docker` stdio server fails to connect | Docker daemon off, image not pulled, or env var (`-e VAR`) not in parent env | Start Docker; `docker pull <image>`; set env in entry's `env` block |
-| Entry exists in master but doesn't appear | `enabled: false` in master | Set `enabled: true` and re-sync |
+| `docker` stdio server fails to connect | Docker daemon off, image unavailable, or missing child credential | Verify the runtime and use scoped startup to supply only the named `-e VAR` credentials |
+| Entry exists in master but doesn't appear | Disabled intent or native binding not reconciled | Review `enabled` and reconcile that consumer |
 | Tool returns stale config after edit | MCP servers only load at session startup | Restart Claude Code (exit + relaunch) |
 
 ## Secret hygiene
@@ -252,18 +249,17 @@ Tests: `python3 -I shared/test_credential_exec.py` runs synthetic child processe
 
 No harness is automatically migrated by installing this helper.
 Reconcile one native entry, preserve account/tool permissions and unrelated configuration, then verify a real read-only operation with approval.
-The legacy generator refuses scoped readers; native reconciliation is their only deployment path.
+Native reconciliation is the only deployment path.
 
-### Legacy generator
+### Definition hygiene
 
 - The master holds `${VAR}` placeholders only.
-  Values live in `~/.config/secrets/work.env` (dir 700, file 600), outside every repo.
+  Values live in the declared work or personal store (dir 700, file 600), outside every repo.
 - Work-specific variable-name templates belong to the private pack's bootstrap overlays.
   Reconcile consumers after the owner fills the value in the declared store; do not add employer inventory to public templates.
 - To rotate, see [Rotating a token](#rotating-a-token).
-- A literal in a secret-named env/header field is refused by every target.
-  Use `--strict` to make that a failure.
-- The script never prints values; its warnings name the server and field only.
+- Reject literal credentials during reconciliation; there is no generator validating definitions for you.
+  Evidence and diagnostics name the consumer and field, never a value.
 
 ## Rotating a token
 
@@ -285,8 +281,7 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | Cursor | yes | yes |
 | VS Code | no | yes (the `vscode` target) |
 | Claude Desktop | no | yes (the `desktop` target) |
-| Codex | yes | yes, personal only (servers marked `"personal": true`, no secrets; edits `~/.codex/config.toml` in place) |
-| Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
+| Codex | yes | yes, explicitly approved personal bindings only; no work credentials |
 | Copilot | yes | no |
 
 Devin uses its dedicated MCP config files; inspect project overrides as well as the user config.

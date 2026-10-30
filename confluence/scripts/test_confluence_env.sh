@@ -16,6 +16,8 @@ out="$(run CONFLUENCE_URL=https://env.example CONFLUENCE_USERNAME=env-user 2>&1)
 check "missing token is named" "$(echo "$out" | grep -c 'missing: CONFLUENCE_API_TOKEN')" "1"
 check "error points at bootstrap" "$(echo "$out" | grep -c './bootstrap.sh --secrets')" "1"
 check "error points at work.env" "$(echo "$out" | grep -c 'work.env')" "1"
+check "error points at scoped launch" "$(echo "$out" | grep -c 'credential_exec.py')" "1"
+check "error does not suggest global shell loading" "$(echo "$out" | grep -c 'open a new shell')" "0"
 out="$(run CONFLUENCE_API_TOKEN=env-token 2>&1)"
 check "missing url and user are named" "$(echo "$out" | grep -c 'missing: CONFLUENCE_URL CONFLUENCE_USERNAME')" "1"
 
@@ -44,8 +46,14 @@ PORT=$((20000 + RANDOM % 20000))
 python3 -I "$T/stub.py" "$PORT" "$T/result" & SP=$!
 sleep 1
 printf '<p>hi</p>' > "$T/body.html"
-out="$(env -i HOME="$T" PATH="$PATH" CONFLUENCE_URL="http://127.0.0.1:$PORT" CONFLUENCE_USERNAME=u \
-  CONFLUENCE_API_TOKEN=t bash -c ". '$HERE/confluence_env.sh' && confluence_put_storage 42 '$T/body.html'" 2>&1)"
+printf 'CONFLUENCE_URL=http://127.0.0.1:%s\nCONFLUENCE_USERNAME=u\nCONFLUENCE_API_TOKEN=t\nUNRELATED_TOKEN=unused\n' \
+  "$PORT" > "$T/work.env"
+chmod 600 "$T/work.env"
+out="$(env -i HOME="$T" PATH="$PATH" INHERITED_TOKEN=unused \
+  python3 -I "$HERE/../../shared/credential_exec.py" --file "$T/work.env" \
+  --var CONFLUENCE_URL --var CONFLUENCE_USERNAME --var CONFLUENCE_API_TOKEN -- \
+  bash --noprofile --norc -c \
+  "test -z \"\${UNRELATED_TOKEN-}\${INHERITED_TOKEN-}\" && . '$HERE/confluence_env.sh' && confluence_put_storage 42 '$T/body.html'" 2>&1)"
 kill $SP 2>/dev/null; wait $SP 2>/dev/null
 check "put returns 200" "$out" "PUT 200"
 check "stub saw bumped version and storage body" "$(cat "$T/result" 2>/dev/null)" "ok"
