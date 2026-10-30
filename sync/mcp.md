@@ -282,7 +282,6 @@ Skills and MCP servers sync to different sets of tools, because each tool reads 
 | VS Code | no | yes (the `vscode` target) |
 | Claude Desktop | no | yes (the `desktop` target) |
 | Codex | yes | yes, explicitly approved personal bindings only; no work credentials |
-| Antigravity | yes | no: `~/.gemini/antigravity/mcp_config.json` exists but is empty and unmanaged |
 | Copilot | yes | no |
 
 Devin uses its dedicated MCP config files; inspect project overrides as well as the user config.

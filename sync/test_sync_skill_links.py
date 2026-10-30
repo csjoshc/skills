@@ -125,6 +125,26 @@ class TestPrivateSkillBoundary(unittest.TestCase):
                 self.assertEqual((native / "work-only").resolve(), private.resolve())
             self.assertFalse((master / "work-only").exists())
 
+    def test_cli_does_not_recreate_retired_antigravity_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            public = home / ".skills/public"
+            public.mkdir(parents=True)
+            (public / "SKILL.md").write_text("public definition\n")
+            retired = home / ".gemini/antigravity"
+            retired.mkdir(parents=True)
+            (home / ".copilot").mkdir()
+            for _ in range(2):
+                result = subprocess.run(
+                    [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
+                    env={"HOME": str(home), "PATH": os.environ["PATH"]},
+                    capture_output=True, text=True, timeout=10, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual((home / ".copilot/skills/public").resolve(), public.resolve())
+                self.assertFalse((retired / "skills").exists())
+                self.assertNotIn("Antigravity", result.stdout)
+
     def test_cli_refuses_external_definitions_before_linking_any_consumer(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)

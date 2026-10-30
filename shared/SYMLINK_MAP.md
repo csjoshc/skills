@@ -15,7 +15,6 @@ An external skill import blocks sync until its native readers are verified and i
 | **Codex** | `~/.codex/skills/<name>` | `~/.skills/<name>` (per-skill, see note) |
 | **Cursor (Skills)** | `~/.cursor/skills/<name>` | `~/.skills/<name>` |
 | **Claude Code** | `~/.claude/skills/<name>` | `~/.skills/<name>` |
-| **Antigravity** | `~/.gemini/antigravity/skills/<name>` | `~/.skills/<name>` |
 | **OpenCode** | `~/.config/opencode/skills/<name>` | `~/.skills/<name>` |
 | **Copilot / VS Code** | `~/.copilot/skills/<name>` | `~/.skills/<name>` |
 | **pi** (`pi_agent_rust`) | `~/.pi/agent/skills/<name>` | `~/.skills/<name>` (per-skill, see pi note) |
@@ -66,7 +65,6 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | **Codex** | `~/.codex/AGENTS.md` | Symlink |
 | **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
 | **Devin CLI** | `~/.config/devin/AGENTS.md` | Symlink (Devin does not walk up to `~/AGENTS.md`); created by bootstrap, not `sync.py` |
-| **Antigravity** | `~/.gemini/antigravity/AGENTS.md` | Symlink |
 | **Cursor / Copilot** | (none) | No global file; use project `AGENTS.md` |
 
 Projects inherit `~/AGENTS.md` from the home directory; keep project-specific rules in the repo root `AGENTS.md` without a symlink to the global file.

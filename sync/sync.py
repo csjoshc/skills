@@ -89,13 +89,6 @@ PLATFORMS = {
         permission_note="no managed config; sandbox reads outside the workspace not confirmed",
         platform_key="codex",
     ),
-    "antigravity": PlatformConfig(
-        name="Antigravity",
-        skills_symlink=HOME / ".gemini" / "antigravity" / "skills",
-        permission_type="unmanaged",
-        permission_note="no managed config; no known setting for reads outside the workspace",
-        platform_key="antigravity",
-    ),
     "cursor": PlatformConfig(
         name="Cursor",
         skills_symlink=HOME / ".cursor" / "skills",

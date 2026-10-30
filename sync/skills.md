@@ -131,7 +131,6 @@ Always provide a **Sync Status Report** table with the following structure:
 | Cursor | Synced / Out of Sync / Missing | Setup / Missing / N/A | Refer to shared/SYMLINK_MAP.md |
 | Claude Code | Synced / Out of Sync / Missing | Setup / Stale / Missing / N/A | Project-level uses `cp -r` (not symlink) |
 | Codex | Synced / Out of Sync / Missing | N/A | Global `~/.codex/skills` symlink required |
-| Antigravity | Synced / Out of Sync / Missing | N/A | Path: ~/.gemini/antigravity/skills |
 | VS Code | Synced / Out of Sync / Missing | Setup / Missing / N/A | Project-level discovery recommended |
 | *[Others]* | Synced / Out of Sync / Missing | Setup / Missing / N/A | See shared/SYMLINK_MAP.md |
 
@@ -145,7 +144,7 @@ The audit's Permissions column says whether a tool can read `~/.skills` without 
 |---|---|
 | OK | Nothing to configure (workspace trust), or the allow rule is present. |
 | Missing | opencode only: no allow rule for `~/.skills`. A repair run adds one. |
-| Unmanaged | Codex and Antigravity: no managed config exists. Nothing is written, and it is not a failure. |
+| Unmanaged | Codex: no managed config exists. Nothing is written, and it is not a failure. |
 
 opencode v2 takes a `permissions` rule array in `~/.config/opencode/opencode.json`.
 The repair adds two rules and leaves every other key and the file mode alone:

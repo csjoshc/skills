@@ -16,7 +16,7 @@
 
 Multiple agent sessions (or a parent + write subagents) that share **one working tree** fight over `HEAD`. A `git checkout` / `git switch` in one session moves the branch for every other session rooted in that directory. Uncommitted edits collide; smoke-test pins flip; reviews target the wrong branch.
 
-**Linked git worktrees** give each concurrent branch its own directory while sharing object storage. That is the portable isolation model across Cursor, Claude Code, Codex, Antigravity, and plain terminals.
+**Linked git worktrees** give each concurrent branch its own directory while sharing object storage. That is the portable isolation model across Cursor, Claude Code, Codex, and plain terminals.
 
 **No "quick task" exception.** A single `git checkout` / `git switch` / `git reset --hard` in the shared primary checkout is exactly as disruptive whether the task behind it is large or small — it still moves `HEAD` for every other session rooted there. "It's just a quick fix" or "one-off corrective branch" is not a reason to skip a worktree. If a task needs a different branch checked out, even briefly, cut a worktree for it.
 

@@ -176,7 +176,6 @@ context exclusions, and operational rules.
 ```
 
 - **Cursor**: `.cursorrules` (Note: older `.cursorrules` that copy stack or rules blocks should be replaced with this shim).
-- **Antigravity**: `GEMINI.md`
 - **Windsurf**: `.windsurfrules`
 - **Cline**: `.clinerules`
 
