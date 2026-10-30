@@ -102,10 +102,13 @@ EOF
 **In terminal agent (no IDE browser):**
 
 ```bash
-# Start a recording session with Chrome DevTools Protocol
-# Or use the harness's chrome-devtools MCP tools
 # CRITICAL: Do NOT skip this step - start dev server if needed
-# Save screenshots to /tmp/, then use the ephemeral commit pattern above.
+agent-browser --session pr-evidence --allowed-domains localhost open http://localhost:3000/<route>
+agent-browser --session pr-evidence screenshot "$TMPDIR/<feature>-default.png"
+agent-browser --session pr-evidence set media dark && agent-browser --session pr-evidence screenshot "$TMPDIR/<feature>-dark.png"
+agent-browser --session pr-evidence record start "$TMPDIR/<feature>-flow.webm"   # complex flows
+agent-browser --session pr-evidence close
+# Then use the ephemeral commit pattern above.
 ```
 
 **Minimum UI evidence for ANY frontend PR:**

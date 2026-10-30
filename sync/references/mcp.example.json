@@ -9,19 +9,13 @@
       "allowedTools": ["search_docs"],
       "enabled": false
     },
-    "chrome-devtools": {
+    "agent-browser": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated=true"],
+      "command": "agent-browser",
+      "args": ["mcp", "--tools", "core"],
       "personal": true,
-      "enabled": true
-    },
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"],
-      "personal": true,
-      "enabled": false
+      "enabled": false,
+      "_note": "Only for consumers without a shell (Claude Desktop). Coding harnesses call the agent-browser CLI directly; see ~/.skills/browser/SKILL.md."
     }
   }
 }
