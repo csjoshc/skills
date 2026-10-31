@@ -4,7 +4,6 @@
 
 - Tokenify block
 - Engineering principles block
-- graphify (if present)
 - MCP Tools (optional)
 
 Copy-verbatim blocks appended to `AGENTS.md` after the stack preamble. Extracted from `SKILL.md` for the 500-line budget.
@@ -33,21 +32,6 @@ Prefer the smallest coherent change that is correct, readable, and complete.
 Keep validation, error handling and auth checks at trust boundaries, even when they cost lines.
 Touch only what the task needs; match existing style.
 If requirements are ambiguous or conflict, state your assumption and ask before choosing.
-```
-
-### graphify (if present)
-
-If `graphify-out/` exists, add this block to `AGENTS.md`:
-
-```markdown
-## graphify
-
-This project has a graphify knowledge graph at graphify-out/.
-
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
 ```
 
 ### MCP Tools (optional)
