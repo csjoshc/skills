@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("skill_sources", Path(__file__).with_name("skill_sources.py"))
@@ -97,19 +98,19 @@ class SourceTests(unittest.TestCase):
 
     def test_cli_failure_has_nonzero_exit(self):
         result = subprocess.run(
-            ["python3", "-I", str(Path(__file__).with_name("skill_sources.py")), "--master", str(self.master), "--audit"],
+            [sys.executable, "-I", str(Path(__file__).with_name("skill_sources.py")), "--master", str(self.master), "--audit"],
             text=True, capture_output=True,
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("source checkout missing", result.stderr)
 
     def test_sync_stops_before_platform_repair_on_source_failure(self):
-        for name in ("sync.py", "skill_sources.py"):
+        for name in ("sync.py", "skill_sources.py", "directory_links.py"):
             shutil.copyfile(Path(__file__).with_name(name), self.master / "sync" / name)
         (self.root / ".skills").symlink_to(self.master, target_is_directory=True)
         result = subprocess.run(
-            ["python3", "-I", str(self.master / "sync/sync.py"), "--audit"],
-            env={**os.environ, "HOME": str(self.root)}, text=True, capture_output=True,
+            [sys.executable, "-I", str(self.master / "sync/sync.py"), "--audit"],
+            env={**os.environ, "HOME": str(self.root), "USERPROFILE": str(self.root)}, text=True, capture_output=True,
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("source checkout missing", result.stderr)

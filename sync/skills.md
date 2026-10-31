@@ -5,12 +5,30 @@
 
 ## Contents
 
+- Windows and Mac use the same entry point
 - Context
 - Objectives
 - Companion Files
 - Execution Steps (discovery, master sync, symlink verification, project-level setup)
 - Output Format
 - Quick Reference
+
+## Windows and Mac use the same entry point
+
+The master stays `~/.skills` on every OS. Python and Git are the only sync prerequisites; no harness CLI or account is needed. Use Windows Python 3.12+ for junction detection (bootstrap installs 3.13); Mac/Linux support Python 3.10+.
+
+| Action | Windows PowerShell | Mac/Linux shell |
+|---|---|---|
+| Audit | `python "$HOME/.skills/sync/sync.py" --audit` | `python3 ~/.skills/sync/sync.py --audit` |
+| Repair | `python "$HOME/.skills/sync/sync.py"` | `python3 ~/.skills/sync/sync.py` |
+
+The audit writes no log or configuration, performs no downloads, and exits nonzero for unresolved source, link or installed-harness permission problems. Repair installs pinned sources, repairs links, then verifies them. Missing harness parent directories are skipped; start/install a harness before syncing it. The `PLATFORMS` table in `sync.py` owns the harness paths.
+
+Windows first tries directory symlinks, then local-volume junctions when symlink privileges are unavailable. Both refer to the same files, so edits are immediately visible through every linked harness. Every native skill root uses individual skill links, preserving physical overrides and private links. A foreign whole-store link requires deliberate reconciliation. Only stale links into the shared store are removed. Codex's existing `.system` remains reachable during migration from a legacy whole-store link.
+
+Windows and WSL have separate homes. Run sync with the interpreter for the consuming OS; Windows clients receive Windows paths. Git checkout updates are separate from link repair. Sync provides discovery; sandbox access and each skill's runtime still depend on the consuming harness and machine. Native MCP projection is a separate Windows gap; running the current Mac MCP sync against Windows configs is not part of this skill-link flow.
+
+Bootstrap's current main uses agent-led setup. Its BOM lists the native prerequisites and the same sync commands; no Windows installer or wrapper is required.
 
 ## Context
 
@@ -50,7 +68,7 @@ Both commands fail with a nonzero exit when a source cannot be verified; platfor
 The installer clones into ignored `~/.skills/.vendor/<name>/`, checks out the pin detached, and creates an ignored `~/.skills/<name>` symlink to the package inside that clone.
 For Archify, the package path is `archify`, so the skill link resolves to `.vendor/archify/archify/`.
 Keep the manifest and installer tracked; keep upstream checkouts and their root skill links ignored.
-The net skill count stays at 29; the upstream Archify source replaces the vendored bundle.
+This manifest replaces the former Archify bundle; the upstream Archify source replaces the vendored bundle.
 
 An ordinary run uses the recorded pin, never upstream's latest branch.
 To update, explicitly choose a new upstream commit, change the manifest through a PR, run sync and verify the skill.

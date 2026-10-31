@@ -61,12 +61,13 @@ class PermissionTests(unittest.TestCase):
     def test_repair_adds_rules_keeps_other_keys_and_mode(self):
         self.cfg.write_text(json.dumps({"mcp": {"a": 1}, "permissions": [{"action": "bash", "resource": "*", "effect": "ask"}]}))
         os.chmod(self.cfg, 0o600)
+        expected_mode = stat.S_IMODE(self.cfg.stat().st_mode)
         self.assertTrue(sync.repair_permissions(opencode(self.cfg), Quiet()))
         data = json.loads(self.cfg.read_text())
         self.assertEqual(data["mcp"], {"a": 1})
         self.assertIn({"action": "bash", "resource": "*", "effect": "ask"}, data["permissions"])
         self.assertEqual(self.audit(), sync.Status.PERMISSION_OK)
-        self.assertEqual(stat.S_IMODE(self.cfg.stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(self.cfg.stat().st_mode), expected_mode)
 
     def test_repair_is_idempotent(self):
         self.cfg.write_text("{}")

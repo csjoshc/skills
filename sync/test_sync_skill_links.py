@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("sync", Path(__file__).with_name("sync.py"))
@@ -19,7 +20,11 @@ class Quiet:
 
 class TestOmpSkillLink(unittest.TestCase):
     def setUp(self):
-        self.root = Path(tempfile.mkdtemp())
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        previous = sync.SKILLS_DIR
+        self.addCleanup(setattr, sync, "SKILLS_DIR", previous)
         self.master = self.root / "skills"
         (self.master / "tdd").mkdir(parents=True)
         (self.master / "tdd" / "SKILL.md").write_text("shared skill\n")
@@ -60,6 +65,39 @@ class TestOmpSkillLink(unittest.TestCase):
         self.assertEqual(sync.audit_symlink("omp", self.cfg, Quiet()).symlink_status,
                          sync.Status.SYNCED)
 
+    def test_audit_detects_wrong_shared_link_and_removes_retired_skill(self):
+        sync.create_link(self.omp / "caveman", self.master / "tdd")
+        self.assertEqual(sync.audit_symlink("omp", self.cfg, Quiet()).symlink_status,
+                         sync.Status.BROKEN)
+        self.assertTrue(sync.repair_symlink(self.cfg, Quiet()))
+        self.assertEqual((self.omp / "caveman").resolve(), (self.master / "caveman").resolve())
+        (self.master / "caveman/SKILL.md").unlink()
+        self.assertEqual(sync.audit_symlink("omp", self.cfg, Quiet()).symlink_status,
+                         sync.Status.BROKEN)
+        self.assertTrue(sync.repair_symlink(self.cfg, Quiet()))
+        self.assertFalse(sync.is_symlink(self.omp / "caveman"))
+
+    @unittest.skipUnless(os.name == "nt", "native Windows junction fallback")
+    def test_junction_fallback_preserves_target_and_repairs_shared_links(self):
+        import directory_links
+        denied = OSError("symlink privilege unavailable")
+        denied.winerror = 1314
+        with mock.patch.object(directory_links.os, "symlink", side_effect=denied):
+            self.assertTrue(sync.repair_symlink(self.cfg, Quiet()))
+            self.assertTrue((self.omp / "caveman").is_junction())
+            directory_links.create_link(self.omp / "caveman", self.master / "tdd")
+            self.assertTrue(sync.repair_symlink(self.cfg, Quiet()))
+        self.assertEqual((self.omp / "caveman").resolve(), (self.master / "caveman").resolve())
+        directory_links.remove_link(self.omp / "caveman")
+        self.assertEqual((self.master / "caveman/SKILL.md").read_text(), "another shared skill\n")
+
+    def test_failed_replacement_preserves_old_link(self):
+        import directory_links
+        sync.create_link(self.omp / "caveman", self.master / "tdd")
+        with mock.patch.object(directory_links.os, "symlink", side_effect=OSError("denied")):
+            self.assertFalse(sync.repair_symlink(self.cfg, Quiet()))
+        self.assertEqual((self.omp / "caveman").resolve(), (self.master / "tdd").resolve())
+
 
 class TestPrivateSkillBoundary(unittest.TestCase):
     def test_repairs_only_shared_links_and_preserves_native_private_entries(self):
@@ -83,14 +121,14 @@ class TestPrivateSkillBoundary(unittest.TestCase):
             for _ in range(2):
                 result = subprocess.run(
                     [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
-                    env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                    capture_output=True, text=True, timeout=10, check=False,
+                    env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                    capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 for name, target in (("shared", private), ("offline", offline)):
                     with self.subTest(name=name):
                         self.assertTrue((native / name).is_symlink())
-                        self.assertEqual((native / name).readlink(), target)
+                        self.assertEqual((native / name).resolve(), target.resolve())
                 self.assertEqual((native / "new-public").resolve(), master / "new-public")
                 self.assertEqual((native / "wrong").resolve(), master / "wrong")
                 self.assertFalse((native / "stale").is_symlink())
@@ -106,14 +144,14 @@ class TestPrivateSkillBoundary(unittest.TestCase):
             native.symlink_to(private)
             result = subprocess.run(
                 [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
-                env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                capture_output=True, text=True, timeout=10, check=False,
+                env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertEqual(native.readlink(), private)
+            self.assertEqual(native.resolve(), private.resolve())
             self.assertIn("foreign skills root", result.stdout)
 
-    def test_missing_link_audit_preserves_success_status_without_repair(self):
+    def test_missing_link_audit_fails_without_repair_or_log(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
             skill = home / ".skills/public"
@@ -122,11 +160,12 @@ class TestPrivateSkillBoundary(unittest.TestCase):
             (home / ".claude").mkdir()
             result = subprocess.run(
                 [sys.executable, "-B", str(Path(__file__).with_name("sync.py")), "--audit"],
-                env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                capture_output=True, text=True, timeout=10, check=False,
+                env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
             )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertFalse((home / ".claude/skills").exists())
+            self.assertFalse((home / ".skills/sync.log").exists())
 
     def test_shared_vendor_links_sync_without_touching_native_private_links(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -148,8 +187,8 @@ class TestPrivateSkillBoundary(unittest.TestCase):
                 (native / "work-only").symlink_to(private)
             result = subprocess.run(
                 [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
-                env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                capture_output=True, text=True, timeout=10, check=False,
+                env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             for native in natives:
@@ -170,8 +209,8 @@ class TestPrivateSkillBoundary(unittest.TestCase):
             for _ in range(2):
                 result = subprocess.run(
                     [sys.executable, "-B", str(Path(__file__).with_name("sync.py"))],
-                    env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                    capture_output=True, text=True, timeout=10, check=False,
+                    env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                    capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertEqual((home / ".copilot/skills/public").resolve(), public.resolve())
@@ -194,8 +233,8 @@ class TestPrivateSkillBoundary(unittest.TestCase):
                 with self.subTest(args=args):
                     result = subprocess.run(
                         [sys.executable, "-B", str(Path(__file__).with_name("sync.py")), *args],
-                        env={"HOME": str(home), "PATH": os.environ["PATH"]},
-                        capture_output=True, text=True, timeout=10, check=False,
+                        env=dict(os.environ, HOME=str(home), USERPROFILE=str(home)),
+                        capture_output=True, text=True, encoding="utf-8", timeout=10, check=False,
                     )
                     self.assertNotEqual(result.returncode, 0)
                     self.assertIn("native", result.stdout)

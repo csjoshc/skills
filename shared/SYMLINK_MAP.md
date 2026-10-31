@@ -58,7 +58,7 @@ This is forward-compatible: as new master skills are added, run the discovery lo
 | Tool / Platform | Path | Method |
 | :--- | :--- | :--- |
 | **Master** | `~/AGENTS.md` | (Authoritative, real file) |
-| **Claude Code** | `~/.claude/CLAUDE.md` | `@/Users/joshc/AGENTS.md` import (Claude Code reads only a project-level AGENTS.md, and only when no CLAUDE.md or CLAUDE.local.md is in that folder or above) |
+| **Claude Code** | `~/.claude/CLAUDE.md` | `@<absolute home path>/AGENTS.md` import (Claude Code reads only a project-level AGENTS.md, and only when no CLAUDE.md or CLAUDE.local.md is in that folder or above) |
 | **Codex** | `~/.codex/AGENTS.md` | Symlink |
 | **OpenCode** | `~/.config/opencode/AGENTS.md` | Symlink |
 | **Devin CLI** | `~/.config/devin/AGENTS.md` | Symlink (Devin does not walk up to `~/AGENTS.md`); created by bootstrap, not `sync.py` |
@@ -101,14 +101,10 @@ for skill in "$MASTER_SKILLS"/*; do
 done
 ```
 
-### Windows (CMD)
+### Windows PowerShell
 
-```cmd
-set MASTER_SKILLS=%USERPROFILE%\.skills
-python "%MASTER_SKILLS%\sync\sync.py" --audit
-if errorlevel 1 exit /b 1
-mkdir ".skills"
-for /D %i in ("%MASTER_SKILLS%\*") do (
-  mklink /D ".skills\%%~nxi" "%%i"
-)
+```powershell
+python "$HOME/.skills/sync/sync.py" --project (Get-Location).Path
 ```
+
+It preserves an existing physical `.skills` directory and reports the conflict. Global repair uses `python "$HOME/.skills/sync/sync.py"`; append `--audit` for a check without writes. Each OS uses its own home and interpreter.

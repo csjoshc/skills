@@ -7,6 +7,9 @@ import subprocess
 import sys
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from directory_links import create_link, is_link
+
 
 def git(repo, *args):
     result = subprocess.run(
@@ -54,19 +57,19 @@ def sync_sources(master, audit=False):
     master = Path(master)
     entries = read_sources(master)
     vendor = master / ".vendor"
-    if vendor.is_symlink():
+    if is_link(vendor):
         raise RuntimeError("Refusing symlinked .vendor directory")
     for entry in entries:
         name, pin = entry["name"], entry["commit"]
         clone = vendor / name
         link = master / name
         package = clone / entry["path"]
-        if link.is_symlink():
+        if is_link(link):
             if link.resolve() != package.resolve():
                 raise RuntimeError(f"{name}: existing link targets another location")
         elif link.exists():
             raise RuntimeError(f"{name}: refusing to replace existing skill directory")
-        if clone.is_symlink():
+        if is_link(clone):
             raise RuntimeError(f"{name}: refusing symlinked source checkout")
         if clone.exists():
             # A nested path can otherwise silently use the parent skills repository.
@@ -99,10 +102,10 @@ def sync_sources(master, audit=False):
                 staged_clone.rename(clone)
         if not package.resolve().is_relative_to(clone.resolve()) or not (package / "SKILL.md").is_file():
             raise RuntimeError(f"{name}: package missing or escapes checkout")
-        if not link.is_symlink():
+        if not is_link(link):
             if audit:
                 raise RuntimeError(f"{name}: skill link missing")
-            os.symlink(Path(".vendor") / name / entry["path"], link, target_is_directory=True)
+            create_link(link, package)
         print(f"[OK] Source {name}: {pin} -> {link}")
 
 
