@@ -152,11 +152,10 @@ Same style as the global rules. History behind odd code earns a comment too, wit
 
 Cursor and Copilot have no global file. If the user targets those tools, tell them the base style will not reach them.
 
-### Verbatim blocks (Engineering principles, Tokenify, graphify, MCP Tools)
+### Verbatim blocks (Engineering principles, Tokenify, MCP Tools)
 
 Copy the matching blocks from `AGENTS_BLOCKS.md` verbatim. Engineering principles (always) goes right
-after Code comments, then Tokenify (optional), graphify (if present),
-MCP Tools (optional).
+after Code comments, then Tokenify (optional) and MCP Tools (optional).
 
 ## 2-3. Cursor files
 
