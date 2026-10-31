@@ -85,11 +85,10 @@ Add a hook only when a real failure mode points to it.
 |---|---|---|---|
 | `verify-gate` | `PreToolUse: Bash` running `git commit` or `gh pr create` | halt | 5s |
 | `merge-gate` | `PreToolUse`: shell and MCP merge, approval, protected-branch push and local merge attempts | halt | 5s |
-| `diff-pane` | `Stop`: a worktree has recent unpushed commits not yet shown | side effect for the user, never blocks | returns at once |
 
-`diff-pane` opens the branch diff beside the agent so the user reviews before saying push.
-It is not an advisory hook: it shows nothing to the model, so the no-advisory rule below does not apply.
-One pane per worktree, replaced when a newer commit lands; `AGENT_DIFF_PANE=0` turns it off.
+Open panes automatically only to stage CLI commands the user must run interactively, such as a guarded `gh pr merge`, sudo or authentication.
+Paste each command without Enter using `side-pane.sh stage`; keep the command visible in chat too.
+Code reviews stay in the current session unless the user explicitly requests a diff pane.
 
 `verify-gate` only catches an agent that ran verify, recorded a failure, and
 tried to ship anyway. It cannot catch an agent that never ran the check;
@@ -97,6 +96,7 @@ that rule lives in AGENTS.md and `pr-create` Phase 0.
 
 Removed hooks and where their intent lives now:
 
+- `diff-pane`: remove its `Stop` registrations from harness settings; explicit diff-pane requests use `shared/scripts/side-diff.sh`.
 - PR self-review reminder → `pr-create` Phase 0.
 - Ticket BUILD reminder → `/todo` state detection.
 - Workflow-gates notice → a link from the project AGENTS.md.

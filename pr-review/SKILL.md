@@ -60,7 +60,8 @@ with the remote default branch. Context commands are in
 
 ### Side-by-side diff
 
-When the user will read the change alongside you, open it beside the agent's pane after fetching the PR:
+Review in the current session by default.
+Open a diff pane only when the user explicitly requests one:
 
 ```bash
 ~/.skills/shared/scripts/side-diff.sh <base>...<head>
