@@ -20,6 +20,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
+# Standalone scripts also load through importlib in the isolated regression checks.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from directory_links import create_link, is_link, remove_link
+
 
 # ─── OS Detection ───────────────────────────────────────────────────────────
 
@@ -54,11 +58,6 @@ LOG_FILE = SKILLS_DIR / "sync.log"
 def resolve_path(path_str: str) -> Path:
     """Resolve a path string with ~ expansion."""
     return Path(path_str).expanduser()
-
-
-def windows_path(path: Path) -> str:
-    """Convert a Path to Windows-style for mklink."""
-    return str(path).replace("/", "\\")
 
 
 # ─── Platform Definitions ───────────────────────────────────────────────────
@@ -190,7 +189,7 @@ if IS_WINDOWS:
 
 
 def is_symlink(path: Path) -> bool:
-    return path.is_symlink()
+    return is_link(path)
 
 
 def get_symlink_target(path: Path) -> Optional[Path]:
@@ -200,42 +199,26 @@ def get_symlink_target(path: Path) -> Optional[Path]:
 
 
 def create_symlink(link_path: Path, target: Path) -> bool:
-    """Create a symlink using OS-appropriate method."""
-    if link_path.is_symlink():
-        link_path.unlink()
-    elif link_path.exists():
-        if link_path.is_dir():
-            shutil.rmtree(link_path, ignore_errors=True)
-        else:
-            link_path.unlink()
+    """Create a directory link while preserving real local entries."""
+    try:
+        create_link(link_path, target)
+        return True
+    except (OSError, ValueError) as exc:
+        print(f"directory link failed: {exc}")
+        return False
 
-    link_path.parent.mkdir(parents=True, exist_ok=True)
 
+def owned_skill_link(path):
+    """Only links into the shared store belong to this sync."""
+    if not is_symlink(path):
+        return False
+    raw_target = os.readlink(path)
     if IS_WINDOWS:
-        try:
-            result = subprocess.run(
-                [
-                    "cmd",
-                    "//c",
-                    "mklink",
-                    "/D",
-                    windows_path(link_path),
-                    windows_path(target),
-                ],
-                check=True,
-                capture_output=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"mklink failed: {e.stderr.decode()}")
-            return False
-    else:
-        try:
-            os.symlink(target, link_path)
-            return True
-        except OSError as e:
-            print(f"symlink failed: {e}")
-            return False
+        raw_target = raw_target.removeprefix("\\\\?\\")
+    target = Path(raw_target)
+    if not target.is_absolute():
+        target = path.parent / target
+    return target.resolve().is_relative_to(SKILLS_DIR.resolve())
 
 
 # ─── Symlink Audit ──────────────────────────────────────────────────────────
@@ -263,7 +246,7 @@ def audit_symlink(
         logger.info(f"{config.name}: Not installed (parent dir missing)")
         return result
 
-    if not symlink_path.exists() and not symlink_path.is_symlink():
+    if not symlink_path.exists() and not is_symlink(symlink_path):
         result.symlink_status = Status.MISSING
         result.symlink_details = "Symlink does not exist"
         logger.warn(f"{config.name}: Skills symlink missing")
@@ -285,23 +268,29 @@ def audit_symlink(
         logger.warn(f"{config.name}: Skills path is not a directory")
         return result
 
-    missing = []
+    issues = []
     for skill_dir in SKILLS_DIR.iterdir():
         if not skill_dir.is_dir() or skill_dir.name.startswith("."):
             continue
         if not (skill_dir / "SKILL.md").is_file():
             continue
         link = symlink_path / skill_dir.name
-        if not link.exists() and not link.is_symlink():
-            missing.append(skill_dir.name)
+        if owned_skill_link(link) and link.resolve() != skill_dir.resolve():
+            issues.append(f"wrong: {skill_dir.name}")
+        elif not link.exists() and not is_symlink(link):
+            issues.append(f"missing: {skill_dir.name}")
 
-    if missing:
+    for entry in symlink_path.iterdir():
+        if not entry.name.startswith(".") and owned_skill_link(entry) and not (SKILLS_DIR / entry.name / "SKILL.md").is_file():
+            issues.append(f"stale: {entry.name}")
+
+    if issues:
         result.symlink_status = Status.BROKEN
         result.symlink_details = (
-            f"Missing per-skill links: {', '.join(sorted(missing)[:8])}"
-            + ("…" if len(missing) > 8 else "")
+            f"Per-skill link issues: {', '.join(sorted(issues)[:8])}"
+            + ("…" if len(issues) > 8 else "")
         )
-        logger.warn(f"{config.name}: {len(missing)} master skill(s) not linked")
+        logger.warn(f"{config.name}: {len(issues)} skill link issue(s)")
         return result
 
     result.symlink_status = Status.SYNCED
@@ -328,20 +317,27 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     skills_root = SKILLS_DIR.resolve()
     logger.info(f"Syncing {config.name} per-skill symlinks...")
 
-    if links_dir.is_symlink():
+    legacy_system = None
+    if is_symlink(links_dir):
         if links_dir.resolve() != SKILLS_DIR.resolve():
             logger.error(f"{config.name}: reconcile the foreign skills root before syncing")
             return False
+        if config.platform_key == "codex" and (links_dir / ".system").is_dir():
+            legacy_system = (links_dir / ".system").resolve()
         logger.warn(
             f"{config.name} skills path is a symlink to the master store; "
             "converting to a real directory with per-skill links."
         )
-        links_dir.unlink()
+        remove_link(links_dir)
 
     links_dir.mkdir(parents=True, exist_ok=True)
+    if legacy_system is not None and not (links_dir / ".system").exists():
+        if not create_symlink(links_dir / ".system", legacy_system):
+            return False
 
     added = 0
     repaired = 0
+    success = True
     for skill_dir in sorted(SKILLS_DIR.iterdir()):
         if not skill_dir.is_dir() or skill_dir.name.startswith("."):
             continue
@@ -351,7 +347,7 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
         link_path = links_dir / skill_dir.name
         expected = skill_dir.resolve()
 
-        if link_path.is_symlink():
+        if is_symlink(link_path):
             try:
                 current = link_path.resolve()
             except (OSError, RuntimeError):
@@ -360,10 +356,11 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
                 if current is None or not current.is_relative_to(skills_root):
                     logger.debug(f"  Preserving native symlink: {link_path.name}")
                     continue
-                link_path.unlink()
-                os.symlink(expected, link_path)
-                repaired += 1
-                logger.info(f"  Repaired: {link_path.name}")
+                if create_symlink(link_path, skill_dir):
+                    repaired += 1
+                    logger.info(f"  Repaired: {link_path.name}")
+                else:
+                    success = False
             continue
 
         if link_path.exists():
@@ -371,14 +368,16 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
             logger.debug(f"  Skipping non-symlink entry: {link_path.name}")
             continue
 
-        os.symlink(expected, link_path)
-        added += 1
-        logger.info(f"  Linked: {link_path.name}")
+        if create_symlink(link_path, skill_dir):
+            added += 1
+            logger.info(f"  Linked: {link_path.name}")
+        else:
+            success = False
 
     # Drop broken symlinks that no longer exist in master
     stale = []
     for entry in links_dir.iterdir():
-        if entry.is_symlink() and not entry.exists():
+        if not entry.name.startswith(".") and owned_skill_link(entry) and not (SKILLS_DIR / entry.name / "SKILL.md").is_file():
             try:
                 target = entry.resolve()
             except (OSError, RuntimeError):
@@ -386,7 +385,7 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
             if target.is_relative_to(skills_root):
                 stale.append(entry)
     for entry in stale:
-        entry.unlink()
+        remove_link(entry)
         logger.info(f"  Removed broken: {entry.name}")
 
     if config.platform_key == "codex":
@@ -400,7 +399,7 @@ def sync_per_skill_links(config: PlatformConfig, logger: Logger) -> bool:
     logger.info(
         f"  {config.name} sync done (added={added}, repaired={repaired}, stale_removed={len(stale)})"
     )
-    return True
+    return success
 
 
 # ─── Permission Config Audit ────────────────────────────────────────────────
@@ -498,17 +497,13 @@ def add_project_symlink(project_dir: Path, logger: Logger) -> bool:
     """Add a project-level .skills symlink."""
     project_skills = project_dir / ".skills"
 
-    if project_skills.is_symlink():
-        target = get_symlink_target(project_skills)
-        if target == SKILLS_DIR:
-            logger.info(f"Project symlink already exists: {project_skills}")
-            return True
-        logger.warn(f"Project symlink points to wrong target: {target}")
-        project_skills.unlink()
+    if is_symlink(project_skills) and get_symlink_target(project_skills) == SKILLS_DIR.resolve():
+        logger.info(f"Project link already exists: {project_skills}")
+        return True
 
-    if project_skills.exists():
-        logger.warn(f"Project .skills exists as real directory, removing...")
-        shutil.rmtree(project_skills, ignore_errors=True)
+    if project_skills.exists() and not is_symlink(project_skills):
+        logger.error(f"Project .skills contains local files; preserved: {project_skills}")
+        return False
 
     success = create_symlink(project_skills, SKILLS_DIR)
     if success:
@@ -537,7 +532,7 @@ def full_audit(
 ) -> list[AuditResult]:
     """Audit all platforms and optionally repair."""
     if logger is None:
-        logger = Logger(verbose=True, log_file=LOG_FILE)
+        logger = Logger(verbose=True, log_file=None if audit_only else LOG_FILE)
 
     results = []
 
@@ -561,16 +556,18 @@ def full_audit(
             permission_details=permission_result.permission_details,
         )
 
-        if not audit_only:
+        if not audit_only and symlink_result.symlink_status != Status.NOT_INSTALLED:
             if symlink_result.symlink_status != Status.SYNCED:
-                if symlink_result.symlink_status == Status.NOT_INSTALLED:
-                    logger.info(f"  Skipping (not installed)")
-                else:
+                try:
                     repaired = repair_symlink(config, logger)
-                    combined.repaired = repaired
-                    if repaired:
-                        combined.symlink_status = Status.SYNCED
-                        combined.symlink_details = f"→ {SKILLS_DIR} (repaired)"
+                except (OSError, ValueError) as exc:
+                    logger.error(f"{config.name}: {exc}")
+                    repaired = False
+                combined.repaired = repaired
+                if repaired:
+                    checked = audit_symlink(platform_key, config, logger)
+                    combined.symlink_status = checked.symlink_status
+                    combined.symlink_details = checked.symlink_details
 
             if permission_result.permission_status in (
                 Status.PERMISSION_MISSING,
@@ -611,7 +608,7 @@ def print_report(results: list[AuditResult]):
     if any(
         r.symlink_status not in (Status.SYNCED, Status.NOT_INSTALLED) for r in results
     ):
-        print("Some platforms need attention. Run with --repair to fix.")
+        print("Some platforms need attention. Run without --audit to repair.")
 
 
 # ─── CLI Entry Point ────────────────────────────────────────────────────────
@@ -630,7 +627,7 @@ def main():
     args = parser.parse_args()
 
     verbose = not args.quiet
-    logger = Logger(verbose=verbose, log_file=LOG_FILE)
+    logger = Logger(verbose=verbose, log_file=None if args.audit else LOG_FILE)
 
     external = sorted(
         skill.name for skill in SKILLS_DIR.iterdir()
@@ -648,8 +645,9 @@ def main():
     if args.project:
         project_dir = Path(args.project).resolve()
         logger.info(f"Adding project symlink for: {project_dir}")
-        add_project_symlink(project_dir, logger)
-        return
+        if args.audit:
+            parser.error("--audit cannot be combined with --project")
+        return 0 if add_project_symlink(project_dir, logger) else 1
 
     source_command = [sys.executable, str(Path(__file__).with_name("skill_sources.py"))]
     if args.audit:
@@ -660,8 +658,10 @@ def main():
 
     results = full_audit(audit_only=args.audit, logger=logger)
     print_report(results)
-    return int(not args.audit and any(
-        result.symlink_status in (Status.BROKEN, Status.WRONG_TARGET, Status.MISSING)
+    return int(any(
+        result.symlink_status in (Status.BROKEN, Status.WRONG_TARGET, Status.MISSING) or
+        (result.symlink_status != Status.NOT_INSTALLED and
+         result.permission_status in (Status.PERMISSION_MISSING, Status.PERMISSION_BROKEN))
         for result in results
     ))
 

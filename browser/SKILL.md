@@ -9,10 +9,14 @@ compatibility: opencode, claude-code, codex, cursor, omp
 
 Browser automation is a CLI, not an MCP server: `agent-browser` (Vercel Labs, Rust binary, Apache-2.0).
 There is no tool schema in context; each command costs only the tokens it prints.
-Run `agent-browser --help` for the full surface and `agent-browser skills get core` for the upstream workflow guide, which always matches the installed version.
+Run `agent-browser --help` for the installed command surface.
+Packaged skill assets also support `agent-browser skills get core` for the matching upstream workflow guide.
+The standalone Windows and Linux release binaries lack those assets; use `--help` and this skill there.
 
 Install: `brew install agent-browser` on Mac (also in bootstrap's Brewfile); `wsl/packages.tsv` on the Linux side.
+On native Windows, use the checksummed official `agent-browser-win32-x64.exe` release asset as `~/.local/bin/agent-browser.exe` and put that directory on user PATH.
 It drives the system Chrome when present; `agent-browser install` downloads Chrome for Testing when it is not.
+On WSL, bootstrap declares Chrome's NSS/audio libraries. Verify a real `open` and `snapshot -i`; the quick doctor can pass while Chrome is missing shared libraries.
 
 ## Core workflow
 
@@ -45,6 +49,9 @@ Rules that save tokens and retries:
 | Reuse the live Chrome window | `--auto-connect` | Only when Chrome runs with remote debugging; that port exposes full browser control to any local process. Prefer `--profile`. |
 
 Always add `--content-boundaries` so page text arrives inside nonce-delimited markers, and `--max-output` when the page is unknown.
+
+Windows profiles are separate from WSL's Linux profiles. WSLg supports `--headed`; SSO there requires an owner-authenticated private Linux profile (`--headed --profile <path>`).
+The named-profile SSO results above were verified on Mac. Native Windows named-profile copying timed out on the reference 0.41.0 run, so do not promise that a Windows Chrome login will transfer.
 
 ## Trusted vs untrusted output
 
