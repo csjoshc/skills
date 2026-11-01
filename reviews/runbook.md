@@ -52,6 +52,14 @@ they are reported, not gated.
 
 Both skills run a validation pass on each candidate finding (re-verify every
 YES criterion independently) before admitting it to `REVIEW-FINDINGS`.
+pr-review additionally runs the independent re-check (Local Mode section of
+`reference/review-operations.md`): a harness subagent with a different chat
+model, or at minimum fresh context with no view of this session's
+conclusions, re-derives each verdict and verifies proof targets. Any
+`OVERRULE` downgrade is recorded; a skipped re-check caps ledger confidence
+at MEDIUM. This attack on the same-author-same-model correlation problem is
+complementary to validate.py: the script gates shape deterministically, the
+subagent is the unanchored second opinion on substance.
 
 Exit gate: `REVIEW-GATE: phase-1 → report`. Criteria must include
 `validation_pass: met`.

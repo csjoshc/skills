@@ -80,13 +80,19 @@ Done when it prints `side-pane: <where>`; on exit 1, give the user the printed c
 3. Run deterministic checks before LLM critique when available.
 4. Launch specialist review lenses from `reference/review-lenses.md`.
 5. Validate, deduplicate, and sort findings into `REVIEW-FINDINGS` blocks.
-6. Emit `REVIEW-LEDGER` and `REVIEW-GATE: report → post` (local mode: stop
+6. Independent re-check: a harness subagent with a different chat model (at
+   minimum fresh context with no view of this transcript) re-derives each
+   verdict and verifies proof targets; `OVERRULE` findings drop to
+   `DISMISSED` with the reason, a skipped re-check caps confidence at MEDIUM
+   (workflow in `reference/review-operations.md`).
+7. Emit `REVIEW-LEDGER` and `REVIEW-GATE: report → post` (local mode: stop
    at `phase-1 → report`).
-7. Run `python3 ~/.skills/reviews/validate.py --transcript <draft>` (add
-   `--local` in local mode); exit 0 required before posting or reporting.
-8. Disposition (see Fix-first disposition): apply auto-fixable findings to
+8. Run `python3 ~/.skills/reviews/validate.py --transcript <draft> --repo <root>`
+   (add `--local` in local mode); exit 0 required before posting or reporting.
+   The transcript file carries the fenced blocks; local-mode chat stays lean.
+9. Disposition (see Fix-first disposition): apply auto-fixable findings to
    the working tree; carry only open questions forward as comments.
-9. PR mode: post the remaining open-question comments and a summary using
+10. PR mode: post the remaining open-question comments and a summary using
    `reference/review-operations.md`. Local mode: print open questions in chat
    as `file:line` with the suggested fix, and post nothing.
 
@@ -106,20 +112,25 @@ Every `/pr-review` session emits, in order:
 4. `REVIEW-GATE: report → post. Criteria: [validator exit 0: met]. Proceeding: yes.`
    Local mode omits this gate.
 
-Findings use `source: lens-derived` (or `tool-flagged` for pre-flight
-results folded in). Structural findings require a `proof:` field — a
-reproducible command, failing test, curl, or CI link. The rule fires on
-`severity: CRITICAL` (any category), `category: Architectural Drift`,
-or `category: Layer` at `HIGH`/`CRITICAL`. The validator at
-[`~/.skills/reviews/validate.py`](../reviews/validate.py) blocks
-posting without it.
+These blocks are the machine contract: they belong in the validated transcript
+file, not in chat prose. In local mode the chat report stays lean - findings
+with evidence, disposition, and the validator boolean; the transcript
+(`.agent-local/reviews/<slug>.md`) carries the blocks. The blocks reappear
+readable only when something posts.
 
-Always emit these fenced blocks, never free-form prose, even if the validator
-or a companion is unavailable (say so in the gate line). Every finding carries
-`source` and `checklist_score: N/M`; rate CRITICAL only with a `proof:`, else
-HIGH. `line` is the new-file line number, not the position in the diff text.
-`category` is exactly one of Bug | Error Handling | Standards | Test Gap |
-Scope | Layer | Redundancy | Modularity | Architectural Drift.
+Validate before reporting: run `python3 ~/.skills/reviews/validate.py --transcript <draft>`
+(add `--local` in local mode); exit 0 required before posting or reporting.
+
+Transcript-carrying rules (unchanged): every finding carries `source`
+(`tool-flagged` for pre-flight results) and `checklist_score: N/M`; structural
+findings require a `proof:` field - a path in the reviewed repo, a failing
+test, or a CI link, verified for on-disk existence by the validator when
+`--repo` is passed. The proof rule fires on `severity: CRITICAL` (any
+category), `category: Architectural Drift`, or `category: Layer` at
+`HIGH`/`CRITICAL`. `category` is exactly one of Bug | Error Handling |
+Standards | Test Gap | Scope | Layer | Redundancy | Modularity |
+Architectural Drift. `line` is the new-file line number, not the diff-text
+position.
 
 Fixed phase sequence is documented in
 [`~/.skills/reviews/runbook.md`](../reviews/runbook.md).

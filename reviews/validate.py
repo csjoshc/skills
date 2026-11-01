@@ -205,6 +205,7 @@ class Transcript:
     fragment: bool = False  # True when validating an arch-violations catalog
                             # file or other document containing REVIEW-FINDINGS
                             # few-shots but no full transcript envelope.
+    repo: Path | None = None  # repo root for on-disk proof verification
 
 
 # ── Parsing ──────────────────────────────────────────────────────────────────
@@ -242,9 +243,10 @@ def parse_findings_block(block: str) -> list[Finding]:
 
 
 def parse_transcript(
-    text: str, skill: str, fragment: bool = False, local: bool = False
+    text: str, skill: str, fragment: bool = False, local: bool = False,
+    repo: Path | None = None,
 ) -> Transcript:
-    t = Transcript(text=text, skill=skill, fragment=fragment, local=local)
+    t = Transcript(text=text, skill=skill, fragment=fragment, local=local, repo=repo)
 
     for m in _PHASE_0_RE.finditer(text):
         t.phase_0_rows.extend(parse_phase_0_table(m.group(1)))
@@ -430,6 +432,79 @@ def structural_findings_have_proof(t: Transcript) -> list[str]:
 
 
 @check
+def proof_targets_exist(t: Transcript) -> list[str]:
+    """On-disk existence check for structural findings' proof targets.
+
+    schemas.md requires `proof:` for CRITICAL findings and Layer HIGH+;
+    presence alone proved nothing: a fabricated path passes a presence-only
+    gate. When `--repo` is given, every path-shaped token in the proof must
+    exist under the repo root, and a `path::NAME` token must name something
+    present inside that file. Proofs that cite no on-disk artifact (CI URLs,
+    log excerpts) cannot be verified offline; they earn a stderr note, never
+    an error, so a legitimate CI-link proof still passes.
+    """
+    if t.fragment or t.repo is None:
+        return []
+    errors: list[str] = []
+    notes: list[str] = []
+    _PATH_TOKEN = re.compile(
+        r"(?<![\w./-])"                       # not the tail of a longer token
+        r"[A-Za-z0-9_][A-Za-z0-9_./@-]*\.[A-Za-z]{1,6}"  # name.ext with / separators
+        r"(?:::?\d+|::[\w-]+)?"          # optional :NNN line or ::name tail
+    )
+    _EXTS = {"py", "sh", "lua", "ts", "tsx", "js", "mjs", "md", "toml"}
+    _TOKEN_TAIL = ".,;:'\"()[]{}`"
+    for f in t.findings:
+        sev = str(f.fields.get("severity", "")).upper()
+        st = str(f.fields.get("status", "")).upper()
+        cat = str(f.fields.get("category", ""))
+        if st != "VALIDATED":
+            continue
+        needs_proof = (
+            sev == "CRITICAL"
+            or (cat == "Layer" and sev in {"HIGH", "CRITICAL"})
+        )
+        if not needs_proof:
+            continue
+        fid = f.fields.get("id", "<?>")
+        proof = str(f.fields.get("proof", ""))
+        if not proof.strip():
+            continue  # presence-only rule already flags the empty case
+        checked = 0
+        for token in _PATH_TOKEN.findall(proof):
+            token = token.strip(_TOKEN_TAIL).strip()
+            path_part = token.split("::", 1)[0].split(":", 1)[0]
+            if not path_part or not path_part.lower().endswith(tuple(_EXTS)):
+                continue
+            cand = Path(path_part)
+            target = cand if cand.is_absolute() else t.repo / cand
+            if not target.exists():
+                errors.append(
+                    f"finding {fid}: proof cites '{path_part}' "
+                    f"but it does not exist under {t.repo}"
+                )
+                continue
+            checked += 1
+            after_sep = token.split("::", 1)[1] if "::" in token else None
+            if after_sep:
+                content = target.read_text(errors="replace")
+                if after_sep not in content:
+                    errors.append(
+                        f"finding {fid}: proof cites '{token}' "
+                        f"but '{after_sep}' does not appear in {path_part}"
+                    )
+        if checked == 0 and not errors:
+            notes.append(
+                f"finding {fid}: proof cites no on-disk artifact; "
+                f"URLs and log excerpts are not verified offline"
+            )
+    if notes:
+        for n in notes:
+            print(f"  [note] {n}")
+    return errors
+
+
+@check
 def architectural_drift_has_plan_reference(t: Transcript) -> list[str]:
     """Every VALIDATED `Architectural Drift` finding must either cite the
     linked plan in `proof:` or explicitly say `no-plan-available`. This
@@ -579,6 +654,11 @@ def main() -> int:
         "--local", action="store_true",
         help="pr-review of a local diff: no report → post gate is required.",
     )
+    parser.add_argument(
+        "--repo", default=None,
+        help="Repository root for on-disk proof verification (default: none; "
+             "pass the reviewed repo to enable path-existence checks).",
+    )
     args = parser.parse_args()
 
     transcript_path = Path(args.transcript)
@@ -593,7 +673,10 @@ def main() -> int:
     mode = "fragment" if fragment else "transcript"
     print(f"reviews validator (mode: {mode}, skill: {skill}, yaml backend: {backend})")
     print("=" * 40)
-    transcript = parse_transcript(text, skill=skill, fragment=fragment, local=args.local)
+    transcript = parse_transcript(
+        text, skill=skill, fragment=fragment, local=args.local,
+        repo=Path(args.repo).resolve() if args.repo else None,
+    )
     return run(transcript)
 
 

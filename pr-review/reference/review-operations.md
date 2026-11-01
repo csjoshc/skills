@@ -73,6 +73,27 @@ git ls-files --others --exclude-standard   # untracked files are part of the cha
 - The PR skip rules (closed, draft, already commented) don't apply.
 - Run the tracked-but-ignored check on `git diff --name-only "$base"` plus the untracked list.
 - Plan lookup uses only the local plan step.
+
+Quiet reporting: write the assembled transcript (findings, gates, ledger) to
+`.agent-local/reviews/<slug>.md`, validate it there
+(`python3 ~/.skills/reviews/validate.py --transcript <file> --skill pr-review --local --repo <root>`),
+and keep chat lean: the findings with evidence, the FIX/COMMENT disposition,
+test or gate results, and the one-line validator boolean. Chat never reprints
+the fenced blocks; the transcript is the artifact, and it is what a later
+posting step would validate again.
+
+Independent re-check before disposition: when the harness can spawn a
+subagent with a different chat model (or at minimum a fresh context and no
+access to this transcript), hand it only the diff and the `REVIEW-FINDINGS`
+blocks and ask it to re-derive each lens checklist verdict and verify every
+proof target itself. It returns one line per finding: `CONFIRM` or
+`OVERRULE <one-line reason>`. An `OVERRULE` finding drops to `DISMISSED`
+with the reason recorded, unless new evidence is produced for it. What the
+subagent gets must not include this session's conclusions; its job is to be
+the unanchored second opinion that `validate.py` cannot be - the validator
+checks shape, the re-check checks substance. Skip it only when the harness
+has no subagent mechanism, and record `recheck: skipped` per finding; a
+skipped re-check caps ledger confidence at MEDIUM.
 - Validate with `--local`, end at `REVIEW-GATE: phase-1 → report`, and print findings in chat.
 - If the user then opens a PR, rerun in PR mode rather than posting the local transcript.
 
@@ -201,11 +222,12 @@ Check for:
 
 ## Pre-Post Validation
 
-Before any `gh api` call, assemble the review output (findings, ledger,
-gate lines) into a single draft file and run:
+Before any `gh api` call, run the independent re-check (Local Mode section)
+on the findings that survived validation, then assemble the review output
+(findings, ledger, gate lines) into a single draft file and run:
 
 ```bash
-python3 ~/.skills/reviews/validate.py --transcript <draft>.md --skill pr-review
+python3 ~/.skills/reviews/validate.py --transcript <draft>.md --skill pr-review --repo <repo-root>
 ```
 
 Local mode adds `--local`, which drops the `report → post` gate requirement.

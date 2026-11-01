@@ -100,7 +100,11 @@ A finding must carry a `proof:` field when any of:
 
 Proof is one of:
 
-- a reproducible command (`curl ...`, `pytest path::test`, `npm run ...`, `madge --circular`, `importlinter --config .importlinter`),
+- a path inside the reviewed repo, verifiable on disk: when the validator is
+  run with `--repo <root>`, every path-shaped token in `proof:` must exist
+  under the root and a `path::NAME` token must name something present in that
+  file; proofs citing no on-disk artifact (CI URLs, log excerpts) cannot be
+  verified offline and earn a note, never an error,
 - a failing test name with file path,
 - a log/transcript snippet with a timestamp and file/line,
 - a linked CI job URL,
