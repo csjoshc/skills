@@ -448,8 +448,8 @@ def proof_targets_exist(t: Transcript) -> list[str]:
     errors: list[str] = []
     notes: list[str] = []
     _PATH_TOKEN = re.compile(
-        r"(?<![\w./-])"                       # not the tail of a longer token
-        r"[A-Za-z0-9_][A-Za-z0-9_./@-]*\.[A-Za-z]{1,6}"  # name.ext with / separators
+        r"(?<![\w./\\-])"                       # not the tail of a longer token
+        r"[A-Za-z0-9_][A-Za-z0-9_./\\@-]*\.[A-Za-z]{1,6}"  # name.ext with / or \ separators
         r"(?:::?\d+|::[\w-]+)?"          # optional :NNN line or ::name tail
     )
     _EXTS = {"py", "sh", "lua", "ts", "tsx", "js", "mjs", "md", "toml"}
@@ -476,7 +476,7 @@ def proof_targets_exist(t: Transcript) -> list[str]:
             path_part = token.split("::", 1)[0].split(":", 1)[0]
             if not path_part or not path_part.lower().endswith(tuple(_EXTS)):
                 continue
-            cand = Path(path_part)
+            cand = Path(path_part.replace("\\", "/"))
             target = cand if cand.is_absolute() else t.repo / cand
             if not target.exists():
                 errors.append(
@@ -487,7 +487,8 @@ def proof_targets_exist(t: Transcript) -> list[str]:
             checked += 1
             after_sep = token.split("::", 1)[1] if "::" in token else None
             if after_sep:
-                content = target.read_text(errors="replace")
+                # Encoding is explicit: Windows default encoding is cp1252.
+                content = target.read_text(encoding="utf-8", errors="replace")
                 if after_sep not in content:
                     errors.append(
                         f"finding {fid}: proof cites '{token}' "

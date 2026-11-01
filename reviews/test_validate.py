@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
-import validate  # noqa: E402
+import validate
 
 TRANSCRIPT = """```REVIEW-FINDINGS
 - id: F-001
@@ -59,6 +59,30 @@ def test_missing_test_id_fails(repo):
 
 def test_existing_test_id_passes(repo):
     assert run_check("pytest tests/suite_test.py::test_login exits 0", repo) == []
+
+
+def test_windows_backslash_path_resolves(repo):
+    # Proofs authored on Windows use backslashes; they must resolve to the
+    # same file as forward-slash tokens.
+    assert run_check("tests\\suite_test.py::test_login exits 0", repo) == []
+
+
+def test_missing_test_id_fails_with_backslash_path(repo):
+    errors = run_check("pytest tests\\suite_test.py::test_missing_case exits 1", repo)
+    assert any("does not appear" in e for e in errors)
+
+
+def test_non_ascii_target_file_reads_as_utf8(tmp_path: Path) -> None:
+    # Target files are read byte-identically on all platforms; without an
+    # explicit encoding Windows would decode this as cp1252.
+    (tmp_path / "readme.md").write_text(
+        "check Café-Münzen ✓\n", encoding="utf-8",
+    )
+    text = TRANSCRIPT.format(
+        severity="CRITICAL", proof="readme.md::Café-Münzen",
+    )
+    t = validate.parse_transcript(text, skill="pr-review", repo=tmp_path)
+    assert validate.proof_targets_exist(t) == []
 
 
 def test_url_only_proof_is_a_note_not_an_error(repo, capsys):
